@@ -3,51 +3,58 @@ body {
     margin: 0;
     padding: 0;
     background-color: #f2f2f2;
+    color: #333;
 }
 
 header {
-    background-color: #4CAF50;
+    background-color: #0044cc;
     color: white;
     padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
 }
 
-.logo {
+.logo img {
     height: 50px;
 }
 
-.header-right {
-    display: flex;
-    align-items: center;
+.user-menu {
+    position: relative;
+    display: inline-block;
 }
 
-.auth-btn, .user-menu button {
-    background-color: #4CAF50;
+.user-menu button {
+    background-color: #0044cc;
     color: white;
     border: none;
-    padding: 10px 20px;
     cursor: pointer;
-    margin-left: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 5px;
 }
 
-.auth-btn:hover, .user-menu button:hover {
-    background-color: #45a049;
+.user-menu button:hover {
+    background-color: #0033a0;
 }
 
-.avatar {
+.user-menu img {
     height: 40px;
     border-radius: 50%;
+    margin-right: 10px;
+    vertical-align: middle;
 }
 
 .dropdown-content {
     display: none;
     position: absolute;
+    right: 0;
     background-color: #f9f9f9;
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1;
+    border-radius: 5px;
 }
 
 .dropdown-content button {
@@ -57,6 +64,8 @@ header {
     display: block;
     width: 100%;
     text-align: left;
+    border: none;
+    background-color: white;
 }
 
 .dropdown-content button:hover {
@@ -69,7 +78,7 @@ header {
 
 .tab {
     overflow: hidden;
-    background-color: #f1f1f1;
+    background-color: #0044cc;
     border-bottom: 1px solid #ccc;
     display: flex;
     justify-content: center;
@@ -83,14 +92,15 @@ header {
     padding: 14px 16px;
     transition: 0.3s;
     font-size: 17px;
+    color: white;
 }
 
 .tab button:hover {
-    background-color: #ddd;
+    background-color: #0033a0;
 }
 
 .tab button.active {
-    background-color: #ccc;
+    background-color: #002680;
 }
 
 .tabcontent {
@@ -237,10 +247,10 @@ form button:hover {
 /* Estilos para las cards de los partidos */
 .match-card {
     background: white;
-    border: 1px solid #0077c2;
+    border: 1px solid #0044cc;
     border-radius: 5px;
     padding: 20px;
-    width: 300px;
+    width: 30%;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
     text-align: center;
@@ -279,7 +289,7 @@ form button:hover {
     margin-top: 20px;
     width: 100%;
     padding: 10px;
-    background-color: #0077c2;
+    background-color: #0044cc;
     color: white;
     border: none;
     cursor: pointer;
@@ -287,7 +297,7 @@ form button:hover {
 }
 
 .match-card button:hover {
-    background-color: #005bb5;
+    background-color: #0033a0;
 }
 
 .team-flag {
@@ -295,13 +305,6 @@ form button:hover {
     height: 20px;
     margin-right: 10px;
     vertical-align: middle;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f2f2f2;
 }
 
 .logo-container {
@@ -313,31 +316,9 @@ body {
     height: 100px;
 }
 
-.login-container {
-    max-width: 400px;
-    margin: 5% auto;
-    padding: 20px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-}
-
 .login-container h2 {
     text-align: center;
     margin-bottom: 20px;
-}
-
-form label {
-    display: block;
-    margin: 10px 0 5px;
-}
-
-form input {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
 }
 
 form button, #registerModalBtn {
@@ -354,20 +335,6 @@ form button, #registerModalBtn {
 
 form button:hover, #registerModalBtn:hover {
     background-color: #45a049;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgb(0,0,0);
-    background-color: rgba(0,0,0,0.4);
-    padding-top: 60px;
 }
 
 .modal-content {
@@ -392,4 +359,30 @@ form button:hover, #registerModalBtn:hover {
     color: black;
     text-decoration: none;
     cursor: pointer;
+}
+
+/* Tabla de posiciones */
+#leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#leaderboard-table th, #leaderboard-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#leaderboard-table th {
+    background-color: #0044cc;
+    color: white;
+}
+
+#leaderboard-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#leaderboard-table tr:hover {
+    background-color: #ddd;
 }

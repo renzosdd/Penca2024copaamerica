@@ -7,11 +7,26 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <header>
+        <div class="logo">
+            <img src="images/Logo.png" alt="Penca Copa América">
+        </div>
+        <div class="user-menu">
+            <button>
+                <img src="images/avatar.webp" alt="User Avatar" id="user-avatar">
+                <span id="user-name">User</span>
+            </button>
+            <div class="dropdown-content">
+                <button id="profileBtn">Profile</button>
+                <button id="logoutBtn">Logout</button>
+            </div>
+        </div>
+    </header>
+
     <div class="tab">
         <button class="tablink" onclick="openTab(event, 'Predictions')">Predictions</button>
         <button class="tablink" onclick="openTab(event, 'Fixture')">Fixture</button>
-        <button class="tablink" onclick="openTab(event, 'Profile')">Profile</button>
-        <button id="logoutBtn">Logout</button>
+        <button class="tablink" onclick="openTab(event, 'Leaderboard')">Leaderboard</button>
     </div>
 
     <div id="Predictions" class="tabcontent">
@@ -24,19 +39,63 @@
         <div id="fixture-list"></div>
     </div>
 
-    <div id="Profile" class="tabcontent">
-        <h3>Profile</h3>
-        <form id="profile-form">
-            <label for="firstName">First Name:</label>
-            <input type="text" id="firstName" name="firstName"><br>
-            <label for="lastName">Last Name:</label>
-            <input type="text" id="lastName" name="lastName"><br>
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email"><br>
-            <label for="phone">Phone:</label>
-            <input type="text" id="phone" name="phone"><br>
-            <button type="submit">Update Profile</button>
-        </form>
+    <div id="Leaderboard" class="tabcontent">
+        <h3>Leaderboard</h3>
+        <table id="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Points</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be populated dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Profile</h3>
+            <form id="profile-form">
+                <label for="firstName">First Name:</label>
+                <input type="text" id="firstName" name="firstName"><br>
+                <label for="lastName">Last Name:</label>
+                <input type="text" id="lastName" name="lastName"><br>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email"><br>
+                <label for="phone">Phone:</label>
+                <input type="text" id="phone" name="phone"><br>
+                <button type="submit">Update Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="closeRegisterModal">&times;</span>
+            <h3>Register</h3>
+            <form id="register-form">
+                <label for="reg-username">Username:</label>
+                <input type="text" id="reg-username" name="reg-username" required><br>
+                <label for="reg-password">Password:</label>
+                <input type="password" id="reg-password" name="reg-password" required><br>
+                <label for="reg-email">Email:</label>
+                <input type="email" id="reg-email" name="reg-email" required><br>
+                <label for="reg-firstName">First Name:</label>
+                <input type="text" id="reg-firstName" name="reg-firstName"><br>
+                <label for="reg-lastName">Last Name:</label>
+                <input type="text" id="reg-lastName" name="reg-lastName"><br>
+                <label for="reg-phone">Phone:</label>
+                <input type="text" id="reg-phone" name="reg-phone"><br>
+                <label for="reg-avatar">Avatar:</label>
+                <input type="file" id="reg-avatar" name="reg-avatar" accept="image/*"><br>
+                <button type="submit">Register</button>
+            </form>
+        </div>
     </div>
 
     <script src="js/app.js" type="module"></script>

@@ -55,9 +55,21 @@ export const fetchMatches = async (predictions = []) => {
                                 <input type="number" class="prediction-input" id="goals_team2_${match.id}" value="${goals_team2}" ${canEdit ? '' : 'disabled'} min="0">
                             </div>
                         </div>
-                        <button onclick="submitPrediction(${match.id})" ${canEdit ? '' : 'disabled'}>Enviar</button>
+                        <button id="submit_btn_${match.id}" onclick="submitPrediction(${match.id})" ${canEdit ? '' : 'disabled'} ${goals_team1 && goals_team2 ? '' : 'disabled'}>Enviar</button>
                     `;
                     predictionsList.appendChild(card);
+
+                    const goalsTeam1Input = document.getElementById(`goals_team1_${match.id}`);
+                    const goalsTeam2Input = document.getElementById(`goals_team2_${match.id}`);
+                    const submitButton = document.getElementById(`submit_btn_${match.id}`);
+
+                    goalsTeam1Input.addEventListener('input', () => {
+                        submitButton.disabled = !goalsTeam1Input.value || !goalsTeam2Input.value;
+                    });
+
+                    goalsTeam2Input.addEventListener('input', () => {
+                        submitButton.disabled = !goalsTeam1Input.value || !goalsTeam2Input.value;
+                    });
                 });
             }
             if (fixtureList) {

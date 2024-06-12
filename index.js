@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const app = express();
 const db = require('./database'); // Import the database configuration
+const multer = require('multer');
+const fs = require('fs');
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
@@ -27,6 +29,21 @@ const checkAuth = (req, res, next) => {
         next();
     });
 };
+
+// Configuración de multer para la subida de archivos
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = 'uploads/';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+const upload = multer({ storage });
 
 const insertKnockoutMatches = (matches) => {
     return new Promise((resolve, reject) => {
@@ -214,11 +231,12 @@ const calculateKnockoutStages = async () => {
 };
 
 // User registration endpoint
-app.post('/register', (req, res) => {
+app.post('/register', upload.single('avatar'), (req, res) => {
     const { username, password, email, firstName, lastName, phone } = req.body;
+    const avatar = req.file ? `/uploads/${req.file.filename}` : '/images/avatar.webp';
     const hashedPassword = bcrypt.hashSync(password, 10);
 
-    db.run(`INSERT INTO users (username, password, email, firstName, lastName, phone) VALUES (?, ?, ?, ?, ?, ?)`, [username, hashedPassword, email, firstName, lastName, phone], function(err) {
+    db.run(`INSERT INTO users (username, password, email, firstName, lastName, phone, avatar) VALUES (?, ?, ?, ?, ?, ?, ?)`, [username, hashedPassword, email, firstName, lastName, phone, avatar], function(err) {
         if (err) {
             console.error('Error creating user:', err.message);
             res.status(500).json({ error: 'Error creating user' });
@@ -277,6 +295,10 @@ app.put('/profile/:id', checkAuth, (req, res) => {
             res.json({ message: 'Profile updated successfully' });
         }
     });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
 
 // Endpoint to calculate knockout stages
@@ -398,6 +420,18 @@ app.put('/matches/:matchId', checkAuth, (req, res) => {
                 console.error('Error calculating knockout stages:', err.message);
                 res.status(500).json({ error: 'Error calculating knockout stages' });
             }
+        }
+    });
+});
+
+// Endpoint to get leaderboard
+app.get('/leaderboard', checkAuth, (req, res) => {
+    db.all(`SELECT username, firstName, lastName, points FROM users JOIN user_points ON users.id = user_points.user_id WHERE isAdmin = 0 ORDER BY points DESC`, (err, rows) => {
+        if (err) {
+            console.error('Error fetching leaderboard:', err.message);
+            res.status(500).json({ error: 'Error fetching leaderboard' });
+        } else {
+            res.json(rows);
         }
     });
 });

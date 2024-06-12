@@ -29,13 +29,22 @@ export const register = async () => {
     const firstName = document.getElementById('reg-firstName').value;
     const lastName = document.getElementById('reg-lastName').value;
     const phone = document.getElementById('reg-phone').value;
+    const avatar = document.getElementById('reg-avatar').files[0];
+
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
+    formData.append('email', email);
+    formData.append('firstName', firstName);
+    formData.append('lastName', lastName);
+    formData.append('phone', phone);
+    if (avatar) {
+        formData.append('avatar', avatar);
+    }
 
     const response = await fetch('/register', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ username, password, email, firstName, lastName, phone })
+        body: formData
     });
 
     const data = await response.json();
@@ -43,6 +52,7 @@ export const register = async () => {
     if (response.ok) {
         alert('Registration successful!');
         document.getElementById('register-form').reset();
+        window.location.href = '/login.html';
     } else {
         alert('Registration failed: ' + data.error);
     }
@@ -51,6 +61,22 @@ export const register = async () => {
 export const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
-    localStorage.removeItem('user'); // Clear the stored user data
+    localStorage.removeItem('user');
     window.location.href = '/login.html';
+};
+
+export const fetchUser = async () => {
+    const response = await fetch('/profile', {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        return data.user;
+    } else {
+        alert('Error fetching user: ' + data.error);
+    }
 };
