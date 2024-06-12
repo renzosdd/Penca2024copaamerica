@@ -28,6 +28,7 @@ db.serialize(() => {
         lastName TEXT,
         phone TEXT,
         avatar TEXT,
+        role TEXT DEFAULT 'user',
         isAdmin INTEGER DEFAULT 0
     )`);
 
@@ -51,8 +52,6 @@ db.serialize(() => {
         match_id INTEGER NOT NULL,
         goals_team1 INTEGER,
         goals_team2 INTEGER,
-        team1 TEXT,  -- Add these columns to store predicted teams
-        team2 TEXT,
         FOREIGN KEY (user_id) REFERENCES users (id),
         FOREIGN KEY (match_id) REFERENCES matches (id),
         UNIQUE (user_id, match_id)
@@ -66,6 +65,12 @@ db.serialize(() => {
         goals_against INTEGER
     )`);
 
+    db.run(`CREATE TABLE IF NOT EXISTS user_points (
+        user_id INTEGER PRIMARY KEY,
+        points INTEGER DEFAULT 0,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+    )`);
+
     db.run(`CREATE INDEX IF NOT EXISTS idx_matches_series ON matches (series)`);
     db.run(`CREATE INDEX IF NOT EXISTS idx_matches_tournament ON matches (tournament)`);
 
@@ -76,7 +81,6 @@ db.serialize(() => {
         }
 
         if (row.count === 0) {
-            // Insert initial data if table is empty
             const matches = [
                 { date: '2024-06-20', time: '20:00', team1: 'Argentina', team2: 'Canadá', competition: 'Copa América', group_name: 'A', series: 'group', tournament: 'Copa América' },
                 { date: '2024-06-21', time: '19:00', team1: 'Perú', team2: 'Chile', competition: 'Copa América', group_name: 'A', series: 'group', tournament: 'Copa América' },
@@ -101,28 +105,27 @@ db.serialize(() => {
                 { date: '2024-07-01', time: '21:00', team1: 'Bolivia', team2: 'Panamá', competition: 'Copa América', group_name: 'C', series: 'group', tournament: 'Copa América' },
                 { date: '2024-07-01', time: '18:00', team1: 'Estados Unidos', team2: 'Uruguay', competition: 'Copa América', group_name: 'C', series: 'group', tournament: 'Copa América' },
                 { date: '2024-07-02', time: '17:00', team1: 'Costa Rica', team2: 'Paraguay', competition: 'Copa América', group_name: 'D', series: 'group', tournament: 'Copa América' },
-                { date: '2024-07-02', time: '20:00', team1: 'Brasil', team2: 'Colombia', competition: 'Copa América', group_name: 'D', series: 'group', tournament: 'Copa América' },
-                { date: '2024-07-04', time: '20:00', team1: '1A', team2: '2B', competition: 'Copa América', group_name: 'Cuartos de final', series: 'quarterfinal', tournament: 'Copa América' },
-                { date: '2024-07-05', time: '20:00', team1: '1B', team2: '2A', competition: 'Copa América', group_name: 'Cuartos de final', series: 'quarterfinal', tournament: 'Copa América' },
-                { date: '2024-07-06', time: '18:00', team1: '1C', team2: '2D', competition: 'Copa América', group_name: 'Cuartos de final', series: 'quarterfinal', tournament: 'Copa América' },
-                { date: '2024-07-06', time: '15:00', team1: '1D', team2: '2C', competition: 'Copa América', group_name: 'Cuartos de final', series: 'quarterfinal', tournament: 'Copa América' },
-                { date: '2024-07-09', time: '20:00', team1: 'G25', team2: 'G26', competition: 'Copa América', group_name: 'Semifinales', series: 'semifinal', tournament: 'Copa América' },
-                { date: '2024-07-10', time: '20:00', team1: 'G27', team2: 'G28', competition: 'Copa América', group_name: 'Semifinales', series: 'semifinal', tournament: 'Copa América' },
-                { date: '2024-07-13', time: '20:00', team1: 'P29', team2: 'P30', competition: 'Copa América', group_name: '3º Puesto', series: 'third place', tournament: 'Copa América' },
-                { date: '2024-07-14', time: '20:00', team1: 'G29', team2: 'G30', competition: 'Copa América', group_name: 'Final', series: 'final', tournament: 'Copa América' }
+                { date: '2024-07-02', time: '20:00', team1: 'Brasil', team2: 'Colombia', competition: 'Copa América', group_name: 'D', series: 'group', tournament: 'Copa América' }
             ];
 
             const stmt = db.prepare(`INSERT INTO matches (date, time, team1, team2, competition, group_name, series, tournament) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
             matches.forEach(match => {
-                stmt.run([match.date, match.time, match.team1, match.team2, match.competition, match.group_name, match.series, match.tournament]);
+                if (match.team1 && match.team2 && match.date && match.time && match.competition && match.group_name && match.series && match.tournament) {
+                    stmt.run([match.date, match.time, match.team1, match.team2, match.competition, match.group_name, match.series, match.tournament], (err) => {
+                        if (err) {
+                            console.error('Error inserting match:', err.message);
+                        }
+                    });
+                } else {
+                    console.error('Incomplete match data:', match);
+                }
             });
             stmt.finalize();
         }
     });
 
-    // Crear usuario administrador por defecto
     const hashedPassword = bcrypt.hashSync('Penca2024Ren', 10);
-    db.run(`INSERT INTO users (username, password, email, isAdmin) VALUES (?, ?, ?, ?)`, ['admin', hashedPassword, 'admin@penca.com', 1], (err) => {
+    db.run(`INSERT INTO users (username, password, email, isAdmin, role) VALUES (?, ?, ?, ?, ?)`, ['admin', hashedPassword, 'admin@penca.com', 1, 'super-admin'], (err) => {
         if (err && err.code !== 'SQLITE_CONSTRAINT') {
             console.error('Error creating admin user:', err.message);
         }
