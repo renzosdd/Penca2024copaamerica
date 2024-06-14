@@ -20,7 +20,10 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
-    if (err) return console.error(err);
+    if (err) {
+        console.error(err);
+        process.exit(1);
+    }
     db = client.db('penca_copa_america');
 
     app.use(session({
@@ -35,10 +38,13 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
         })
     }));
 
-    createAdminUser();
-
-    app.listen(PORT, () => {
-        console.log(`Server is running on port ${PORT}`);
+    createAdminUser().then(() => {
+        app.listen(PORT, () => {
+            console.log(`Server is running on port ${PORT}`);
+        });
+    }).catch((err) => {
+        console.error(err);
+        process.exit(1);
     });
 });
 
@@ -49,11 +55,25 @@ app.get('/', (req, res) => {
 });
 
 app.get('/dashboard.html', isAuthenticated, (req, res) => {
+    if (!db) {
+        return res.status(500).send('Database connection not established');
+    }
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-app.use('/predictions', isAuthenticated, require('./routes/predictions')(db));
-app.use('/admin', isAuthenticated, isAdmin, require('./routes/admin')(db));
+app.use('/predictions', isAuthenticated, (req, res, next) => {
+    if (!db) {
+        return res.status(500).send('Database connection not established');
+    }
+    require('./routes/predictions')(db)(req, res, next);
+});
+
+app.use('/admin', isAuthenticated, isAdmin, (req, res, next) => {
+    if (!db) {
+        return res.status(500).send('Database connection not established');
+    }
+    require('./routes/admin')(db)(req, res, next);
+});
 
 async function createAdminUser() {
     const usersCollection = db.collection('users');
