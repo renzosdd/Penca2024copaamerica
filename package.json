@@ -1,7 +1,7 @@
 {
     "name": "penca_copa_america",
     "version": "1.0.0",
-    "description": "Plataforma de apuestas para la Copa América 2024",
+    "description": "Plataforma de penca para la Copa América 2024",
     "main": "index.js",
     "scripts": {
       "start": "node index.js",
@@ -20,7 +20,7 @@
     "devDependencies": {
       "nodemon": "^2.0.12"
     },
-    "author": "Tu Nombre",
+    "author": "Ren",
     "license": "ISC"
   }
   

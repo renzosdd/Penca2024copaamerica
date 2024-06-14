@@ -22,12 +22,12 @@ app.use(bodyParser.json());
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, async (err, client) => {
     if (err) {
-        console.error(err);
+        console.error('Failed to connect to MongoDB', err);
         process.exit(1);
     }
     db = client.db('penca_copa_america');
+    console.log('Connected to MongoDB');
 
-    // Inicialización de sesiones después de la conexión a la base de datos
     app.use(session({
         secret: 'secret',
         resave: false,
@@ -40,10 +40,8 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, as
         })
     }));
 
-    // Crear usuario admin si no existe
     await createAdminUser();
 
-    // Iniciar el servidor después de la conexión y la creación del usuario admin
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
@@ -52,16 +50,32 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, as
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', require('./routes/index'));
-app.use('/predictions', require('./routes/predictions')(db));
-app.use('/admin', require('./routes/admin')(db));
+app.use('/predictions', (req, res, next) => {
+    if (!db) {
+        return res.status(500).send('Database connection not established');
+    }
+    require('./routes/predictions')(db)(req, res, next);
+});
+app.use('/admin', (req, res, next) => {
+    if (!db) {
+        return res.status(500).send('Database connection not established');
+    }
+    require('./routes/admin')(db)(req, res, next);
+});
 
 async function createAdminUser() {
+    if (!db) {
+        console.error('Database connection not established');
+        throw new Error('Database connection not established');
+    }
     const usersCollection = db.collection('users');
     const adminUser = await usersCollection.findOne({ username: 'admin' });
     if (!adminUser) {
         const hashedPassword = await bcrypt.hash('Penca2024Ren', 10);
         await usersCollection.insertOne({ username: 'admin', password: hashedPassword, role: 'admin' });
         console.log('Admin user created');
+    } else {
+        console.log('Admin user already exists');
     }
 }
 
@@ -79,6 +93,16 @@ app.post('/login', async (req, res) => {
         res.status(500).send('Error');
     }
 });
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/uploads')
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname))
+    }
+});
+const upload = multer({ storage: storage });
 
 app.post('/register', upload.single('avatar'), async (req, res) => {
     const { username, password, surname, email, dob } = req.body;
