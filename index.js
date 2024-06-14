@@ -4,7 +4,8 @@ const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
 const path = require('path');
 const dotenv = require('dotenv');
-const multer = require('multer'); // Asegúrate de requerir multer
+const multer = require('multer');
+const bcrypt = require('bcrypt');
 const fs = require('fs');
 
 dotenv.config();
@@ -23,7 +24,6 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// Configuración de multer para el manejo de archivos
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'public/uploads')
@@ -48,12 +48,25 @@ app.use('/', require('./routes/index'));
 app.use('/predictions', require('./routes/predictions')(db));
 app.use('/admin', require('./routes/admin')(db));
 
+// Función para crear un usuario admin si no existe
+async function createAdminUser() {
+    const usersCollection = db.collection('users');
+    const adminUser = await usersCollection.findOne({ username: 'admin' });
+    if (!adminUser) {
+        const hashedPassword = await bcrypt.hash('Penca2024Ren', 10);
+        await usersCollection.insertOne({ username: 'admin', password: hashedPassword, role: 'admin' });
+        console.log('Admin user created');
+    }
+}
+
+createAdminUser();
+
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const usersCollection = db.collection('users');
     try {
-        const user = await usersCollection.findOne({ username, password });
-        if (!user) {
+        const user = await usersCollection.findOne({ username });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
         req.session.user = user;
@@ -72,7 +85,8 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         if (existingUser) {
             return res.status(400).json({ error: 'Username already exists' });
         }
-        const user = await usersCollection.insertOne({ username, password, surname, email, dob, avatar, role: 'user' });
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await usersCollection.insertOne({ username, password: hashedPassword, surname, email, dob, avatar, role: 'user' });
         req.session.user = user.ops[0];
         res.redirect('/platform');
     } catch (err) {
