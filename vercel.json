@@ -2,11 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "index.js",
+      "src": "main.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "/" }
+    { "src": "/login", "dest": "/main.js" },
+    { "src": "/register", "dest": "/main.js" },
+    { "src": "/dashboard", "dest": "/public/dashboard.html" },
+    { "src": "/(.*)", "dest": "/main.js" }
   ]
 }
