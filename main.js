@@ -22,12 +22,11 @@ app.use(bodyParser.json());
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
     if (err) {
         console.error('Failed to connect to the database. Exiting now...', err);
-        process.exit();
+        process.exit(1);
     }
     db = client.db('penca_copa_america');
     console.log('Database connection established');
 
-    // Configurar express-session después de la conexión a la base de datos
     app.use(session({
         secret: 'secret',
         resave: false,
@@ -46,7 +45,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
         });
     }).catch((err) => {
         console.error('Failed to create admin user', err);
-        process.exit();
+        process.exit(1);
     });
 });
 
@@ -89,12 +88,18 @@ async function createAdminUser() {
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
+    console.log('Login attempt for user:', username);
     const usersCollection = db.collection('users');
     try {
         const user = await usersCollection.findOne({ username });
         console.log('User found:', user);
-        if (!user || !(await bcrypt.compare(password, user.password))) {
-            console.log('Invalid username or password');
+        if (!user) {
+            console.log('User not found');
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            console.log('Invalid password');
             return res.status(401).json({ error: 'Unauthorized' });
         }
         if (!req.session) {
