@@ -26,6 +26,7 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
     }
     db = client.db('penca_copa_america');
 
+    // Configurar express-session después de la conexión a la base de datos
     app.use(session({
         secret: 'secret',
         resave: false,
@@ -92,6 +93,9 @@ app.post('/login', async (req, res) => {
         const user = await usersCollection.findOne({ username });
         if (!user || !(await bcrypt.compare(password, user.password))) {
             return res.status(401).json({ error: 'Unauthorized' });
+        }
+        if (!req.session) {
+            return res.status(500).json({ error: 'Session not initialized' });
         }
         req.session.user = user;
         res.status(200).json({ message: 'Login exitoso' });
