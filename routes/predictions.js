@@ -6,7 +6,7 @@ module.exports = (db) => {
 
     // Ruta para servir la página de predicciones
     router.get('/', (req, res) => {
-        res.sendFile(path.join(__dirname, '../public/platform.html'));
+        res.sendFile(path.join(__dirname, '../public/dashboard.html'));
     });
 
     // Ruta para enviar las predicciones de los usuarios

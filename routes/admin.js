@@ -4,10 +4,12 @@ const path = require('path');
 module.exports = (db) => {
     const router = express.Router();
 
+    // Ruta para servir la página de administración
     router.get('/', (req, res) => {
-        res.sendFile(path.join(__dirname, '../public/platform.html'));
+        res.sendFile(path.join(__dirname, '../public/dashboard.html'));
     });
 
+    // Ruta para actualizar los resultados de los partidos
     router.post('/update', async (req, res) => {
         const matchesCollection = db.collection('matches');
         const { matchId, result } = req.body;
