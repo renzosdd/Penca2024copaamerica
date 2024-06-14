@@ -14,6 +14,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const uri = process.env.MONGO_URI;
 
+console.log('Mongo URI:', uri);  // Verifica que la URI se está leyendo correctamente
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
