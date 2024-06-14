@@ -12,7 +12,8 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const uri = process.env.MONGO_URI;
+
+const uri = 'mongodb+srv://admindbpenca:AdminDbPenca2024Ren@pencacopaamerica2024.yispiqt.mongodb.net/penca_copa_america?retryWrites=true&w=majority&appName=PencaCopaAmerica2024';
 
 console.log('Mongo URI:', uri);  // Verifica que la URI se está leyendo correctamente
 
