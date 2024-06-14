@@ -6,6 +6,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
+const MongoStore = require('connect-mongo');
 const fs = require('fs');
 
 dotenv.config();
@@ -18,25 +19,31 @@ let db;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(session({
-    secret: 'secret',
-    resave: false,
-    saveUninitialized: true
-}));
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/uploads')
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname))
+MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, async (err, client) => {
+    if (err) {
+        console.error(err);
+        process.exit(1);
     }
-});
-const upload = multer({ storage: storage });
-
-MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
-    if (err) return console.error(err);
     db = client.db('penca_copa_america');
+
+    // Inicialización de sesiones después de la conexión a la base de datos
+    app.use(session({
+        secret: 'secret',
+        resave: false,
+        saveUninitialized: false,
+        store: MongoStore.create({
+            client: client,
+            dbName: 'penca_copa_america',
+            collectionName: 'sessions',
+            ttl: 14 * 24 * 60 * 60 // 14 días
+        })
+    }));
+
+    // Crear usuario admin si no existe
+    await createAdminUser();
+
+    // Iniciar el servidor después de la conexión y la creación del usuario admin
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
@@ -48,7 +55,6 @@ app.use('/', require('./routes/index'));
 app.use('/predictions', require('./routes/predictions')(db));
 app.use('/admin', require('./routes/admin')(db));
 
-// Función para crear un usuario admin si no existe
 async function createAdminUser() {
     const usersCollection = db.collection('users');
     const adminUser = await usersCollection.findOne({ username: 'admin' });
@@ -58,8 +64,6 @@ async function createAdminUser() {
         console.log('Admin user created');
     }
 }
-
-createAdminUser();
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
