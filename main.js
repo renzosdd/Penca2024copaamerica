@@ -74,18 +74,19 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
         req.session.user = user;
-        res.redirect('/dashboard.html');
+        res.status(200).json({ message: 'Login exitoso' });
     } catch (err) {
-        res.status(500).send('Error');
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads')
+        cb(null, 'public/uploads');
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname))
+        cb(null, Date.now() + path.extname(file.originalname));
     }
 });
 const upload = multer({ storage: storage });
@@ -104,7 +105,8 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         req.session.user = user.ops[0];
         res.redirect('/dashboard.html');
     } catch (err) {
-        res.status(500).send('Error');
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
@@ -125,3 +127,5 @@ function isAdmin(req, res, next) {
 app.use((req, res) => {
     res.status(404).send('404: Page not found');
 });
+
+module.exports = app;

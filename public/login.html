@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
-    <script src="/main.js" defer></script> <!-- Asegúrate de que la referencia es correcta -->
+    <script src="/main.js" defer></script> <!-- Referencia correcta a main.js -->
 </head>
 <body>
     <div class="container">
@@ -19,7 +19,7 @@
                 <div class="card">
                     <div class="card-content">
                         <span class="card-title">Login</span>
-                        <form id="loginForm" action="/login" method="POST">
+                        <form id="loginForm">
                             <div class="input-field">
                                 <input type="text" id="loginUsername" name="username" required>
                                 <label for="loginUsername">Username</label>
@@ -91,7 +91,13 @@
                 e.preventDefault();
                 const response = await fetch('/login', {
                     method: 'POST',
-                    body: new FormData(e.target)
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: document.getElementById('loginUsername').value,
+                        password: document.getElementById('loginPassword').value
+                    })
                 });
                 
                 if (response.ok) {
