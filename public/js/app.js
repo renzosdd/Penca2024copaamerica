@@ -32,6 +32,7 @@ const registerModal = document.getElementById('registerModal');
 const registerModalBtn = document.getElementById('registerModalBtn');
 const closeRegisterModal = document.getElementById('closeRegisterModal');
 const closeProfile = document.getElementsByClassName('close')[0];
+const profileBtn = document.getElementById('profileBtn');
 
 if (registerModalBtn) {
     registerModalBtn.onclick = () => {
