@@ -95,7 +95,7 @@ app.post('/login', async (req, res) => {
         }
         req.session.user = user;
         console.log('Session set for user:', req.session.user);
-        res.redirect('/dashboard.html');
+        res.redirect('/public/dashboard.html');
     } catch (err) {
         console.error('Login error', err);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -124,7 +124,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await usersCollection.insertOne({ username, password: hashedPassword, surname, email, dob, avatar, role: 'user' });
         req.session.user = user.ops[0];
-        res.redirect('/dashboard.html');
+        res.redirect('/public/dashboard.html');
     } catch (err) {
         console.error('Registration error', err);
         res.status(500).json({ error: 'Internal Server Error' });
