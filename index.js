@@ -110,12 +110,13 @@ app.post('/login', async (req, res) => {
         }
         req.session.user = user;
         console.log(`User ${username} logged in successfully`);
-        res.redirect('/platform');
+        res.redirect('/dashboard.html');
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).send('Error');
     }
 });
+
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
