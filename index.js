@@ -7,7 +7,6 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
-const fs = require('fs');
 
 dotenv.config();
 
@@ -55,13 +54,8 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.get('/platform', isAuthenticated, (req, res) => {
-    try {
-        res.render('platform', { user: req.session.user });
-    } catch (err) {
-        console.error('Error rendering platform:', err);
-        res.status(500).send('Internal Server Error');
-    }
+app.get('/dashboard.html', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
 app.use('/predictions', (req, res, next) => {
@@ -117,7 +111,6 @@ app.post('/login', async (req, res) => {
     }
 });
 
-
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'public/uploads')
@@ -142,7 +135,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         const user = await usersCollection.insertOne({ username, password: hashedPassword, surname, email, dob, avatar, role: 'user' });
         req.session.user = user.ops[0];
         console.log(`User ${username} registered successfully`);
-        res.redirect('/platform');
+        res.redirect('/dashboard.html');
     } catch (err) {
         console.error('Registration error:', err);
         res.status(500).send('Error');
