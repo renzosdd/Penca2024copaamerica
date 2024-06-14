@@ -46,9 +46,16 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', require('./routes/index'));
-app.use('/predictions', require('./routes/predictions')(db));
-app.use('/admin', require('./routes/admin')(db));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/dashboard.html', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+app.use('/predictions', isAuthenticated, require('./routes/predictions')(db));
+app.use('/admin', isAuthenticated, isAdmin, require('./routes/admin')(db));
 
 async function createAdminUser() {
     const usersCollection = db.collection('users');
@@ -116,9 +123,6 @@ function isAdmin(req, res, next) {
     }
     res.status(403).send('Forbidden');
 }
-
-app.use('/predictions', isAuthenticated);
-app.use('/admin', [isAuthenticated, isAdmin]);
 
 app.use((req, res) => {
     res.status(404).send('404: Page not found');
