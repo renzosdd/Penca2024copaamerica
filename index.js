@@ -1,121 +1,84 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const session = require('express-session');
+const bodyParser = require('body-parser');
+const MongoClient = require('mongodb').MongoClient;
 const path = require('path');
-const multer = require('multer');
-const fs = require('fs');
-const connectToDatabase = require('./database');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const uri = process.env.MONGO_URI;
 
-// Secret key for JWT
-const JWT_SECRET = 'a123b456c789d012e345f678g901h234i567j890k123l456m789n012o345p678q901r234s567t890u123v456w789x012y345z678a901b234c567d890e123f456g789h012';
+let db;
 
-// Middleware
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: true
+}));
+
+MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
+    if (err) return console.error(err);
+    db = client.db('penca_copa_america');
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware to check authentication
-const checkAuth = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
-    if (!token) {
-        return res.status(401).send('Access Denied');
-    }
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(401).send('Invalid Token');
-        }
-        req.user = decoded;
-        next();
-    });
-};
+app.use('/', require('./routes/index'));
+app.use('/predictions', require('./routes/predictions')(db));
+app.use('/admin', require('./routes/admin')(db));
 
-// Configuración de multer para la subida de archivos
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const dir = '/tmp/uploads/';
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        cb(null, dir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-const upload = multer({ storage });
-
-// Rutas
-const profileRouter = require('./routes/profile');
-const matchesRouter = require('./routes/matches');
-const predictionsRouter = require('./routes/predictions');
-const leaderboardRouter = require('./routes/leaderboard');
-
-app.use('/profile', checkAuth, profileRouter);
-app.use('/matches', checkAuth, matchesRouter);
-app.use('/predictions', checkAuth, predictionsRouter);
-app.use('/leaderboard', checkAuth, leaderboardRouter);
-
-// User registration endpoint
-app.post('/register', upload.single('avatar'), async (req, res) => {
-    const db = await connectToDatabase();
-    const usersCollection = db.collection('users');
-
-    const { username, password, email, firstName, lastName, phone } = req.body;
-    const avatar = req.file ? `/uploads/${req.file.filename}` : '/images/avatar.webp';
-    const hashedPassword = bcrypt.hashSync(password, 10);
-
-    try {
-        await usersCollection.insertOne({
-            username,
-            password: hashedPassword,
-            email,
-            firstName,
-            lastName,
-            phone,
-            avatar,
-            role: 'user',
-            isAdmin: false
-        });
-        res.status(201).json({ message: 'User registered successfully' });
-    } catch (err) {
-        console.error('Error creating user:', err.message);
-        res.status(500).json({ error: 'Error creating user' });
-    }
-});
-
-// User login endpoint
 app.post('/login', async (req, res) => {
-    const db = await connectToDatabase();
-    const usersCollection = db.collection('users');
-
     const { username, password } = req.body;
-
+    const usersCollection = db.collection('users');
     try {
-        const user = await usersCollection.findOne({ username });
+        const user = await usersCollection.findOne({ username, password });
         if (!user) {
-            return res.status(400).json({ error: 'Invalid username or password' });
+            return res.status(401).send('Unauthorized');
         }
-
-        const passwordMatch = bcrypt.compareSync(password, user.password);
-        if (!passwordMatch) {
-            return res.status(400).json({ error: 'Invalid username or password' });
-        }
-
-        const token = jwt.sign({ id: user._id, username: user.username, isAdmin: user.isAdmin }, JWT_SECRET, { expiresIn: '1h' });
-        res.json({ accessToken: token, user });
+        req.session.user = user;
+        res.redirect('/platform');
     } catch (err) {
-        console.error('Error fetching user:', err.message);
-        res.status(500).json({ error: 'Error fetching user' });
+        res.status(500).send('Error');
     }
 });
 
-// Serve login.html as default if not authenticated
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+    const usersCollection = db.collection('users');
+    try {
+        const user = await usersCollection.insertOne({ username, password, role: 'user' });
+        req.session.user = user.ops[0];
+        res.redirect('/platform');
+    } catch (err) {
+        res.status(500).send('Error');
+    }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+function isAuthenticated(req, res, next) {
+    if (req.session.user) {
+        return next();
+    }
+    res.redirect('/');
+}
+
+function isAdmin(req, res, next) {
+    if (req.session.user && req.session.user.role === 'admin') {
+        return next();
+    }
+    res.status(403).send('Forbidden');
+}
+
+app.use('/predictions', isAuthenticated);
+app.use('/admin', [isAuthenticated, isAdmin]);
+
+app.use((req, res) => {
+    res.status(404).send('404: Page not found');
 });

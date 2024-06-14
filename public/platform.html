@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Plataforma</title>
+    <script src="/js/main.js" defer></script>
+</head>
+<body>
+    <h1>Bienvenido, <%= user.username %></h1>
+
+    <h2>Modificar Perfil</h2>
+    <form id="updateProfileForm" action="/updateProfile" method="POST">
+        <label for="username">Nuevo Username:</label>
+        <input type="text" id="username" name="username" required>
+        <br>
+        <label for="password">Nuevo Password:</label>
+        <input type="password" id="password" name="password" required>
+        <br>
+        <button type="submit">Actualizar Perfil</button>
+    </form>
+
+    <h2>Hacer Predicciones</h2>
+    <form id="predictionForm" action="/predictions/submit" method="POST">
+        <label for="matchId">Match ID:</label>
+        <input type="text" id="matchId" name="matchId" required>
+        <br>
+        <label for="predictedScore">Predicted Score:</label>
+        <input type="text" id="predictedScore" name="predictedScore" required>
+        <br>
+        <button type="submit">Submit Prediction</button>
+    </form>
+
+    <% if (user.role === 'admin') { %>
+        <h2>Actualizar Resultados</h2>
+        <form id="adminForm" action="/admin/update" method="POST">
+            <label for="matchId">Match ID:</label>
+            <input type="text" id="matchId" name="matchId" required>
+            <br>
+            <label for="result">Result:</label>
+            <input type="text" id="result" name="result" required>
+            <br>
+            <button type="submit">Update Result</button>
+        </form>
+    <% } %>
+
+    <h2>Ranking de Usuarios</h2>
+    <div id="userRanking"></div>
+</body>
+</html>
