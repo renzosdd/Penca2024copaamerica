@@ -7,9 +7,10 @@
     }
   ],
   "routes": [
+    { "src": "/", "dest": "/main.js" },
     { "src": "/login", "dest": "/main.js" },
     { "src": "/register", "dest": "/main.js" },
     { "src": "/dashboard.html", "dest": "/public/dashboard.html" },
-    { "src": "/(.*)", "dest": "/" }
+    { "src": "/(.*)", "dest": "/main.js" }
   ]
 }
