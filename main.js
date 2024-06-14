@@ -1,7 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
-const MongoClient = require('mongodb').MongoClient;
+const mongoose = require('mongoose');
 const path = require('path');
 const dotenv = require('dotenv');
 const multer = require('multer');
@@ -14,8 +14,6 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const uri = process.env.MONGO_URI;
 
-let db;
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -25,29 +23,30 @@ app.use(session({
     saveUninitialized: false,
     store: MongoStore.create({
         mongoUrl: uri,
-        dbName: 'penca_copa_america',
         collectionName: 'sessions',
         ttl: 14 * 24 * 60 * 60 // 14 días
     })
 }));
 
-MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
-    if (err) {
+mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('Database connection established'))
+    .catch(err => {
         console.error('Failed to connect to the database. Exiting now...', err);
         process.exit(1);
-    }
-    db = client.db('penca_copa_america');
-    console.log('Database connection established');
-
-    createAdminUser().then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server is running on port ${PORT}`);
-        });
-    }).catch((err) => {
-        console.error('Failed to create admin user', err);
-        process.exit(1);
     });
+
+const userSchema = new mongoose.Schema({
+    username: String,
+    password: String,
+    surname: String,
+    email: String,
+    dob: Date,
+    avatar: Buffer,
+    avatarContentType: String,
+    role: { type: String, default: 'user' }
 });
+
+const User = mongoose.model('User', userSchema);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -59,30 +58,11 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-app.use('/predictions', isAuthenticated, (req, res, next) => {
-    require('./routes/predictions')(db)(req, res, next);
-});
-
-app.use('/admin', isAuthenticated, isAdmin, (req, res, next) => {
-    require('./routes/admin')(db)(req, res, next);
-});
-
-async function createAdminUser() {
-    const usersCollection = db.collection('users');
-    const adminUser = await usersCollection.findOne({ username: 'admin' });
-    if (!adminUser) {
-        const hashedPassword = await bcrypt.hash('Penca2024Ren', 10);
-        await usersCollection.insertOne({ username: 'admin', password: hashedPassword, role: 'admin' });
-        console.log('Admin user created');
-    }
-}
-
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     console.log('Login attempt for user:', username);
-    const usersCollection = db.collection('users');
     try {
-        const user = await usersCollection.findOne({ username });
+        const user = await User.findOne({ username });
         console.log('User found:', user);
         if (!user) {
             console.log('User not found');
@@ -102,32 +82,56 @@ app.post('/login', async (req, res) => {
     }
 });
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/uploads');
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
+// Configurar Multer para almacenar archivos en memoria y usar el nombre de usuario
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        if (!req.body.username) {
+            return cb(new Error('Username is required'));
+        }
+        cb(null, true);
     }
 });
-const upload = multer({ storage: storage });
 
 app.post('/register', upload.single('avatar'), async (req, res) => {
     const { username, password, surname, email, dob } = req.body;
-    const avatar = req.file ? req.file.filename : null;
-    const usersCollection = db.collection('users');
+    const avatar = req.file ? req.file.buffer : null;
+    const avatarContentType = req.file ? req.file.mimetype : null;
     try {
-        const existingUser = await usersCollection.findOne({ username });
+        const existingUser = await User.findOne({ username });
         if (existingUser) {
             return res.status(400).json({ error: 'Username already exists' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await usersCollection.insertOne({ username, password: hashedPassword, surname, email, dob, avatar, role: 'user' });
-        req.session.user = user.ops[0];
+        const user = new User({
+            username,
+            password: hashedPassword,
+            surname,
+            email,
+            dob,
+            avatar,
+            avatarContentType
+        });
+        await user.save();
+        req.session.user = user;
         res.redirect('/dashboard');
     } catch (err) {
         console.error('Registration error', err);
         res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.get('/avatar/:username', async (req, res) => {
+    try {
+        const user = await User.findOne({ username: req.params.username });
+        if (!user || !user.avatar) {
+            return res.status(404).send('Avatar not found');
+        }
+        res.set('Content-Type', user.avatarContentType);
+        res.send(user.avatar);
+    } catch (err) {
+        res.status(500).send('Error retrieving avatar');
     }
 });
 
@@ -149,4 +153,6 @@ app.use((req, res) => {
     res.status(404).send('404: Page not found');
 });
 
-module.exports = app;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
