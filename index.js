@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
 const path = require('path');
 const dotenv = require('dotenv');
-const multer = require('multer');
+const multer = require('multer'); // Asegúrate de requerir multer
 const fs = require('fs');
 
 dotenv.config();
@@ -23,6 +23,7 @@ app.use(session({
     saveUninitialized: true
 }));
 
+// Configuración de multer para el manejo de archivos
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'public/uploads')
