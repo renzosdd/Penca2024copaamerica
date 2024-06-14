@@ -19,6 +19,19 @@ let db;
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// Configurar express-session antes de la conexión a la base de datos
+app.use(session({
+    secret: 'secret',
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: uri,
+        dbName: 'penca_copa_america',
+        collectionName: 'sessions',
+        ttl: 14 * 24 * 60 * 60 // 14 días
+    })
+}));
+
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
     if (err) {
         console.error('Failed to connect to the database. Exiting now...', err);
@@ -26,18 +39,6 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
     }
     db = client.db('penca_copa_america');
     console.log('Database connection established');
-
-    app.use(session({
-        secret: 'secret',
-        resave: false,
-        saveUninitialized: false,
-        store: MongoStore.create({
-            mongoUrl: uri,
-            dbName: 'penca_copa_america',
-            collectionName: 'sessions',
-            ttl: 14 * 24 * 60 * 60 // 14 días
-        })
-    }));
 
     createAdminUser().then(() => {
         app.listen(PORT, () => {
@@ -101,10 +102,6 @@ app.post('/login', async (req, res) => {
         if (!passwordMatch) {
             console.log('Invalid password');
             return res.status(401).json({ error: 'Unauthorized' });
-        }
-        if (!req.session) {
-            console.log('Session not initialized');
-            return res.status(500).json({ error: 'Session not initialized' });
         }
         req.session.user = user;
         console.log('Session set for user:', req.session.user);
