@@ -19,6 +19,8 @@ let db;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, async (err, client) => {
     if (err) {
@@ -49,13 +51,21 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, as
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', require('./routes/index'));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/platform', isAuthenticated, (req, res) => {
+    res.render('platform', { user: req.session.user });
+});
+
 app.use('/predictions', (req, res, next) => {
     if (!db) {
         return res.status(500).send('Database connection not established');
     }
     require('./routes/predictions')(db)(req, res, next);
 });
+
 app.use('/admin', (req, res, next) => {
     if (!db) {
         return res.status(500).send('Database connection not established');
@@ -84,12 +94,20 @@ app.post('/login', async (req, res) => {
     const usersCollection = db.collection('users');
     try {
         const user = await usersCollection.findOne({ username });
-        if (!user || !(await bcrypt.compare(password, user.password))) {
+        if (!user) {
+            console.error('Login failed: User not found');
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            console.error('Login failed: Invalid password');
             return res.status(401).json({ error: 'Unauthorized' });
         }
         req.session.user = user;
+        console.log(`User ${username} logged in successfully`);
         res.redirect('/platform');
     } catch (err) {
+        console.error('Login error:', err);
         res.status(500).send('Error');
     }
 });
@@ -111,13 +129,16 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
     try {
         const existingUser = await usersCollection.findOne({ username });
         if (existingUser) {
+            console.error('Registration failed: Username already exists');
             return res.status(400).json({ error: 'Username already exists' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await usersCollection.insertOne({ username, password: hashedPassword, surname, email, dob, avatar, role: 'user' });
         req.session.user = user.ops[0];
+        console.log(`User ${username} registered successfully`);
         res.redirect('/platform');
     } catch (err) {
+        console.error('Registration error:', err);
         res.status(500).send('Error');
     }
 });
