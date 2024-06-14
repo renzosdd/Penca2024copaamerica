@@ -56,7 +56,12 @@ app.get('/', (req, res) => {
 });
 
 app.get('/platform', isAuthenticated, (req, res) => {
-    res.render('platform', { user: req.session.user });
+    try {
+        res.render('platform', { user: req.session.user });
+    } catch (err) {
+        console.error('Error rendering platform:', err);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 app.use('/predictions', (req, res, next) => {
