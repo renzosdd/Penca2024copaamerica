@@ -41,7 +41,7 @@ app.post('/login', async (req, res) => {
     try {
         const user = await usersCollection.findOne({ username, password });
         if (!user) {
-            return res.status(401).send('Unauthorized');
+            return res.status(401).json({ error: 'Unauthorized' });
         }
         req.session.user = user;
         res.redirect('/platform');
@@ -61,6 +61,7 @@ app.post('/register', async (req, res) => {
         res.status(500).send('Error');
     }
 });
+
 
 function isAuthenticated(req, res, next) {
     if (req.session.user) {

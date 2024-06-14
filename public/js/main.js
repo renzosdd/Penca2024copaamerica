@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.ok) {
                 window.location.href = '/platform';
             } else {
-                alert('Login failed');
+                const error = await response.json();
+                alert(`Login failed: ${error.error}`);
             }
         });
     }
