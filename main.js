@@ -92,13 +92,17 @@ app.post('/login', async (req, res) => {
     const usersCollection = db.collection('users');
     try {
         const user = await usersCollection.findOne({ username });
+        console.log('User found:', user);
         if (!user || !(await bcrypt.compare(password, user.password))) {
+            console.log('Invalid username or password');
             return res.status(401).json({ error: 'Unauthorized' });
         }
         if (!req.session) {
+            console.log('Session not initialized');
             return res.status(500).json({ error: 'Session not initialized' });
         }
         req.session.user = user;
+        console.log('Session set for user:', req.session.user);
         res.status(200).json({ message: 'Login exitoso' });
     } catch (err) {
         console.error('Login error', err);
