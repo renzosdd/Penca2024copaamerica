@@ -23,7 +23,6 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
     if (err) return console.error(err);
     db = client.db('penca_copa_america');
 
-    // Iniciar sesión solo después de la conexión a la base de datos
     app.use(session({
         secret: 'secret',
         resave: false,
@@ -36,7 +35,6 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
         })
     }));
 
-    // Asegúrate de que la función createAdminUser se ejecuta después de la conexión a la base de datos
     createAdminUser();
 
     app.listen(PORT, () => {

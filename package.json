@@ -2,10 +2,10 @@
     "name": "penca_copa_america",
     "version": "1.0.0",
     "description": "Plataforma de penca para la Copa América 2024",
-    "main": "index.js",
+    "main": "main.js",
     "scripts": {
-      "start": "node index.js",
-      "dev": "nodemon index.js"
+      "start": "node main.js",
+      "dev": "nodemon main.js"
     },
     "dependencies": {
       "bcrypt": "^5.0.1",
