@@ -10,6 +10,8 @@ if (!fs.existsSync(dbDir)) {
 
 const dbPath = path.join(dbDir, 'penca.db');
 
+fs.chmodSync(dbPath, 0o666);  // Asegúrate de que el archivo de la base de datos tenga permisos de lectura y escritura
+
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);
