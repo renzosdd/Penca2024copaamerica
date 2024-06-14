@@ -105,7 +105,7 @@ app.post('/login', async (req, res) => {
         }
         req.session.user = user;
         console.log('Session set for user:', req.session.user);
-        res.status(200).json({ message: 'Login exitoso' });
+        res.redirect('/dashboard.html');
     } catch (err) {
         console.error('Login error', err);
         res.status(500).json({ error: 'Internal Server Error' });
