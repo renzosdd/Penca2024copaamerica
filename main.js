@@ -56,23 +56,14 @@ app.get('/', (req, res) => {
 });
 
 app.get('/dashboard.html', isAuthenticated, (req, res) => {
-    if (!db) {
-        return res.status(500).send('Database connection not established');
-    }
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
 app.use('/predictions', isAuthenticated, (req, res, next) => {
-    if (!db) {
-        return res.status(500).send('Database connection not established');
-    }
     require('./routes/predictions')(db)(req, res, next);
 });
 
 app.use('/admin', isAuthenticated, isAdmin, (req, res, next) => {
-    if (!db) {
-        return res.status(500).send('Database connection not established');
-    }
     require('./routes/admin')(db)(req, res, next);
 });
 
