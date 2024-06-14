@@ -1,17 +1,37 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
+const connectToDatabase = require('../database');
 
-// Endpoint para obtener las predicciones del usuario
-router.get('/:userId', (req, res) => {
+router.get('/:userId', async (req, res) => {
+    const db = await connectToDatabase();
+    const predictionsCollection = db.collection('predictions');
     const userId = req.params.userId;
-    db.all('SELECT * FROM predictions WHERE user_id = ?', [userId], (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: 'Error fetching predictions' });
-        } else {
-            res.json({ predictions: rows });
-        }
-    });
+
+    try {
+        const predictions = await predictionsCollection.find({ user_id: userId }).toArray();
+        res.json({ predictions });
+    } catch (err) {
+        console.error('Error fetching predictions:', err.message);
+        res.status(500).json({ error: 'Error fetching predictions' });
+    }
 });
 
-module.exports = router; // Exportar el router correctamente
+router.post('/', async (req, res) => {
+    const db = await connectToDatabase();
+    const predictionsCollection = db.collection('predictions');
+    const { userId, matchId, goals_team1, goals_team2 } = req.body;
+
+    try {
+        await predictionsCollection.updateOne(
+            { user_id: userId, match_id: matchId },
+            { $set: { goals_team1, goals_team2 } },
+            { upsert: true }
+        );
+        res.json({ message: 'Prediction saved successfully' });
+    } catch (err) {
+        console.error('Error saving prediction:', err.message);
+        res.status(500).json({ error: 'Error saving prediction' });
+    }
+});
+
+module.exports = router;

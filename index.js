@@ -1,11 +1,10 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const db = require('./database'); // Import the database configuration
+const connectToDatabase = require('./database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,7 +34,7 @@ const checkAuth = (req, res, next) => {
 // Configuración de multer para la subida de archivos
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const dir = 'uploads/';
+        const dir = '/tmp/uploads/';
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
@@ -59,41 +58,57 @@ app.use('/predictions', checkAuth, predictionsRouter);
 app.use('/leaderboard', checkAuth, leaderboardRouter);
 
 // User registration endpoint
-app.post('/register', upload.single('avatar'), (req, res) => {
+app.post('/register', upload.single('avatar'), async (req, res) => {
+    const db = await connectToDatabase();
+    const usersCollection = db.collection('users');
+
     const { username, password, email, firstName, lastName, phone } = req.body;
     const avatar = req.file ? `/uploads/${req.file.filename}` : '/images/avatar.webp';
     const hashedPassword = bcrypt.hashSync(password, 10);
 
-    db.run(`INSERT INTO users (username, password, email, firstName, lastName, phone, avatar) VALUES (?, ?, ?, ?, ?, ?, ?)`, [username, hashedPassword, email, firstName, lastName, phone, avatar], function(err) {
-        if (err) {
-            console.error('Error creating user:', err.message);
-            res.status(500).json({ error: 'Error creating user' });
-        } else {
-            res.status(201).json({ message: 'User registered successfully' });
-        }
-    });
+    try {
+        await usersCollection.insertOne({
+            username,
+            password: hashedPassword,
+            email,
+            firstName,
+            lastName,
+            phone,
+            avatar,
+            role: 'user',
+            isAdmin: false
+        });
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (err) {
+        console.error('Error creating user:', err.message);
+        res.status(500).json({ error: 'Error creating user' });
+    }
 });
 
 // User login endpoint
-app.post('/login', (req, res) => {
+app.post('/login', async (req, res) => {
+    const db = await connectToDatabase();
+    const usersCollection = db.collection('users');
+
     const { username, password } = req.body;
 
-    db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, user) => {
-        if (err) {
-            console.error('Error fetching user:', err.message);
-            res.status(500).json({ error: 'Error fetching user' });
-        } else if (!user) {
-            res.status(400).json({ error: 'Invalid username or password' });
-        } else {
-            const passwordMatch = bcrypt.compareSync(password, user.password);
-            if (!passwordMatch) {
-                res.status(400).json({ error: 'Invalid username or password' });
-            } else {
-                const token = jwt.sign({ id: user.id, username: user.username, isAdmin: user.isAdmin }, JWT_SECRET, { expiresIn: '1h' });
-                res.json({ accessToken: token, user });
-            }
+    try {
+        const user = await usersCollection.findOne({ username });
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid username or password' });
         }
-    });
+
+        const passwordMatch = bcrypt.compareSync(password, user.password);
+        if (!passwordMatch) {
+            return res.status(400).json({ error: 'Invalid username or password' });
+        }
+
+        const token = jwt.sign({ id: user._id, username: user.username, isAdmin: user.isAdmin }, JWT_SECRET, { expiresIn: '1h' });
+        res.json({ accessToken: token, user });
+    } catch (err) {
+        console.error('Error fetching user:', err.message);
+        res.status(500).json({ error: 'Error fetching user' });
+    }
 });
 
 // Serve login.html as default if not authenticated

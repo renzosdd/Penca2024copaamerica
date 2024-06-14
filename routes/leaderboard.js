@@ -1,16 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database');
+const connectToDatabase = require('../database');
 
-// Endpoint para obtener el leaderboard
-router.get('/', (req, res) => {
-    db.all('SELECT username, firstName, lastName, points FROM users JOIN user_points ON users.id = user_points.user_id WHERE isAdmin = 0 ORDER BY points DESC', (err, rows) => {
-        if (err) {
-            res.status(500).json({ error: 'Error fetching leaderboard' });
-        } else {
-            res.json(rows);
-        }
-    });
+router.get('/', async (req, res) => {
+    const db = await connectToDatabase();
+    const usersCollection = db.collection('users');
+
+    try {
+        const leaderboard = await usersCollection.find({ isAdmin: false }).sort({ points: -1 }).toArray();
+        res.json(leaderboard);
+    } catch (err) {
+        console.error('Error fetching leaderboard:', err.message);
+        res.status(500).json({ error: 'Error fetching leaderboard' });
+    }
 });
 
-module.exports = router; // Exportar el router correctamente
+module.exports = router;
