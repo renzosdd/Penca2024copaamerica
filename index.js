@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
 const path = require('path');
 const dotenv = require('dotenv');
+const multer = require('multer');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -20,6 +22,16 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }));
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/uploads')
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + path.extname(file.originalname))
+    }
+});
+const upload = multer({ storage: storage });
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
     if (err) return console.error(err);
@@ -50,18 +62,22 @@ app.post('/login', async (req, res) => {
     }
 });
 
-app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
+app.post('/register', upload.single('avatar'), async (req, res) => {
+    const { username, password, surname, email, dob } = req.body;
+    const avatar = req.file ? req.file.filename : null;
     const usersCollection = db.collection('users');
     try {
-        const user = await usersCollection.insertOne({ username, password, role: 'user' });
+        const existingUser = await usersCollection.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already exists' });
+        }
+        const user = await usersCollection.insertOne({ username, password, surname, email, dob, avatar, role: 'user' });
         req.session.user = user.ops[0];
         res.redirect('/platform');
     } catch (err) {
         res.status(500).send('Error');
     }
 });
-
 
 function isAuthenticated(req, res, next) {
     if (req.session.user) {

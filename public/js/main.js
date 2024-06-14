@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.ok) {
                 window.location.href = '/platform';
             } else {
-                alert('Registration failed');
+                const error = await response.json();
+                alert(`Registration failed: ${error.error}`);
             }
         });
     }
@@ -100,4 +101,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (document.getElementById('userRanking')) {
         fetchRanking();
     }
+
+    // Inicialización de modales
+    const modals = document.querySelectorAll('.modal');
+    M.Modal.init(modals);
 });
