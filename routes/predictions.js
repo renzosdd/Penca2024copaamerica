@@ -1,16 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database'); // Asegúrate de que la ruta es correcta
+const db = require('../database');
 
-// Endpoint para obtener los partidos
-router.get('/', (req, res) => {
-    db.all('SELECT * FROM matches', (err, rows) => {
+// Endpoint para obtener las predicciones del usuario
+router.get('/:userId', (req, res) => {
+    const userId = req.params.userId;
+    db.all('SELECT * FROM predictions WHERE user_id = ?', [userId], (err, rows) => {
         if (err) {
-            res.status(500).json({ error: 'Error fetching matches' });
+            res.status(500).json({ error: 'Error fetching predictions' });
         } else {
-            res.json({ matches: rows });
+            res.json({ predictions: rows });
         }
     });
 });
 
-module.exports = router;
+module.exports = router; // Exportar el router correctamente

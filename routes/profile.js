@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../database'); // Asegúrate de que la ruta es correcta
+const db = require('../database');
 
 // Endpoint para obtener el perfil de usuario
 router.get('/', (req, res) => {
@@ -14,4 +14,4 @@ router.get('/', (req, res) => {
     });
 });
 
-module.exports = router;
+module.exports = router; // Exportar el router correctamente
