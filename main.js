@@ -21,10 +21,11 @@ app.use(bodyParser.json());
 
 MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (err, client) => {
     if (err) {
-        console.error(err);
-        process.exit(1);
+        console.error('Failed to connect to the database. Exiting now...', err);
+        process.exit();
     }
     db = client.db('penca_copa_america');
+    console.log('Database connection established');
 
     // Configurar express-session después de la conexión a la base de datos
     app.use(session({
@@ -44,8 +45,8 @@ MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, (e
             console.log(`Server is running on port ${PORT}`);
         });
     }).catch((err) => {
-        console.error(err);
-        process.exit(1);
+        console.error('Failed to create admin user', err);
+        process.exit();
     });
 });
 
@@ -100,7 +101,7 @@ app.post('/login', async (req, res) => {
         req.session.user = user;
         res.status(200).json({ message: 'Login exitoso' });
     } catch (err) {
-        console.error(err);
+        console.error('Login error', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
@@ -129,20 +130,20 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         req.session.user = user.ops[0];
         res.redirect('/dashboard.html');
     } catch (err) {
-        console.error(err);
+        console.error('Registration error', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
 function isAuthenticated(req, res, next) {
-    if (req.session.user) {
+    if (req.session && req.session.user) {
         return next();
     }
     res.redirect('/');
 }
 
 function isAdmin(req, res, next) {
-    if (req.session.user && req.session.user.role === 'admin') {
+    if (req.session && req.session.user && req.session.user.role === 'admin') {
         return next();
     }
     res.status(403).send('Forbidden');
