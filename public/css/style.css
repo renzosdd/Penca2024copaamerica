@@ -1,4 +1,3 @@
-/* Estilos existentes */
 body {
     display: flex;
     min-height: 100vh;
@@ -8,6 +7,21 @@ body {
 
 .container {
     flex: 1 0 auto;
+}
+
+header {
+    margin-bottom: 20px;
+}
+
+.brand-logo img {
+    height: 50px;
+}
+
+.nav-wrapper ul li a img {
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 h1, h2 {
@@ -36,7 +50,6 @@ input[type=text]:focus, input[type=password]:focus, input[type=email]:focus, inp
     box-shadow: 0 1px 0 0 #0d47a1;
 }
 
-/* Nuevos estilos */
 .match-card {
     background-color: white;
     border: 1px solid #e0e0e0;
@@ -60,6 +73,11 @@ input[type=text]:focus, input[type=password]:focus, input[type=email]:focus, inp
     width: 32px;
     height: 32px;
     margin-right: 10px;
+}
+
+.team .team-name {
+    font-weight: bold;
+    font-size: 1.2em;
 }
 
 .match-details {

@@ -95,6 +95,15 @@ app.post('/login', async (req, res) => {
     }
 });
 
+app.post('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.status(500).json({ error: 'Failed to logout' });
+        }
+        res.redirect('/');
+    });
+});
+
 // Configurar Multer para almacenar archivos en memoria y usar el nombre de usuario
 const storage = multer.memoryStorage();
 const upload = multer({

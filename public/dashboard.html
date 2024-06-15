@@ -9,22 +9,39 @@
     <link href="/css/style.css" rel="stylesheet">
 </head>
 <body data-role="<%= user.role %>" data-username="<%= user.username %>">
+    <header>
+        <nav class="blue darken-3">
+            <div class="nav-wrapper container">
+                <a href="#" class="brand-logo"><img src="/images/Logo.png" alt="Logo" class="responsive-img" style="height: 50px;"></a>
+                <ul class="right">
+                    <li>
+                        <a class="dropdown-trigger" href="#!" data-target="user-dropdown">
+                            <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img" style="height: 50px;">
+                        </a>
+                    </li>
+                </ul>
+                <ul id="user-dropdown" class="dropdown-content">
+                    <li><a href="#" id="logout-button">Cerrar sesión</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
     <div class="container">
         <h1 class="center-align">Dashboard - Copa América 2024</h1>
         
         <ul class="tabs">
-            <li class="tab col s3"><a href="#fixture">Fixture</a></li>
+            <li class="tab col s3"><a href="#fixture" class="active">Fixture</a></li>
             <li class="tab col s3"><a href="#predictions">Predicciones</a></li>
             <li class="tab col s3"><a href="#ranking">Ranking</a></li>
         </ul>
         
         <div id="fixture" class="col s12">
             <h4>Fixture</h4>
-            <div id="matches-list"></div>
+            <div id="matches-list" class="row"></div>
         </div>
         <div id="predictions" class="col s12">
             <h4>Predicciones</h4>
-            <div id="predictions-list"></div>
+            <div id="predictions-list" class="row"></div>
         </div>
         <div id="ranking" class="col s12">
             <h4>Ranking</h4>

@@ -43,6 +43,7 @@ router.post('/', isAuthenticated, async (req, res) => {
             return res.status(400).json({ error: 'Cannot change prediction within one hour of the match start' });
         }
 
+        // Verificar si ya existe una predicción para el mismo usuario y partido
         const existingPrediction = await Prediction.findOne({ username: req.session.user.username, matchId });
         if (existingPrediction) {
             existingPrediction.result1 = parseInt(result1);
