@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const matchesList = document.getElementById('matches-list');
         matchesList.innerHTML = ''; // Limpiar cualquier contenido previo
         matches.forEach(match => {
+            const team1Flag = match.team1.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
+            const team2Flag = match.team2.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
             const matchDiv = document.createElement('div');
             matchDiv.className = 'col s12 m6';
             matchDiv.innerHTML = `
@@ -30,12 +32,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="card-content">
                         <div class="match-header">
                             <div class="team">
-                                <img src="/images/${match.team1.toLowerCase()}.png" alt="${match.team1}" class="circle responsive-img">
+                                <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
                                 <span class="team-name">${match.team1}</span>
                             </div>
                             <span class="vs">vs</span>
                             <div class="team">
-                                <img src="/images/${match.team2.toLowerCase()}.png" alt="${match.team2}" class="circle responsive-img">
+                                <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
                                 <span class="team-name">${match.team2}</span>
                             </div>
                         </div>
@@ -72,6 +74,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const predictionsList = document.getElementById('predictions-list');
         predictionsList.innerHTML = ''; // Limpiar cualquier contenido previo
         matches.forEach(match => {
+            const team1Flag = match.team1.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
+            const team2Flag = match.team2.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
             const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
             console.log('Processing match:', match._id);
             const predictionDiv = document.createElement('div');
@@ -81,12 +85,12 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <div class="card-content">
                         <div class="match-header">
                             <div class="team">
-                                <img src="/images/${match.team1.toLowerCase()}.png" alt="${match.team1}" class="circle responsive-img">
+                                <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
                                 <span class="team-name">${match.team1}</span>
                             </div>
                             <span class="vs">vs</span>
                             <div class="team">
-                                <img src="/images/${match.team2.toLowerCase()}.png" alt="${match.team2}" class="circle responsive-img">
+                                <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
                                 <span class="team-name">${match.team2}</span>
                             </div>
                         </div>
