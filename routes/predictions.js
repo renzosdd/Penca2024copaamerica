@@ -25,7 +25,7 @@ router.get('/', isAuthenticated, async (req, res) => {
 router.post('/', isAuthenticated, async (req, res) => {
     const { matchId, result1, result2 } = req.body;
 
-    if (!Number.isInteger(result1) || !Number.isInteger(result2)) {
+    if (isNaN(parseInt(result1)) || isNaN(parseInt(result2))) {
         return res.status(400).json({ error: 'Results must be integers' });
     }
 
@@ -38,8 +38,8 @@ router.post('/', isAuthenticated, async (req, res) => {
         const prediction = new Prediction({
             username: req.session.user.username,
             matchId,
-            result1,
-            result2
+            result1: parseInt(result1),
+            result2: parseInt(result2)
         });
         await prediction.save();
         res.json(prediction);

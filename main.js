@@ -38,11 +38,6 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
         process.exit(1);
     });
 
-app.use((req, res, next) => {
-    res.locals.user = req.session.user;
-    next();
-});
-    
 const userSchema = new mongoose.Schema({
     username: String,
     password: String,
@@ -57,6 +52,11 @@ const userSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use((req, res, next) => {
+    res.locals.user = req.session.user;
+    next();
+});
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
@@ -157,10 +157,8 @@ function isAdmin(req, res, next) {
     res.status(403).send('Forbidden');
 }
 
-// Rutas para partidos y predicciones
 app.use('/matches', require('./routes/matches'));
 app.use('/predictions', require('./routes/predictions'));
-
 
 app.use((req, res) => {
     res.status(404).send('404: Page not found');

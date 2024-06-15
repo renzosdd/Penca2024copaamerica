@@ -2,7 +2,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     var elems = document.querySelectorAll('.tabs');
     var instances = M.Tabs.init(elems);
 
-    const userRole = 'user'; // Cambiar esto dinámicamente según el rol del usuario autenticado
+    // Asigna el rol del usuario dinámicamente
+    const userRole = document.querySelector('body').getAttribute('data-role');
 
     // Cargar los partidos para el fixture
     try {
