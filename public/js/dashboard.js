@@ -15,6 +15,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     let matches = []; // Definir la variable matches en el contexto adecuado
 
+    // Función para normalizar los nombres de los equipos eliminando tildes y convirtiendo a minúsculas
+    const normalizeName = (name) => {
+        return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+    };
+
     // Cargar los partidos para el fixture
     try {
         const matchesResponse = await fetch('/matches');
@@ -27,8 +32,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const userPredictions = predictions.filter(prediction => prediction.username === username);
         
         matches.forEach(match => {
-            const team1Flag = match.team1.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
-            const team2Flag = match.team2.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
+            const team1Flag = normalizeName(match.team1); // Normalizar el nombre del equipo
+            const team2Flag = normalizeName(match.team2); // Normalizar el nombre del equipo
             const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
 
             const matchDiv = document.createElement('div');
@@ -81,8 +86,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const predictionsList = document.getElementById('predictions-list');
         predictionsList.innerHTML = ''; // Limpiar cualquier contenido previo
         matches.forEach(match => {
-            const team1Flag = match.team1.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
-            const team2Flag = match.team2.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
+            const team1Flag = normalizeName(match.team1); // Normalizar el nombre del equipo
+            const team2Flag = normalizeName(match.team2); // Normalizar el nombre del equipo
             const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
             console.log('Processing match:', match._id);
             const predictionDiv = document.createElement('div');
@@ -112,6 +117,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                     <button class="btn waves-effect waves-light" type="submit">Enviar Predicción</button>
                                 </div>
                             </form>
+                            ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
                         </div>
                     </div>
                 </div>
@@ -132,6 +138,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const result = await response.json();
                     if (response.ok) {
                         console.log('Predicción enviada exitosamente');
+                        // Mostrar mensaje de éxito
+                        M.toast({html: 'Predicción actualizada correctamente!', classes: 'green'});
                         // Actualizar el tick verde al guardar la predicción
                         const matchCard = form.closest('.card');
                         if (matchCard && !matchCard.querySelector('.tick-icon')) {
@@ -143,9 +151,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                         }
                     } else {
                         console.error('Error:', result.error);
+                        M.toast({html: 'Error al actualizar la predicción', classes: 'red'});
                     }
                 } catch (error) {
                     console.error('Error al enviar la predicción:', error);
+                    M.toast({html: 'Error al enviar la predicción', classes: 'red'});
                 }
             });
             predictionsList.appendChild(predictionDiv);
@@ -162,9 +172,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 window.location.href = '/';
             } else {
                 console.error('Error al cerrar sesión');
+                M.toast({html: 'Error al cerrar sesión', classes: 'red'});
             }
         } catch (error) {
             console.error('Error al cerrar sesión:', error);
+            M.toast({html: 'Error al cerrar sesión', classes: 'red'});
         }
     });
 });
