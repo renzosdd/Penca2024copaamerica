@@ -161,6 +161,8 @@ function isAdmin(req, res, next) {
 }
 
 app.use('/matches', require('./routes/matches'));
+app.use('/predictions', require('./routes/predictions'));
+
 
 app.use((req, res) => {
     res.status(404).send('404: Page not found');
