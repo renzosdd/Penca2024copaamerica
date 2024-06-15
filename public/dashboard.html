@@ -7,32 +7,22 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="/js/dashboard.js" defer></script>
 </head>
 <body>
     <div class="container">
         <h1 class="center-align">Dashboard - Copa América 2024</h1>
-        
-        <ul class="tabs">
-            <li class="tab col s3"><a href="#fixture">Fixture</a></li>
-            <li class="tab col s3"><a href="#predictions">Predicciones</a></li>
-            <li class="tab col s3"><a href="#ranking">Ranking</a></li>
-        </ul>
-        
-        <div id="fixture" class="col s12">
-            <h4>Fixture</h4>
-            <div id="matches-list"></div>
+        <div class="row">
+            <ul class="tabs">
+                <li class="tab col s3"><a href="#fixture">Fixture</a></li>
+                <li class="tab col s3"><a href="#predictions">Pronósticos</a></li>
+                <li class="tab col s3"><a href="#ranking">Ranking</a></li>
+            </ul>
         </div>
-        <div id="predictions" class="col s12">
-            <h4>Predicciones</h4>
-            <!-- Contenido para predicciones -->
-        </div>
-        <div id="ranking" class="col s12">
-            <h4>Ranking</h4>
-            <!-- Contenido para ranking -->
-        </div>
+        <div id="fixture" class="col s12">Contenido del Fixture</div>
+        <div id="predictions" class="col s12">Contenido de Pronósticos</div>
+        <div id="ranking" class="col s12">Contenido del Ranking</div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script src="/js/dashboard.js"></script>
 </body>
 </html>
