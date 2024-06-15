@@ -1,23 +1,24 @@
 const express = require('express');
-const mongoose = require('mongoose');
-
+const Match = require('../models/Match');
 const router = express.Router();
 
-const matchSchema = new mongoose.Schema({
-    date: String,
-    time: String,
-    team1: String,
-    team2: String,
-    competition: String,
-    group_name: String,
-    series: String,
-    tournament: String,
-    result1: Number,
-    result2: Number
-});
+// Middleware de autenticación
+function isAuthenticated(req, res, next) {
+    if (req.session && req.session.user) {
+        return next();
+    }
+    res.status(403).json({ error: 'Forbidden' });
+}
 
-const Match = mongoose.model('Match', matchSchema);
+// Middleware de autorización para admin
+function isAdmin(req, res, next) {
+    if (req.session && req.session.user && req.session.user.role === 'admin') {
+        return next();
+    }
+    res.status(403).json({ error: 'Forbidden' });
+}
 
+// Obtener todos los partidos
 router.get('/', async (req, res) => {
     try {
         const matches = await Match.find();
@@ -27,7 +28,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.post('/:id', async (req, res) => {
+// Actualizar un partido (solo admin)
+router.post('/:id', isAdmin, async (req, res) => {
     const { id } = req.params;
     const { result1, result2 } = req.body;
     if (!Number.isInteger(result1) || !Number.isInteger(result2)) {

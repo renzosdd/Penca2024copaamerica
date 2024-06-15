@@ -24,21 +24,7 @@
         </div>
         <div id="predictions" class="col s12">
             <h4>Predicciones</h4>
-            <form id="predictionForm">
-                <div class="input-field">
-                    <input type="text" id="matchId" name="matchId" required>
-                    <label for="matchId">ID del Partido</label>
-                </div>
-                <div class="input-field">
-                    <input type="number" id="result1" name="result1" required>
-                    <label for="result1">Resultado Equipo 1</label>
-                </div>
-                <div class="input-field">
-                    <input type="number" id="result2" name="result2" required>
-                    <label for="result2">Resultado Equipo 2</label>
-                </div>
-                <button class="btn waves-effect waves-light" type="submit">Enviar Predicción</button>
-            </form>
+            <div id="predictions-list"></div>
         </div>
         <div id="ranking" class="col s12">
             <h4>Ranking</h4>
@@ -48,30 +34,69 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var elems = document.querySelectorAll('.tabs');
-            var instances = M.Tabs.init(elems);
-        });
-
-        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const response = await fetch('/predictions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    matchId: document.getElementById('matchId').value,
-                    result1: document.getElementById('result1').value,
-                    result2: document.getElementById('result2').value
-                })
+        document.addEventListener('DOMContentLoaded', async function() {
+            const matchesResponse = await fetch('/matches');
+            const matches = await matchesResponse.json();
+            const matchesList = document.getElementById('matches-list');
+            matches.forEach(match => {
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'card';
+                matchDiv.innerHTML = `
+                    <div class="card-content">
+                        <span class="card-title">${match.team1} vs ${match.team2}</span>
+                        <p>Fecha: ${match.date} Hora: ${match.time}</p>
+                        <p>Resultado: ${match.result1} - ${match.result2}</p>
+                    </div>
+                `;
+                if (${req.session.user.role === 'admin'}) {
+                    matchDiv.innerHTML += `
+                        <div class="card-action">
+                            <form method="POST" action="/matches/${match._id}">
+                                <div class="input-field">
+                                    <input type="number" name="result1" value="${match.result1 || ''}" required>
+                                    <label for="result1">Resultado Equipo 1</label>
+                                </div>
+                                <div class="input-field">
+                                    <input type="number" name="result2" value="${match.result2 || ''}" required>
+                                    <label for="result2">Resultado Equipo 2</label>
+                                </div>
+                                <button class="btn waves-effect waves-light" type="submit">Actualizar</button>
+                            </form>
+                        </div>
+                    `;
+                }
+                matchesList.appendChild(matchDiv);
             });
 
-            if (response.ok) {
-                alert('Predicción enviada exitosamente');
-            } else {
-                alert('Error al enviar la predicción');
-            }
+            const predictionsResponse = await fetch('/matches');
+            const predictions = await predictionsResponse.json();
+            const predictionsList = document.getElementById('predictions-list');
+            predictions.forEach(match => {
+                const predictionDiv = document.createElement('div');
+                predictionDiv.className = 'card';
+                predictionDiv.innerHTML = `
+                    <div class="card-content">
+                        <span class="card-title">${match.team1} vs ${match.team2}</span>
+                        <p>Fecha: ${match.date} Hora: ${match.time}</p>
+                        <p>Resultado: ${match.result1} - ${match.result2}</p>
+                    </div>
+                    <div class="card-action">
+                        <form id="predictionForm" method="POST" action="/predictions">
+                            <input type="hidden" name="matchId" value="${match._id}">
+                            <div class="input-field">
+                                <input type="number" name="result1" required>
+                                <label for="result1">Predicción Resultado Equipo 1</label>
+                            </div>
+                            <div class="input-field">
+                                <input type="number" name="result2" required>
+                                <label for="result2">Predicción Resultado Equipo 2</label>
+                            </div>
+                            <button class="btn waves-effect waves-light" type="submit">Enviar Predicción</button>
+                        </form>
+                    </div>
+                `;
+                predictionsList.appendChild(predictionDiv);
+            });
         });
     </script>
 </body>

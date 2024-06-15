@@ -11,8 +11,8 @@ function isAuthenticated(req, res, next) {
     res.status(403).json({ error: 'Forbidden' });
 }
 
-// Obtener todas las predicciones (solo para propósitos de desarrollo, eliminar en producción)
-router.get('/', async (req, res) => {
+// Obtener todas las predicciones
+router.get('/', isAuthenticated, async (req, res) => {
     try {
         const predictions = await Prediction.find();
         res.json(predictions);
