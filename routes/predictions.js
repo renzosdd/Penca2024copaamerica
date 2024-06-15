@@ -1,37 +1,74 @@
 const express = require('express');
-const Prediction = require('../models/Prediction');
+const path = require('path');
 
-const router = express.Router();
+module.exports = (db) => {
+    const router = express.Router();
 
-router.get('/', async (req, res) => {
-    try {
-        const predictions = await Prediction.find();
-        res.json(predictions);
-    } catch (err) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
+    // Ruta para servir la página de predicciones
+    router.get('/', (req, res) => {
+        res.sendFile(path.join(__dirname, '../public/dashboard.html'));
+    });
 
-router.post('/', async (req, res) => {
-    const { matchId, result1, result2 } = req.body;
-    if (!req.session.user || req.session.user.role !== 'user') {
-        return res.status(403).json({ error: 'Forbidden' });
-    }
-    if (!Number.isInteger(result1) || !Number.isInteger(result2)) {
-        return res.status(400).json({ error: 'Results must be integers' });
-    }
-    try {
-        const prediction = new Prediction({
-            username: req.session.user.username,
-            matchId,
-            result1,
-            result2
-        });
-        await prediction.save();
-        res.json(prediction);
-    } catch (err) {
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
+    // Ruta para enviar las predicciones de los usuarios
+    router.post('/submit', async (req, res) => {
+        const predictionsCollection = db.collection('predictions');
+        const { matchId, predictedScore } = req.body;
+        try {
+            await predictionsCollection.updateOne(
+                { userId: req.session.user._id, matchId: matchId },
+                { $set: { userId: req.session.user._id, matchId: matchId, predictedScore: predictedScore } },
+                { upsert: true }
+            );
+            res.send('Prediction submitted');
+        } catch (err) {
+            res.status(500).send('Error');
+        }
+    });
 
-module.exports = router;
+    // Ruta para obtener el ranking de los usuarios
+    router.get('/ranking', async (req, res) => {
+        const usersCollection = db.collection('users');
+        const predictionsCollection = db.collection('predictions');
+        const matchesCollection = db.collection('matches');
+        try {
+            const users = await usersCollection.find().toArray();
+            const matches = await matchesCollection.find().toArray();
+            const predictions = await predictionsCollection.find().toArray();
+
+            let userPoints = {};
+            users.forEach(user => {
+                userPoints[user._id] = { username: user.username, points: 0 };
+            });
+
+            predictions.forEach(prediction => {
+                const match = matches.find(m => m.matchId === prediction.matchId);
+                if (match && match.result) {
+                    const predicted = prediction.predictedScore.split('-').map(Number);
+                    const actual = match.result.split('-').map(Number);
+
+                    if (predicted[0] === actual[0] && predicted[1] === actual[1]) {
+                        userPoints[prediction.userId].points += 3;
+                    } else if (
+                        (predicted[0] > predicted[1] && actual[0] > actual[1]) ||
+                        (predicted[0] < predicted[1] && actual[0] < actual[1]) ||
+                        (predicted[0] === predicted[1] && actual[0] === actual[1])
+                    ) {
+                        userPoints[prediction.userId].points += 1;
+                    }
+
+                    if (predicted[0] === actual[0] || predicted[1] === actual[1]) {
+                        userPoints[prediction.userId].points += 1;
+                    }
+                }
+            });
+
+            let ranking = Object.values(userPoints).sort((a, b) => b.points - a.points);
+
+            res.json(ranking);
+        } catch (err) {
+            res.status(500).send('Error');
+        }
+    });
+
+    return router;
+};
