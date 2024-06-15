@@ -85,6 +85,14 @@ app.post('/login', async (req, res) => {
     }
 });
 
+app.get('/session', (req, res) => {
+    if (req.session.user) {
+        res.json({ user: req.session.user });
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
+});
+
 // Configurar Multer para almacenar archivos en memoria y usar el nombre de usuario
 const storage = multer.memoryStorage();
 const upload = multer({

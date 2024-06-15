@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(matches => {
             const matchesList = document.getElementById('matches-list');
+            const isAdmin = sessionStorage.getItem('userRole') === 'admin';
             matches.forEach(match => {
                 const matchDiv = document.createElement('div');
                 matchDiv.innerHTML = `
@@ -15,12 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <p>${match.date} ${match.time}</p>
                             <p>${match.competition} - Grupo ${match.group_name}</p>
                             <div class="input-field">
-                                <input type="number" id="result1-${match._id}" placeholder="Resultado ${match.team1}" min="0">
+                                <input type="number" id="result1-${match._id}" placeholder="Resultado ${match.team1}" min="0" ${!isAdmin ? 'disabled' : ''}>
                             </div>
                             <div class="input-field">
-                                <input type="number" id="result2-${match._id}" placeholder="Resultado ${match.team2}" min="0">
+                                <input type="number" id="result2-${match._id}" placeholder="Resultado ${match.team2}" min="0" ${!isAdmin ? 'disabled' : ''}>
                             </div>
-                            <button class="btn" onclick="saveResult('${match._id}')">Guardar</button>
+                            ${isAdmin ? `<button class="btn" onclick="saveResult('${match._id}')">Guardar</button>` : ''}
                         </div>
                     </div>
                 `;
@@ -52,4 +53,11 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => alert('Error al guardar los resultados'));
     }
+
+    fetch('/session')
+        .then(response => response.json())
+        .then(session => {
+            sessionStorage.setItem('userRole', session.user.role);
+        })
+        .catch(err => console.error('Error fetching session', err));
 });
