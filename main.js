@@ -7,9 +7,9 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
-const User = require('./models/User');  // Importar el modelo de User
-const Prediction = require('./models/Prediction');  // Importar el modelo de Prediction
-const Match = require('./models/Match');  // Importar el modelo de Match
+const User = require('./models/User');
+const Prediction = require('./models/Prediction');
+const Match = require('./models/Match');
 
 dotenv.config();
 
