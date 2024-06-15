@@ -95,6 +95,8 @@ app.post('/login', async (req, res) => {
     }
 });
 
+// Otras importaciones y configuraciones...
+
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
@@ -103,6 +105,9 @@ app.post('/logout', (req, res) => {
         res.redirect('/');
     });
 });
+
+// Rutas existentes...
+
 
 // Configurar Multer para almacenar archivos en memoria y usar el nombre de usuario
 const storage = multer.memoryStorage();

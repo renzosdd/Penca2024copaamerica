@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         predictionsList.innerHTML = ''; // Limpiar cualquier contenido previo
         matches.forEach(match => {
             const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
-            console.log('Processing match:', match._id);
+            //console.log('Processing match:', match._id);
             const predictionDiv = document.createElement('div');
             predictionDiv.className = 'col s12 m6';
             predictionDiv.innerHTML = `
