@@ -12,16 +12,5 @@
     { "src": "/register", "dest": "/main.js" },
     { "src": "/dashboard.html", "dest": "/public/dashboard.html" },
     { "src": "/(.*)", "dest": "/main.js" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Content-Security-Policy",
-          "value": "script-src 'self' 'unsafe-eval'"
-        }
-      ]
-    }
   ]
 }
