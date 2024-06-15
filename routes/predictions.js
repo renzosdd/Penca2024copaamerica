@@ -21,7 +21,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     }
 });
 
-// Enviar una nueva predicción
+// Enviar o actualizar una predicción
 router.post('/', isAuthenticated, async (req, res) => {
     const { matchId, result1, result2 } = req.body;
 
@@ -35,10 +35,20 @@ router.post('/', isAuthenticated, async (req, res) => {
             return res.status(404).json({ error: 'Match not found' });
         }
 
-        // Verificar si ya existe una predicción para el mismo usuario y partido
+        const matchTime = new Date(`${match.date}T${match.time}`);
+        const oneHourBeforeMatch = new Date(matchTime.getTime() - 60 * 60 * 1000);
+        const currentTime = new Date();
+
+        if (currentTime > oneHourBeforeMatch) {
+            return res.status(400).json({ error: 'Cannot change prediction within one hour of the match start' });
+        }
+
         const existingPrediction = await Prediction.findOne({ username: req.session.user.username, matchId });
         if (existingPrediction) {
-            return res.status(400).json({ error: 'Prediction already exists for this match' });
+            existingPrediction.result1 = parseInt(result1);
+            existingPrediction.result2 = parseInt(result2);
+            await existingPrediction.save();
+            return res.json(existingPrediction);
         }
 
         const prediction = new Prediction({
