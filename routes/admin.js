@@ -12,11 +12,11 @@ module.exports = (db) => {
     // Ruta para actualizar los resultados de los partidos
     router.post('/update', async (req, res) => {
         const matchesCollection = db.collection('matches');
-        const { matchId, result } = req.body;
+        const { matchId, result1, result2 } = req.body;
         try {
             await matchesCollection.updateOne(
-                { matchId: matchId },
-                { $set: { result: result } },
+                { _id: matchId },
+                { $set: { result1: result1, result2: result2 } },
                 { upsert: true }
             );
             res.send('Results updated');

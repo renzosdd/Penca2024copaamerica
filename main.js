@@ -49,9 +49,8 @@ app.use((req, res, next) => {
     next();
 });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
+app.use('/', require('./routes/index'));
+app.use('/admin', require('./routes/admin')(mongoose.connection.db));
 
 app.get('/dashboard', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
