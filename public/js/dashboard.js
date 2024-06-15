@@ -5,10 +5,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     const userRole = document.querySelector('body').getAttribute('data-role');
     const username = document.querySelector('body').getAttribute('data-username');
 
+    // Mostrar el rol y el nombre de usuario
+    alert('User Role: ' + userRole);
+    alert('Username: ' + username);
+
+    let matches = []; // Definir la variable matches en el contexto adecuado
+
     // Cargar los partidos para el fixture
     try {
         const matchesResponse = await fetch('/matches');
-        const matches = await matchesResponse.json();
+        matches = await matchesResponse.json(); // Asignar valor a la variable matches
+        alert('Matches fetched successfully');
         const matchesList = document.getElementById('matches-list');
         matchesList.innerHTML = ''; // Limpiar cualquier contenido previo
         matches.forEach(match => {
@@ -17,12 +24,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             matchDiv.innerHTML = `
                 <div class="match-header">
                     <div class="team">
-                        <img src="/flags/${match.team1.toLowerCase()}.png" alt="${match.team1}">
+                        <img src="/images/${match.team1.toLowerCase()}.png" alt="${match.team1}">
                         <span>${match.team1}</span>
                     </div>
                     <span>vs</span>
                     <div class="team">
-                        <img src="/flags/${match.team2.toLowerCase()}.png" alt="${match.team2}">
+                        <img src="/images/${match.team2.toLowerCase()}.png" alt="${match.team2}">
                         <span>${match.team2}</span>
                     </div>
                 </div>
@@ -46,6 +53,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             matchesList.appendChild(matchDiv);
         });
     } catch (error) {
+        alert('Error al cargar los partidos: ' + error.message);
         console.error('Error al cargar los partidos:', error);
     }
 
@@ -53,22 +61,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         const predictionsResponse = await fetch('/predictions');
         const predictions = await predictionsResponse.json();
+        alert('Predictions fetched successfully');
         const userPredictions = predictions.filter(prediction => prediction.username === username);
         const predictionsList = document.getElementById('predictions-list');
         predictionsList.innerHTML = ''; // Limpiar cualquier contenido previo
         matches.forEach(match => {
             const userPrediction = userPredictions.find(prediction => prediction.matchId === match._id);
+            alert('Processing match: ' + match._id);
             const predictionDiv = document.createElement('div');
             predictionDiv.className = 'match-card';
             predictionDiv.innerHTML = `
                 <div class="match-header">
                     <div class="team">
-                        <img src="/flags/${match.team1.toLowerCase()}.png" alt="${match.team1}">
+                        <img src="/images/${match.team1.toLowerCase()}.png" alt="${match.team1}">
                         <span>${match.team1}</span>
                     </div>
                     <span>vs</span>
                     <div class="team">
-                        <img src="/flags/${match.team2.toLowerCase()}.png" alt="${match.team2}">
+                        <img src="/images/${match.team2.toLowerCase()}.png" alt="${match.team2}">
                         <span>${match.team2}</span>
                     </div>
                 </div>
@@ -103,13 +113,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                         alert('Error: ' + result.error);
                     }
                 } catch (error) {
+                    alert('Error al enviar la predicción: ' + error.message);
                     console.error('Error al enviar la predicción:', error);
-                    alert('Error interno del servidor');
                 }
             });
             predictionsList.appendChild(predictionDiv);
         });
     } catch (error) {
+        alert('Error al cargar las predicciones: ' + error.message);
         console.error('Error al cargar las predicciones:', error);
     }
 });
