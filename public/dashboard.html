@@ -24,7 +24,21 @@
         </div>
         <div id="predictions" class="col s12">
             <h4>Predicciones</h4>
-            <!-- Contenido para predicciones -->
+            <form id="predictionForm">
+                <div class="input-field">
+                    <input type="text" id="matchId" name="matchId" required>
+                    <label for="matchId">ID del Partido</label>
+                </div>
+                <div class="input-field">
+                    <input type="number" id="result1" name="result1" required>
+                    <label for="result1">Resultado Equipo 1</label>
+                </div>
+                <div class="input-field">
+                    <input type="number" id="result2" name="result2" required>
+                    <label for="result2">Resultado Equipo 2</label>
+                </div>
+                <button class="btn waves-effect waves-light" type="submit">Enviar Predicción</button>
+            </form>
         </div>
         <div id="ranking" class="col s12">
             <h4>Ranking</h4>
@@ -33,6 +47,32 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script src="/js/dashboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var elems = document.querySelectorAll('.tabs');
+            var instances = M.Tabs.init(elems);
+        });
+
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await fetch('/predictions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    matchId: document.getElementById('matchId').value,
+                    result1: document.getElementById('result1').value,
+                    result2: document.getElementById('result2').value
+                })
+            });
+
+            if (response.ok) {
+                alert('Predicción enviada exitosamente');
+            } else {
+                alert('Error al enviar la predicción');
+            }
+        });
+    </script>
 </body>
 </html>
