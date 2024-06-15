@@ -1,55 +1,88 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     var elems = document.querySelectorAll('.tabs');
     var instances = M.Tabs.init(elems);
 
-    fetch('/matches')
-        .then(response => response.json())
-        .then(matches => {
-            const matchesList = document.getElementById('matches-list');
-            matches.forEach(match => {
-                const matchDiv = document.createElement('div');
-                matchDiv.innerHTML = `
-                    <div class="card">
-                        <div class="card-content">
-                            <span class="card-title">${match.team1} vs ${match.team2}</span>
-                            <p>${match.date} ${match.time}</p>
-                            <p>${match.competition} - Grupo ${match.group_name}</p>
-                            <div class="input-field">
-                                <input type="number" id="result1-${match._id}" placeholder="Resultado ${match.team1}" min="0">
-                            </div>
-                            <div class="input-field">
-                                <input type="number" id="result2-${match._id}" placeholder="Resultado ${match.team2}" min="0">
-                            </div>
-                            <button class="btn" onclick="saveResult('${match._id}')">Guardar</button>
-                        </div>
+    const userRole = 'user'; // Cambiar esto dinámicamente según el rol del usuario autenticado
+
+    // Cargar los partidos para el fixture
+    try {
+        const matchesResponse = await fetch('/matches');
+        const matches = await matchesResponse.json();
+        const matchesList = document.getElementById('matches-list');
+        matchesList.innerHTML = ''; // Limpiar cualquier contenido previo
+        matches.forEach(match => {
+            const matchDiv = document.createElement('div');
+            matchDiv.className = 'match-card';
+            matchDiv.innerHTML = `
+                <div class="match-header">
+                    <div class="team">
+                        <img src="/flags/${match.team1.toLowerCase()}.png" alt="${match.team1}">
+                        <span>${match.team1}</span>
+                    </div>
+                    <span>vs</span>
+                    <div class="team">
+                        <img src="/flags/${match.team2.toLowerCase()}.png" alt="${match.team2}">
+                        <span>${match.team2}</span>
+                    </div>
+                </div>
+                <div class="match-details">
+                    <p>Fecha: ${match.date} Hora: ${match.time}</p>
+                    <p>Resultado: ${match.result1 || '-'} - ${match.result2 || '-'}</p>
+                </div>
+            `;
+            if (userRole === 'admin') {
+                matchDiv.innerHTML += `
+                    <div class="match-details">
+                        <form method="POST" action="/matches/${match._id}">
+                            <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required>
+                            <span>-</span>
+                            <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required>
+                            <button class="btn waves-effect waves-light" type="submit">Actualizar</button>
+                        </form>
                     </div>
                 `;
-                matchesList.appendChild(matchDiv);
-            });
-        });
-
-    window.saveResult = function(id) {
-        const result1 = parseInt(document.getElementById(`result1-${id}`).value);
-        const result2 = parseInt(document.getElementById(`result2-${id}`).value);
-        if (isNaN(result1) || isNaN(result2)) {
-            alert('Por favor, introduce resultados válidos');
-            return;
-        }
-        fetch(`/matches/${id}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ result1, result2 })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert('Error al guardar los resultados');
-            } else {
-                alert('Resultados guardados');
             }
-        })
-        .catch(err => alert('Error al guardar los resultados'));
+            matchesList.appendChild(matchDiv);
+        });
+    } catch (error) {
+        console.error('Error al cargar los partidos:', error);
+    }
+
+    // Cargar los partidos para las predicciones
+    try {
+        const predictionsResponse = await fetch('/matches');
+        const predictions = await predictionsResponse.json();
+        const predictionsList = document.getElementById('predictions-list');
+        predictionsList.innerHTML = ''; // Limpiar cualquier contenido previo
+        predictions.forEach(match => {
+            const predictionDiv = document.createElement('div');
+            predictionDiv.className = 'match-card';
+            predictionDiv.innerHTML = `
+                <div class="match-header">
+                    <div class="team">
+                        <img src="/flags/${match.team1.toLowerCase()}.png" alt="${match.team1}">
+                        <span>${match.team1}</span>
+                    </div>
+                    <span>vs</span>
+                    <div class="team">
+                        <img src="/flags/${match.team2.toLowerCase()}.png" alt="${match.team2}">
+                        <span>${match.team2}</span>
+                    </div>
+                </div>
+                <div class="match-details">
+                    <p>Fecha: ${match.date} Hora: ${match.time}</p>
+                    <form id="predictionForm" method="POST" action="/predictions">
+                        <input type="hidden" name="matchId" value="${match._id}">
+                        <input type="number" class="result-input" name="result1" required>
+                        <span>-</span>
+                        <input type="number" class="result-input" name="result2" required>
+                        <button class="btn waves-effect waves-light" type="submit">Enviar Predicción</button>
+                    </form>
+                </div>
+            `;
+            predictionsList.appendChild(predictionDiv);
+        });
+    } catch (error) {
+        console.error('Error al cargar las predicciones:', error);
     }
 });

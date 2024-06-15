@@ -1,3 +1,4 @@
+/* Estilos existentes */
 body {
     display: flex;
     min-height: 100vh;
@@ -33,4 +34,40 @@ input[type=text]:focus, input[type=password]:focus, input[type=email]:focus, inp
 .file-path-wrapper .file-path:focus {
     border-bottom: 1px solid #0d47a1;
     box-shadow: 0 1px 0 0 #0d47a1;
+}
+
+/* Nuevos estilos */
+.match-card {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.team {
+    display: flex;
+    align-items: center;
+}
+
+.team img {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+}
+
+.match-details {
+    text-align: center;
+    font-size: 1.2em;
+}
+
+.result-input {
+    width: 50px;
+    text-align: center;
 }
