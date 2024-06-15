@@ -18,7 +18,7 @@
                 <div class="card">
                     <div class="card-content">
                         <span class="card-title">Login</span>
-                        <form id="loginForm">
+                        <form id="loginForm" method="POST" action="/login">
                             <div class="input-field">
                                 <input type="text" id="loginUsername" name="username" required>
                                 <label for="loginUsername">Username</label>
@@ -85,27 +85,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             var elems = document.querySelectorAll('.modal');
             var instances = M.Modal.init(elems);
-
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: document.getElementById('loginUsername').value,
-                        password: document.getElementById('loginPassword').value
-                    })
-                });
-                
-                if (response.ok) {
-                    alert('Login exitoso');
-                    window.location.href = '/dashboard.html';
-                } else {
-                    alert('Error en el login');
-                }
-            });
         });
     </script>
 </body>
