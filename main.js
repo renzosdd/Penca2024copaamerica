@@ -7,6 +7,9 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
+const User = require('./models/User');  // Importar el modelo de User
+const Prediction = require('./models/Prediction');  // Importar el modelo de Prediction
+const Match = require('./models/Match');  // Importar el modelo de Match
 
 dotenv.config();
 
@@ -15,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 
 const uri = 'mongodb+srv://admindbpenca:AdminDbPenca2024Ren@pencacopaamerica2024.yispiqt.mongodb.net/penca_copa_america?retryWrites=true&w=majority&appName=PencaCopaAmerica2024';
 
-console.log('Mongo URI:', uri);  // Verifica que la URI se está leyendo correctamente
+console.log('Mongo URI:', uri);
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -37,19 +40,6 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
         console.error('Failed to connect to the database. Exiting now...', err);
         process.exit(1);
     });
-
-const userSchema = new mongoose.Schema({
-    username: String,
-    password: String,
-    surname: String,
-    email: String,
-    dob: Date,
-    avatar: Buffer,
-    avatarContentType: String,
-    role: { type: String, default: 'user' }
-});
-
-const User = mongoose.model('User', userSchema);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -82,14 +72,6 @@ app.post('/login', async (req, res) => {
     } catch (err) {
         console.error('Login error', err);
         res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-app.get('/session', (req, res) => {
-    if (req.session.user) {
-        res.json({ user: req.session.user });
-    } else {
-        res.status(401).json({ error: 'Not authenticated' });
     }
 });
 
@@ -146,6 +128,14 @@ app.get('/avatar/:username', async (req, res) => {
     }
 });
 
+app.get('/session', (req, res) => {
+    if (req.session.user) {
+        res.json({ user: req.session.user });
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
+});
+
 function isAuthenticated(req, res, next) {
     if (req.session && req.session.user) {
         return next();
@@ -162,7 +152,6 @@ function isAdmin(req, res, next) {
 
 app.use('/matches', require('./routes/matches'));
 app.use('/predictions', require('./routes/predictions'));
-
 
 app.use((req, res) => {
     res.status(404).send('404: Page not found');
