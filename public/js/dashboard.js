@@ -22,9 +22,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('Matches fetched successfully');
         const matchesList = document.getElementById('matches-list');
         matchesList.innerHTML = ''; // Limpiar cualquier contenido previo
+        const predictionsResponse = await fetch('/predictions');
+        const predictions = await predictionsResponse.json();
+        const userPredictions = predictions.filter(prediction => prediction.username === username);
+        
         matches.forEach(match => {
             const team1Flag = match.team1.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
             const team2Flag = match.team2.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ""); // Normalizar el nombre del equipo
+            const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
+
             const matchDiv = document.createElement('div');
             matchDiv.className = 'col s12 m6';
             matchDiv.innerHTML = `
@@ -44,6 +50,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="match-details">
                             <p>Fecha: ${match.date} Hora: ${match.time}</p>
                             <p>Resultado: ${match.result1 || '-'} - ${match.result2 || '-'}</p>
+                            ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
                         </div>
                         ${userRole === 'admin' ? `
                         <div class="match-details">
@@ -125,6 +132,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const result = await response.json();
                     if (response.ok) {
                         console.log('Predicción enviada exitosamente');
+                        // Actualizar el tick verde al guardar la predicción
+                        const matchCard = form.closest('.card');
+                        if (matchCard && !matchCard.querySelector('.tick-icon')) {
+                            const tickIcon = document.createElement('img');
+                            tickIcon.src = '/images/tick.png';
+                            tickIcon.alt = 'Predicción guardada';
+                            tickIcon.className = 'tick-icon';
+                            matchCard.querySelector('.match-details').appendChild(tickIcon);
+                        }
                     } else {
                         console.error('Error:', result.error);
                     }
