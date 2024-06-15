@@ -7,9 +7,6 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
-const User = require('./models/User');
-const Prediction = require('./models/Prediction');
-const Match = require('./models/Match');
 
 dotenv.config();
 
@@ -18,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 
 const uri = 'mongodb+srv://admindbpenca:AdminDbPenca2024Ren@pencacopaamerica2024.yispiqt.mongodb.net/penca_copa_america?retryWrites=true&w=majority&appName=PencaCopaAmerica2024';
 
-console.log('Mongo URI:', uri);
+console.log('Mongo URI:', uri);  // Verifica que la URI se está leyendo correctamente
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -41,13 +38,20 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
         process.exit(1);
     });
 
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Content-Security-Policy header
-app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-eval'");
-    next();
+const userSchema = new mongoose.Schema({
+    username: String,
+    password: String,
+    surname: String,
+    email: String,
+    dob: Date,
+    avatar: Buffer,
+    avatarContentType: String,
+    role: { type: String, default: 'user' }
 });
+
+const User = mongoose.model('User', userSchema);
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
@@ -134,14 +138,6 @@ app.get('/avatar/:username', async (req, res) => {
     }
 });
 
-app.get('/session', (req, res) => {
-    if (req.session.user) {
-        res.json({ user: req.session.user });
-    } else {
-        res.status(401).json({ error: 'Not authenticated' });
-    }
-});
-
 function isAuthenticated(req, res, next) {
     if (req.session && req.session.user) {
         return next();
@@ -157,8 +153,6 @@ function isAdmin(req, res, next) {
 }
 
 app.use('/matches', require('./routes/matches'));
-app.use('/predictions', require('./routes/predictions'));
-
 
 app.use((req, res) => {
     res.status(404).send('404: Page not found');

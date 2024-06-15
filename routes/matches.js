@@ -1,7 +1,22 @@
 const express = require('express');
-const Match = require('../models/Match');
+const mongoose = require('mongoose');
 
 const router = express.Router();
+
+const matchSchema = new mongoose.Schema({
+    date: String,
+    time: String,
+    team1: String,
+    team2: String,
+    competition: String,
+    group_name: String,
+    series: String,
+    tournament: String,
+    result1: Number,
+    result2: Number
+});
+
+const Match = mongoose.model('Match', matchSchema);
 
 router.get('/', async (req, res) => {
     try {
