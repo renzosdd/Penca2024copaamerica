@@ -44,7 +44,7 @@ router.post('/', isAuthenticated, async (req, res) => {
         }
 
         // Verificar si ya existe una predicción para el mismo usuario y partido
-        const existingPrediction = await Prediction.findOne({ username: req.session.user.username, matchId });
+        const existingPrediction = await Prediction.findOne({ userId: req.session.user._id, matchId });
         if (existingPrediction) {
             existingPrediction.result1 = parseInt(result1);
             existingPrediction.result2 = parseInt(result2);
@@ -53,6 +53,7 @@ router.post('/', isAuthenticated, async (req, res) => {
         }
 
         const prediction = new Prediction({
+            userId: req.session.user._id,
             username: req.session.user.username,
             matchId,
             result1: parseInt(result1),
