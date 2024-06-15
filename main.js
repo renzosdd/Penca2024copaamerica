@@ -43,9 +43,14 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+// Content-Security-Policy header
+app.use((req, res, next) => {
+    res.setHeader("Content-Security-Policy", "script-src 'self' 'unsafe-eval'");
+    next();
 });
+
+app.use('/', require('./routes/index'));
+app.use('/admin', require('./routes/admin')(mongoose.connection.db));
 
 app.get('/dashboard', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
