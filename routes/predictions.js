@@ -35,6 +35,12 @@ router.post('/', isAuthenticated, async (req, res) => {
             return res.status(404).json({ error: 'Match not found' });
         }
 
+        // Verificar si ya existe una predicción para el mismo usuario y partido
+        const existingPrediction = await Prediction.findOne({ username: req.session.user.username, matchId });
+        if (existingPrediction) {
+            return res.status(400).json({ error: 'Prediction already exists for this match' });
+        }
+
         const prediction = new Prediction({
             username: req.session.user.username,
             matchId,
@@ -44,6 +50,7 @@ router.post('/', isAuthenticated, async (req, res) => {
         await prediction.save();
         res.json(prediction);
     } catch (err) {
+        console.error('Error al guardar la predicción:', err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
