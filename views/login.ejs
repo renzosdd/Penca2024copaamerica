@@ -129,9 +129,12 @@
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    M.toast({html: 'Registro exitoso! Por favor, inicia sesión.', classes: 'green'});
+                    M.toast({html: 'Registro exitoso! Redirigiendo...', classes: 'green'});
                     const modalInstance = M.Modal.getInstance(document.getElementById('register-modal'));
                     modalInstance.close();
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 1000);
                 } else {
                     document.getElementById('register-error-message').innerText = result.error;
                 }
