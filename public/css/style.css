@@ -2,7 +2,7 @@ body {
     display: flex;
     min-height: 100vh;
     flex-direction: column;
-    background: linear-gradient(to right, #d3cce3, #e9e4f0); /* Gradiente de fondo suave */
+    background: linear-gradient(135deg, #71b7e6, #9b59b6); /* Gradiente de fondo más atractivo */
     font-family: 'Roboto', sans-serif;
 }
 
@@ -75,8 +75,17 @@ header {
 }
 
 .result-input {
-    width: 50px;
+    width: 40px;
     text-align: center;
+    margin-right: 10px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.result-input:focus {
+    border: 1px solid #0d47a1;
 }
 
 .tick-icon {

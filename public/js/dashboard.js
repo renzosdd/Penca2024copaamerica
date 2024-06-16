@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const matchDiv = document.createElement('div');
             matchDiv.className = 'col s12 m6';
             matchDiv.innerHTML = `
-                <div class="card">
+                <div class="card match-card">
                     <div class="card-content">
                         <div class="match-header">
                             <div class="team">
@@ -54,20 +54,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                         </div>
                         <div class="match-details">
                             <p>Fecha: ${match.date} Hora: ${match.time}</p>
-                            <p>Resultado: ${match.result1 || '-'} - ${match.result2 || '-'}</p>
-                            ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
-                        </div>
-                        ${userRole === 'admin' ? `
-                        <div class="match-details">
-                            <form method="POST" action="/matches/${match._id}">
+                            <form id="predictionForm-${match._id}" method="POST" action="/predictions">
+                                <input type="hidden" name="matchId" value="${match._id}">
                                 <div class="input-field inline">
-                                    <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required>
+                                    <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" required>
                                     <span>-</span>
-                                    <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required>
-                                    <button class="btn waves-effect waves-light" type="submit">Actualizar</button>
+                                    <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" required>
+                                    <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
                                 </div>
                             </form>
-                        </div>` : ''}
+                            ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
+                        </div>
                     </div>
                 </div>
             `;
@@ -93,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const predictionDiv = document.createElement('div');
             predictionDiv.className = 'col s12 m6';
             predictionDiv.innerHTML = `
-                <div class="card">
+                <div class="card match-card">
                     <div class="card-content">
                         <div class="match-header">
                             <div class="team">
@@ -114,7 +111,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                     <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" required>
                                     <span>-</span>
                                     <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" required>
-                                    <button class="btn waves-effect waves-light" type="submit">Enviar Predicción</button>
+                                    <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
                                 </div>
                             </form>
                             ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
