@@ -179,4 +179,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             M.toast({html: 'Error al cerrar sesión', classes: 'red'});
         }
     });
+
+    // Verificar si el avatar está disponible
+    const avatarImage = document.querySelector('a.dropdown-trigger img');
+    const avatarSrc = avatarImage.src;
+    const avatarRequest = new XMLHttpRequest();
+    avatarRequest.open('GET', avatarSrc, true);
+    avatarRequest.onreadystatechange = function() {
+        if (avatarRequest.readyState === 4) {
+            if (avatarRequest.status !== 200) {
+                // Si el avatar no está disponible, usa el avatar por defecto
+                avatarImage.src = '/images/avatar.webp';
+            }
+        }
+    };
+    avatarRequest.send();
 });

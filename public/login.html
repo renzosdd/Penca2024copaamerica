@@ -3,88 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login y Registro - Copa América 2024</title>
-    <link rel="icon" href="/uploads/Logo.ico">
+    <title>Login - Copa América 2024</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
 </head>
-<body>
+<body class="blue lighten-5">
     <div class="container">
-        <h1 class="center-align">Copa América 2024</h1>
-        
         <div class="row">
-            <div class="col s12 m6">
+            <div class="col s12 m6 offset-m3">
                 <div class="card">
                     <div class="card-content">
-                        <span class="card-title">Login</span>
+                        <span class="card-title center-align">Iniciar Sesión</span>
                         <form id="loginForm" method="POST" action="/login">
                             <div class="input-field">
-                                <input type="text" id="loginUsername" name="username" required>
-                                <label for="loginUsername">Username</label>
+                                <input id="username" name="username" type="text" class="validate" required>
+                                <label for="username">Nombre de usuario</label>
                             </div>
                             <div class="input-field">
-                                <input type="password" id="loginPassword" name="password" required>
-                                <label for="loginPassword">Password</label>
+                                <input id="password" name="password" type="password" class="validate" required>
+                                <label for="password">Contraseña</label>
                             </div>
-                            <button class="btn waves-effect waves-light" type="submit">Login</button>
+                            <div class="center-align">
+                                <button class="btn waves-effect waves-light blue darken-3" type="submit">Iniciar Sesión</button>
+                            </div>
                         </form>
                     </div>
                 </div>
             </div>
-            
-            <div class="col s12 m6">
-                <button data-target="registerModal" class="btn modal-trigger">Nuevo Usuario</button>
+        </div>
+    </div>
+    <footer class="page-footer blue darken-3">
+        <div class="container">
+            <div class="row">
+                <div class="col l6 s12">
+                    <h5 class="white-text">Contacto</h5>
+                    <p class="grey-text text-lighten-4">Puedes encontrarme en LinkedIn y GitHub.</p>
+                </div>
+                <div class="col l4 offset-l2 s12">
+                    <h5 class="white-text">Enlaces</h5>
+                    <ul>
+                        <li>
+                            <a class="grey-text text-lighten-3" href="https://www.linkedin.com/in/renzodogliotti/">
+                                <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="height: 24px; vertical-align: middle;"> LinkedIn
+                            </a>
+                        </li>
+                        <li>
+                            <a class="grey-text text-lighten-3" href="https://github.com/renzosdd">
+                                <img src="/images/github.png" alt="GitHub" class="responsive-img" style="height: 24px; vertical-align: middle;"> GitHub
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
-    </div>
-
-    <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <h4>Registro</h4>
-            <form id="registerForm" action="/register" method="POST" enctype="multipart/form-data">
-                <div class="input-field">
-                    <input type="text" id="registerUsername" name="username" required>
-                    <label for="registerUsername">Username</label>
-                </div>
-                <div class="input-field">
-                    <input type="text" id="registerSurname" name="surname" required>
-                    <label for="registerSurname">Apellido</label>
-                </div>
-                <div class="input-field">
-                    <input type="email" id="registerEmail" name="email" required>
-                    <label for="registerEmail">Email</label>
-                </div>
-                <div class="input-field">
-                    <input type="date" id="registerDob" name="dob">
-                    <label for="registerDob">Fecha de Nacimiento</label>
-                </div>
-                <div class="file-field input-field">
-                    <div class="btn">
-                        <span>Avatar</span>
-                        <input type="file" name="avatar">
-                    </div>
-                    <div class="file-path-wrapper">
-                        <input class="file-path validate" type="text" placeholder="Subir avatar">
-                    </div>
-                </div>
-                <div class="input-field">
-                    <input type="password" id="registerPassword" name="password" required>
-                    <label for="registerPassword">Password</label>
-                </div>
-                <button class="btn waves-effect waves-light" type="submit">Register</button>
-            </form>
-        </div>
-        <div class="modal-footer">
-            <button class="modal-close btn waves-effect waves-light">Cerrar</button>
-        </div>
-    </div>
-
+    </footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            var elems = document.querySelectorAll('.modal');
-            var instances = M.Modal.init(elems);
+            M.updateTextFields();
         });
     </script>
 </body>
