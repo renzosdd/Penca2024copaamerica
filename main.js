@@ -8,6 +8,7 @@ const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
 const ejs = require('ejs');
+const { isAuthenticated, isAdmin } = require('./middleware/auth');
 
 dotenv.config();
 
@@ -31,8 +32,9 @@ app.use(session({
     store: MongoStore.create({
         mongoUrl: uri,
         collectionName: 'sessions',
-        ttl: 14 * 24 * 60 * 60 // 14 días
-    })
+        ttl: 30 * 60, // 30 minutos en segundos
+    }),
+    cookie: { maxAge: 30 * 60 * 1000 } // 30 minutos en milisegundos
 }));
 
 mongoose.connect(uri, { 
@@ -62,6 +64,9 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', (req, res) => {
+    if (req.session.user) {
+        return res.redirect('/dashboard');
+    }
     res.render('login');
 });
 
@@ -88,7 +93,7 @@ app.post('/login', async (req, res) => {
         }
         req.session.user = user;
         console.log('Session set for user:', req.session.user);
-        res.redirect('/dashboard');
+        res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Login error', err);
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -135,7 +140,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         await score.save();
         req.session.user = user;
         console.log('Usuario registrado y sesión iniciada:', req.session.user);
-        res.status(200).json({ message: 'Registro exitoso' });
+        res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Registration error', err);
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -155,23 +160,9 @@ app.get('/avatar/:username', async (req, res) => {
     }
 });
 
-app.use('/matches', require('./routes/matches'));
-app.use('/predictions', require('./routes/predictions'));
-app.use('/ranking', require('./routes/ranking'));
-
-function isAuthenticated(req, res, next) {
-    if (req.session && req.session.user) {
-        return next();
-    }
-    res.redirect('/');
-}
-
-function isAdmin(req, res, next) {
-    if (req.session && req.session.user && req.session.user.role === 'admin') {
-        return next();
-    }
-    res.status(403).send('Prohibido');
-}
+app.use('/matches', isAuthenticated, require('./routes/matches'));
+app.use('/predictions', isAuthenticated, require('./routes/predictions'));
+app.use('/ranking', isAuthenticated, require('./routes/ranking'));
 
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {

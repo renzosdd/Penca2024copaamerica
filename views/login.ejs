@@ -109,7 +109,7 @@
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    window.location.href = '/dashboard';
+                    window.location.href = result.redirectUrl;
                 } else {
                     document.getElementById('error-message').innerText = result.error;
                 }
@@ -133,7 +133,7 @@
                     const modalInstance = M.Modal.getInstance(document.getElementById('register-modal'));
                     modalInstance.close();
                     setTimeout(() => {
-                        window.location.href = '/dashboard';
+                        window.location.href = result.redirectUrl;
                     }, 1000);
                 } else {
                     document.getElementById('register-error-message').innerText = result.error;
