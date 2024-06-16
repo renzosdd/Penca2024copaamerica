@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             </div>
                             <div class="match-details">
                                 <div class="info">
-                                    <img src="/images/calendar.png" alt="Fecha">
+                                    <img src="/images/cal.png" alt="Fecha">
                                     <p>${match.date}</p>
                                 </div>
                                 <div class="info">
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         </div>
                         <div class="match-details">
                             <div class="info">
-                                <img src="/images/calendar.png" alt="Fecha">
+                                <img src="/images/cal.png" alt="Fecha">
                                 <p>${match.date}</p>
                             </div>
                             <div class="info">

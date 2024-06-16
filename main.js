@@ -63,7 +63,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/dashboard', isAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+    const { user } = req.session;
+    res.render('dashboard', { user });
 });
 
 app.post('/login', async (req, res) => {
