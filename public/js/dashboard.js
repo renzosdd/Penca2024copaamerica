@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const matchDiv = document.createElement('div');
             matchDiv.className = 'col s12 m6';
             matchDiv.innerHTML = `
-                <div class="card match-card ${userPrediction ? 'saved' : ''}">
+                <div class="card match-card ${match.result1 !== undefined && match.result2 !== undefined ? 'saved' : ''}">
                     <div class="card-content">
                         <div class="row">
                             <div class="col s10">
@@ -58,9 +58,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                                         <span>${match.time}</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col s2">
-                                ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon right">` : ''}
                             </div>
                         </div>
                         <div class="match-header">

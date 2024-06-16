@@ -11,7 +11,7 @@
     { "src": "/login", "dest": "/main.js" },
     { "src": "/register", "dest": "/main.js" },
     { "src": "/dashboard", "dest": "/main.js" },
-    { "src": "/dashboard.html", "dest": "/public/dashboard.html" },
+    { "src": "/avatar/(.*)", "dest": "/main.js" },
     { "src": "/(.*)", "dest": "/main.js" }
   ]
 }
