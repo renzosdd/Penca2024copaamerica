@@ -58,13 +58,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                             </div>
                         </div>
                         <div class="match-details">
-                            <div class="info">
-                                <img src="/images/cal.png" alt="Fecha">
-                                <p>${match.date}</p>
-                            </div>
-                            <div class="info">
-                                <img src="/images/clock.png" alt="Hora">
-                                <p>${match.time}</p>
+                            <div class="date-time">
+                                <div class="info">
+                                    <img src="/images/cal.png" alt="Fecha" class="small-icon">
+                                    <p>${match.date}</p>
+                                </div>
+                                <div class="info">
+                                    <img src="/images/clock.png" alt="Hora" class="small-icon">
+                                    <p>${match.time}</p>
+                                </div>
                             </div>
                             ${userRole === 'admin' ? `
                             <form id="matchForm-${match._id}" method="POST" action="/matches/${match._id}">
@@ -101,13 +103,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                             </div>
                         </div>
                         <div class="match-details">
-                            <div class="info">
-                                <img src="/images/cal.png" alt="Fecha">
-                                <p>${match.date}</p>
-                            </div>
-                            <div class="info">
-                                <img src="/images/clock.png" alt="Hora">
-                                <p>${match.time}</p>
+                            <div class="date-time">
+                                <div class="info">
+                                    <img src="/images/cal.png" alt="Fecha" class="small-icon">
+                                    <p>${match.date}</p>
+                                </div>
+                                <div class="info">
+                                    <img src="/images/clock.png" alt="Hora" class="small-icon">
+                                    <p>${match.time}</p>
+                                </div>
                             </div>
                             <form id="predictionForm-${match._id}" method="POST" action="/predictions">
                                 <input type="hidden" name="matchId" value="${match._id}">
@@ -185,6 +189,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                         if (response.ok) {
                             console.log('Resultado enviado exitosamente');
                             M.toast({html: 'Resultado actualizado correctamente!', classes: 'green'});
+                            // Recalcular puntaje de todos los usuarios
+                            await fetch('/ranking/recalculate', { method: 'POST' });
                         } else {
                             console.error('Error:', result.error);
                             M.toast({html: 'Error al actualizar el resultado', classes: 'red'});

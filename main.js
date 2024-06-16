@@ -52,26 +52,13 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-const matchSchema = new mongoose.Schema({
-    team1: String,
-    team2: String,
-    date: String,
-    time: String,
-    result1: Number,
-    result2: Number
-});
-
-const Match = mongoose.model('Match', matchSchema);
-
-const predictionSchema = new mongoose.Schema({
+const scoreSchema = new mongoose.Schema({
     userId: mongoose.Schema.Types.ObjectId,
-    matchId: mongoose.Schema.Types.ObjectId,
-    result1: Number,
-    result2: Number,
-    username: String
+    competition: String,
+    score: { type: Number, default: 0 }
 });
 
-const Prediction = mongoose.model('Prediction', predictionSchema);
+const Score = mongoose.model('Score', scoreSchema);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -149,6 +136,12 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             avatarContentType
         });
         await user.save();
+        // Crear registro de puntaje
+        const score = new Score({
+            userId: user._id,
+            competition: 'Copa America 2024'
+        });
+        await score.save();
         req.session.user = user;
         res.redirect('/dashboard');
     } catch (err) {
@@ -170,67 +163,8 @@ app.get('/avatar/:username', async (req, res) => {
     }
 });
 
-app.get('/matches', async (req, res) => {
-    try {
-        const matches = await Match.find();
-        res.json(matches);
-    } catch (err) {
-        res.status(500).json({ error: 'Error retrieving matches' });
-    }
-});
-
-app.post('/matches/:id', isAdmin, async (req, res) => {
-    try {
-        const { result1, result2 } = req.body;
-        const match = await Match.findById(req.params.id);
-        if (!match) {
-            return res.status(404).json({ error: 'Match not found' });
-        }
-        match.result1 = result1;
-        match.result2 = result2;
-        await match.save();
-        res.json({ message: 'Match result updated' });
-    } catch (err) {
-        res.status(500).json({ error: 'Error updating match result' });
-    }
-});
-
-app.get('/predictions', async (req, res) => {
-    try {
-        const predictions = await Prediction.find();
-        res.json(predictions);
-    } catch (err) {
-        res.status(500).json({ error: 'Error retrieving predictions' });
-    }
-});
-
-app.post('/predictions', async (req, res) => {
-    try {
-        const { matchId, result1, result2 } = req.body;
-        const user = req.session.user;
-        if (!user) {
-            return res.status(401).json({ error: 'Unauthorized' });
-        }
-        let prediction = await Prediction.findOne({ userId: user._id, matchId });
-        if (prediction) {
-            prediction.result1 = result1;
-            prediction.result2 = result2;
-        } else {
-            prediction = new Prediction({
-                userId: user._id,
-                matchId,
-                result1,
-                result2,
-                username: user.username
-            });
-        }
-        await prediction.save();
-        res.json({ message: 'Prediction saved' });
-    } catch (err) {
-        res.status(500).json({ error: 'Error saving prediction' });
-    }
-});
-
+app.use('/matches', require('./routes/matches'));
+app.use('/predictions', require('./routes/predictions'));
 app.use('/ranking', require('./routes/ranking'));
 
 function isAuthenticated(req, res, next) {
