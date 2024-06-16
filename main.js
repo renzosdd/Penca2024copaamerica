@@ -18,6 +18,9 @@ const uri = process.env.MONGODB_URI || 'mongodb+srv://admindbpenca:AdminDbPenca2
 
 console.log('Mongo URI:', uri);
 
+// Solucionar advertencia de `strictQuery`
+mongoose.set('strictQuery', true);
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -39,26 +42,8 @@ mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
         process.exit(1);
     });
 
-const userSchema = new mongoose.Schema({
-    username: String,
-    password: String,
-    surname: String,
-    email: String,
-    dob: Date,
-    avatar: Buffer,
-    avatarContentType: String,
-    role: { type: String, default: 'user' }
-});
-
-const User = mongoose.model('User', userSchema);
-
-const scoreSchema = new mongoose.Schema({
-    userId: mongoose.Schema.Types.ObjectId,
-    competition: String,
-    score: { type: Number, default: 0 }
-});
-
-const Score = mongoose.model('Score', scoreSchema);
+const User = require('./models/User');
+const Score = require('./models/Score');
 
 app.use(express.static(path.join(__dirname, 'public')));
 
