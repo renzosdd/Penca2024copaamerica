@@ -28,14 +28,18 @@
     </header>
     <div class="container">
         <ul class="tabs">
-            <li class="tab col s3"><a href="#fixture" class="active">Fixture</a></li>
-            <li class="tab col s3"><a href="#predictions">Predicciones</a></li>
+            <% if (user.role === 'admin') { %>
+                <li class="tab col s3"><a href="#fixture" class="active">Fixture</a></li>
+            <% } %>
+            <li class="tab col s3"><a href="#predictions" class="<%= user.role !== 'admin' ? 'active' : '' %>">Predicciones</a></li>
             <li class="tab col s3"><a href="#ranking">Ranking</a></li>
         </ul>
         
-        <div id="fixture" class="col s12">
-            <div id="matches-list" class="row"></div>
-        </div>
+        <% if (user.role === 'admin') { %>
+            <div id="fixture" class="col s12">
+                <div id="matches-list" class="row"></div>
+            </div>
+        <% } %>
         <div id="predictions" class="col s12">
             <div id="predictions-list" class="row"></div>
         </div>

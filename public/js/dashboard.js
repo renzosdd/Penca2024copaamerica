@@ -21,57 +21,66 @@ document.addEventListener('DOMContentLoaded', async function() {
     };
 
     // Cargar los partidos para el fixture
-    try {
-        const matchesResponse = await fetch('/matches');
-        matches = await matchesResponse.json(); // Asignar valor a la variable matches
-        console.log('Matches fetched successfully');
-        const matchesList = document.getElementById('matches-list');
-        matchesList.innerHTML = ''; // Limpiar cualquier contenido previo
-        const predictionsResponse = await fetch('/predictions');
-        const predictions = await predictionsResponse.json();
-        const userPredictions = predictions.filter(prediction => prediction.username === username);
-        
-        matches.forEach(match => {
-            const team1Flag = normalizeName(match.team1); // Normalizar el nombre del equipo
-            const team2Flag = normalizeName(match.team2); // Normalizar el nombre del equipo
-            const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
+    if (userRole === 'admin') {
+        try {
+            const matchesResponse = await fetch('/matches');
+            matches = await matchesResponse.json(); // Asignar valor a la variable matches
+            console.log('Matches fetched successfully');
+            const matchesList = document.getElementById('matches-list');
+            matchesList.innerHTML = ''; // Limpiar cualquier contenido previo
+            const predictionsResponse = await fetch('/predictions');
+            const predictions = await predictionsResponse.json();
+            const userPredictions = predictions.filter(prediction => prediction.username === username);
 
-            const matchDiv = document.createElement('div');
-            matchDiv.className = 'col s12 m6';
-            matchDiv.innerHTML = `
-                <div class="card match-card">
-                    <div class="card-content">
-                        <div class="match-header">
-                            <div class="team">
-                                <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
-                                <span class="team-name">${match.team1}</span>
-                            </div>
-                            <span class="vs">vs</span>
-                            <div class="team">
-                                <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
-                                <span class="team-name">${match.team2}</span>
-                            </div>
-                        </div>
-                        <div class="match-details">
-                            <p>Fecha: ${match.date} Hora: ${match.time}</p>
-                            <form id="predictionForm-${match._id}" method="POST" action="/predictions">
-                                <input type="hidden" name="matchId" value="${match._id}">
-                                <div class="input-field inline">
-                                    <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" required>
-                                    <span>-</span>
-                                    <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" required>
-                                    <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
+            matches.forEach(match => {
+                const team1Flag = normalizeName(match.team1); // Normalizar el nombre del equipo
+                const team2Flag = normalizeName(match.team2); // Normalizar el nombre del equipo
+                const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
+
+                const matchDiv = document.createElement('div');
+                matchDiv.className = 'col s12 m6';
+                matchDiv.innerHTML = `
+                    <div class="card match-card ${userPrediction ? 'saved' : ''}">
+                        <div class="card-content">
+                            <div class="match-header">
+                                <div class="team">
+                                    <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
+                                    <span class="team-name">${match.team1}</span>
                                 </div>
-                            </form>
-                            ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
+                                <span class="vs">vs</span>
+                                <div class="team">
+                                    <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
+                                    <span class="team-name">${match.team2}</span>
+                                </div>
+                            </div>
+                            <div class="match-details">
+                                <div class="info">
+                                    <img src="/images/calendar.png" alt="Fecha">
+                                    <p>${match.date}</p>
+                                </div>
+                                <div class="info">
+                                    <img src="/images/clock.png" alt="Hora">
+                                    <p>${match.time}</p>
+                                </div>
+                                <form id="predictionForm-${match._id}" method="POST" action="/predictions">
+                                    <input type="hidden" name="matchId" value="${match._id}">
+                                    <div class="input-field inline">
+                                        <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" required>
+                                        <span>-</span>
+                                        <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" required>
+                                        <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
+                                    </div>
+                                </form>
+                                ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            matchesList.appendChild(matchDiv);
-        });
-    } catch (error) {
-        console.error('Error al cargar los partidos:', error);
+                `;
+                matchesList.appendChild(matchDiv);
+            });
+        } catch (error) {
+            console.error('Error al cargar los partidos:', error);
+        }
     }
 
     // Cargar las predicciones del usuario actual
@@ -90,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const predictionDiv = document.createElement('div');
             predictionDiv.className = 'col s12 m6';
             predictionDiv.innerHTML = `
-                <div class="card match-card">
+                <div class="card match-card ${userPrediction ? 'saved' : ''}">
                     <div class="card-content">
                         <div class="match-header">
                             <div class="team">
@@ -104,7 +113,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                             </div>
                         </div>
                         <div class="match-details">
-                            <p>Fecha: ${match.date} Hora: ${match.time}</p>
+                            <div class="info">
+                                <img src="/images/calendar.png" alt="Fecha">
+                                <p>${match.date}</p>
+                            </div>
+                            <div class="info">
+                                <img src="/images/clock.png" alt="Hora">
+                                <p>${match.time}</p>
+                            </div>
                             <form id="predictionForm-${match._id}" method="POST" action="/predictions">
                                 <input type="hidden" name="matchId" value="${match._id}">
                                 <div class="input-field inline">
@@ -139,12 +155,15 @@ document.addEventListener('DOMContentLoaded', async function() {
                         M.toast({html: 'Predicción actualizada correctamente!', classes: 'green'});
                         // Actualizar el tick verde al guardar la predicción
                         const matchCard = form.closest('.card');
-                        if (matchCard && !matchCard.querySelector('.tick-icon')) {
-                            const tickIcon = document.createElement('img');
-                            tickIcon.src = '/images/tick.png';
-                            tickIcon.alt = 'Predicción guardada';
-                            tickIcon.className = 'tick-icon';
-                            matchCard.querySelector('.match-details').appendChild(tickIcon);
+                        if (matchCard) {
+                            matchCard.classList.add('saved');
+                            if (!matchCard.querySelector('.tick-icon')) {
+                                const tickIcon = document.createElement('img');
+                                tickIcon.src = '/images/tick.png';
+                                tickIcon.alt = 'Predicción guardada';
+                                tickIcon.className = 'tick-icon';
+                                matchCard.querySelector('.match-details').appendChild(tickIcon);
+                            }
                         }
                     } else {
                         console.error('Error:', result.error);
