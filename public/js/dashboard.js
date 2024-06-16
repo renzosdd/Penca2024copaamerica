@@ -81,8 +81,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                                     <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required>
                                     <span>-</span>
                                     <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required>
-                                    <button class="btn waves-effect waves-light blue darken-3" type="submit">Guardar Resultado</button>
                                 </div>
+                                <button class="btn waves-effect waves-light blue darken-3" type="submit">Guardar Resultado</button>
                             </form>` : `
                             <p>Resultado: ${match.result1 !== undefined ? match.result1 : '-'} - ${match.result2 !== undefined ? match.result2 : '-'}</p>`}
                         </div>
@@ -132,8 +132,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                                     <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" required>
                                     <span>-</span>
                                     <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" required>
-                                    <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
                                 </div>
+                                <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
                             </form>
                         </div>
                     </div>

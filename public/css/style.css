@@ -3,18 +3,18 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    background: linear-gradient(to right, #ff6e7f, #bfe9ff);
+    background: #f3f4f6;
     color: #444;
 }
 
 header {
     background: #004d40;
     padding: 10px 0;
+    text-align: center;
 }
 
 header img {
-    height: 50px;
-    margin-left: 20px;
+    height: 60px;
 }
 
 nav {
@@ -22,7 +22,7 @@ nav {
 }
 
 nav .brand-logo img {
-    height: 50px;
+    height: 60px;
     padding: 5px 10px;
 }
 
@@ -33,7 +33,7 @@ nav .right img {
 
 .footer {
     background: #004d40;
-    padding: 20px 0;
+    padding: 10px 0;
     text-align: center;
     color: #fff;
 }
@@ -41,6 +41,14 @@ nav .right img {
 .footer a {
     color: #fff;
     margin: 0 10px;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+}
+
+.footer img {
+    max-width: 100%;
+    height: auto;
 }
 
 .small-icon {
@@ -59,6 +67,7 @@ nav .right img {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
     transition: border 0.3s ease;
+    padding: 15px;
 }
 
 .match-card.saved {
@@ -111,7 +120,7 @@ nav .right img {
 }
 
 .card-content {
-    padding: 20px;
+    padding: 10px;
 }
 
 form {
@@ -187,4 +196,30 @@ form {
 
 .right {
     float: right;
+}
+
+.match-details {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.match-details .input-field.inline {
+    margin: 0 10px;
+}
+
+.match-details button {
+    margin-top: 10px;
+    width: 100%;
+}
+
+@media (min-width: 600px) {
+    .match-details {
+        flex-direction: row;
+    }
+
+    .match-details button {
+        width: auto;
+    }
 }
