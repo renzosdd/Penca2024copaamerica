@@ -7,7 +7,7 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
-const ejs = require('ejs');  // Importar EJS
+const ejs = require('ejs');
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3000;
 
 const uri = process.env.MONGODB_URI || 'mongodb+srv://admindbpenca:AdminDbPenca2024Ren@pencacopaamerica2024.yispiqt.mongodb.net/penca_copa_america?retryWrites=true&w=majority&appName=PencaCopaAmerica2024';
 
-console.log('Mongo URI:', uri);  // Verifica que la URI se está leyendo correctamente
+console.log('Mongo URI:', uri);
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -51,6 +51,27 @@ const userSchema = new mongoose.Schema({
 });
 
 const User = mongoose.model('User', userSchema);
+
+const matchSchema = new mongoose.Schema({
+    team1: String,
+    team2: String,
+    date: String,
+    time: String,
+    result1: Number,
+    result2: Number
+});
+
+const Match = mongoose.model('Match', matchSchema);
+
+const predictionSchema = new mongoose.Schema({
+    userId: mongoose.Schema.Types.ObjectId,
+    matchId: mongoose.Schema.Types.ObjectId,
+    result1: Number,
+    result2: Number,
+    username: String
+});
+
+const Prediction = mongoose.model('Prediction', predictionSchema);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -149,6 +170,69 @@ app.get('/avatar/:username', async (req, res) => {
     }
 });
 
+app.get('/matches', async (req, res) => {
+    try {
+        const matches = await Match.find();
+        res.json(matches);
+    } catch (err) {
+        res.status(500).json({ error: 'Error retrieving matches' });
+    }
+});
+
+app.post('/matches/:id', isAdmin, async (req, res) => {
+    try {
+        const { result1, result2 } = req.body;
+        const match = await Match.findById(req.params.id);
+        if (!match) {
+            return res.status(404).json({ error: 'Match not found' });
+        }
+        match.result1 = result1;
+        match.result2 = result2;
+        await match.save();
+        res.json({ message: 'Match result updated' });
+    } catch (err) {
+        res.status(500).json({ error: 'Error updating match result' });
+    }
+});
+
+app.get('/predictions', async (req, res) => {
+    try {
+        const predictions = await Prediction.find();
+        res.json(predictions);
+    } catch (err) {
+        res.status(500).json({ error: 'Error retrieving predictions' });
+    }
+});
+
+app.post('/predictions', async (req, res) => {
+    try {
+        const { matchId, result1, result2 } = req.body;
+        const user = req.session.user;
+        if (!user) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        let prediction = await Prediction.findOne({ userId: user._id, matchId });
+        if (prediction) {
+            prediction.result1 = result1;
+            prediction.result2 = result2;
+        } else {
+            prediction = new Prediction({
+                userId: user._id,
+                matchId,
+                result1,
+                result2,
+                username: user.username
+            });
+        }
+        await prediction.save();
+        res.json({ message: 'Prediction saved' });
+    } catch (err) {
+        res.status(500).json({ error: 'Error saving prediction' });
+    }
+});
+
+app.use('/ranking', require('./routes/ranking'));
+
 function isAuthenticated(req, res, next) {
     if (req.session && req.session.user) {
         return next();
@@ -162,9 +246,6 @@ function isAdmin(req, res, next) {
     }
     res.status(403).send('Forbidden');
 }
-
-app.use('/matches', require('./routes/matches'));
-app.use('/predictions', require('./routes/predictions'));
 
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {
