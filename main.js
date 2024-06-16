@@ -7,6 +7,7 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
+const ejs = require('ejs');  // Importar EJS
 
 dotenv.config();
 
@@ -57,6 +58,10 @@ app.use((req, res, next) => {
     res.locals.user = req.session.user;
     next();
 });
+
+// Configurar EJS como motor de vistas
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
