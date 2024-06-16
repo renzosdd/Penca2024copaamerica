@@ -2,7 +2,8 @@ body {
     display: flex;
     min-height: 100vh;
     flex-direction: column;
-    background: #fafafa;
+    background: linear-gradient(to right, #d3cce3, #e9e4f0); /* Gradiente de fondo suave */
+    font-family: 'Roboto', sans-serif;
 }
 
 .container {
@@ -88,12 +89,25 @@ header {
 
 .page-footer {
     background-color: #0d47a1;
+    padding-top: 20px;
 }
 
-.page-footer .white-text {
-    color: white !important;
+.page-footer .container {
+    display: flex;
+    justify-content: center;
 }
 
-.page-footer .grey-text.text-lighten-3 {
-    color: #b0bec5 !important;
+.page-footer ul {
+    list-style: none;
+    padding: 0;
+}
+
+.page-footer ul li {
+    display: inline-block;
+    margin: 0 10px;
+}
+
+.page-footer ul li a img {
+    height: 24px;
+    vertical-align: middle;
 }
