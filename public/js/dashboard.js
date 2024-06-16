@@ -46,6 +46,23 @@ document.addEventListener('DOMContentLoaded', async function() {
             matchDiv.innerHTML = `
                 <div class="card match-card ${userPrediction ? 'saved' : ''}">
                     <div class="card-content">
+                        <div class="row">
+                            <div class="col s10">
+                                <div class="date-time">
+                                    <div class="info">
+                                        <img src="/images/cal.png" alt="Fecha" class="small-icon">
+                                        <span>${match.date}</span>
+                                    </div>
+                                    <div class="info">
+                                        <img src="/images/clock.png" alt="Hora" class="small-icon">
+                                        <span>${match.time}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col s2">
+                                ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon right">` : ''}
+                            </div>
+                        </div>
                         <div class="match-header">
                             <div class="team">
                                 <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
@@ -58,16 +75,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                             </div>
                         </div>
                         <div class="match-details">
-                            <div class="date-time">
-                                <div class="info">
-                                    <img src="/images/cal.png" alt="Fecha" class="small-icon">
-                                    <p>${match.date}</p>
-                                </div>
-                                <div class="info">
-                                    <img src="/images/clock.png" alt="Hora" class="small-icon">
-                                    <p>${match.time}</p>
-                                </div>
-                            </div>
                             ${userRole === 'admin' ? `
                             <form id="matchForm-${match._id}" method="POST" action="/matches/${match._id}">
                                 <div class="input-field inline">
@@ -78,7 +85,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 </div>
                             </form>` : `
                             <p>Resultado: ${match.result1 !== undefined ? match.result1 : '-'} - ${match.result2 !== undefined ? match.result2 : '-'}</p>`}
-                            ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
                         </div>
                     </div>
                 </div>
@@ -91,6 +97,23 @@ document.addEventListener('DOMContentLoaded', async function() {
             predictionDiv.innerHTML = `
                 <div class="card match-card ${userPrediction ? 'saved' : ''}">
                     <div class="card-content">
+                        <div class="row">
+                            <div class="col s10">
+                                <div class="date-time">
+                                    <div class="info">
+                                        <img src="/images/cal.png" alt="Fecha" class="small-icon">
+                                        <span>${match.date}</span>
+                                    </div>
+                                    <div class="info">
+                                        <img src="/images/clock.png" alt="Hora" class="small-icon">
+                                        <span>${match.time}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col s2">
+                                ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon right">` : ''}
+                            </div>
+                        </div>
                         <div class="match-header">
                             <div class="team">
                                 <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
@@ -103,16 +126,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                             </div>
                         </div>
                         <div class="match-details">
-                            <div class="date-time">
-                                <div class="info">
-                                    <img src="/images/cal.png" alt="Fecha" class="small-icon">
-                                    <p>${match.date}</p>
-                                </div>
-                                <div class="info">
-                                    <img src="/images/clock.png" alt="Hora" class="small-icon">
-                                    <p>${match.time}</p>
-                                </div>
-                            </div>
                             <form id="predictionForm-${match._id}" method="POST" action="/predictions">
                                 <input type="hidden" name="matchId" value="${match._id}">
                                 <div class="input-field inline">
@@ -122,7 +135,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                                     <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
                                 </div>
                             </form>
-                            ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon">` : ''}
                         </div>
                     </div>
                 </div>
@@ -155,8 +167,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 const tickIcon = document.createElement('img');
                                 tickIcon.src = '/images/tick.png';
                                 tickIcon.alt = 'Predicción guardada';
-                                tickIcon.className = 'tick-icon';
-                                matchCard.querySelector('.match-details').appendChild(tickIcon);
+                                tickIcon.className = 'tick-icon right';
+                                matchCard.querySelector('.row').appendChild(tickIcon);
                             }
                         }
                     } else {

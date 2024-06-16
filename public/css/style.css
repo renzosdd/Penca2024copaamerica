@@ -1,140 +1,190 @@
-body {
-    display: flex;
-    min-height: 100vh;
-    flex-direction: column;
-    background: linear-gradient(135deg, #71b7e6, #9b59b6); /* Gradiente de fondo más atractivo */
-    font-family: 'Roboto', sans-serif;
-}
+/* Import Materialize CSS */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css');
 
-.container {
-    flex: 1 0 auto;
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(to right, #ff6e7f, #bfe9ff);
+    color: #444;
 }
 
 header {
-    margin-bottom: 20px;
+    background: #004d40;
+    padding: 10px 0;
 }
 
-.brand-logo img {
+header img {
     height: 50px;
+    margin-left: 20px;
 }
 
-.nav-wrapper ul li a img {
+nav {
+    background: #004d40;
+}
+
+nav .brand-logo img {
     height: 50px;
-    width: 50px;
+    padding: 5px 10px;
+}
+
+nav .right img {
+    height: 40px;
     border-radius: 50%;
-    object-fit: cover;
 }
 
-.tabs .tab a {
-    color: #0d47a1;
+.footer {
+    background: #004d40;
+    padding: 20px 0;
+    text-align: center;
+    color: #fff;
 }
 
-.tabs .tab a.active {
-    color: #0d47a1;
-    border-bottom: 2px solid #0d47a1;
+.footer a {
+    color: #fff;
+    margin: 0 10px;
 }
 
-.tabs .indicator {
-    background-color: #0d47a1;
+.small-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 5px;
+}
+
+.tick-icon {
+    width: 20px;
+    height: 20px;
 }
 
 .match-card {
-    background-color: white;
-    border: 1px solid #e0e0e0;
     border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
-    padding: 20px;
-    transition: border-color 0.3s;
+    transition: border 0.3s ease;
 }
 
 .match-card.saved {
-    border-color: green; /* Borde verde para las predicciones guardadas */
+    border: 2px solid #4caf50;
 }
 
 .match-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 15px;
 }
 
-.team {
+.match-header .team {
     display: flex;
     align-items: center;
 }
 
-.team img {
+.match-header .team img {
     width: 32px;
     height: 32px;
     margin-right: 10px;
 }
 
-.team .team-name {
+.match-header .vs {
     font-weight: bold;
     font-size: 1.2em;
 }
 
-.match-details {
+.date-time {
     display: flex;
-    flex-direction: column;
+    justify-content: flex-start;
     align-items: center;
-    text-align: center;
-    font-size: 1.2em;
-    position: relative;
 }
 
-.match-details img {
+.date-time .info {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+}
+
+.date-time .info img {
     margin-right: 5px;
 }
 
-.match-details .info {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.result-input {
-    width: 40px;
+.input-field.inline input {
+    width: 50px;
+    margin-right: 5px;
     text-align: center;
-    margin-right: 10px;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    padding: 5px;
 }
 
-.result-input:focus {
-    border: 1px solid #0d47a1;
+.card-content {
+    padding: 20px;
 }
 
-.tick-icon {
-    width: 24px;
-    height: 24px;
-    position: absolute;
-    top: 10px;
-    right: 10px;
+form {
+    margin: 0;
 }
 
-.page-footer {
-    background-color: #0d47a1;
-    padding-top: 20px;
+.tabs .tab a {
+    color: #004d40;
 }
 
-.page-footer .container {
-    display: flex;
-    justify-content: center;
+.tabs .tab a.active {
+    background-color: #b2dfdb;
+    color: #004d40;
 }
 
-.page-footer ul {
-    list-style: none;
-    padding: 0;
+.tabs .indicator {
+    background-color: #004d40;
 }
 
-.page-footer ul li {
-    display: inline-block;
-    margin: 0 10px;
+.btn {
+    background-color: #004d40;
+    border-radius: 25px;
 }
 
-.page-footer ul li a img {
-    height: 24px;
-    vertical-align: middle;
+.btn:hover {
+    background-color: #00332c;
+}
+
+.table thead th {
+    background-color: #004d40;
+    color: #fff;
+}
+
+.table tbody tr:hover {
+    background-color: #e0f2f1;
+}
+
+.dropdown-content li>a, .dropdown-content li>span {
+    color: #004d40;
+}
+
+.dropdown-content li>a:hover, .dropdown-content li>span:hover {
+    background-color: #b2dfdb;
+}
+
+/* Login Page Styles */
+.login-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.login-container h5 {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.login-container .input-field {
+    margin-bottom: 20px;
+}
+
+.login-container .btn {
+    width: 100%;
+}
+
+/* General Styles */
+.center-align {
+    text-align: center;
+}
+
+.right {
+    float: right;
 }

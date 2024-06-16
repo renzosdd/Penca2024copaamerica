@@ -4,66 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Copa América 2024</title>
+    <link rel="stylesheet" href="/css/style.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
-    <link href="/css/style.css" rel="stylesheet">
 </head>
 <body data-role="<%= user.role %>" data-username="<%= user.username %>">
+
     <header>
-        <nav class="blue darken-3">
-            <div class="nav-wrapper container">
-                <a href="#" class="brand-logo"><img src="/images/Logo.png" alt="Logo" class="responsive-img" style="height: 50px;"></a>
-                <ul class="right">
-                    <li>
-                        <a class="dropdown-trigger" href="#!" data-target="user-dropdown">
-                            <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img" style="height: 50px;">
-                        </a>
-                    </li>
-                </ul>
-                <ul id="user-dropdown" class="dropdown-content">
-                    <li><a href="#" id="logout-button">Cerrar sesión</a></li>
-                </ul>
-            </div>
-        </nav>
+        <img src="/images/Logo.png" alt="Logo">
     </header>
-    <div class="container">
-        <ul class="tabs">
-            <% if (user.role === 'admin') { %>
-                <li class="tab col s3"><a href="#fixture" class="active">Fixture</a></li>
-            <% } %>
-            <li class="tab col s3"><a href="#predictions" class="<%= user.role !== 'admin' ? 'active' : '' %>">Predicciones</a></li>
-            <li class="tab col s3"><a href="#ranking">Ranking</a></li>
-        </ul>
-        
-        <% if (user.role === 'admin') { %>
-            <div id="fixture" class="col s12">
-                <div id="matches-list" class="row"></div>
-            </div>
-        <% } %>
-        <div id="predictions" class="col s12">
-            <div id="predictions-list" class="row"></div>
-        </div>
-        <div id="ranking" class="col s12">
-            <!-- Contenido para ranking -->
-        </div>
-    </div>
-    <footer class="page-footer blue darken-3">
-        <div class="container">
-            <ul>
-                <li>
-                    <a href="https://www.linkedin.com/in/renzodogliotti/">
-                        <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img">
-                    </a>
-                </li>
-                <li>
-                    <a href="https://github.com/renzosdd">
-                        <img src="/images/github.png" alt="GitHub" class="responsive-img">
-                    </a>
-                </li>
+
+    <nav>
+        <div class="nav-wrapper">
+            <a href="#!" class="brand-logo"><img src="/images/Logo.png" alt="Logo"></a>
+            <ul class="right hide-on-med-and-down">
+                <li><a href="#"><img src="/avatar/<%= user.username %>" alt="Avatar"></a></li>
+                <li><a href="#!" id="logout-button">Cerrar Sesión</a></li>
             </ul>
         </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+                <ul class="tabs">
+                    <li class="tab col s4"><a href="#matches" class="active">FIXTURE</a></li>
+                    <li class="tab col s4"><a href="#predictions">PREDICCIONES</a></li>
+                    <li class="tab col s4"><a href="#ranking">RANKING</a></li>
+                </ul>
+            </div>
+
+            <div id="matches" class="col s12">
+                <div class="row" id="matches-list"></div>
+            </div>
+
+            <div id="predictions" class="col s12">
+                <div class="row" id="predictions-list"></div>
+            </div>
+
+            <div id="ranking" class="col s12">
+                <div class="row" id="ranking-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <a href="https://www.linkedin.com/in/renzodogliotti/" target="_blank"><img src="/images/linkedin.png" alt="LinkedIn"></a>
+        <a href="https://github.com/renzosdd" target="_blank"><img src="/images/github.png" alt="GitHub"></a>
     </footer>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
     <script src="/js/dashboard.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>
