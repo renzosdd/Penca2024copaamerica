@@ -81,6 +81,7 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Unauthorized' });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
+        console.log('Password match:', passwordMatch);
         if (!passwordMatch) {
             console.log('Invalid password');
             return res.status(401).json({ error: 'Unauthorized' });
