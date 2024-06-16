@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema({
     dob: { type: Date, required: true },
     avatar: Buffer,
     avatarContentType: String,
-    role: { type: String, default: 'user' }
+    role: { type: String, default: 'user' },
+    valid: { type: Boolean, default: true }
 });
 
 module.exports = mongoose.model('User', userSchema);

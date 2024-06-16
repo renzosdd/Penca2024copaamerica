@@ -52,6 +52,39 @@ mongoose.connect(uri, {
 const User = require('./models/User');
 const Score = require('./models/Score');
 
+// Crear o actualizar el usuario administrador
+const ensureAdminUser = async () => {
+    const adminData = {
+        username: 'admin',
+        password: 'Admin12345', // Asegúrate de usar una contraseña segura en producción
+        surname: 'Admin',
+        email: 'admin@example.com',
+        dob: new Date('2000-01-01'),
+        role: 'admin',
+        valid: true
+    };
+
+    try {
+        let admin = await User.findOne({ username: 'admin' });
+        if (!admin) {
+            const hashedPassword = await bcrypt.hash(adminData.password, 10);
+            adminData.password = hashedPassword;
+            admin = new User(adminData);
+            await admin.save();
+            console.log('Admin user created');
+        } else {
+            const updateData = { ...adminData };
+            delete updateData.password; // No actualizar la contraseña si ya existe el admin
+            await User.updateOne({ _id: admin._id }, updateData);
+            console.log('Admin user updated');
+        }
+    } catch (err) {
+        console.error('Error ensuring admin user', err);
+    }
+};
+
+ensureAdminUser();
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
@@ -129,7 +162,8 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             email,
             dob,
             avatar,
-            avatarContentType
+            avatarContentType,
+            valid: true // Asignar campo valid a true
         });
         await user.save();
         // Crear registro de puntaje
