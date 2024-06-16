@@ -35,7 +35,12 @@ app.use(session({
     })
 }));
 
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(uri, { 
+    useNewUrlParser: true, 
+    useUnifiedTopology: true,
+    connectTimeoutMS: 60000,
+    socketTimeoutMS: 60000
+})
     .then(() => console.log('Database connection established'))
     .catch(err => {
         console.error('Failed to connect to the database. Exiting now...', err);
@@ -57,7 +62,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    res.render('login');
 });
 
 app.get('/dashboard', isAuthenticated, (req, res) => {
