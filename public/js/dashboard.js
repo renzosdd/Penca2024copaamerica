@@ -27,9 +27,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Función para formatear la fecha en formato DD/MM/YYYY
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses son de 0 a 11
-        const year = date.getFullYear();
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Los meses son de 0 a 11
+        const year = date.getUTCFullYear();
         return `${day}/${month}/${year}`;
     };
 
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
 
             const formattedDate = formatDate(match.date);
-            const matchDate = new Date(`${match.date}T${match.time}`);
+            const matchDate = new Date(`${match.date}T${match.time}:00.000Z`);
             const now = new Date();
             const thirtyMinutesBefore = new Date(matchDate.getTime() - 30 * 60000);
             const editable = now < thirtyMinutesBefore && matchDate > now;
