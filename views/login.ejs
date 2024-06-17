@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,15 +11,15 @@
 <body>
 
     <header>
-        <nav class="header">
-            <div class="container">
-                <a href="#" class="brand-logo logo"><img src="/images/Logo.png" alt="Logo" class="responsive-img"></a>
+        <nav class="blue darken-3">
+            <div class="nav-wrapper container">
+                <a href="#" class="brand-logo"><img src="/images/Logo.png" alt="Logo" class="responsive-img" style="height: 60px;"></a>
             </div>
         </nav>
     </header>
 
     <div class="container login-container">
-        <h5>Login</h5>
+        <h5>Iniciar sesión</h5>
         <form id="login-form" action="/login" method="POST">
             <div class="input-field">
                 <input id="username" type="text" name="username" required>
@@ -29,7 +29,7 @@
                 <input id="password" type="password" name="password" required>
                 <label for="password">Contraseña</label>
             </div>
-            <button class="btn waves-effect waves-light" type="submit">Login</button>
+            <button class="btn waves-effect waves-light blue darken-3" type="submit">Iniciar sesión</button>
         </form>
         <div class="center-align">
             <a href="#register-modal" class="btn-flat modal-trigger">Registrar</a>
@@ -56,7 +56,7 @@
                 </div>
                 <div class="input-field">
                     <input type="email" id="email" name="email" required>
-                    <label for="email">Email *</label>
+                    <label for="email">Correo electrónico *</label>
                 </div>
                 <div class="input-field">
                     <input type="text" id="surname" name="surname">
@@ -75,27 +75,24 @@
                         <input class="file-path validate" type="text">
                     </div>
                 </div>
-                <button class="btn waves-effect waves-light" type="submit">Registrarse</button>
+                <button class="btn waves-effect waves-light blue darken-3" type="submit">Registrarse</button>
             </form>
         </div>
     </div>
     
-    <footer class="footer">
-        <ul class="footer-links">
-            <li>
-                <a href="https://www.linkedin.com/in/renzodogliotti/">
-                    <img src="/images/linkedin.png" alt="LinkedIn">
-                </a>
-            </li>
-            <li>
-                <a href="https://github.com/renzosdd">
-                    <img src="/images/github.png" alt="GitHub">
-                </a>
-            </li>
-        </ul>
+
+    <footer class="page-footer blue darken-3">
+        <div class="container center-align">
+            <a href="https://www.linkedin.com/in/renzodogliotti/">
+                <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;">
+            </a>
+            <a href="https://github.com/renzosdd">
+                <img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;">
+            </a>
+        </div>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <script src="/js/login.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 </body>
 </html>

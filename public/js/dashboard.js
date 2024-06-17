@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="card match-card ${match.result1 !== undefined && match.result2 !== undefined ? 'saved' : ''}">
                     <div class="card-content">
                         <div class="row">
-                            <div class="col s10">
+                            <div class="col s12">
                                 <div class="date-time">
                                     <div class="info">
                                         <img src="/images/cal.png" alt="Fecha" class="small-icon">
@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                         <img src="/images/clock.png" alt="Hora" class="small-icon">
                                         <span>${match.time}</span>
                                     </div>
+                                    ${match.result1 !== undefined && match.result2 !== undefined ? '<img src="/images/tick.png" alt="Resultado guardado" class="tick-icon right">' : ''}
                                 </div>
                             </div>
                         </div>
@@ -84,13 +85,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
                                 <span class="team-name">${match.team1}</span>
                             </div>
-                            <div class="input-field inline">
-                                <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
-                            </div>
                             <span class="vs">vs</span>
-                            <div class="input-field inline">
-                                <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
-                            </div>
                             <div class="team">
                                 <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
                                 <span class="team-name">${match.team2}</span>
@@ -100,8 +95,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                             ${userRole === 'admin' ? `
                             <form id="matchForm-${match._id}" method="POST" action="/matches/update">
                                 <input type="hidden" name="matchId" value="${match._id}">
+                                <div class="input-field inline">
+                                    <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required min="0">
+                                    <span>-</span>
+                                    <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required min="0">
+                                </div>
                                 <button class="btn waves-effect waves-light blue darken-3" type="submit">Guardar Resultado</button>
-                            </form>` : ''}
+                            </form>` : `
+                            <p>Resultado: ${match.result1 !== undefined ? match.result1 : '-'} - ${match.result2 !== undefined ? match.result2 : '-'}</p>`}
                         </div>
                     </div>
                 </div>
@@ -115,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="card match-card ${userPrediction ? 'saved' : ''}">
                     <div class="card-content">
                         <div class="row">
-                            <div class="col s10">
+                            <div class="col s12">
                                 <div class="date-time">
                                     <div class="info">
                                         <img src="/images/cal.png" alt="Fecha" class="small-icon">
@@ -125,10 +126,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                                         <img src="/images/clock.png" alt="Hora" class="small-icon">
                                         <span>${match.time}</span>
                                     </div>
+                                    ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon right">` : ''}
                                 </div>
-                            </div>
-                            <div class="col s2">
-                                ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon right">` : ''}
                             </div>
                         </div>
                         <div class="match-header">
@@ -136,13 +135,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
                                 <span class="team-name">${match.team1}</span>
                             </div>
-                            <div class="input-field inline">
-                                <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required min="0">
-                            </div>
                             <span class="vs">vs</span>
-                            <div class="input-field inline">
-                                <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required min="0">
-                            </div>
                             <div class="team">
                                 <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
                                 <span class="team-name">${match.team2}</span>
@@ -151,6 +144,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="match-details">
                             <form id="predictionForm-${match._id}" method="POST" action="/predictions">
                                 <input type="hidden" name="matchId" value="${match._id}">
+                                <div class="input-field inline">
+                                    <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required min="0">
+                                    <span>-</span>
+                                    <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required min="0">
+                                </div>
                                 <button class="btn waves-effect waves-light blue darken-3" type="submit" ${!editable ? 'disabled' : ''}>Enviar Predicción</button>
                             </form>
                         </div>
