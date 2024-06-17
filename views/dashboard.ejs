@@ -9,27 +9,23 @@
     <link href="/css/style.css" rel="stylesheet">
 </head>
 <body data-role="<%= user.role %>" data-username="<%= user.username %>">
-    <header>
-        <nav class="blue darken-3">
-            <div class="nav-wrapper container">
-                <a href="#" class="brand-logo"><img src="/images/Logo.png" alt="Logo" class="responsive-img" style="height: 50px;"></a>
-                <ul class="right">
-                    <li>
-                        <a href="#" data-target="info-modal" class="modal-trigger">
-                            <i class="material-icons">info</i>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-trigger" href="#!" data-target="user-dropdown">
-                            <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img" style="height: 50px;">
-                        </a>
-                    </li>
-                </ul>
-                <ul id="user-dropdown" class="dropdown-content">
-                    <li><a href="#" id="logout-button">Cerrar sesión</a></li>
-                </ul>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <a href="#"><img src="/images/Logo.png" alt="Logo" class="responsive-img"></a>
             </div>
-        </nav>
+            <div class="user-menu right">
+                <a href="#" data-target="info-modal" class="modal-trigger info-icon">
+                    <img src="/images/info.png" alt="Info" class="circle responsive-img">
+                </a>
+                <a class="dropdown-trigger" href="#!" data-target="user-dropdown">
+                    <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img">
+                </a>
+            </div>
+            <ul id="user-dropdown" class="dropdown-content">
+                <li><a href="#" id="logout-button">Cerrar sesión</a></li>
+            </ul>
+        </div>
     </header>
     <div class="container">
         <ul class="tabs">
@@ -48,9 +44,9 @@
             <div id="ranking-list" class="row"></div>
         </div>
     </div>
-    <footer class="page-footer blue darken-3">
+    <footer class="footer">
         <div class="container">
-            <ul>
+            <ul class="footer-links">
                 <li>
                     <a href="https://www.linkedin.com/in/renzodogliotti/">
                         <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img">
@@ -70,8 +66,9 @@
         <div class="modal-content">
             <h4>Reglas de la Penca</h4>
             <p>
+                Aquí puedes incluir las reglas de la penca. 
                 - Resultado exacto da 3 puntos.
-                - Pronosticar resultado (ganador o empate) da 1 punto.
+                - Indicar resultado (ganador o empate) da 1 punto.
                 - Adivinar la cantidad de goles de uno de los dos equipos da 1 punto adicional.
             </p>
         </div>

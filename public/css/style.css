@@ -3,50 +3,68 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    background: linear-gradient(to right, #004d99, #ffcc00, #ff3300); /* Colores de la Copa América */
+    background: #f9f9f9;
     color: #444;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-header {
-    background: #004d99; /* Azul oscuro */
+.header {
+    background: #002f6c; /* Azul oscuro */
     padding: 10px 0;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-header img {
+.header .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo img {
     height: 60px;
 }
 
-nav {
-    background: transparent; /* Nav transparente para que tome el color del header */
+.user-menu {
+    display: flex;
+    align-items: center;
 }
 
-nav .brand-logo img {
-    height: 60px;
-    padding: 5px 10px;
-}
-
-nav .right img {
+.user-menu img {
     height: 40px;
-    border-radius: 50%;
+    margin-left: 10px;
 }
 
-footer {
-    background: #004d99; /* Azul oscuro */
+.footer {
+    background: #002f6c; /* Azul oscuro */
     padding: 10px 0;
     text-align: center;
     color: #fff;
+    margin-top: auto;
 }
 
-footer a {
-    color: #fff;
+.footer .footer-links {
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    list-style: none;
+}
+
+.footer .footer-links li {
     margin: 0 10px;
+}
+
+.footer a {
+    color: #fff;
     display: inline-block;
     width: 24px;
     height: 24px;
 }
 
-footer img {
+.footer img {
     max-width: 100%;
     height: auto;
 }
@@ -68,11 +86,11 @@ footer img {
     margin-bottom: 20px;
     transition: border 0.3s ease;
     padding: 15px;
-    background: #fff; /* Fondo blanco para las tarjetas */
+    background: #fff;
 }
 
 .match-card.saved {
-    border: 2px solid #4caf50; /* Verde para indicar guardado */
+    border: 2px solid #28a745; /* Verde */
 }
 
 .match-header {
@@ -129,42 +147,42 @@ form {
 }
 
 .tabs .tab a {
-    color: #004d99; /* Azul oscuro */
+    color: #002f6c; /* Azul oscuro */
 }
 
 .tabs .tab a.active {
-    background-color: #ffcc00; /* Amarillo */
-    color: #004d99; /* Azul oscuro */
+    background-color: #ffd100; /* Amarillo */
+    color: #002f6c; /* Azul oscuro */
 }
 
 .tabs .indicator {
-    background-color: #004d99; /* Azul oscuro */
+    background-color: #002f6c; /* Azul oscuro */
 }
 
 .btn {
-    background-color: #004d99; /* Azul oscuro */
+    background-color: #ffd100; /* Amarillo */
     border-radius: 25px;
 }
 
 .btn:hover {
-    background-color: #003366; /* Azul más oscuro */
+    background-color: #e6b800; /* Amarillo más oscuro */
 }
 
 .table thead th {
-    background-color: #004d99; /* Azul oscuro */
+    background-color: #002f6c; /* Azul oscuro */
     color: #fff;
 }
 
 .table tbody tr:hover {
-    background-color: #e0f2f1;
+    background-color: #f1f1f1;
 }
 
 .dropdown-content li>a, .dropdown-content li>span {
-    color: #004d99; /* Azul oscuro */
+    color: #002f6c; /* Azul oscuro */
 }
 
 .dropdown-content li>a:hover, .dropdown-content li>span:hover {
-    background-color: #ffcc00; /* Amarillo */
+    background-color: #ffd100; /* Amarillo */
 }
 
 /* Login Page Styles */
@@ -188,6 +206,20 @@ form {
 
 .login-container .btn {
     width: 100%;
+}
+
+/* Modal Styles */
+.modal {
+    max-width: 500px;
+}
+
+.modal-content {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 10px;
+    text-align: right;
 }
 
 /* General Styles */

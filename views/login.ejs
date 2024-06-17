@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,17 +19,17 @@
     </header>
 
     <div class="container login-container">
-        <h5>Login</h5>
+        <h5>Iniciar Sesión</h5>
         <form id="login-form" action="/login" method="POST">
             <div class="input-field">
                 <input id="username" type="text" name="username" required>
-                <label for="username">Username</label>
+                <label for="username">Nombre de usuario</label>
             </div>
             <div class="input-field">
                 <input id="password" type="password" name="password" required>
-                <label for="password">Password</label>
+                <label for="password">Contraseña</label>
             </div>
-            <button class="btn waves-effect waves-light blue darken-3" type="submit">Login</button>
+            <button class="btn waves-effect waves-light blue darken-3" type="submit">Iniciar Sesión</button>
         </form>
         <div class="center-align">
             <a href="#register-modal" class="btn-flat modal-trigger">Registrar</a>
@@ -41,7 +41,7 @@
     <div id="register-modal" class="modal">
         <div class="modal-content">
             <h4>Registrar usuario</h4>
-            <form id="register-form" enctype="multipart/form-data">
+            <form id="register-form" action="/register" method="POST" enctype="multipart/form-data">
                 <div class="input-field">
                     <input type="text" id="name" name="name">
                     <label for="name">Nombre</label>
@@ -67,9 +67,9 @@
                     <label for="dob">Fecha de nacimiento</label>
                 </div>
                 <div class="file-field input-field">
-                    <div class="btn">
+                    <div class="btn blue darken-3">
                         <span>Avatar</span>
-                        <input type="file" name="avatar">
+                        <input type="file" name="avatar" accept="image/*">
                     </div>
                     <div class="file-path-wrapper">
                         <input class="file-path validate" type="text">
@@ -77,6 +77,7 @@
                 </div>
                 <button class="btn waves-effect waves-light blue darken-3" type="submit">Registrarse</button>
             </form>
+            <div id="register-error-message" class="red-text center-align"></div>
         </div>
     </div>
     
@@ -92,61 +93,7 @@
         </div>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var elems = document.querySelectorAll('.modal');
-            var instances = M.Modal.init(elems);
-        });
-
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                if (response.ok) {
-                    window.location.href = result.redirectUrl;
-                } else {
-                    document.getElementById('error-message').innerText = result.error;
-                }
-            } catch (error) {
-                document.getElementById('error-message').innerText = 'Error al iniciar sesión';
-            }
-        });
-
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const formData = new FormData(form);
-            try {
-                const response = await fetch(form.action, {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-                if (response.ok) {
-                    M.toast({html: 'Registro exitoso! Redirigiendo...', classes: 'green'});
-                    const modalInstance = M.Modal.getInstance(document.getElementById('register-modal'));
-                    modalInstance.close();
-                    setTimeout(() => {
-                        window.location.href = result.redirectUrl;
-                    }, 1000);
-                } else {
-                    document.getElementById('register-error-message').innerText = result.error;
-                }
-            } catch (error) {
-                document.getElementById('register-error-message').innerText = 'Error al registrar';
-            }
-        });
-    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="/js/login.js"></script>
 </body>
 </html>
