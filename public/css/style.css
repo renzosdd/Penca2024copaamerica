@@ -46,12 +46,18 @@ main {
     justify-content: center;
 }
 
+/* Footer Styles */
 .footer {
     background: #002f6c; /* Azul oscuro */
     padding: 10px 0;
     text-align: center;
     color: #fff;
+    margin-top: auto;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
 }
+
 
 .footer .footer-links {
     display: flex;

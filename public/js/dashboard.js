@@ -58,6 +58,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
     }
+    // Función para obtener la URL de la bandera con un fallback a una imagen por defecto
+    const getFlagUrl = (team) => {
+        const normalizedTeam = normalizeName(team);
+        return `/images/${normalizedTeam}.png`;
+    };
 
     // Cargar los partidos
     try {
@@ -75,8 +80,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         predictionsList.innerHTML = ''; // Limpiar cualquier contenido previo
 
         matches.forEach(match => {
-            const team1Flag = normalizeName(match.team1); // Normalizar el nombre del equipo
-            const team2Flag = normalizeName(match.team2); // Normalizar el nombre del equipo
+            const team1Flag = getFlagUrl(match.team1);
+            const team2Flag = getFlagUrl(match.team2);
             const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
 
             const formattedDate = formatDate(match.date);
@@ -111,7 +116,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <span class="team-name">${match.team2}</span>
                         </div>
                         <div class="match-details center-align">
-                            <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
+                            <img src="${team1Flag}" alt="${match.team1}" class="circle responsive-img flag" onerror="this.src='/images/default.png'">
                             <div class="input-field inline">
                                 <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
                             </div>
@@ -119,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <div class="input-field inline">
                                 <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
                             </div>
-                            <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
+                            <img src="${team2Flag}" alt="${match.team2}" class="circle responsive-img flag" onerror="this.src='/images/default.png'">
                         </div>
                         <div class="center-align">
                             ${userRole === 'admin' ? `
@@ -162,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <span class="team-name">${match.team2}</span>
                         </div>
                         <div class="match-details center-align">
-                            <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
+                            <img src="${team1Flag}" alt="${match.team1}" class="circle responsive-img flag" onerror="this.src='/images/default.png'">
                             <div class="input-field inline">
                                 <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required min="0">
                             </div>
@@ -170,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <div class="input-field inline">
                                 <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required min="0">
                             </div>
-                            <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
+                            <img src="${team2Flag}" alt="${match.team2}" class="circle responsive-img flag" onerror="this.src='/images/default.png'">
                         </div>
                         <div class="center-align">
                             <form id="predictionForm-${match._id}" method="POST" action="/predictions">
