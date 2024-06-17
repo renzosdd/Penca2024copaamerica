@@ -62,12 +62,12 @@ router.post('/recalculate', async (req, res) => {
         const scores = await calculateScores();
         for (let score of scores) {
             await Score.updateOne(
-                { userId: score.userId, competition: 'Copa America 2024' },
+                { userId: score.userId, competition: 'Copa América 2024' },
                 { $set: { score: score.score } },
                 { upsert: true }
             );
         }
-        res.json({ message: 'Puntajes recalculados correctamente' });
+        res.json({ message: 'Puntajes recalculados correctamente' }); 
     } catch (err) {
         console.error('Error al recalcular los puntajes:', err);
         res.status(500).json({ error: 'Error al recalcular los puntajes' });
