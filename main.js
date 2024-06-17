@@ -133,7 +133,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             dob,
             avatar,
             avatarContentType,
-            valid: false
+            valid: true
         });
         await user.save();
         // Crear registro de puntaje
@@ -179,6 +179,14 @@ app.post('/logout', (req, res) => {
 
 app.use((req, res) => {
     res.status(404).send('404: Página no encontrada');
+});
+
+// Evento para cerrar la conexión de Mongoose al cerrar el servidor
+process.on('SIGINT', async () => {
+    console.log('Cerrando la conexión de Mongoose...');
+    await mongoose.connection.close();
+    console.log('Conexión de Mongoose cerrada.');
+    process.exit(0);
 });
 
 app.listen(PORT, () => {
