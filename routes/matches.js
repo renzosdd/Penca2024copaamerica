@@ -17,18 +17,18 @@ router.get('/', async (req, res) => {
 
 // Ruta para actualizar un resultado de partido (solo admin)
 router.post('/update', isAdmin, async (req, res) => {
-    const { result1, result2 } = req.body;
+    const { matchId, homeScore, awayScore } = req.body;
     try {
         const match = await Match.findById(matchId);
         if (!match) {
             return res.status(404).json({ error: 'Match not found' });
         }
-        match.result1 = result1;
-        match.result2 = result2;
+        match.homeScore = homeScore;
+        match.awayScore = awayScore;
         await match.save();
         res.json({ success: true });
         // Recalcular puntaje de todos los usuarios
-        await fetch('/ranking/recalculate', { method: 'POST' });
+        await fetch(`http://localhost:${process.env.PORT || 3000}/ranking/recalculate`, { method: 'POST' });
     } catch (err) {
         console.error('Error updating match', err);
         res.status(500).json({ error: 'Error al enviar el resultado' });
