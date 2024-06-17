@@ -178,7 +178,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 }
             });
         });
-
+/*
         // Añadir eventos de envío para los formularios de resultados (solo para admin)
         if (userRole === 'admin') {
             document.querySelectorAll('form[id^="matchForm-"]').forEach(form => {
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('Error al cargar los partidos:', error);
     }
-
+*/
     // Cargar el ranking
     try {
         const rankingResponse = await fetch('/ranking');
