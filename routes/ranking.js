@@ -62,7 +62,7 @@ router.post('/recalculate', async (req, res) => {
         const scores = await calculateScores();
         for (let score of scores) {
             await Score.updateOne(
-                { userId: score.userId, competition: 'Copa America 2024' },
+                { userId: score.userId, competition: 'Copa América 2024' },
                 { $set: { score: score.score } },
                 { upsert: true }
             );
