@@ -30,37 +30,33 @@
             </ul>
         </div>
     </header>
-    <div class="container">
-        <ul class="tabs">
-            <li class="tab col s3"><a href="#fixture" class="<%= user.role === 'admin' ? 'active' : '' %>">Fixture</a></li>
-            <li class="tab col s3"><a href="#predictions" class="<%= user.role !== 'admin' ? 'active' : '' %>">Predicciones</a></li>
-            <li class="tab col s3"><a href="#ranking">Ranking</a></li>
-        </ul>
-        
-        <div id="fixture" class="col s12">
-            <div id="matches-list" class="row"></div>
-        </div>
-        <div id="predictions" class="col s12">
-            <div id="predictions-list" class="row"></div>
-        </div>
-        <div id="ranking" class="col s12">
-            <div id="ranking-list" class="row"></div>
-        </div>
-    </div>
-    <footer class="footer">
+    <main>
         <div class="container">
-            <ul class="footer-links">
-                <li>
-                    <a href="https://www.linkedin.com/in/renzodogliotti/">
-                        <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img">
-                    </a>
-                </li>
-                <li>
-                    <a href="https://github.com/renzosdd">
-                        <img src="/images/github.png" alt="GitHub" class="responsive-img">
-                    </a>
-                </li>
+            <ul class="tabs">
+                <li class="tab col s3"><a href="#fixture" class="<%= user.role === 'admin' ? 'active' : '' %>">Fixture</a></li>
+                <li class="tab col s3"><a href="#predictions" class="<%= user.role !== 'admin' ? 'active' : '' %>">Predicciones</a></li>
+                <li class="tab col s3"><a href="#ranking">Ranking</a></li>
             </ul>
+            
+            <div id="fixture" class="col s12">
+                <div id="matches-list" class="row"></div>
+            </div>
+            <div id="predictions" class="col s12">
+                <div id="predictions-list" class="row"></div>
+            </div>
+            <div id="ranking" class="col s12">
+                <div id="ranking-list" class="row"></div>
+            </div>
+        </div>
+    </main>
+    <footer class="page-footer blue darken-3">
+        <div class="container center-align">
+            <a href="https://www.linkedin.com/in/renzodogliotti/">
+                <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;">
+            </a>
+            <a href="https://github.com/renzosdd">
+                <img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;">
+            </a>
         </div>
     </footer>
     
