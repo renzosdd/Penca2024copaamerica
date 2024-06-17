@@ -280,3 +280,9 @@ form {
     height: 24px;
     border-radius: 50%;
 }
+
+.flag {
+    width: 50px;
+    height: 35px;
+    object-fit: cover;
+}
