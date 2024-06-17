@@ -182,11 +182,12 @@ app.post('/logout', (req, res) => {
 
 app.post('/reset-matches', isAdmin, async (req, res) => {
     try {
+        const matches = require('./matches.json');
+        
         await Match.deleteMany({});
         await Prediction.deleteMany({});
         await Score.updateMany({}, { $set: { score: 0 } });
 
-        const matches = req.body.matches;
         await Match.insertMany(matches);
 
         res.json({ success: true, message: 'Partidos y predicciones reseteados, y puntajes inicializados' });
@@ -195,6 +196,7 @@ app.post('/reset-matches', isAdmin, async (req, res) => {
         res.status(500).json({ error: 'Error al resetear partidos y predicciones' });
     }
 });
+
 
 app.use((req, res) => {
     res.status(404).send('404: Página no encontrada');

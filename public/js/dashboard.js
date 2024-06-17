@@ -33,6 +33,32 @@ document.addEventListener('DOMContentLoaded', async function() {
         return `${day}/${month}/${year}`;
     };
 
+    // Función para restablecer partidos
+    if (userRole === 'admin') {
+        document.getElementById('reset-matches-btn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/reset-matches', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include' // Para enviar cookies junto con la solicitud
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    M.toast({ html: result.message, classes: 'green' });
+                } else {
+                    M.toast({ html: result.error, classes: 'red' });
+                }
+            } catch (error) {
+                console.error('Error al reestablecer partidos:', error);
+                M.toast({ html: 'Error al reestablecer partidos', classes: 'red' });
+            }
+        });
+    }
+
     // Cargar los partidos
     try {
         const matchesResponse = await fetch('/matches');
