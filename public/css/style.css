@@ -118,7 +118,7 @@ body {
 
 .date-time {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
 }
 
@@ -235,7 +235,7 @@ form {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 10px;
+    flex-direction: column;
 }
 
 .match-details .input-field.inline {
@@ -249,7 +249,7 @@ form {
 
 @media (min-width: 600px) {
     .match-details {
-        flex-direction: row;
+        flex-direction: column;
     }
 
     .match-details button {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,7 +19,7 @@
     </header>
 
     <div class="container login-container">
-        <h5>Iniciar sesión</h5>
+        <h5>Login</h5>
         <form id="login-form" action="/login" method="POST">
             <div class="input-field">
                 <input id="username" type="text" name="username" required>
@@ -29,7 +29,7 @@
                 <input id="password" type="password" name="password" required>
                 <label for="password">Contraseña</label>
             </div>
-            <button class="btn waves-effect waves-light blue darken-3" type="submit">Iniciar sesión</button>
+            <button class="btn waves-effect waves-light blue darken-3" type="submit">Login</button>
         </form>
         <div class="center-align">
             <a href="#register-modal" class="btn-flat modal-trigger">Registrar</a>
@@ -41,7 +41,7 @@
     <div id="register-modal" class="modal">
         <div class="modal-content">
             <h4>Registrar usuario</h4>
-            <form id="register-form" enctype="multipart/form-data">
+            <form id="register-form" enctype="multipart/form-data" action="/register" method="POST">
                 <div class="input-field">
                     <input type="text" id="name" name="name">
                     <label for="name">Nombre</label>
@@ -56,7 +56,7 @@
                 </div>
                 <div class="input-field">
                     <input type="email" id="email" name="email" required>
-                    <label for="email">Correo electrónico *</label>
+                    <label for="email">Email *</label>
                 </div>
                 <div class="input-field">
                     <input type="text" id="surname" name="surname">
@@ -69,7 +69,7 @@
                 <div class="file-field input-field">
                     <div class="btn">
                         <span>Avatar</span>
-                        <input type="file" name="avatar">
+                        <input type="file" name="avatar" accept="image/*">
                     </div>
                     <div class="file-path-wrapper">
                         <input class="file-path validate" type="text">

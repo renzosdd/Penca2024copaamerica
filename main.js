@@ -39,6 +39,7 @@ app.use(session({
 mongoose.connect(uri, { 
     useNewUrlParser: true, 
     useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 60000, // Aumentar el tiempo de espera de selección del servidor
     connectTimeoutMS: 60000,
     socketTimeoutMS: 60000
 })
@@ -115,11 +116,13 @@ const upload = multer({
 
 app.post('/register', upload.single('avatar'), async (req, res) => {
     const { username, password, name, surname, email, dob } = req.body;
+    console.log('Registro de usuario:', username, email);
     const avatar = req.file ? req.file.buffer : null;
     const avatarContentType = req.file ? req.file.mimetype : null;
     try {
         const existingUser = await User.findOne({ $or: [{ username }, { email }] });
         if (existingUser) {
+            console.log('Usuario o email ya existe:', existingUser);
             return res.status(400).json({ error: 'El nombre de usuario o email ya existe' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -135,6 +138,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             valid: false
         });
         await user.save();
+        console.log('Usuario guardado en la base de datos:', user);
         // Crear registro de puntaje
         const score = new Score({
             userId: user._id,
