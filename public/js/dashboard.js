@@ -272,9 +272,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const rankingList = document.getElementById('ranking-list');
         rankingList.innerHTML = ''; // Limpiar cualquier contenido previo
 
-        // Ordenar el ranking por puntaje
-        ranking.sort((a, b) => b.score - a.score);
-
         const table = document.createElement('table');
         table.className = 'striped';
         table.innerHTML = `
@@ -285,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </tr>
             </thead>
             <tbody>
-                ${ranking.map((user, index) => `
+                ${ranking.sort((a, b) => b.score - a.score).map((user, index) => `
                     <tr class="${index === 0 ? 'highlight-first' : ''}">
                         <td>${user.username}</td>
                         <td>${user.score}</td>
