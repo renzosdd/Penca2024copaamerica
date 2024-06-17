@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                             console.log('Resultado enviado exitosamente');
                             M.toast({html: '¡Resultado actualizado correctamente!', classes: 'green'});
                             // Recalcular puntaje de todos los usuarios
-                            await fetch('/ranking/recalculate', { method: 'POST' });
+                            //await fetch('/ranking/recalculate', { method: 'POST' });
                         } else {
                             console.error('Error:', result.error);
                             M.toast({html: 'Error al actualizar el resultado', classes: 'red'});
