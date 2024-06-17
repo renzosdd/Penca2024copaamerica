@@ -6,16 +6,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     var dropdownElems = document.querySelectorAll('.dropdown-trigger');
     var dropdownInstances = M.Dropdown.init(dropdownElems, { constrainWidth: false, coverTrigger: false });
 
-    // Inicializar el modal
-    var modalElems = document.querySelectorAll('.modal');
-    var modalInstances = M.Modal.init(modalElems);
-
     const userRole = document.querySelector('body').getAttribute('data-role');
     const username = document.querySelector('body').getAttribute('data-username');
 
     // Mostrar el rol y el nombre de usuario
-    console.log('Rol del usuario:', userRole);
-    console.log('Nombre de usuario:', username);
+    console.log('User Role:', userRole);
+    console.log('Username:', username);
 
     let matches = []; // Definir la variable matches en el contexto adecuado
 
@@ -24,58 +20,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
     };
 
-    // Función para formatear la fecha en formato DD/MM/YYYY
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Los meses son de 0 a 11
-        const year = date.getUTCFullYear();
-        return `${day}/${month}/${year}`;
-    };
-
-    // Función para restablecer partidos
-    if (userRole === 'admin') {
-        document.getElementById('reset-matches-btn').addEventListener('click', async () => {
-            if (confirm('¿Estás seguro de que deseas restablecer todos los partidos y predicciones?')) {
-                const secondConfirmation = confirm('¡Atención! Esta acción es irreversible. ¿Deseas continuar?');
-                if (!secondConfirmation) return;
-
-                try {
-                    const response = await fetch('/reset-matches', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        credentials: 'include' // Para enviar cookies junto con la solicitud
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        M.toast({ html: result.message, classes: 'green' });
-                        location.reload();
-                    } else {
-                        M.toast({ html: result.error, classes: 'red' });
-                    }
-                } catch (error) {
-                    console.error('Error al reestablecer partidos:', error);
-                    M.toast({ html: 'Error al reestablecer partidos', classes: 'red' });
-                }
-            }
-        });
-    }
-
-    // Función para obtener la URL de la bandera con un fallback a una imagen por defecto
-    const getFlagUrl = (team) => {
-        const normalizedTeam = normalizeName(team);
-        return `/images/${normalizedTeam}.png`;
-    };
-
     // Cargar los partidos
     try {
         const matchesResponse = await fetch('/matches');
         matches = await matchesResponse.json();
-        console.log('Partidos cargados correctamente');
+        console.log('Matches fetched successfully');
 
         const predictionsResponse = await fetch('/predictions');
         const predictions = await predictionsResponse.json();
@@ -87,15 +36,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         predictionsList.innerHTML = ''; // Limpiar cualquier contenido previo
 
         matches.forEach(match => {
-            const team1Flag = getFlagUrl(match.team1);
-            const team2Flag = getFlagUrl(match.team2);
+            const team1Flag = normalizeName(match.team1); // Normalizar el nombre del equipo
+            const team2Flag = normalizeName(match.team2); // Normalizar el nombre del equipo
             const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
-
-            const formattedDate = formatDate(match.date);
-            const matchDate = new Date(`${match.date}T${match.time}:00.000Z`);
-            const now = new Date();
-            const thirtyMinutesBefore = new Date(matchDate.getTime() - 30 * 60000);
-            const editable = now < thirtyMinutesBefore && matchDate > now;
 
             // Crear tarjeta de fixture
             const matchDiv = document.createElement('div');
@@ -104,11 +47,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="card match-card ${match.result1 !== undefined && match.result2 !== undefined ? 'saved' : ''}">
                     <div class="card-content">
                         <div class="row">
-                            <div class="col s6">
+                            <div class="col s10">
                                 <div class="date-time">
                                     <div class="info">
                                         <img src="/images/cal.png" alt="Fecha" class="small-icon">
-                                        <span>${formattedDate}</span>
+                                        <span>${match.date}</span>
                                     </div>
                                     <div class="info">
                                         <img src="/images/clock.png" alt="Hora" class="small-icon">
@@ -117,28 +60,28 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 </div>
                             </div>
                         </div>
-                        <div class="match-header center-align">
-                            <span class="team-name">${match.team1}</span>
+                        <div class="match-header">
+                            <div class="team">
+                                <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
+                                <span class="team-name">${match.team1}</span>
+                            </div>
                             <span class="vs">vs</span>
-                            <span class="team-name">${match.team2}</span>
-                        </div>
-                        <div class="match-details center-align">
-                            <img src="${team1Flag}" alt="${match.team1}" class="circle responsive-img flag" onerror="this.src='/images/default.png'">
-                            <div class="input-field inline">
-                                <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
+                            <div class="team">
+                                <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
+                                <span class="team-name">${match.team2}</span>
                             </div>
-                            <span class="vs">-</span>
-                            <div class="input-field inline">
-                                <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
-                            </div>
-                            <img src="${team2Flag}" alt="${match.team2}" class="circle responsive-img flag" onerror="this.src='/images/default.png'">
                         </div>
-                        <div class="center-align">
+                        <div class="match-details">
                             ${userRole === 'admin' ? `
-                            <form id="matchForm-${match._id}" method="POST" action="/matches/update">
-                                <input type="hidden" name="matchId" value="${match._id}">
+                            <form id="matchForm-${match._id}" method="POST" action="/matches/${match._id}">
+                                <div class="input-field inline">
+                                    <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required>
+                                    <span>-</span>
+                                    <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required>
+                                </div>
                                 <button class="btn waves-effect waves-light blue darken-3" type="submit">Guardar Resultado</button>
-                            </form>` : ''}
+                            </form>` : `
+                            <p>Resultado: ${match.result1 !== undefined ? match.result1 : '-'} - ${match.result2 !== undefined ? match.result2 : '-'}</p>`}
                         </div>
                     </div>
                 </div>
@@ -152,11 +95,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <div class="card match-card ${userPrediction ? 'saved' : ''}">
                     <div class="card-content">
                         <div class="row">
-                            <div class="col s6">
+                            <div class="col s10">
                                 <div class="date-time">
                                     <div class="info">
                                         <img src="/images/cal.png" alt="Fecha" class="small-icon">
-                                        <span>${formattedDate}</span>
+                                        <span>${match.date}</span>
                                     </div>
                                     <div class="info">
                                         <img src="/images/clock.png" alt="Hora" class="small-icon">
@@ -164,30 +107,30 @@ document.addEventListener('DOMContentLoaded', async function() {
                                     </div>
                                 </div>
                             </div>
-                            <div class="col s6 right-align">
+                            <div class="col s2">
                                 ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon right">` : ''}
                             </div>
                         </div>
-                        <div class="match-header center-align">
-                            <span class="team-name">${match.team1}</span>
+                        <div class="match-header">
+                            <div class="team">
+                                <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
+                                <span class="team-name">${match.team1}</span>
+                            </div>
                             <span class="vs">vs</span>
-                            <span class="team-name">${match.team2}</span>
-                        </div>
-                        <div class="match-details center-align">
-                            <img src="${team1Flag}" alt="${match.team1}" class="circle responsive-img flag" onerror="this.src='/images/default.png'">
-                            <div class="input-field inline">
-                                <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required min="0">
+                            <div class="team">
+                                <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
+                                <span class="team-name">${match.team2}</span>
                             </div>
-                            <span class="vs">-</span>
-                            <div class="input-field inline">
-                                <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required min="0">
-                            </div>
-                            <img src="${team2Flag}" alt="${match.team2}" class="circle responsive-img flag" onerror="this.src='/images/default.png'">
                         </div>
-                        <div class="center-align">
+                        <div class="match-details">
                             <form id="predictionForm-${match._id}" method="POST" action="/predictions">
                                 <input type="hidden" name="matchId" value="${match._id}">
-                                <button class="btn waves-effect waves-light blue darken-3" type="submit" ${!editable ? 'disabled' : ''}>Enviar Predicción</button>
+                                <div class="input-field inline">
+                                    <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" required>
+                                    <span>-</span>
+                                    <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" required>
+                                </div>
+                                <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
                             </form>
                         </div>
                     </div>
@@ -213,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const result = await response.json();
                     if (response.ok) {
                         console.log('Predicción enviada exitosamente');
-                        M.toast({html: '¡Predicción actualizada correctamente!', classes: 'green'});
+                        M.toast({html: 'Predicción actualizada correctamente!', classes: 'green'});
                         const matchCard = form.closest('.card');
                         if (matchCard) {
                             matchCard.classList.add('saved');
@@ -254,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         const result = await response.json();
                         if (response.ok) {
                             console.log('Resultado enviado exitosamente');
-                            M.toast({html: '¡Resultado actualizado correctamente!', classes: 'green'});
+                            M.toast({html: 'Resultado actualizado correctamente!', classes: 'green'});
                             // Recalcular puntaje de todos los usuarios
                             await fetch('/ranking/recalculate', { method: 'POST' });
                         } else {
@@ -271,16 +214,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     } catch (error) {
         console.error('Error al cargar los partidos:', error);
-        M.toast({html: 'Error al cargar los partidos', classes: 'red'});
     }
 
     // Cargar el ranking
     try {
         const rankingResponse = await fetch('/ranking');
         const ranking = await rankingResponse.json();
-        if (!Array.isArray(ranking)) {
-            throw new Error('La respuesta del servidor no es un array');
-        }
         const rankingList = document.getElementById('ranking-list');
         rankingList.innerHTML = ''; // Limpiar cualquier contenido previo
 
@@ -289,13 +228,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         table.innerHTML = `
             <thead>
                 <tr>
-                    <th>Jugador</th>
+                    <th>Usuario</th>
                     <th>Puntaje</th>
                 </tr>
             </thead>
             <tbody>
-                ${ranking.sort((a, b) => b.score - a.score).map((user, index) => `
-                    <tr class="${index === 0 ? 'highlight-first' : ''}">
+                ${ranking.map(user => `
+                    <tr>
                         <td>${user.username}</td>
                         <td>${user.score}</td>
                     </tr>
@@ -305,7 +244,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         rankingList.appendChild(table);
     } catch (error) {
         console.error('Error al cargar el ranking:', error);
-        M.toast({html: 'Error al cargar el ranking', classes: 'red'});
     }
 
     // Manejar el cierre de sesión
