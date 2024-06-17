@@ -36,28 +36,35 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Función para restablecer partidos
     if (userRole === 'admin') {
         document.getElementById('reset-matches-btn').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/reset-matches', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include' // Para enviar cookies junto con la solicitud
-                });
+            if (confirm('¿Estás seguro de que deseas restablecer todos los partidos y predicciones?')) {
+                const secondConfirmation = confirm('¡Atención! Esta acción es irreversible. ¿Deseas continuar?');
+                if (!secondConfirmation) return;
 
-                const result = await response.json();
+                try {
+                    const response = await fetch('/reset-matches', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include' // Para enviar cookies junto con la solicitud
+                    });
 
-                if (response.ok) {
-                    M.toast({ html: result.message, classes: 'green' });
-                } else {
-                    M.toast({ html: result.error, classes: 'red' });
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        M.toast({ html: result.message, classes: 'green' });
+                        location.reload();
+                    } else {
+                        M.toast({ html: result.error, classes: 'red' });
+                    }
+                } catch (error) {
+                    console.error('Error al reestablecer partidos:', error);
+                    M.toast({ html: 'Error al reestablecer partidos', classes: 'red' });
                 }
-            } catch (error) {
-                console.error('Error al reestablecer partidos:', error);
-                M.toast({ html: 'Error al reestablecer partidos', classes: 'red' });
             }
         });
     }
+
     // Función para obtener la URL de la bandera con un fallback a una imagen por defecto
     const getFlagUrl = (team) => {
         const normalizedTeam = normalizeName(team);
