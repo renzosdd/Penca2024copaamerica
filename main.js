@@ -8,6 +8,7 @@ const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
 const ejs = require('ejs');
+const fetch = require('node-fetch');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
 
 dotenv.config();
@@ -51,6 +52,8 @@ mongoose.connect(uri, {
 
 const User = require('./models/User');
 const Score = require('./models/Score');
+const Match = require('./models/Match');
+const Prediction = require('./models/Prediction');
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -175,6 +178,22 @@ app.post('/logout', (req, res) => {
         }
         res.redirect('/');
     });
+});
+
+app.post('/reset-matches', isAdmin, async (req, res) => {
+    try {
+        await Match.deleteMany({});
+        await Prediction.deleteMany({});
+        await Score.updateMany({}, { $set: { score: 0 } });
+
+        const matches = req.body.matches;
+        await Match.insertMany(matches);
+
+        res.json({ success: true, message: 'Partidos y predicciones reseteados, y puntajes inicializados' });
+    } catch (err) {
+        console.error('Error al resetear partidos y predicciones', err);
+        res.status(500).json({ error: 'Error al resetear partidos y predicciones' });
+    }
 });
 
 app.use((req, res) => {
