@@ -65,42 +65,43 @@ document.addEventListener('DOMContentLoaded', async function() {
             matchDiv.innerHTML = `
                 <div class="card match-card ${match.result1 !== undefined && match.result2 !== undefined ? 'saved' : ''}">
                     <div class="card-content">
-                        <div class="date-time">
-                            <div class="info">
-                                <img src="/images/cal.png" alt="Fecha" class="small-icon">
-                                <span>${formattedDate}</span>
+                        <div class="row">
+                            <div class="col s6">
+                                <div class="date-time">
+                                    <div class="info">
+                                        <img src="/images/cal.png" alt="Fecha" class="small-icon">
+                                        <span>${formattedDate}</span>
+                                    </div>
+                                    <div class="info">
+                                        <img src="/images/clock.png" alt="Hora" class="small-icon">
+                                        <span>${match.time}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="info">
-                                <img src="/images/clock.png" alt="Hora" class="small-icon">
-                                <span>${match.time}</span>
-                            </div>
-                            ${match.result1 !== undefined && match.result2 !== undefined ? '<img src="/images/tick.png" alt="Resultado guardado" class="tick-icon right">' : ''}
                         </div>
-                        <div class="match-header">
+                        <div class="match-header center-align">
                             <span class="team-name">${match.team1}</span>
                             <span class="vs">vs</span>
                             <span class="team-name">${match.team2}</span>
                         </div>
-                        <div class="match-details">
-                            <div class="team">
-                                <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
-                                <div class="input-field inline">
-                                    <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
-                                </div>
+                        <div class="match-details center-align">
+                            <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
+                            <div class="input-field inline">
+                                <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
                             </div>
                             <span class="vs">-</span>
-                            <div class="team">
-                                <div class="input-field inline">
-                                    <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
-                                </div>
-                                <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
+                            <div class="input-field inline">
+                                <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
                             </div>
+                            <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
                         </div>
-                        ${userRole === 'admin' ? `
-                        <form id="matchForm-${match._id}" method="POST" action="/matches/update">
-                            <input type="hidden" name="matchId" value="${match._id}">
-                            <button class="btn waves-effect waves-light blue darken-3" type="submit">Guardar Resultado</button>
-                        </form>` : ''}
+                        <div class="center-align">
+                            ${userRole === 'admin' ? `
+                            <form id="matchForm-${match._id}" method="POST" action="/matches/update">
+                                <input type="hidden" name="matchId" value="${match._id}">
+                                <button class="btn waves-effect waves-light blue darken-3" type="submit">Guardar Resultado</button>
+                            </form>` : ''}
+                        </div>
                     </div>
                 </div>
             `;
@@ -112,41 +113,45 @@ document.addEventListener('DOMContentLoaded', async function() {
             predictionDiv.innerHTML = `
                 <div class="card match-card ${userPrediction ? 'saved' : ''}">
                     <div class="card-content">
-                        <div class="date-time">
-                            <div class="info">
-                                <img src="/images/cal.png" alt="Fecha" class="small-icon">
-                                <span>${formattedDate}</span>
+                        <div class="row">
+                            <div class="col s6">
+                                <div class="date-time">
+                                    <div class="info">
+                                        <img src="/images/cal.png" alt="Fecha" class="small-icon">
+                                        <span>${formattedDate}</span>
+                                    </div>
+                                    <div class="info">
+                                        <img src="/images/clock.png" alt="Hora" class="small-icon">
+                                        <span>${match.time}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="info">
-                                <img src="/images/clock.png" alt="Hora" class="small-icon">
-                                <span>${match.time}</span>
+                            <div class="col s6 right-align">
+                                ${userPrediction ? `<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon right">` : ''}
                             </div>
-                            ${userPrediction ? '<img src="/images/tick.png" alt="Predicción guardada" class="tick-icon right">' : ''}
                         </div>
-                        <div class="match-header">
+                        <div class="match-header center-align">
                             <span class="team-name">${match.team1}</span>
                             <span class="vs">vs</span>
                             <span class="team-name">${match.team2}</span>
                         </div>
-                        <div class="match-details">
-                            <div class="team">
-                                <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
-                                <div class="input-field inline">
-                                    <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required min="0">
-                                </div>
+                        <div class="match-details center-align">
+                            <img src="/images/${team1Flag}.png" alt="${match.team1}" class="circle responsive-img">
+                            <div class="input-field inline">
+                                <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required min="0">
                             </div>
                             <span class="vs">-</span>
-                            <div class="team">
-                                <div class="input-field inline">
-                                    <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required min="0">
-                                </div>
-                                <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
+                            <div class="input-field inline">
+                                <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required min="0">
                             </div>
+                            <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
                         </div>
-                        <form id="predictionForm-${match._id}" method="POST" action="/predictions">
-                            <input type="hidden" name="matchId" value="${match._id}">
-                            <button class="btn waves-effect waves-light blue darken-3" type="submit" ${!editable ? 'disabled' : ''}>Enviar Predicción</button>
-                        </form>
+                        <div class="center-align">
+                            <form id="predictionForm-${match._id}" method="POST" action="/predictions">
+                                <input type="hidden" name="matchId" value="${match._id}">
+                                <button class="btn waves-effect waves-light blue darken-3" type="submit" ${!editable ? 'disabled' : ''}>Enviar Predicción</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             `;
@@ -179,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 tickIcon.src = '/images/tick.png';
                                 tickIcon.alt = 'Predicción guardada';
                                 tickIcon.className = 'tick-icon right';
-                                matchCard.querySelector('.date-time').appendChild(tickIcon);
+                                matchCard.querySelector('.row').appendChild(tickIcon);
                             }
                         }
                     } else {
@@ -252,9 +257,9 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </tr>
             </thead>
             <tbody>
-                ${ranking.map(user => `
-                    <tr class="${user.rank === 1 ? 'highlight-first' : ''}">
-                        <td><img src="/avatar/${user.username}" alt="Avatar" class="avatar-small"></td>
+                ${ranking.map((user, index) => `
+                    <tr class="${index === 0 ? 'highlight-first' : ''}">
+                        <td><img src="/avatar/${user.username}" alt="Avatar" class="circle responsive-img avatar-small"></td>
                         <td>${user.username}</td>
                         <td>${user.score}</td>
                     </tr>
