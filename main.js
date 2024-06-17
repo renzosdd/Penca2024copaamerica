@@ -39,13 +39,13 @@ app.use(session({
 mongoose.connect(uri, { 
     useNewUrlParser: true, 
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 60000, // Aumentar el tiempo de espera de selección del servidor
     connectTimeoutMS: 60000,
-    socketTimeoutMS: 60000
+    socketTimeoutMS: 60000,
+    maxPoolSize: 10 // Ajusta el tamaño del pool según tus necesidades
 })
-    .then(() => console.log('Database connection established'))
+    .then(() => console.log('Conexión a la base de datos establecida'))
     .catch(err => {
-        console.error('Failed to connect to the database. Exiting now...', err);
+        console.error('Error al conectar a la base de datos. Saliendo...', err);
         process.exit(1);
     });
 
@@ -77,25 +77,25 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log('Login attempt for user:', username);
+    console.log('Intento de inicio de sesión para el usuario:', username);
     try {
         const user = await User.findOne({ username });
-        console.log('User found:', user);
+        console.log('Usuario encontrado:', user);
         if (!user) {
-            console.log('User not found');
+            console.log('Usuario no encontrado');
             return res.status(401).json({ error: 'Usuario no encontrado' });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
-        console.log('Password match:', passwordMatch);
+        console.log('Coincidencia de contraseña:', passwordMatch);
         if (!passwordMatch) {
-            console.log('Invalid password');
+            console.log('Contraseña incorrecta');
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
         req.session.user = user;
-        console.log('Session set for user:', req.session.user);
+        console.log('Sesión establecida para el usuario:', req.session.user);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
-        console.error('Login error', err);
+        console.error('Error en el inicio de sesión', err);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -116,13 +116,11 @@ const upload = multer({
 
 app.post('/register', upload.single('avatar'), async (req, res) => {
     const { username, password, name, surname, email, dob } = req.body;
-    console.log('Registro de usuario:', username, email);
     const avatar = req.file ? req.file.buffer : null;
     const avatarContentType = req.file ? req.file.mimetype : null;
     try {
         const existingUser = await User.findOne({ $or: [{ username }, { email }] });
         if (existingUser) {
-            console.log('Usuario o email ya existe:', existingUser);
             return res.status(400).json({ error: 'El nombre de usuario o email ya existe' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -138,7 +136,6 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             valid: false
         });
         await user.save();
-        console.log('Usuario guardado en la base de datos:', user);
         // Crear registro de puntaje
         const score = new Score({
             userId: user._id,
@@ -149,7 +146,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         console.log('Usuario registrado y sesión iniciada:', req.session.user);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
-        console.error('Registration error', err);
+        console.error('Error en el registro', err);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -185,5 +182,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
