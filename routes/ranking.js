@@ -36,7 +36,10 @@ async function calculateScores() {
             });
 
         scores.push({
+            userId: user._id,
             username: user.username,
+            avatar: user.avatar,
+            avatarContentType: user.avatarContentType,
             score: userScore
         });
     });
