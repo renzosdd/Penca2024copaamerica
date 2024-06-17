@@ -18,68 +18,69 @@
         </nav>
     </header>
 
-    <div class="container login-container">
-        <h5>Login</h5>
-        <form id="login-form" action="/login" method="POST">
-            <div class="input-field">
-                <input id="username" type="text" name="username" required>
-                <label for="username">Nombre de usuario</label>
-            </div>
-            <div class="input-field">
-                <input id="password" type="password" name="password" required>
-                <label for="password">Contraseña</label>
-            </div>
-            <button class="btn waves-effect waves-light blue darken-3" type="submit">Login</button>
-        </form>
-        <div class="center-align">
-            <a href="#register-modal" class="btn-flat modal-trigger">Registrar</a>
-        </div>
-        <div id="error-message" class="red-text center-align"></div>
-    </div>
-
-    <!-- Modal de Registro -->
-    <div id="register-modal" class="modal">
-        <div class="modal-content">
-            <h4>Registrar usuario</h4>
-            <form id="register-form" enctype="multipart/form-data" action="/register" method="POST">
+    <main>
+        <div class="container login-container">
+            <h5>Login</h5>
+            <form id="login-form" action="/login" method="POST">
                 <div class="input-field">
-                    <input type="text" id="name" name="name">
-                    <label for="name">Nombre</label>
+                    <input id="username" type="text" name="username" required>
+                    <label for="username">Nombre de usuario</label>
                 </div>
                 <div class="input-field">
-                    <input type="text" id="username" name="username" required>
-                    <label for="username">Nombre de usuario *</label>
+                    <input id="password" type="password" name="password" required>
+                    <label for="password">Contraseña</label>
                 </div>
-                <div class="input-field">
-                    <input type="password" id="password" name="password" required>
-                    <label for="password">Contraseña *</label>
-                </div>
-                <div class="input-field">
-                    <input type="email" id="email" name="email" required>
-                    <label for="email">Email *</label>
-                </div>
-                <div class="input-field">
-                    <input type="text" id="surname" name="surname">
-                    <label for="surname">Apellido</label>
-                </div>
-                <div class="input-field">
-                    <input type="date" id="dob" name="dob">
-                    <label for="dob">Fecha de nacimiento</label>
-                </div>
-                <div class="file-field input-field">
-                    <div class="btn">
-                        <span>Avatar</span>
-                        <input type="file" name="avatar" accept="image/*">
-                    </div>
-                    <div class="file-path-wrapper">
-                        <input class="file-path validate" type="text">
-                    </div>
-                </div>
-                <button class="btn waves-effect waves-light blue darken-3" type="submit">Registrarse</button>
+                <button class="btn waves-effect waves-light blue darken-3" type="submit">Login</button>
             </form>
+            <div class="center-align">
+                <a href="#register-modal" class="btn-flat modal-trigger">Registrar</a>
+            </div>
+            <div id="error-message" class="red-text center-align"></div>
         </div>
-    </div>
-    
+
+        <!-- Modal de Registro -->
+        <div id="register-modal" class="modal">
+            <div class="modal-content">
+                <h4>Registrar usuario</h4>
+                <form id="register-form" enctype="multipart/form-data" action="/register" method="POST">
+                    <div class="input-field">
+                        <input type="text" id="name" name="name">
+                        <label for="name">Nombre</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="text" id="username" name="username" required>
+                        <label for="username">Nombre de usuario *</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="password" id="password" name="password" required>
+                        <label for="password">Contraseña *</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="email" id="email" name="email" required>
+                        <label for="email">Email *</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="text" id="surname" name="surname">
+                        <label for="surname">Apellido</label>
+                    </div>
+                    <div class="input-field">
+                        <input type="date" id="dob" name="dob">
+                        <label for="dob">Fecha de nacimiento</label>
+                    </div>
+                    <div class="file-field input-field">
+                        <div class="btn">
+                            <span>Avatar</span>
+                            <input type="file" name="avatar" accept="image/*">
+                        </div>
+                        <div class="file-path-wrapper">
+                            <input class="file-path validate" type="text">
+                        </div>
+                    </div>
+                    <button class="btn waves-effect waves-light blue darken-3" type="submit">Registrarse</button>
+                </form>
+            </div>
+        </div>
+    </main>
 
     <footer class="page-footer blue darken-3">
         <div class="container center-align">

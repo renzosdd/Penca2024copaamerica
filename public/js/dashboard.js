@@ -246,12 +246,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         const rankingList = document.getElementById('ranking-list');
         rankingList.innerHTML = ''; // Limpiar cualquier contenido previo
 
+        // Ordenar el ranking por puntaje
+        ranking.sort((a, b) => b.score - a.score);
+
         const table = document.createElement('table');
         table.className = 'striped';
         table.innerHTML = `
             <thead>
                 <tr>
-                    <th>Avatar</th>
                     <th>Jugador</th>
                     <th>Puntaje</th>
                 </tr>
@@ -259,7 +261,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             <tbody>
                 ${ranking.map((user, index) => `
                     <tr class="${index === 0 ? 'highlight-first' : ''}">
-                        <td><img src="/avatar/${user.username}" alt="Avatar" class="circle responsive-img avatar-small"></td>
                         <td>${user.username}</td>
                         <td>${user.score}</td>
                     </tr>

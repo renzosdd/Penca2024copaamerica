@@ -8,9 +8,10 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    margin: 0;
 }
 
-.header {
+header {
     background: #002f6c; /* Azul oscuro */
     padding: 10px 0;
     display: flex;
@@ -18,7 +19,7 @@ body {
     justify-content: space-between;
 }
 
-.header .container {
+header .container {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -38,12 +39,18 @@ body {
     margin-left: 10px;
 }
 
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .footer {
     background: #002f6c; /* Azul oscuro */
     padding: 10px 0;
     text-align: center;
     color: #fff;
-    margin-top: auto;
 }
 
 .footer .footer-links {
