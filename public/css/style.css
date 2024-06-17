@@ -3,12 +3,12 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    background: #f3f4f6;
+    background: linear-gradient(to right, #004d99, #ffcc00, #ff3300); /* Colores de la Copa América */
     color: #444;
 }
 
 header {
-    background: #004d40;
+    background: #004d99; /* Azul oscuro */
     padding: 10px 0;
     text-align: center;
 }
@@ -18,7 +18,7 @@ header img {
 }
 
 nav {
-    background: none;
+    background: transparent; /* Nav transparente para que tome el color del header */
 }
 
 nav .brand-logo img {
@@ -31,14 +31,14 @@ nav .right img {
     border-radius: 50%;
 }
 
-.footer {
-    background: #004d40;
+footer {
+    background: #004d99; /* Azul oscuro */
     padding: 10px 0;
     text-align: center;
     color: #fff;
 }
 
-.footer a {
+footer a {
     color: #fff;
     margin: 0 10px;
     display: inline-block;
@@ -46,7 +46,7 @@ nav .right img {
     height: 24px;
 }
 
-.footer img {
+footer img {
     max-width: 100%;
     height: auto;
 }
@@ -68,10 +68,11 @@ nav .right img {
     margin-bottom: 20px;
     transition: border 0.3s ease;
     padding: 15px;
+    background: #fff; /* Fondo blanco para las tarjetas */
 }
 
 .match-card.saved {
-    border: 2px solid #4caf50;
+    border: 2px solid #4caf50; /* Verde para indicar guardado */
 }
 
 .match-header {
@@ -128,29 +129,29 @@ form {
 }
 
 .tabs .tab a {
-    color: #004d40;
+    color: #004d99; /* Azul oscuro */
 }
 
 .tabs .tab a.active {
-    background-color: #b2dfdb;
-    color: #004d40;
+    background-color: #ffcc00; /* Amarillo */
+    color: #004d99; /* Azul oscuro */
 }
 
 .tabs .indicator {
-    background-color: #004d40;
+    background-color: #004d99; /* Azul oscuro */
 }
 
 .btn {
-    background-color: #004d40;
+    background-color: #004d99; /* Azul oscuro */
     border-radius: 25px;
 }
 
 .btn:hover {
-    background-color: #00332c;
+    background-color: #003366; /* Azul más oscuro */
 }
 
 .table thead th {
-    background-color: #004d40;
+    background-color: #004d99; /* Azul oscuro */
     color: #fff;
 }
 
@@ -159,11 +160,11 @@ form {
 }
 
 .dropdown-content li>a, .dropdown-content li>span {
-    color: #004d40;
+    color: #004d99; /* Azul oscuro */
 }
 
 .dropdown-content li>a:hover, .dropdown-content li>span:hover {
-    background-color: #b2dfdb;
+    background-color: #ffcc00; /* Amarillo */
 }
 
 /* Login Page Styles */

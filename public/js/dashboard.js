@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     var dropdownElems = document.querySelectorAll('.dropdown-trigger');
     var dropdownInstances = M.Dropdown.init(dropdownElems, { constrainWidth: false, coverTrigger: false });
 
+    // Inicializar el modal
+    var modalElems = document.querySelectorAll('.modal');
+    var modalInstances = M.Modal.init(modalElems);
+
     const userRole = document.querySelector('body').getAttribute('data-role');
     const username = document.querySelector('body').getAttribute('data-username');
 
