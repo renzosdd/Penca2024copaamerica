@@ -1,14 +1,14 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: false },
-    username: { type: String, required: true, unique: true },
+    username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
-    surname: { type: String, required: false },
-    email: { type: String, required: true, unique: true },
-    dob: { type: Date, required: false },
-    avatar: { type: Buffer, required: false },
-    avatarContentType: { type: String, required: false },
+    name: { type: String },
+    surname: { type: String },
+    email: { type: String, unique: true, required: true },
+    dob: { type: Date },
+    avatar: { type: Buffer },
+    avatarContentType: { type: String },
     role: { type: String, default: 'user' },
     valid: { type: Boolean, default: true }
 });

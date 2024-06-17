@@ -1,3 +1,4 @@
+// Asegúrate de que estos imports estén en la parte superior de tu archivo main.js
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
@@ -19,7 +20,6 @@ const uri = process.env.MONGODB_URI || 'mongodb+srv://admindbpenca:AdminDbPenca2
 
 console.log('Mongo URI:', uri);
 
-// Solucionar advertencia de `strictQuery`
 mongoose.set('strictQuery', true);
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -52,40 +52,6 @@ mongoose.connect(uri, {
 const User = require('./models/User');
 const Score = require('./models/Score');
 
-// Crear o actualizar el usuario administrador
-const ensureAdminUser = async () => {
-    const adminData = {
-        username: 'admin',
-        password: 'Admin12345', // Asegúrate de usar una contraseña segura en producción
-        name: 'Admin',
-        surname: 'Admin',
-        email: 'admin@example.com',
-        dob: new Date('2000-01-01'),
-        role: 'admin',
-        valid: true
-    };
-
-    try {
-        let admin = await User.findOne({ username: 'admin' });
-        if (!admin) {
-            const hashedPassword = await bcrypt.hash(adminData.password, 10);
-            adminData.password = hashedPassword;
-            admin = new User(adminData);
-            await admin.save();
-            console.log('Admin user created');
-        } else {
-            const updateData = { ...adminData };
-            delete updateData.password; // No actualizar la contraseña si ya existe el admin
-            await User.updateOne({ _id: admin._id }, updateData);
-            console.log('Admin user updated');
-        }
-    } catch (err) {
-        console.error('Error ensuring admin user', err);
-    }
-};
-
-ensureAdminUser();
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
@@ -111,25 +77,25 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log('Intento de inicio de sesión para el usuario:', username);
+    console.log('Login attempt for user:', username);
     try {
         const user = await User.findOne({ username });
-        console.log('Usuario encontrado:', user);
+        console.log('User found:', user);
         if (!user) {
-            console.log('Usuario no encontrado');
+            console.log('User not found');
             return res.status(401).json({ error: 'Usuario no encontrado' });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
-        console.log('Coincidencia de contraseña:', passwordMatch);
+        console.log('Password match:', passwordMatch);
         if (!passwordMatch) {
-            console.log('Contraseña incorrecta');
+            console.log('Invalid password');
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
         req.session.user = user;
-        console.log('Sesión establecida para el usuario:', req.session.user);
+        console.log('Session set for user:', req.session.user);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
-        console.error('Error de inicio de sesión', err);
+        console.error('Login error', err);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -149,25 +115,25 @@ const upload = multer({
 });
 
 app.post('/register', upload.single('avatar'), async (req, res) => {
-    const { name, username, password, surname, email, dob } = req.body;
+    const { username, password, name, surname, email, dob } = req.body;
     const avatar = req.file ? req.file.buffer : null;
     const avatarContentType = req.file ? req.file.mimetype : null;
     try {
-        const existingUser = await User.findOne({ username });
+        const existingUser = await User.findOne({ $or: [{ username }, { email }] });
         if (existingUser) {
-            return res.status(400).json({ error: 'El nombre de usuario ya existe' });
+            return res.status(400).json({ error: 'El nombre de usuario o email ya existe' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({
-            name,
             username,
             password: hashedPassword,
+            name,
             surname,
             email,
             dob,
             avatar,
             avatarContentType,
-            valid: true // Asignar campo valid a true
+            valid: false
         });
         await user.save();
         // Crear registro de puntaje
@@ -180,7 +146,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         console.log('Usuario registrado y sesión iniciada:', req.session.user);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
-        console.error('Error de registro', err);
+        console.error('Registration error', err);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -216,5 +182,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`El servidor está ejecutando en el puerto ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
