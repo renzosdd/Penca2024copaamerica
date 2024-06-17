@@ -10,8 +10,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const username = document.querySelector('body').getAttribute('data-username');
 
     // Mostrar el rol y el nombre de usuario
-    console.log('User Role:', userRole);
-    console.log('Username:', username);
+    console.log('Rol del usuario:', userRole);
+    console.log('Nombre de usuario:', username);
 
     let matches = []; // Definir la variable matches en el contexto adecuado
 
@@ -20,11 +20,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
     };
 
+    // Función para formatear la fecha en formato DD/MM/YYYY
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses son de 0 a 11
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
     // Cargar los partidos
     try {
         const matchesResponse = await fetch('/matches');
         matches = await matchesResponse.json();
-        console.log('Matches fetched successfully');
+        console.log('Partidos cargados correctamente');
 
         const predictionsResponse = await fetch('/predictions');
         const predictions = await predictionsResponse.json();
@@ -40,6 +49,12 @@ document.addEventListener('DOMContentLoaded', async function() {
             const team2Flag = normalizeName(match.team2); // Normalizar el nombre del equipo
             const userPrediction = userPredictions.find(prediction => prediction.matchId.toString() === match._id.toString());
 
+            const formattedDate = formatDate(match.date);
+            const matchDate = new Date(`${match.date}T${match.time}`);
+            const now = new Date();
+            const thirtyMinutesBefore = new Date(matchDate.getTime() - 30 * 60000);
+            const editable = now < thirtyMinutesBefore && matchDate > now;
+
             // Crear tarjeta de fixture
             const matchDiv = document.createElement('div');
             matchDiv.className = 'col s12 m6';
@@ -51,7 +66,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 <div class="date-time">
                                     <div class="info">
                                         <img src="/images/cal.png" alt="Fecha" class="small-icon">
-                                        <span>${match.date}</span>
+                                        <span>${formattedDate}</span>
                                     </div>
                                     <div class="info">
                                         <img src="/images/clock.png" alt="Hora" class="small-icon">
@@ -73,7 +88,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                         </div>
                         <div class="match-details">
                             ${userRole === 'admin' ? `
-                            <form id="matchForm-${match._id}" method="POST" action="/matches/${match._id}">
+                            <form id="matchForm-${match._id}" method="POST" action="/matches/update">
+                                <input type="hidden" name="matchId" value="${match._id}">
                                 <div class="input-field inline">
                                     <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required>
                                     <span>-</span>
@@ -99,7 +115,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 <div class="date-time">
                                     <div class="info">
                                         <img src="/images/cal.png" alt="Fecha" class="small-icon">
-                                        <span>${match.date}</span>
+                                        <span>${formattedDate}</span>
                                     </div>
                                     <div class="info">
                                         <img src="/images/clock.png" alt="Hora" class="small-icon">
@@ -126,11 +142,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                             <form id="predictionForm-${match._id}" method="POST" action="/predictions">
                                 <input type="hidden" name="matchId" value="${match._id}">
                                 <div class="input-field inline">
-                                    <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" required>
+                                    <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required>
                                     <span>-</span>
-                                    <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" required>
+                                    <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required>
                                 </div>
-                                <button class="btn waves-effect waves-light blue darken-3" type="submit">Enviar Predicción</button>
+                                <button class="btn waves-effect waves-light blue darken-3" type="submit" ${!editable ? 'disabled' : ''}>Enviar Predicción</button>
                             </form>
                         </div>
                     </div>
@@ -156,7 +172,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     const result = await response.json();
                     if (response.ok) {
                         console.log('Predicción enviada exitosamente');
-                        M.toast({html: 'Predicción actualizada correctamente!', classes: 'green'});
+                        M.toast({html: '¡Predicción actualizada correctamente!', classes: 'green'});
                         const matchCard = form.closest('.card');
                         if (matchCard) {
                             matchCard.classList.add('saved');
@@ -197,7 +213,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         const result = await response.json();
                         if (response.ok) {
                             console.log('Resultado enviado exitosamente');
-                            M.toast({html: 'Resultado actualizado correctamente!', classes: 'green'});
+                            M.toast({html: '¡Resultado actualizado correctamente!', classes: 'green'});
                             // Recalcular puntaje de todos los usuarios
                             await fetch('/ranking/recalculate', { method: 'POST' });
                         } else {

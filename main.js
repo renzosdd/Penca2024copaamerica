@@ -57,6 +57,7 @@ const ensureAdminUser = async () => {
     const adminData = {
         username: 'admin',
         password: 'Admin12345', // Asegúrate de usar una contraseña segura en producción
+        name: 'Admin',
         surname: 'Admin',
         email: 'admin@example.com',
         dob: new Date('2000-01-01'),
@@ -110,25 +111,25 @@ app.get('/dashboard', isAuthenticated, (req, res) => {
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log('Login attempt for user:', username);
+    console.log('Intento de inicio de sesión para el usuario:', username);
     try {
         const user = await User.findOne({ username });
-        console.log('User found:', user);
+        console.log('Usuario encontrado:', user);
         if (!user) {
-            console.log('User not found');
+            console.log('Usuario no encontrado');
             return res.status(401).json({ error: 'Usuario no encontrado' });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
-        console.log('Password match:', passwordMatch);
+        console.log('Coincidencia de contraseña:', passwordMatch);
         if (!passwordMatch) {
-            console.log('Invalid password');
+            console.log('Contraseña incorrecta');
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
         req.session.user = user;
-        console.log('Session set for user:', req.session.user);
+        console.log('Sesión establecida para el usuario:', req.session.user);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
-        console.error('Login error', err);
+        console.error('Error de inicio de sesión', err);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -138,15 +139,17 @@ const storage = multer.memoryStorage();
 const upload = multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        if (!req.body.username) {
-            return cb(new Error('Username is required'));
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Tipo de archivo no soportado. Solo se permiten imágenes.'));
         }
-        cb(null, true);
     }
 });
 
 app.post('/register', upload.single('avatar'), async (req, res) => {
-    const { username, password, surname, email, dob } = req.body;
+    const { name, username, password, surname, email, dob } = req.body;
     const avatar = req.file ? req.file.buffer : null;
     const avatarContentType = req.file ? req.file.mimetype : null;
     try {
@@ -156,6 +159,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({
+            name,
             username,
             password: hashedPassword,
             surname,
@@ -176,7 +180,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         console.log('Usuario registrado y sesión iniciada:', req.session.user);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
-        console.error('Registration error', err);
+        console.error('Error de registro', err);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -212,5 +216,5 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`El servidor está ejecutando en el puerto ${PORT}`);
 });
