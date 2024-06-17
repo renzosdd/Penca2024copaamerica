@@ -132,7 +132,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             dob,
             avatar,
             avatarContentType,
-            valid: true
+            valid: false
         });
         await user.save();
         // Crear registro de puntaje

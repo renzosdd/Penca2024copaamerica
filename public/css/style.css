@@ -188,7 +188,7 @@ form {
 /* Login Page Styles */
 .login-container {
     max-width: 400px;
-    margin: 100px auto;
+    margin: 100px auto 50px auto;
     padding: 30px;
     background: #fff;
     border-radius: 10px;
@@ -255,4 +255,15 @@ form {
     .match-details button {
         width: auto;
     }
+}
+
+/* Estilo del ranking */
+.table tbody tr.highlight-first {
+    background-color: #c8e6c9; /* Verde claro */
+}
+
+.avatar-small {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
 }
