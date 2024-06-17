@@ -24,12 +24,15 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         });
         const result = await response.json();
         if (response.ok) {
-            window.location.href = result.redirectUrl;
+            M.toast({html: '¡Inicio de sesión exitoso!', classes: 'green'});
+            setTimeout(() => {
+                window.location.href = result.redirectUrl;
+            }, 1000);
         } else {
-            document.getElementById('error-message').innerText = result.error;
+            M.toast({html: result.error, classes: 'red'});
         }
     } catch (error) {
-        document.getElementById('error-message').innerText = 'Error al iniciar sesión';
+        M.toast({html: 'Error al iniciar sesión', classes: 'red'});
     }
 });
 
@@ -44,16 +47,16 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
         });
         const result = await response.json();
         if (response.ok) {
-            M.toast({html: 'Registro exitoso! Redirigiendo...', classes: 'green'});
+            M.toast({html: '¡Registro exitoso! Redirigiendo...', classes: 'green'});
             const modalInstance = M.Modal.getInstance(document.getElementById('register-modal'));
             modalInstance.close();
             setTimeout(() => {
                 window.location.href = result.redirectUrl;
             }, 1000);
         } else {
-            document.getElementById('register-error-message').innerText = result.error;
+            M.toast({html: result.error, classes: 'red'});
         }
     } catch (error) {
-        document.getElementById('register-error-message').innerText = 'Error al registrar';
+        M.toast({html: 'Error al registrar', classes: 'red'});
     }
 });

@@ -1,4 +1,3 @@
-// Asegúrate de que estos imports estén en la parte superior de tu archivo main.js
 const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
@@ -133,7 +132,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             dob,
             avatar,
             avatarContentType,
-            valid: false
+            valid: true
         });
         await user.save();
         // Crear registro de puntaje

@@ -85,11 +85,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 <span class="team-name">${match.team1}</span>
                             </div>
                             <div class="input-field inline">
-                                <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required>
+                                <input type="number" class="result-input" name="result1" value="${match.result1 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
                             </div>
                             <span class="vs">vs</span>
                             <div class="input-field inline">
-                                <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required>
+                                <input type="number" class="result-input" name="result2" value="${match.result2 || ''}" required ${userRole !== 'admin' ? 'disabled' : ''} min="0">
                             </div>
                             <div class="team">
                                 <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
@@ -137,11 +137,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                                 <span class="team-name">${match.team1}</span>
                             </div>
                             <div class="input-field inline">
-                                <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required>
+                                <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" ${!editable ? 'disabled' : ''} required min="0">
                             </div>
                             <span class="vs">vs</span>
                             <div class="input-field inline">
-                                <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required>
+                                <input type="number" class="result-input" name="result2" value="${userPrediction ? userPrediction.result2 : ''}" ${!editable ? 'disabled' : ''} required min="0">
                             </div>
                             <div class="team">
                                 <img src="/images/${team2Flag}.png" alt="${match.team2}" class="circle responsive-img">
@@ -235,12 +235,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     } catch (error) {
         console.error('Error al cargar los partidos:', error);
+        M.toast({html: 'Error al cargar los partidos', classes: 'red'});
     }
 
     // Cargar el ranking
     try {
         const rankingResponse = await fetch('/ranking');
         const ranking = await rankingResponse.json();
+        if (!Array.isArray(ranking)) {
+            throw new Error('La respuesta del servidor no es un array');
+        }
         const rankingList = document.getElementById('ranking-list');
         rankingList.innerHTML = ''; // Limpiar cualquier contenido previo
 
@@ -265,6 +269,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         rankingList.appendChild(table);
     } catch (error) {
         console.error('Error al cargar el ranking:', error);
+        M.toast({html: 'Error al cargar el ranking', classes: 'red'});
     }
 
     // Manejar el cierre de sesión

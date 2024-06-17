@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Score = require('../models/Score');
+const Match = require('../models/Match'); // Asegúrate de tener este import
+const Prediction = require('../models/Prediction'); // Asegúrate de tener este import
 
 router.get('/', async (req, res) => {
     try {
