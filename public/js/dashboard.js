@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Función para verificar si faltan menos de 30 minutos para el partido
     const isLessThan30MinutesToMatch = (matchDate, matchTime) => {
-        const matchDateTime = new Date(`${matchDate}T${matchTime}`);
+        const matchDateTime = new Date(`${matchDate}T${matchTime}:00`); // Combinar fecha y hora
         const now = new Date();
         const timeDifference = (matchDateTime - now) / 60000; // Diferencia en minutos
         return timeDifference < 30;

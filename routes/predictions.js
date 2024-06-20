@@ -28,8 +28,8 @@ router.post('/', async (req, res) => {
 
         // Verificar si falta menos de media hora para el partido
         const currentTime = new Date();
-        const matchTime = new Date(match.date); // Asumimos que la hora del partido está almacenada en 'match.date'
-        const timeDifference = (matchTime - currentTime) / 60000; // Diferencia en minutos
+        const matchDateTime = new Date(`${match.date}T${match.time}:00`); // Combinar fecha y hora
+        const timeDifference = (matchDateTime - currentTime) / 60000; // Diferencia en minutos
 
         if (timeDifference < 30) {
             return res.status(400).json({ error: 'Cannot submit prediction within 30 minutes of match start' });
