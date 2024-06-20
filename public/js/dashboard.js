@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
     };
 
+    // Función para verificar si faltan menos de 30 minutos para el partido
+    const isLessThan30MinutesToMatch = (matchDate, matchTime) => {
+        const matchDateTime = new Date(`${matchDate}T${matchTime}`);
+        const now = new Date();
+        const timeDifference = (matchDateTime - now) / 60000; // Diferencia en minutos
+        return timeDifference < 30;
+    };
+
     // Cargar los partidos
     try {
         const matchesResponse = await fetch('/matches');
@@ -145,6 +153,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                 e.preventDefault();
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
+
+                // Verificar si faltan menos de 30 minutos para el partido
+                const match = matches.find(m => m._id.toString() === data.matchId);
+                if (isLessThan30MinutesToMatch(match.date, match.time)) {
+                    M.toast({html: 'No se puede enviar predicción dentro de los 30 minutos previos al partido', classes: 'red'});
+                    return;
+                }
+
                 try {
                     const response = await fetch(form.action, {
                         method: 'POST',
