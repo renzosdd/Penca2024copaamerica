@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Prediction = require('../models/Prediction');
+const Match = require('../models/Match'); // Importar el modelo de partidos
 
 router.get('/', async (req, res) => {
     try {
@@ -18,6 +19,22 @@ router.post('/', async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
+
+        // Obtener información del partido
+        const match = await Match.findById(matchId);
+        if (!match) {
+            return res.status(404).json({ error: 'Match not found' });
+        }
+
+        // Verificar si falta menos de media hora para el partido
+        const currentTime = new Date();
+        const matchTime = new Date(match.date); // Asumimos que la hora del partido está almacenada en 'match.date'
+        const timeDifference = (matchTime - currentTime) / 60000; // Diferencia en minutos
+
+        if (timeDifference < 30) {
+            return res.status(400).json({ error: 'Cannot submit prediction within 30 minutes of match start' });
+        }
+
         let prediction = await Prediction.findOne({ userId: user._id, matchId });
         if (prediction) {
             prediction.result1 = result1;
