@@ -53,8 +53,6 @@ main {
     text-align: center;
     color: #fff;
     margin-top: auto;
-    position: absolute;
-    bottom: 0;
     width: 100%;
 }
 
@@ -289,16 +287,8 @@ form {
 /* Mobile specific styles */
 @media (max-width: 600px) {
     .responsive-table {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-
-    .responsive-table th,
-    .responsive-table td {
-        display: block;
-        text-align: left;
-        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
     }
 
     .responsive-table thead {
@@ -306,25 +296,30 @@ form {
     }
 
     .responsive-table tr {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        align-items: center;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 10px;
         border-bottom: 1px solid #ddd;
+    }
+
+    .responsive-table td {
+        display: block;
+        text-align: left;
+        padding: 8px 10px;
+        flex: 1;
+    }
+
+    .responsive-table td[data-label="Avatar"] {
+        display: flex;
+        align-items: center;
+    }
+
+    .responsive-table td[data-label="Usuario"],
+    .responsive-table td[data-label="Puntaje"] {
+        padding-left: 30px;
     }
 
     .responsive-table tr.highlight-first {
         background-color: #c8e6c9; /* Verde claro */
-    }
-
-    .responsive-table td[data-label="Avatar"] {
-        grid-column: 1 / 2;
-    }
-
-    .responsive-table td[data-label="Usuario"] {
-        grid-column: 2 / 3;
-    }
-
-    .responsive-table td[data-label="Puntaje"] {
-        grid-column: 3 / 4;
     }
 }
