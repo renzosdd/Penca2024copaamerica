@@ -38,8 +38,8 @@ async function calculateScores() {
         scores.push({
             userId: user._id,
             username: user.username,
-            avatar: user.avatar,
-            avatarContentType: user.avatarContentType,
+            avatar: user.avatar || null, // Aquí se puede asignar un valor por defecto si es necesario
+            avatarContentType: user.avatarContentType || null, // Asegurar que el campo existe aunque esté vacío
             score: userScore
         });
     });
@@ -47,6 +47,7 @@ async function calculateScores() {
     return scores;
 }
 
+// Endpoint para obtener el ranking
 router.get('/', async (req, res) => {
     try {
         const scores = await calculateScores();
@@ -57,6 +58,7 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Endpoint para recalcular los puntajes
 router.post('/recalculate', async (req, res) => {
     try {
         const scores = await calculateScores();

@@ -235,6 +235,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Cargar el ranking
     try {
         const rankingResponse = await fetch('/ranking');
+        if (!rankingResponse.ok) {
+            throw new Error(`HTTP error! status: ${rankingResponse.status}`);
+        }
         let ranking = await rankingResponse.json();
         const rankingList = document.getElementById('ranking-list');
         rankingList.innerHTML = ''; // Limpiar cualquier contenido previo
@@ -250,6 +253,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         table.innerHTML = `
             <thead>
                 <tr>
+                    <th>Avatar</th>
                     <th>Usuario</th>
                     <th>Puntaje</th>
                 </tr>
@@ -257,6 +261,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             <tbody>
                 ${ranking.map(user => `
                     <tr class="${user.score === highestScore ? 'highlight-first' : ''}">
+                        <td><img src="${user.avatar ? `data:${user.avatarContentType};base64,${user.avatar}` : '/images/avatar.webp'}" alt="${user.username}" class="circle avatar-small"></td>
                         <td>${user.username}</td>
                         <td>${user.score}</td>
                     </tr>
@@ -265,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         `;
         rankingList.appendChild(table);
     } catch (error) {
-        console.error('Error al cargar el ranking:', error);
+        console.error('Error al cargar el ranking:', error.message);
     }
 
     // Manejar el cierre de sesión
