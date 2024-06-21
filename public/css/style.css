@@ -272,7 +272,7 @@ form {
 }
 
 /* Estilo del ranking */
-.table tbody tr.highlight-first {
+.collection-item.highlight-first {
     background-color: #c8e6c9; /* Verde claro */
 }
 
@@ -290,46 +290,23 @@ form {
 
 /* Mobile specific styles */
 @media (max-width: 600px) {
-    .responsive-table {
-        display: block;
+    .collection {
+        padding: 0;
     }
 
-    .responsive-table thead {
-        display: none;
-    }
-
-    .responsive-table tr {
+    .collection .collection-item {
         display: flex;
         flex-direction: column;
-        margin-bottom: 10px;
-        border-bottom: 1px solid #ddd;
+        align-items: flex-start;
         padding: 10px;
-        justify-content: space-between;
+        border-bottom: 1px solid #ddd;
     }
 
-    .responsive-table td {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 5px 0;
+    .collection .collection-item .title {
+        font-weight: bold;
     }
 
-    .responsive-table td[data-label="Avatar"],
-    .responsive-table td[data-label="Usuario"],
-    .responsive-table td[data-label="Puntaje"] {
-        flex: 1;
-    }
-
-    .responsive-table td[data-label="Avatar"] {
-        justify-content: center;
-    }
-
-    .responsive-table td[data-label="Usuario"],
-    .responsive-table td[data-label="Puntaje"] {
-        justify-content: space-between;
-    }
-
-    .responsive-table tr.highlight-first {
-        background-color: #c8e6c9; /* Verde claro */
+    .collection .collection-item p {
+        margin: 5px 0;
     }
 }

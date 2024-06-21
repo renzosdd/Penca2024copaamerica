@@ -248,27 +248,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Encontrar el puntaje más alto
         const highestScore = ranking[0]?.score;
 
-        const table = document.createElement('table');
-        table.className = 'striped highlight responsive-table';
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th>Avatar</th>
-                    <th>Usuario</th>
-                    <th>Puntaje</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${ranking.map(user => `
-                    <tr class="${user.score === highestScore ? 'highlight-first' : ''}">
-                        <td data-label="Avatar"><img src="${user.avatar ? '/avatar/' + user.username : '/images/avatar.webp'}" alt="${user.username}" class="circle avatar-small"></td>
-                        <td data-label="Usuario">${user.username}</td>
-                        <td data-label="Puntaje">${user.score}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        `;
-        rankingList.appendChild(table);
+        const collection = document.createElement('ul');
+        collection.className = 'collection';
+
+        collection.innerHTML = ranking.map(user => `
+            <li class="collection-item avatar ${user.score === highestScore ? 'highlight-first' : ''}">
+                <img src="${user.avatar ? '/avatar/' + user.username : '/images/avatar.webp'}" alt="${user.username}" class="circle">
+                <span class="title">${user.username}</span>
+                <p>Puntaje: ${user.score}</p>
+            </li>
+        `).join('');
+
+        rankingList.appendChild(collection);
     } catch (error) {
         console.error('Error al cargar el ranking:', error.message);
     }
