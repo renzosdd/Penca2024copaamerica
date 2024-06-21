@@ -39,6 +39,8 @@ async function calculateScores() {
         let avatarBase64 = null;
         if (user.avatar && user.avatar.base64) {
             avatarBase64 = user.avatar.base64;
+        } else if (user.avatar && user.avatar.buffer) {
+            avatarBase64 = user.avatar.buffer.toString('base64');
         }
 
         scores.push({
