@@ -54,6 +54,8 @@ const User = require('./models/User');
 const Score = require('./models/Score');
 const Match = require('./models/Match');
 const Prediction = require('./models/Prediction');
+const adminRouter = require('./routes/admin');
+
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -170,6 +172,7 @@ app.get('/avatar/:username', async (req, res) => {
 app.use('/matches', isAuthenticated, require('./routes/matches'));
 app.use('/predictions', isAuthenticated, require('./routes/predictions'));
 app.use('/ranking', isAuthenticated, require('./routes/ranking'));
+app.use('/admin', adminRouter);
 
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Edit User</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <a href="/"><img src="/images/Logo.png" alt="Logo" class="responsive-img"></a>
+            </div>
+            <div class="user-menu right">
+                <a href="/" class="btn red">Volver</a>
+                <a class="dropdown-trigger" href="#!" data-target="user-dropdown">
+                    <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img">
+                </a>
+            </div>
+            <ul id="user-dropdown" class="dropdown-content">
+                <li><a href="#" id="logout-button">Cerrar sesión</a></li>
+            </ul>
+        </div>
+    </header>
+    <main>
+        <div class="container">
+            <h3>Editar Usuario</h3>
+            <form id="editUserForm" method="POST" action="/admin/update" enctype="multipart/form-data">
+                <div class="input-field">
+                    <input id="username" name="username" type="text" required>
+                    <label for="username">Nombre de usuario</label>
+                </div>
+                <div class="input-field">
+                    <input id="name" name="name" type="text">
+                    <label for="name">Nombre</label>
+                </div>
+                <div class="input-field">
+                    <input id="surname" name="surname" type="text">
+                    <label for="surname">Apellido</label>
+                </div>
+                <div class="input-field">
+                    <input id="email" name="email" type="email">
+                    <label for="email">Correo Electrónico</label>
+                </div>
+                <div class="input-field">
+                    <input id="dob" name="dob" type="date">
+                    <label for="dob">Fecha de Nacimiento</label>
+                </div>
+                <div class="input-field">
+                    <select id="role" name="role">
+                        <option value="user">Usuario</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                    <label for="role">Rol</label>
+                </div>
+                <div class="input-field">
+                    <select id="valid" name="valid">
+                        <option value="true">Válido</option>
+                        <option value="false">Inválido</option>
+                    </select>
+                    <label for="valid">Estado</label>
+                </div>
+                <div class="file-field input-field">
+                    <div class="btn">
+                        <span>Avatar</span>
+                        <input type="file" name="avatar">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text">
+                    </div>
+                </div>
+                <button class="btn waves-effect waves-light" type="submit">Actualizar</button>
+            </form>
+        </div>
+    </main>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var elems = document.querySelectorAll('select');
+            var instances = M.FormSelect.init(elems);
+
+            // Handle logout button click
+            document.getElementById('logout-button').addEventListener('click', async () => {
+                try {
+                    const response = await fetch('/logout', { method: 'POST' });
+                    if (response.ok) {
+                        window.location.href = '/';
+                    } else {
+                        console.error('Error al cerrar sesión');
+                        M.toast({html: 'Error al cerrar sesión', classes: 'red'});
+                    }
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    M.toast({html: 'Error al cerrar sesión', classes: 'red'});
+                }
+            });
+        });
+    </script>
+</body>
+</html>
