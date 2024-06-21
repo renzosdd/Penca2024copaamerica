@@ -35,11 +35,17 @@ async function calculateScores() {
                 }
             });
 
+        // Convertir el avatar a base64 si existe
+        let avatarBase64 = null;
+        if (user.avatar && user.avatar.base64) {
+            avatarBase64 = user.avatar.base64;
+        }
+
         scores.push({
             userId: user._id,
             username: user.username,
-            avatar: user.avatar || null, // Aquí se puede asignar un valor por defecto si es necesario
-            avatarContentType: user.avatarContentType || null, // Asegurar que el campo existe aunque esté vacío
+            avatar: avatarBase64,
+            avatarContentType: user.avatarContentType,
             score: userScore
         });
     });
