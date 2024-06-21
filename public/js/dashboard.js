@@ -261,9 +261,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             <tbody>
                 ${ranking.map(user => `
                     <tr class="${user.score === highestScore ? 'highlight-first' : ''}">
-                        <td><img src="${user.avatar ? `data:${user.avatarContentType};base64,${user.avatar}` : '/images/avatar.webp'}" alt="${user.username}" class="circle avatar-small"></td>
-                        <td>${user.username}</td>
-                        <td>${user.score}</td>
+                        <td data-label="Avatar"><img src="${user.avatar ? `data:${user.avatarContentType};base64,${user.avatar}` : '/images/avatar.webp'}" alt="${user.username}" class="circle avatar-small"></td>
+                        <td data-label="Usuario">${user.username}</td>
+                        <td data-label="Puntaje">${user.score}</td>
                     </tr>
                 `).join('')}
             </tbody>
