@@ -13,10 +13,10 @@
             display: flex;
             min-height: 100vh;
             flex-direction: column;
-            padding-bottom: 50px; /* Ensure there is space between body content and footer */
         }
         main {
             flex: 1 0 auto;
+            padding-bottom: 20px; /* Ensure there is space between body content and footer */
         }
     </style>
 </head>
@@ -24,18 +24,13 @@
     <header>
         <nav>
             <div class="nav-wrapper blue darken-3">
-                <a href="/" class="brand-logo center">Admin Panel</a>
-                <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+                <a href="/" class="brand-logo left">Admin - <%= user.username %></a>
                 <ul class="right hide-on-med-and-down">
-                    <li><a href="/" class="btn red">Volver</a></li>
                     <li>
                         <a class="dropdown-trigger" href="#!" data-target="user-dropdown">
-                            <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img" style="width:40px; height:40px;">
+                            <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img" style="width:40px; height:40px; display: block; margin: auto;">
                         </a>
                     </li>
-                </ul>
-                <ul class="sidenav" id="mobile-demo">
-                    <li><a href="/">Volver</a></li>
                 </ul>
                 <ul id="user-dropdown" class="dropdown-content">
                     <li><a href="/dashboard">Dashboard</a></li>
