@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const highestScore = ranking[0]?.score;
 
         const table = document.createElement('table');
-        table.className = 'striped';
+        table.className = 'striped highlight responsive-table';
         table.innerHTML = `
             <thead>
                 <tr>
@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             </thead>
             <tbody>
                 ${ranking.map(user => `
-                    <tr style="background-color: ${user.score === highestScore ? 'lightgreen' : 'white'};">
+                    <tr class="${user.score === highestScore ? 'highlight-first' : ''}">
                         <td>${user.username}</td>
                         <td>${user.score}</td>
                     </tr>
