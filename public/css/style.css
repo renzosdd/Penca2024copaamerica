@@ -291,8 +291,7 @@ form {
 /* Mobile specific styles */
 @media (max-width: 600px) {
     .responsive-table {
-        display: flex;
-        flex-direction: column;
+        display: block;
     }
 
     .responsive-table thead {
@@ -301,7 +300,7 @@ form {
 
     .responsive-table tr {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         margin-bottom: 10px;
         border-bottom: 1px solid #ddd;
         padding: 10px;
@@ -309,22 +308,25 @@ form {
     }
 
     .responsive-table td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 0;
+    }
+
+    .responsive-table td[data-label="Avatar"],
+    .responsive-table td[data-label="Usuario"],
+    .responsive-table td[data-label="Puntaje"] {
         flex: 1;
-        text-align: left;
-        padding: 5px;
     }
 
     .responsive-table td[data-label="Avatar"] {
-        display: flex;
-        align-items: center;
         justify-content: center;
     }
 
     .responsive-table td[data-label="Usuario"],
     .responsive-table td[data-label="Puntaje"] {
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        justify-content: space-between;
     }
 
     .responsive-table tr.highlight-first {
