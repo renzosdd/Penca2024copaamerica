@@ -35,18 +35,13 @@ async function calculateScores() {
             }
         }
 
-        // Conversión del avatar a base64 si está disponible
-        let avatarBase64 = null;
-        if (user.avatar && user.avatar.buffer) {
-            avatarBase64 = user.avatar.buffer.toString('base64');
-        } else if (user.avatar && typeof user.avatar === 'string') {
-            avatarBase64 = user.avatar; // Si el avatar ya está en base64
-        }
+        // Agregamos la referencia del avatar
+        const avatarPath = user.avatar ? '/avatar/' + user.username : '/images/avatar.webp';
 
         scores.push({
             userId: user._id,
             username: user.username,
-            avatar: avatarBase64,
+            avatar: avatarPath,
             avatarContentType: user.avatarContentType,
             score: userScore
         });
