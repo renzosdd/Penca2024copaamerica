@@ -235,9 +235,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Cargar el ranking
     try {
         const rankingResponse = await fetch('/ranking');
-        const ranking = await rankingResponse.json();
+        let ranking = await rankingResponse.json();
         const rankingList = document.getElementById('ranking-list');
         rankingList.innerHTML = ''; // Limpiar cualquier contenido previo
+
+        // Ordenar el ranking por puntaje en orden descendente
+        ranking.sort((a, b) => b.score - a.score);
+
+        // Encontrar el puntaje más alto
+        const highestScore = ranking[0]?.score;
 
         const table = document.createElement('table');
         table.className = 'striped';
@@ -250,7 +256,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             </thead>
             <tbody>
                 ${ranking.map(user => `
-                    <tr>
+                    <tr style="background-color: ${user.score === highestScore ? 'lightgreen' : 'white'};">
                         <td>${user.username}</td>
                         <td>${user.score}</td>
                     </tr>
