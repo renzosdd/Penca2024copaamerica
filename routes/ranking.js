@@ -13,33 +13,30 @@ async function calculateScores() {
 
     let scores = [];
 
-    users.forEach(user => {
+    for (const user of users) {
         let userScore = 0;
-        predictions
-            .filter(prediction => prediction.userId.toString() === user._id.toString())
-            .forEach(prediction => {
-                const match = matches.find(m => m._id.toString() === prediction.matchId.toString());
-                if (match && match.result1 !== undefined && match.result2 !== undefined) {
-                    if (prediction.result1 === match.result1 && prediction.result2 === match.result2) {
-                        userScore += 3; // Resultado exacto
-                    } else if (
-                        (prediction.result1 > prediction.result2 && match.result1 > match.result2) ||
-                        (prediction.result1 < prediction.result2 && match.result1 < match.result2) ||
-                        (prediction.result1 === prediction.result2 && match.result1 === match.result2)
-                    ) {
-                        userScore += 1; // Indicó resultado
-                    }
-                    if (prediction.result1 === match.result1 || prediction.result2 === match.result2) {
-                        userScore += 1; // Adivinó goles de un equipo
-                    }
-                }
-            });
+        const userPredictions = predictions.filter(prediction => prediction.userId.toString() === user._id.toString());
 
-        // Convertir el avatar a base64 si existe
+        for (const prediction of userPredictions) {
+            const match = matches.find(m => m._id.toString() === prediction.matchId.toString());
+            if (match && match.result1 !== undefined && match.result2 !== undefined) {
+                if (prediction.result1 === match.result1 && prediction.result2 === match.result2) {
+                    userScore += 3; // Resultado exacto
+                } else if (
+                    (prediction.result1 > prediction.result2 && match.result1 > match.result2) ||
+                    (prediction.result1 < prediction.result2 && match.result1 < match.result2) ||
+                    (prediction.result1 === prediction.result2 && match.result1 === match.result2)
+                ) {
+                    userScore += 1; // Indicó resultado
+                }
+                if (prediction.result1 === match.result1 || prediction.result2 === match.result2) {
+                    userScore += 1; // Adivinó goles de un equipo
+                }
+            }
+        }
+
         let avatarBase64 = null;
-        if (user.avatar && user.avatar.base64) {
-            avatarBase64 = user.avatar.base64;
-        } else if (user.avatar && user.avatar.buffer) {
+        if (user.avatar && user.avatar.buffer) {
             avatarBase64 = user.avatar.buffer.toString('base64');
         }
 
@@ -50,7 +47,7 @@ async function calculateScores() {
             avatarContentType: user.avatarContentType,
             score: userScore
         });
-    });
+    }
 
     return scores;
 }
