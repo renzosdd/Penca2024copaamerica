@@ -44,10 +44,14 @@ main {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    padding-bottom: 50px; /* Agregar espacio al final para el footer */
 }
 
-/* Footer Styles */
-.footer {
+.container {
+    flex: 1;
+}
+
+footer {
     background: #002f6c; /* Azul oscuro */
     padding: 10px 0;
     text-align: center;
@@ -297,26 +301,30 @@ form {
 
     .responsive-table tr {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         margin-bottom: 10px;
         border-bottom: 1px solid #ddd;
+        padding: 10px;
+        justify-content: space-between;
     }
 
     .responsive-table td {
-        display: block;
-        text-align: left;
-        padding: 8px 10px;
         flex: 1;
+        text-align: left;
+        padding: 5px;
     }
 
     .responsive-table td[data-label="Avatar"] {
         display: flex;
         align-items: center;
+        justify-content: center;
     }
 
     .responsive-table td[data-label="Usuario"],
     .responsive-table td[data-label="Puntaje"] {
-        padding-left: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .responsive-table tr.highlight-first {
