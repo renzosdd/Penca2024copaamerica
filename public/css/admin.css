@@ -44,6 +44,7 @@ h3 {
 .btn {
     background-color: #ffd100; /* Amarillo */
     border-radius: 25px;
+    margin-bottom: 20px;
 }
 
 .btn:hover {
@@ -78,6 +79,8 @@ footer {
     text-align: center;
     color: #fff;
     width: 100%;
+    position: absolute;
+    bottom: 0;
 }
 
 .footer .footer-links {
