@@ -7,6 +7,17 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
     <link href="/css/admin.css" rel="stylesheet">
+    <style>
+        /* Ensuring the footer stays at the bottom */
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -105,14 +116,26 @@
             </div>
         </div>
     </main>
-    <footer>
-        <div class="container center-align">
-            <a href="https://www.linkedin.com/in/renzodogliotti/">
-                <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;">
-            </a>
-            <a href="https://github.com/renzosdd">
-                <img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;">
-            </a>
+    <footer class="page-footer blue darken-3">
+        <div class="container">
+            <div class="row">
+                <div class="col l6 s12">
+                    <h5 class="white-text">Admin Panel</h5>
+                    <p class="grey-text text-lighten-4">Administra los usuarios y configuraciones del sistema.</p>
+                </div>
+                <div class="col l4 offset-l2 s12">
+                    <h5 class="white-text">Enlaces</h5>
+                    <ul>
+                        <li><a class="grey-text text-lighten-3" href="https://www.linkedin.com/in/renzodogliotti/">LinkedIn</a></li>
+                        <li><a class="grey-text text-lighten-3" href="https://github.com/renzosdd">GitHub</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-copyright">
+            <div class="container">
+                © 2024 Admin Panel, Todos los derechos reservados.
+            </div>
         </div>
     </footer>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
@@ -150,8 +173,12 @@
                         document.getElementById('surname').value = user.surname;
                         document.getElementById('email').value = user.email;
                         document.getElementById('dob').value = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
-                        M.FormSelect.getInstance(document.getElementById('role')).setVal(user.role);
-                        M.FormSelect.getInstance(document.getElementById('valid')).setVal(user.valid.toString());
+                        const roleSelect = document.getElementById('role');
+                        const validSelect = document.getElementById('valid');
+                        roleSelect.value = user.role;
+                        validSelect.value = user.valid.toString();
+                        M.FormSelect.init(roleSelect);
+                        M.FormSelect.init(validSelect);
                         M.updateTextFields();
                     } else {
                         M.toast({html: 'Error al cargar los datos del usuario', classes: 'red'});
