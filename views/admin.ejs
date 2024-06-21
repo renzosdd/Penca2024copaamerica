@@ -13,6 +13,7 @@
             display: flex;
             min-height: 100vh;
             flex-direction: column;
+            padding-bottom: 50px; /* Ensure there is space between body content and footer */
         }
         main {
             flex: 1 0 auto;
@@ -37,6 +38,7 @@
                     <li><a href="/">Volver</a></li>
                 </ul>
                 <ul id="user-dropdown" class="dropdown-content">
+                    <li><a href="/dashboard">Dashboard</a></li>
                     <li><a href="#" id="logout-button">Cerrar sesión</a></li>
                 </ul>
             </div>
@@ -124,17 +126,16 @@
                     <p class="grey-text text-lighten-4">Administra los usuarios y configuraciones del sistema.</p>
                 </div>
                 <div class="col l4 offset-l2 s12">
-                    <h5 class="white-text">Enlaces</h5>
-                    <ul>
-                        <li><a class="grey-text text-lighten-3" href="https://www.linkedin.com/in/renzodogliotti/">LinkedIn</a></li>
-                        <li><a class="grey-text text-lighten-3" href="https://github.com/renzosdd">GitHub</a></li>
+                    <ul class="footer-links">
+                        <li><a href="https://www.linkedin.com/in/renzodogliotti/"><img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;"></a></li>
+                        <li><a href="https://github.com/renzosdd"><img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;"></a></li>
                     </ul>
                 </div>
             </div>
         </div>
         <div class="footer-copyright">
             <div class="container">
-                © 2024 Admin Panel, Todos los derechos reservados.
+                © 2024 Ren, Todos los derechos reservados.
             </div>
         </div>
     </footer>
@@ -146,6 +147,12 @@
 
             var selects = document.querySelectorAll('select');
             M.FormSelect.init(selects);
+
+            var dropdowns = document.querySelectorAll('.dropdown-trigger');
+            M.Dropdown.init(dropdowns, {
+                constrainWidth: false,
+                coverTrigger: false
+            });
 
             document.getElementById('logout-button').addEventListener('click', async () => {
                 try {
@@ -186,6 +193,27 @@
                 } catch (error) {
                     console.error('Error al cargar los datos del usuario:', error);
                     M.toast({html: 'Error al cargar los datos del usuario', classes: 'red'});
+                }
+            });
+
+            document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                try {
+                    const response = await fetch('/admin/update', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    if (response.ok) {
+                        window.location.href = '/admin/edit';
+                    } else {
+                        const result = await response.json();
+                        console.error('Error:', result.error);
+                        M.toast({html: 'Error al actualizar el usuario', classes: 'red'});
+                    }
+                } catch (error) {
+                    console.error('Error al enviar la actualización:', error);
+                    M.toast({html: 'Error al enviar la actualización', classes: 'red'});
                 }
             });
         });
