@@ -1,0 +1,111 @@
+/* admin.css */
+
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    background: #f9f9f9;
+    color: #444;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    margin: 0;
+}
+
+header {
+    background: #002f6c; /* Azul oscuro */
+}
+
+.header .nav-wrapper {
+    padding: 0 20px;
+}
+
+.header .brand-logo {
+    font-size: 1.5rem;
+}
+
+.user-menu img {
+    width: 40px;
+    height: 40px;
+}
+
+.container {
+    flex: 1;
+    margin-top: 20px;
+}
+
+h3 {
+    color: #002f6c; /* Azul oscuro */
+}
+
+input-field {
+    margin-bottom: 20px;
+}
+
+.btn {
+    background-color: #ffd100; /* Amarillo */
+    border-radius: 25px;
+}
+
+.btn:hover {
+    background-color: #e6b800; /* Amarillo más oscuro */
+}
+
+.file-field .btn {
+    background-color: #002f6c; /* Azul oscuro */
+}
+
+.file-field .btn:hover {
+    background-color: #001c48; /* Azul oscuro más oscuro */
+}
+
+.tabs .tab a {
+    color: #002f6c; /* Azul oscuro */
+}
+
+.tabs .tab a.active {
+    background-color: #ffd100; /* Amarillo */
+    color: #002f6c; /* Azul oscuro */
+}
+
+.tabs .indicator {
+    background-color: #002f6c; /* Azul oscuro */
+}
+
+/* Footer Styles */
+footer {
+    background: #002f6c; /* Azul oscuro */
+    padding: 10px 0;
+    text-align: center;
+    color: #fff;
+    width: 100%;
+}
+
+.footer .footer-links {
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    list-style: none;
+}
+
+.footer .footer-links li {
+    margin: 0 10px;
+}
+
+.footer a {
+    color: #fff;
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+}
+
+.footer img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Avatar Styles */
+.avatar-small {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
