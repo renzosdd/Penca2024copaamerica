@@ -7,6 +7,30 @@
     }
   ],
   "routes": [
+    {
+      "src": "/(.*)\\.(js|css)",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
+    },
+    {
+      "src": "/(.*)\\.(html|ejs)",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
+    },
+    {
+      "src": "/(.*)\\.(png|jpg|jpeg|gif|webp|svg)",
+      "headers": {
+        "Cache-Control": "max-age=0, no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
+    },
     { "src": "/api/(.*)", "dest": "/main.js" },
     { "src": "/login", "dest": "/main.js" },
     { "src": "/register", "dest": "/main.js" },
