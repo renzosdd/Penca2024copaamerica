@@ -32,7 +32,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     try {
         const matchesResponse = await fetch('/matches');
         matches = await matchesResponse.json();
-        console.log('Matches fetched successfully');
+
+        // Ordenar los partidos por fecha y hora
+        matches.sort((a, b) => {
+            const dateA = new Date(`${a.date}T${a.time}:00`);
+            const dateB = new Date(`${b.date}T${b.time}:00`);
+            return dateA - dateB;
+        });
+
+        console.log('Matches fetched and sorted successfully');
 
         const predictionsResponse = await fetch('/predictions');
         const predictions = await predictionsResponse.json();
