@@ -7,9 +7,9 @@ const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
-const ejs = require('ejs');
-const fetch = require('node-fetch');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
+const cacheControl = require('./middleware/cacheControl');
+const ejs = require('ejs');
 
 dotenv.config();
 
@@ -56,7 +56,10 @@ const Match = require('./models/Match');
 const Prediction = require('./models/Prediction');
 const adminRouter = require('./routes/admin');
 
+// Usar el middleware de control de caché
+app.use(cacheControl);
 
+// Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
@@ -199,7 +202,6 @@ app.post('/reset-matches', isAdmin, async (req, res) => {
         res.status(500).json({ error: 'Error al resetear partidos y predicciones' });
     }
 });
-
 
 app.use((req, res) => {
     res.status(404).send('404: Página no encontrada');
