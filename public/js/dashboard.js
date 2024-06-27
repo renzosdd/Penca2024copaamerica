@@ -169,6 +169,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 // Verificar si faltan menos de 30 minutos para el partido
                 const match = matches.find(m => m._id.toString() === data.matchId);
+                console.log('match.date:', match.date); // Agregar esta línea
+                console.log('match.time:', match.time); // Agregar esta línea
+
                 if (isLessThan30MinutesToMatch(match.date, match.time)) {
                     M.toast({html: 'No se puede enviar predicción dentro de los 30 minutos previos al partido', classes: 'red'});
                     return;
