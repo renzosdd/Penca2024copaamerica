@@ -25,6 +25,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         const matchDateTime = new Date(`${matchDate}T${matchTime}:00`); // Combinar fecha y hora
         const now = new Date();
         const timeDifference = (matchDateTime - now) / 60000; // Diferencia en minutos
+
+        console.log(`currentTime (client): ${now}`);
+        console.log(`matchDateTime (client): ${matchDateTime}`);
+        console.log(`timeDifference (client): ${timeDifference} minutos`);
+
         return timeDifference < 30;
     };
 

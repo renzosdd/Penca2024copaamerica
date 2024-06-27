@@ -8,7 +8,7 @@ router.get('/', async (req, res) => {
         const predictions = await Prediction.find();
         res.json(predictions);
     } catch (err) {
-        res.status(500).json({ error: 'Error retrieving predictions' });
+        res.status(500).json({ error: 'Error al recuperar las predicciones' });
     }
 });
 
@@ -17,22 +17,28 @@ router.post('/', async (req, res) => {
         const { matchId, result1, result2 } = req.body;
         const user = req.session.user;
         if (!user) {
-            return res.status(401).json({ error: 'Unauthorized' });
+            return res.status(401).json({ error: 'No autorizado' });
         }
 
         // Obtener información del partido
         const match = await Match.findById(matchId);
         if (!match) {
-            return res.status(404).json({ error: 'Match not found' });
+            return res.status(404).json({ error: 'Partido no encontrado' });
         }
 
         // Verificar si falta menos de media hora para el partido
         const currentTime = new Date();
         const matchDateTime = new Date(`${match.date}T${match.time}:00`); // Combinar fecha y hora
+
+        console.log(`currentTime: ${currentTime}`);
+        console.log(`matchDateTime: ${matchDateTime}`);
+
         const timeDifference = (matchDateTime - currentTime) / 60000; // Diferencia en minutos
 
+        console.log(`timeDifference: ${timeDifference} minutos`);
+
         if (timeDifference < 30) {
-            return res.status(400).json({ error: 'Cannot submit prediction within 30 minutes of match start' });
+            return res.status(400).json({ error: 'No se puede enviar la predicción dentro de los 30 minutos previos al inicio del partido' });
         }
 
         let prediction = await Prediction.findOne({ userId: user._id, matchId });
@@ -49,9 +55,10 @@ router.post('/', async (req, res) => {
             });
         }
         await prediction.save();
-        res.json({ message: 'Prediction saved' });
+        res.json({ message: 'Predicción guardada' });
     } catch (err) {
-        res.status(500).json({ error: 'Error saving prediction' });
+        console.error('Error al guardar la predicción:', err);
+        res.status(500).json({ error: 'Error al guardar la predicción' });
     }
 });
 
