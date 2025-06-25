@@ -65,6 +65,7 @@ const adminRouter = require('./routes/admin');
 async function initializeDatabase() {
     try {
         // Verificar si existe el usuario administrador
+
         const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
         const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'Penca2024Ren';
         const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
@@ -77,6 +78,14 @@ async function initializeDatabase() {
                 username: adminUsername,
                 password: hashedPassword,
                 email: adminEmail,
+        let admin = await User.findOne({ username: 'admin' });
+        if (!admin) {
+            console.log('No existe usuario administrador, creándolo...');
+            const hashedPassword = await bcrypt.hash('Penca2024Ren', 10);
+            admin = new User({
+                username: 'admin',
+                password: hashedPassword,
+                email: 'admin@example.com',
                 role: 'admin',
                 valid: true
             });
