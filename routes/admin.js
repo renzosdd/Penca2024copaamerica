@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
@@ -90,6 +91,46 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
         res.status(200).json({ message: 'User profile updated successfully' });
     } catch (error) {
         console.error('Error updating user profile:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Crear nuevo owner
+router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { username, password, email, name, surname } = req.body;
+        if (!username || !password || !email) {
+            return res.status(400).json({ error: 'Required fields missing' });
+        }
+        const existing = await User.findOne({ $or: [{ username }, { email }] });
+        if (existing) {
+            return res.status(400).json({ error: 'User exists' });
+        }
+        const hashed = await bcrypt.hash(password, 10);
+        const owner = new User({
+            username,
+            password: hashed,
+            email,
+            name,
+            surname,
+            role: 'owner',
+            valid: true
+        });
+        await owner.save();
+        res.status(201).json({ ownerId: owner._id });
+    } catch (error) {
+        console.error('Error creating owner:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Listar owners existentes
+router.get('/owners', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const owners = await User.find({ role: 'owner' }).select('username _id');
+        res.json(owners);
+    } catch (error) {
+        console.error('Error listing owners:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
