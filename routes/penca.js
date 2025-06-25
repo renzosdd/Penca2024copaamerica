@@ -3,11 +3,14 @@ const router = express.Router();
 const Penca = require('../models/Penca');
 const User = require('../models/User');
 const { isAuthenticated } = require('../middleware/auth');
+const { DEFAULT_COMPETITION } = require('../config');
 
 // Listar todas las pencas (nombre y código)
 router.get('/', isAuthenticated, async (req, res) => {
   try {
-    const pencas = await Penca.find().select('name code');
+    const filter = {};
+    if (req.query.competition) filter.competition = req.query.competition;
+    const pencas = await Penca.find(filter).select('name code competition');
     res.json(pencas);
   } catch (err) {
     console.error('list pencas error', err);
@@ -18,11 +21,39 @@ router.get('/', isAuthenticated, async (req, res) => {
 // Pencas del owner logueado
 router.get('/mine', isAuthenticated, async (req, res) => {
   try {
-    const pencas = await Penca.find({ owner: req.session.user._id }).select('name code participants pendingRequests');
+    const filter = { owner: req.session.user._id };
+    if (req.query.competition) filter.competition = req.query.competition;
+    const pencas = await Penca.find(filter).select('name code competition participants pendingRequests');
     res.json(pencas);
   } catch (err) {
     console.error('mine pencas error', err);
     res.status(500).json({ error: 'Error getting pencas' });
+  }
+});
+
+// Crear una penca
+router.post('/', isAuthenticated, async (req, res) => {
+  const { name, participantLimit, competition } = req.body;
+  const ownerId = req.session.user._id;
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  try {
+    const penca = new Penca({
+      name,
+      code,
+      owner: ownerId,
+      participantLimit,
+      competition: competition || DEFAULT_COMPETITION,
+      participants: [ownerId]
+    });
+    await penca.save();
+    await User.updateOne({ _id: ownerId }, {
+      $addToSet: { ownedPencas: penca._id, pencas: penca._id },
+      $set: { role: 'owner' }
+    });
+    res.status(201).json({ pencaId: penca._id, code: penca.code });
+  } catch (err) {
+    console.error('create penca error', err);
+    res.status(500).json({ error: 'Error creating penca' });
   }
 });
 
@@ -46,7 +77,7 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
 
 // Solicitar unirse a una penca mediante el codigo
 router.post('/join', isAuthenticated, async (req, res) => {
-  const { code } = req.body;
+  const { code, competition } = req.body;
   const userId = req.session.user._id;
   const joined = req.session.user.pencas || [];
   try {
@@ -54,7 +85,11 @@ router.post('/join', isAuthenticated, async (req, res) => {
       return res.status(400).json({ error: 'You have reached the maximum number of pencas you can join' });
     }
 
-    const penca = await Penca.findOne({ code });
+    const query = { code };
+    if (competition) query.competition = competition;
+
+    const penca = await Penca.findOne(query);
+
     if (!penca) return res.status(404).json({ error: 'Penca not found' });
 
     if (penca.participants.includes(userId) || penca.pendingRequests.includes(userId)) {
