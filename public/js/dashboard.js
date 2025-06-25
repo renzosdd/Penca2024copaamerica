@@ -310,4 +310,49 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     };
     avatarRequest.send();
+
+    // Solicitar unirse a una penca
+    const joinBtn = document.getElementById('join-button');
+    if (joinBtn) {
+        joinBtn.addEventListener('click', async () => {
+            const code = document.getElementById('join-code').value;
+            try {
+                const resp = await fetch('/pencas/join', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ code })
+                });
+                const data = await resp.json();
+                const msg = document.getElementById('join-message');
+                if (resp.ok) {
+                    msg.textContent = data.message;
+                    msg.className = 'green-text';
+                } else {
+                    msg.textContent = data.error || 'Error';
+                    msg.className = 'red-text';
+                }
+            } catch (err) {
+                console.error('join penca error', err);
+            }
+        });
+    }
+
+    // Cargar solicitudes y participantes para owners
+    if (userRole === 'owner') {
+        try {
+            const resp = await fetch('/pencas/mine');
+            const pencas = await resp.json();
+            const container = document.getElementById('manage-content');
+            pencas.forEach(penca => {
+                const div = document.createElement('div');
+                div.innerHTML = `<h5>${penca.name}</h5>`;
+                const pending = document.createElement('ul');
+                pending.innerHTML = penca.pendingRequests.map(u => `<li>${u}</li>`).join('');
+                div.appendChild(pending);
+                container.appendChild(div);
+            });
+        } catch (err) {
+            console.error('load owner pencas error', err);
+        }
+    }
 });

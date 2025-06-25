@@ -4,6 +4,46 @@ const Penca = require('../models/Penca');
 const User = require('../models/User');
 const { isAuthenticated } = require('../middleware/auth');
 
+// Listar todas las pencas (nombre y código)
+router.get('/', isAuthenticated, async (req, res) => {
+  try {
+    const pencas = await Penca.find().select('name code');
+    res.json(pencas);
+  } catch (err) {
+    console.error('list pencas error', err);
+    res.status(500).json({ error: 'Error listing pencas' });
+  }
+});
+
+// Pencas del owner logueado
+router.get('/mine', isAuthenticated, async (req, res) => {
+  try {
+    const pencas = await Penca.find({ owner: req.session.user._id }).select('name code participants pendingRequests');
+    res.json(pencas);
+  } catch (err) {
+    console.error('mine pencas error', err);
+    res.status(500).json({ error: 'Error getting pencas' });
+  }
+});
+
+// Detalle de una penca (solo owner)
+router.get('/:pencaId', isAuthenticated, async (req, res) => {
+  const { pencaId } = req.params;
+  try {
+    const penca = await Penca.findById(pencaId)
+      .populate('participants', 'username')
+      .populate('pendingRequests', 'username');
+    if (!penca) return res.status(404).json({ error: 'Penca not found' });
+    if (penca.owner.toString() !== req.session.user._id.toString() && req.session.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    res.json(penca);
+  } catch (err) {
+    console.error('get penca error', err);
+    res.status(500).json({ error: 'Error getting penca' });
+  }
+});
+
 // Solicitar unirse a una penca mediante el codigo
 router.post('/join', isAuthenticated, async (req, res) => {
   const { code } = req.body;
