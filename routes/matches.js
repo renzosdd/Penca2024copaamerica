@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Match = require('../models/Match');
-const fetch = require('node-fetch');
 const { isAdmin } = require('../middleware/auth');
 
 router.get('/', async (req, res) => {
@@ -25,7 +24,6 @@ router.post('/:id', isAdmin, async (req, res) => {
         await match.save();
         res.json({ message: 'Match result updated' });
         // Recalcular puntaje de todos los usuarios
-        //await fetch('/ranking/recalculate', { method: 'POST' });
     } catch (err) {
         res.status(500).json({ error: 'Error updating match result' });
     }
