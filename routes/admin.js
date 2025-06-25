@@ -137,8 +137,8 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
 
 router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const competitions = await Competition.find();
-        res.json(competitions);
+        const competitions = await Competition.find().sort('name');
+        res.status(200).json(competitions);
     } catch (error) {
         console.error('Error listing competitions:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -159,7 +159,7 @@ router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixtur
             const matchesData = JSON.parse(req.file.buffer.toString());
             matchesData.forEach(m => { if (!m.competition) m.competition = name; });
             await Match.insertMany(matchesData);
-        } else if (useApi === 'true') {
+        } else if (String(useApi) === 'true') {
             // TODO: Integrate API-Football fixture loading
         }
 
