@@ -32,6 +32,18 @@
     </header>
     <main>
         <div class="container">
+            <% if (pencas && pencas.length) { %>
+            <div class="row">
+                <div class="input-field col s12 m6">
+                    <select id="penca-select">
+                        <% pencas.forEach(function(p) { %>
+                            <option value="<%= p._id %>"><%= p.name %></option>
+                        <% }); %>
+                    </select>
+                    <label>Seleccionar Penca</label>
+                </div>
+            </div>
+            <% } %>
             <ul class="tabs">
                 <li class="tab col s2"><a href="#fixture" class="<%= user.role === 'admin' ? 'active' : '' %>">Fixture</a></li>
                 <li class="tab col s2"><a href="#predictions" class="<%= user.role !== 'admin' ? 'active' : '' %>">Predicciones</a></li>

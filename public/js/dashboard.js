@@ -11,6 +11,25 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Inicializar el dropdown
     var dropdownElems = document.querySelectorAll('.dropdown-trigger');
     var dropdownInstances = M.Dropdown.init(dropdownElems, { constrainWidth: false, coverTrigger: false });
+    var selectElems = document.querySelectorAll('select');
+    var selectInstances = M.FormSelect.init(selectElems);
+
+    var pencaSelect = document.getElementById('penca-select');
+    var selectedPencaId = pencaSelect ? pencaSelect.value : null;
+    if (pencaSelect) {
+        var storedPenca = localStorage.getItem('selectedPenca');
+        if (storedPenca) {
+            pencaSelect.value = storedPenca;
+            M.FormSelect.getInstance(pencaSelect).destroy();
+            M.FormSelect.init(pencaSelect);
+            selectedPencaId = storedPenca;
+        }
+        pencaSelect.addEventListener('change', () => {
+            selectedPencaId = pencaSelect.value;
+            localStorage.setItem('selectedPenca', selectedPencaId);
+            window.location.reload();
+        });
+    }
 
     const userRole = document.querySelector('body').getAttribute('data-role');
     const username = document.querySelector('body').getAttribute('data-username');
@@ -55,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const predictionsResponse = await fetch('/predictions');
         const predictions = await predictionsResponse.json();
-        const userPredictions = predictions.filter(prediction => prediction.username === username);
+        const userPredictions = predictions.filter(prediction => prediction.username === username && (!selectedPencaId || prediction.pencaId === selectedPencaId));
 
         const matchesList = document.getElementById('matches-list');
         const predictionsList = document.getElementById('predictions-list');
@@ -152,6 +171,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         <div class="match-details">
                             <form id="predictionForm-${match._id}" method="POST" action="/predictions">
                                 <input type="hidden" name="matchId" value="${match._id}">
+                                <input type="hidden" name="pencaId" value="${selectedPencaId}">
                                 <div class="input-field inline">
                                     <input type="number" class="result-input" name="result1" value="${userPrediction ? userPrediction.result1 : ''}" required>
                                     <span>-</span>
@@ -256,7 +276,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Cargar el ranking
     try {
-        const rankingResponse = await fetch('/ranking');
+        const rankingUrl = selectedPencaId ? `/ranking?pencaId=${selectedPencaId}` : '/ranking';
+        const rankingResponse = await fetch(rankingUrl);
         if (!rankingResponse.ok) {
             throw new Error(`HTTP error! status: ${rankingResponse.status}`);
         }
