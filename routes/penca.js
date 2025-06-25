@@ -22,14 +22,21 @@ router.get('/', isAuthenticated, async (req, res) => {
 router.get('/mine', isAuthenticated, async (req, res) => {
   try {
     const filter = { owner: req.session.user._id };
-    if (req.query.competition) filter.competition = req.query.competition;
-    const pencas = await Penca.find(filter).select('name code competition participants pendingRequests');
+    if (req.query.competition) {
+      filter.competition = req.query.competition;
+    }
+
+    const pencas = await Penca.find(filter)
+      .select('name code competition participants pendingRequests')
+      .populate('pendingRequests', 'username');
+
     res.json(pencas);
   } catch (err) {
     console.error('mine pencas error', err);
     res.status(500).json({ error: 'Error getting pencas' });
   }
 });
+
 
 // Crear una penca
 router.post('/', isAuthenticated, async (req, res) => {

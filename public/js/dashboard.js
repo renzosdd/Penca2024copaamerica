@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const div = document.createElement('div');
                 div.innerHTML = `<h5>${penca.name}</h5>`;
                 const pending = document.createElement('ul');
-                pending.innerHTML = penca.pendingRequests.map(u => `<li>${u}</li>`).join('');
+                pending.innerHTML = penca.pendingRequests.map(u => `<li>${u.username || u}</li>`).join('');
                 div.appendChild(pending);
                 container.appendChild(div);
             });
