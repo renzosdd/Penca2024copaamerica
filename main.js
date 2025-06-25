@@ -99,10 +99,16 @@ async function initializeDatabase() {
                 valid: true
             });
             await admin.save();
-
             await Score.create({ userId: admin._id, competition: 'Copa America 2024' });
-
             console.log('Usuario administrador creado.');
+        }
+
+        // Prepopular partidos si la colección está vacía
+        const matchCount = await Match.countDocuments();
+        if (matchCount === 0) {
+            const matches = require('./matches.json');
+            await Match.insertMany(matches);
+            console.log('Partidos prepopulados.');
         }
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
