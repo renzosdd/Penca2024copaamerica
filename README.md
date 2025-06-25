@@ -17,8 +17,12 @@ proyecto con la URL de tu base de datos MongoDB y las credenciales del administr
 La base de datos por defecto debe llamarse `pencas`:
 
 ```bash
+<<<<<<< codex/cambiar-nombre-de-base-de-datos-en-updateschema.js
+MONGODB_URI=mongodb://<usuario>:<password>@<host>/pencas
+=======
 # Ejemplo de conexión local
 MONGODB_URI=mongodb://localhost:27017/pencas
+>>>>>>> main
 DEFAULT_ADMIN_USERNAME=<usuario_admin>
 DEFAULT_ADMIN_PASSWORD=<contraseña_admin>
 DEFAULT_COMPETITION=<nombre>

@@ -22,7 +22,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function createSchema() {
     try {
         await client.connect();
-        const db = client.db('penca_copa_america');
+        const db = client.db('pencas');
         
         const usersCollection = db.collection('users');
         await usersCollection.createIndex({ username: 1 }, { unique: true });
