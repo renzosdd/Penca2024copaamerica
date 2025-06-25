@@ -6,10 +6,11 @@ const Match = require('../models/Match');
 const Score = require('../models/Score');
 
 // Función para calcular los puntajes
-async function calculateScores() {
+async function calculateScores(pencaId) {
     const users = await User.find({ valid: true });
     const matches = await Match.find();
-    const predictions = await Prediction.find();
+    const filter = pencaId ? { pencaId } : {};
+    const predictions = await Prediction.find(filter);
 
     let scores = [];
 
@@ -53,7 +54,8 @@ async function calculateScores() {
 // Endpoint para obtener el ranking
 router.get('/', async (req, res) => {
     try {
-        const scores = await calculateScores();
+        const { pencaId } = req.query;
+        const scores = await calculateScores(pencaId);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
@@ -64,7 +66,8 @@ router.get('/', async (req, res) => {
 // Endpoint para recalcular los puntajes
 router.post('/recalculate', async (req, res) => {
     try {
-        const scores = await calculateScores();
+        const { pencaId } = req.query;
+        const scores = await calculateScores(pencaId);
         for (let score of scores) {
             await Score.updateOne(
                 { userId: score.userId, competition: 'Copa América 2024' },
