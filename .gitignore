@@ -1,6 +1,4 @@
-
 /node_modules
-codex/remove-.ds_store-and-public/uploads-from-version-control
 
 # Local environment variables
 .env
@@ -10,5 +8,3 @@ codex/remove-.ds_store-and-public/uploads-from-version-control
 
 # Uploaded files
 public/uploads/
-.env
-main
