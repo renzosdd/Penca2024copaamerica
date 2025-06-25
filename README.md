@@ -22,6 +22,8 @@ PORT=3000
 # Credenciales del administrador por defecto
 DEFAULT_ADMIN_USERNAME=admin
 DEFAULT_ADMIN_PASSWORD=Penca2024Ren
+# Secreto de la sesión
+SESSION_SECRET=cambiaestevalor
 ```
 
 3. Inicia el servidor en modo desarrollo con **nodemon**:
