@@ -1,3 +1,14 @@
 
 /node_modules
+codex/remove-.ds_store-and-public/uploads-from-version-control
+
+# Local environment variables
 .env
+
+# macOS Finder metadata
+*.DS_Store
+
+# Uploaded files
+public/uploads/
+.env
+main
