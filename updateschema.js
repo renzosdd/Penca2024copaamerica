@@ -1,7 +1,14 @@
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcrypt');
+const dotenv = require('dotenv');
 
-const uri = "mongodb+srv://admindbpenca:AdminDbPenca2024Ren@pencacopaamerica2024.yispiqt.mongodb.net/?retryWrites=true&w=majority&appName=PencaCopaAmerica2024";
+dotenv.config();
+
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+    console.error('MONGODB_URI environment variable not provided. Exiting...');
+    process.exit(1);
+}
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -13,10 +20,17 @@ async function createSchema() {
         const usersCollection = db.collection('users');
         await usersCollection.createIndex({ username: 1 }, { unique: true });
 
-        const adminUser = await usersCollection.findOne({ username: 'admin' });
+        const adminUsername = process.env.DEFAULT_ADMIN_USERNAME;
+        const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
+        if (!adminUsername || !adminPassword) {
+            console.error('DEFAULT_ADMIN_USERNAME and DEFAULT_ADMIN_PASSWORD environment variables are required');
+            process.exit(1);
+        }
+
+        const adminUser = await usersCollection.findOne({ username: adminUsername });
         if (!adminUser) {
-            const hashedPassword = await bcrypt.hash('Penca2024Ren', 10);
-            await usersCollection.insertOne({ username: 'admin', password: hashedPassword, role: 'admin' });
+            const hashedPassword = await bcrypt.hash(adminPassword, 10);
+            await usersCollection.insertOne({ username: adminUsername, password: hashedPassword, role: 'admin' });
             console.log('Admin user created');
         }
 

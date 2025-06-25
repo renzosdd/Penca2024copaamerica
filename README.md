@@ -12,16 +12,15 @@ predicciones de los partidos y consultar el ranking general.
 npm install
 ```
 
-2. Configura las variables de entorno. Crea un archivo `.env` en la raíz del 
-proyecto con al menos la URL de tu base de datos MongoDB:
+2. Configura las variables de entorno. Crea un archivo `.env` en la raíz del
+proyecto con la URL de tu base de datos MongoDB y las credenciales del administrador:
 
 ```bash
 MONGODB_URI=mongodb://<usuario>:<password>@<host>/<basedatos>
+DEFAULT_ADMIN_USERNAME=<usuario_admin>
+DEFAULT_ADMIN_PASSWORD=<contraseña_admin>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
-# Credenciales del administrador por defecto
-DEFAULT_ADMIN_USERNAME=admin
-DEFAULT_ADMIN_PASSWORD=Penca2024Ren
 ```
 
 3. Inicia el servidor en modo desarrollo con **nodemon**:
@@ -34,9 +33,8 @@ Para un entorno de producción puedes utilizar `npm start`.
 
 Al iniciarse por primera vez, la aplicación comprobará que exista la base de datos
 e insertará un usuario administrador por defecto si es necesario. Las credenciales
-
-- **Usuario:** `admin`
-- **Contraseña:** `Penca2024Ren`
+se tomarán de las variables `DEFAULT_ADMIN_USERNAME` y `DEFAULT_ADMIN_PASSWORD`
+definidas en tu archivo `.env`.
 
 ## Estructura del proyecto
 
