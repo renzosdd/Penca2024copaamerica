@@ -1,2 +1,11 @@
 
 /node_modules
+
+# Local environment variables
+.env
+
+# macOS Finder metadata
+*.DS_Store
+
+# Uploaded files
+public/uploads/
