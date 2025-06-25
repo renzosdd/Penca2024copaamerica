@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const User = require('../models/User');
+const Match = require('../models/Match');
+const Penca = require('../models/Penca');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 
 const storage = multer.memoryStorage();
@@ -13,6 +15,17 @@ const upload = multer({
             cb(null, true);
         } else {
             cb(new Error('Tipo de archivo no soportado. Solo se permiten imágenes.'));
+        }
+    }
+});
+
+const jsonUpload = multer({
+    storage: multer.memoryStorage(),
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/json') {
+            cb(null, true);
+        } else {
+            cb(new Error('Solo se permiten archivos JSON'));
         }
     }
 });
@@ -76,6 +89,47 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
         res.status(200).json({ message: 'User profile updated successfully' });
     } catch (error) {
         console.error('Error updating user profile:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
+    try {
+        const { name, owner, participantLimit } = req.body;
+        if (!name) {
+            return res.status(400).json({ error: 'Name required' });
+        }
+
+        const ownerUser = owner ? await User.findById(owner) : req.session.user;
+        if (!ownerUser) {
+            return res.status(404).json({ error: 'Owner not found' });
+        }
+
+        let fixtureIds = [];
+        if (req.file) {
+            const matchesData = JSON.parse(req.file.buffer.toString());
+            const created = await Match.insertMany(matchesData);
+            fixtureIds = created.map(m => m._id);
+        }
+
+        const penca = new Penca({
+            name,
+            code: Math.random().toString(36).substring(2, 8).toUpperCase(),
+            owner: ownerUser._id,
+            participantLimit: participantLimit ? Number(participantLimit) : undefined,
+            fixture: fixtureIds,
+            participants: [ownerUser._id]
+        });
+
+        await penca.save();
+
+        ownerUser.ownedPencas = ownerUser.ownedPencas || [];
+        ownerUser.ownedPencas.push(penca._id);
+        await ownerUser.save();
+
+        res.status(201).json({ pencaId: penca._id, code: penca.code });
+    } catch (error) {
+        console.error('Error creating penca:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
