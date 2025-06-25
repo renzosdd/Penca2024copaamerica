@@ -11,23 +11,28 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Inicializar el dropdown
     var dropdownElems = document.querySelectorAll('.dropdown-trigger');
     var dropdownInstances = M.Dropdown.init(dropdownElems, { constrainWidth: false, coverTrigger: false });
-    var selectElems = document.querySelectorAll('select');
-    var selectInstances = M.FormSelect.init(selectElems);
+    var collapsibleElems = document.querySelectorAll('.collapsible');
+    var collapsibleInstances = M.Collapsible.init(collapsibleElems);
 
-    var pencaSelect = document.getElementById('penca-select');
-    var selectedPencaId = pencaSelect ? pencaSelect.value : null;
-    if (pencaSelect) {
+    var pencaItems = document.querySelectorAll('#penca-collapsible li');
+    var selectedPencaId = null;
+    if (pencaItems.length) {
         var storedPenca = localStorage.getItem('selectedPenca');
         if (storedPenca) {
-            pencaSelect.value = storedPenca;
-            M.FormSelect.getInstance(pencaSelect).destroy();
-            M.FormSelect.init(pencaSelect);
             selectedPencaId = storedPenca;
-        }
-        pencaSelect.addEventListener('change', () => {
-            selectedPencaId = pencaSelect.value;
+        } else {
+            selectedPencaId = pencaItems[0].dataset.id;
             localStorage.setItem('selectedPenca', selectedPencaId);
-            window.location.reload();
+        }
+        pencaItems.forEach((item) => {
+            if (item.dataset.id === selectedPencaId) {
+                item.classList.add('active');
+            }
+            item.querySelector('.collapsible-header').addEventListener('click', () => {
+                selectedPencaId = item.dataset.id;
+                localStorage.setItem('selectedPenca', selectedPencaId);
+                window.location.reload();
+            });
         });
     }
 
