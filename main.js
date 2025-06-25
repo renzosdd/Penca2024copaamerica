@@ -25,7 +25,9 @@ if (!uri) {
 }
 
 
-console.log('Mongo URI:', uri);
+// Evitar exponer credenciales en los logs
+const maskedUri = uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:]+):([^@]+)@/, '$1****:****@');
+console.log('Mongo URI:', maskedUri);
 
 const mongooseOptions = {
     useNewUrlParser: true,
@@ -163,9 +165,12 @@ app.post('/login', async (req, res) => {
     console.log('Intento de inicio de sesión para el usuario:', username);
     try {
         const user = await User.findOne({ username });
-        console.log('Usuario encontrado:', user);
-        if (!user) {
+        if (user) {
+            console.log('Usuario encontrado:', user.username);
+        } else {
             console.log('Usuario no encontrado');
+        }
+        if (!user) {
             return res.status(401).json({ error: 'Usuario no encontrado' });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
@@ -175,7 +180,7 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
         req.session.user = user;
-        console.log('Sesión establecida para el usuario:', req.session.user);
+        console.log('Sesión establecida para el usuario:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Error en el inicio de sesión', err);
@@ -226,7 +231,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         });
         await score.save();
         req.session.user = user;
-        console.log('Usuario registrado y sesión iniciada:', req.session.user);
+        console.log('Usuario registrado y sesión iniciada:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Error en el registro', err);
