@@ -14,7 +14,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const form = e.target;
     const data = {
         username: document.getElementById('login-username').value,
-        password: document.getElementById('password').value
+        password: document.getElementById('login-password').value
     };
     try {
         const response = await fetch(form.action, {
