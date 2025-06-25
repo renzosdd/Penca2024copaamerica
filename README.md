@@ -46,8 +46,10 @@ definidas en tu archivo `.env`.
 - **routes/** – rutas de la aplicación: administración, partidos, predicciones, ranking y pencas.
 - **public/** – archivos estáticos (CSS, imágenes, scripts de cliente, uploads).
 - **views/** – plantillas EJS para las vistas HTML.
-- **matches.json** – datos de los partidos utilizados para inicializar la base.
+- **matches.json** – datos de ejemplo de los partidos que pueden cargarse desde las rutas de administración.
 - **updateschema.js** – script auxiliar para crear o actualizar esquemas en MongoDB.
+
+Los partidos ya no se insertan automáticamente al iniciar la aplicación. Debes cargarlos manualmente desde el panel de administración.
 
 El esquema `Penca` permite organizar competiciones privadas. Los usuarios se unen con un código y el propietario decide aprobar o eliminar participantes.
 
