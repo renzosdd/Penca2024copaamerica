@@ -1,27 +1,29 @@
 {
-    "name": "penca_copa_america",
-    "version": "1.0.0",
-    "description": "Plataforma de penca para la Copa América 2024",
-    "main": "main.js",
-    "scripts": {
-      "start": "node main.js",
-      "dev": "nodemon main.js"
-    },
-    "dependencies": {
-      "bcrypt": "^5.0.1",
-      "body-parser": "^1.19.0",
-      "connect-mongo": "^4.6.0",
-      "dotenv": "^10.0.0",
-      "express": "^4.17.1",
-      "express-session": "^1.17.1",
-      "mongoose": "^6.0.12",
-      "multer": "^1.4.4",
-      "ejs": "^3.1.6"
-    },
-    "devDependencies": {
-      "nodemon": "^2.0.12"
-    },
-    "author": "Ren",
-    "license": "ISC"
-  }
-  
+  "name": "penca_copa_america",
+  "version": "1.0.0",
+  "description": "Plataforma de penca para la Copa América 2024",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "dev": "nodemon main.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "body-parser": "^1.19.0",
+    "connect-mongo": "^4.6.0",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "mongoose": "^6.0.12",
+    "multer": "^1.4.4",
+    "ejs": "^3.1.6"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.12",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
+  },
+  "author": "Ren",
+  "license": "ISC"
+}
