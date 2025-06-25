@@ -19,11 +19,6 @@ proyecto con al menos la URL de tu base de datos MongoDB:
 MONGODB_URI=mongodb://<usuario>:<password>@<host>/<basedatos>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
-# Credenciales del administrador por defecto
-DEFAULT_ADMIN_USERNAME=admin
-DEFAULT_ADMIN_PASSWORD=Penca2024Ren
-# Secreto de la sesión
-SESSION_SECRET=cambiaestevalor
 ```
 
 3. Inicia el servidor en modo desarrollo con **nodemon**:
