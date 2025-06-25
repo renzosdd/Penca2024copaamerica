@@ -15,6 +15,13 @@ const Competition = require('./models/Competition');
 
 dotenv.config();
 
+if (!process.env.SESSION_SECRET) {
+    console.error('SESSION_SECRET is not defined. Exiting...');
+    process.exit(1);
+}
+
+const SESSION_SECRET = process.env.SESSION_SECRET;
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -43,7 +50,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.use(session({
-    secret: 'secret',
+    secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
