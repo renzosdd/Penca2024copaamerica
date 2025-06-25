@@ -16,9 +16,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const uri = process.env.MONGODB_URI || 'mongodb+srv://admindbpenca:AdminDbPenca2024Ren@cluster0.ydlmrlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-//
-//'mongodb+srv://admindbpenca:AdminDbPenca2024Ren@pencacopaamerica2024.yispiqt.mongodb.net/penca_copa_america?retryWrites=true&w=majority&appName=PencaCopaAmerica2024';
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+    console.error('MONGODB_URI environment variable not provided. Exiting...');
+    process.exit(1);
+}
 
 
 console.log('Mongo URI:', uri);
@@ -83,9 +85,13 @@ async function initializeDatabase() {
     try {
         // Verificar si existe el usuario administrador
 
-        const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
-        const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'Penca2024Ren';
+        const adminUsername = process.env.DEFAULT_ADMIN_USERNAME;
+        const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
         const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
+        if (!adminUsername || !adminPassword) {
+            console.error('DEFAULT_ADMIN_USERNAME and DEFAULT_ADMIN_PASSWORD environment variables are required');
+            process.exit(1);
+        }
 
         let admin = await User.findOne({ username: adminUsername });
         if (!admin) {
