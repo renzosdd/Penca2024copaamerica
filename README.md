@@ -16,7 +16,7 @@ npm install
 proyecto con la URL de tu base de datos MongoDB y las credenciales del administrador:
 
 ```bash
-MONGODB_URI=mongodb://<usuario>:<password>@<host>/<basedatos>
+MONGODB_URI=mongodb://<usuario>:<password>@<host>/pencas
 DEFAULT_ADMIN_USERNAME=<usuario_admin>
 DEFAULT_ADMIN_PASSWORD=<contraseña_admin>
 DEFAULT_COMPETITION=<nombre_competencia>
