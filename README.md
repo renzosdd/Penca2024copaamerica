@@ -50,3 +50,19 @@ e insertará un usuario administrador por defecto si es necesario. Las credencia
 - **updateschema.js** – script auxiliar para crear o actualizar esquemas en MongoDB.
 
 Con esta estructura puedes navegar fácilmente por cada componente de la aplicación.
+
+## Pruebas
+
+Antes de ejecutar las pruebas, instala las dependencias del proyecto:
+
+```bash
+npm install
+```
+
+En entornos de integración continua puedes ejecutar el script `scripts/setup-tests.sh` o utilizar `npm ci` para garantizar instalaciones reproducibles.
+
+Para lanzar todas las pruebas:
+
+```bash
+npm test
+```
