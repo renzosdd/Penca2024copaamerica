@@ -18,7 +18,9 @@ router.get('/', isAuthenticated, async (req, res) => {
 // Pencas del owner logueado
 router.get('/mine', isAuthenticated, async (req, res) => {
   try {
-    const pencas = await Penca.find({ owner: req.session.user._id }).select('name code participants pendingRequests');
+    const pencas = await Penca.find({ owner: req.session.user._id })
+      .select('name code participants pendingRequests')
+      .populate('pendingRequests', 'username');
     res.json(pencas);
   } catch (err) {
     console.error('mine pencas error', err);
