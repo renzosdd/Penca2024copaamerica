@@ -84,6 +84,7 @@ const Score = require('./models/Score');
 const Match = require('./models/Match');
 const Prediction = require('./models/Prediction');
 const adminRouter = require('./routes/admin');
+const pencaRouter = require('./routes/penca');
 
 async function initializeDatabase() {
     try {
@@ -255,6 +256,7 @@ app.get('/avatar/:username', async (req, res) => {
 app.use('/matches', isAuthenticated, require('./routes/matches'));
 app.use('/predictions', isAuthenticated, require('./routes/predictions'));
 app.use('/ranking', isAuthenticated, require('./routes/ranking'));
+app.use('/pencas', isAuthenticated, pencaRouter);
 app.use('/admin', adminRouter);
 
 app.post('/logout', (req, res) => {
