@@ -12,8 +12,10 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.target;
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData.entries());
+    const data = {
+        username: document.getElementById('login-username').value,
+        password: document.getElementById('password').value
+    };
     try {
         const response = await fetch(form.action, {
             method: 'POST',
@@ -37,6 +39,7 @@ document.getElementById('register-form').addEventListener('submit', async (e) =>
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
+    formData.set('username', document.getElementById('register-username').value);
     try {
         const response = await fetch(form.action, {
             method: 'POST',
