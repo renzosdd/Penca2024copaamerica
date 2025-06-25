@@ -78,14 +78,6 @@ async function initializeDatabase() {
                 username: adminUsername,
                 password: hashedPassword,
                 email: adminEmail,
-        let admin = await User.findOne({ username: 'admin' });
-        if (!admin) {
-            console.log('No existe usuario administrador, creándolo...');
-            const hashedPassword = await bcrypt.hash('Penca2024Ren', 10);
-            admin = new User({
-                username: 'admin',
-                password: hashedPassword,
-                email: 'admin@example.com',
                 role: 'admin',
                 valid: true
             });
