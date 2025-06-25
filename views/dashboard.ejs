@@ -61,6 +61,7 @@
             </ul>
             <% } %>
 
+            <% if (user.role === 'user') { %>
             <div id="join" class="row">
                 <div class="input-field col s12 m6">
                     <input id="join-code" type="text">
@@ -71,6 +72,7 @@
                 </div>
                 <div id="join-message" class="col s12"></div>
             </div>
+            <% } %>
 
             <% if (user.role === 'owner') { %>
             <div id="manage" class="row">
