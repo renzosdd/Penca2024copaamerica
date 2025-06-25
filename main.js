@@ -12,6 +12,7 @@ const cacheControl = require('./middleware/cacheControl');
 const ejs = require('ejs');
 const { DEFAULT_COMPETITION } = require('./config');
 const Competition = require('./models/Competition');
+const Penca = require("./models/Penca");
 
 dotenv.config();
 
@@ -169,9 +170,15 @@ app.get('/', (req, res) => {
     res.render('login');
 });
 
-app.get('/dashboard', isAuthenticated, (req, res) => {
+app.get('/dashboard', isAuthenticated, async (req, res) => {
     const { user } = req.session;
-    res.render('dashboard', { user, debug: DEBUG });
+    let pencas = [];
+    try {
+        pencas = await Penca.find({ participants: user._id }).select('name _id');
+    } catch (err) {
+        console.error('dashboard pencas error', err);
+    }
+    res.render('dashboard', { user, pencas, debug: DEBUG });
 });
 
 app.post('/login', async (req, res) => {
