@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Prediction = require('../models/Prediction');
 const Match = require('../models/Match');
 const Score = require('../models/Score');
+const { DEFAULT_COMPETITION } = require('../config');
 
 // Función para calcular los puntajes
 async function calculateScores() {
@@ -67,7 +68,7 @@ router.post('/recalculate', async (req, res) => {
         const scores = await calculateScores();
         for (let score of scores) {
             await Score.updateOne(
-                { userId: score.userId, competition: 'Copa América 2024' },
+                { userId: score.userId, competition: DEFAULT_COMPETITION },
                 { $set: { score: score.score } },
                 { upsert: true }
             );

@@ -10,6 +10,8 @@ const MongoStore = require('connect-mongo');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
 const cacheControl = require('./middleware/cacheControl');
 const ejs = require('ejs');
+const { DEFAULT_COMPETITION } = require('./config');
+const Competition = require('./models/Competition');
 
 dotenv.config();
 
@@ -87,6 +89,14 @@ async function initializeDatabase() {
         const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'Penca2024Ren';
         const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
 
+        // Asegurar que exista la competencia por defecto
+        let competition = await Competition.findOne({ name: DEFAULT_COMPETITION });
+        if (!competition) {
+            competition = new Competition({ name: DEFAULT_COMPETITION });
+            await competition.save();
+            console.log(`Competencia creada: ${DEFAULT_COMPETITION}`);
+        }
+
         let admin = await User.findOne({ username: adminUsername });
         if (!admin) {
             console.log('No existe usuario administrador, creándolo...');
@@ -99,7 +109,7 @@ async function initializeDatabase() {
                 valid: true
             });
             await admin.save();
-            await Score.create({ userId: admin._id, competition: 'Copa America 2024' });
+            await Score.create({ userId: admin._id, competition: competition.name });
             console.log('Usuario administrador creado.');
         }
 
@@ -206,7 +216,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         // Crear registro de puntaje
         const score = new Score({
             userId: user._id,
-            competition: 'Copa America 2024'
+            competition: DEFAULT_COMPETITION
         });
         await score.save();
         req.session.user = user;
