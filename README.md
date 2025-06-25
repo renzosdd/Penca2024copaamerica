@@ -29,6 +29,13 @@ npm run dev
 
 Para un entorno de producción puedes utilizar `npm start`.
 
+Al iniciarse por primera vez, la aplicación comprobará que exista la base de datos
+e insertará un usuario administrador por defecto si es necesario. Las credenciales
+iniciales son:
+
+- **Usuario:** `admin`
+- **Contraseña:** `Penca2024Ren`
+
 ## Estructura del proyecto
 
 - **main.js** – punto de entrada de la aplicación y configuración de Express.
