@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
@@ -90,6 +91,39 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
         res.status(200).json({ message: 'User profile updated successfully' });
     } catch (error) {
         console.error('Error updating user profile:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { username, password, email, name, surname, dob } = req.body;
+
+        if (!username || !password || !email) {
+            return res.status(400).json({ error: 'Username, password and email are required' });
+        }
+
+        const existing = await User.findOne({ $or: [{ username }, { email }] });
+        if (existing) {
+            return res.status(409).json({ error: 'Username or email already exists' });
+        }
+
+        const hashed = await bcrypt.hash(password, 10);
+        const user = new User({
+            username,
+            password: hashed,
+            email,
+            name,
+            surname,
+            dob,
+            role: 'owner',
+            valid: true
+        });
+
+        await user.save();
+        res.status(201).json({ userId: user._id });
+    } catch (error) {
+        console.error('Error creating owner:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
