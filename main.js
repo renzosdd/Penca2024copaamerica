@@ -38,7 +38,6 @@ if (!uri) {
     process.exit(1);
 }
 
-
 // Evitar exponer credenciales en los logs
 const maskedUri = uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:]+):([^@]+)@/, '$1****:****@');
 debugLog('Mongo URI:', maskedUri);
