@@ -40,14 +40,17 @@ app.use(session({
     cookie: { maxAge: 30 * 60 * 1000 } // 30 minutos en milisegundos
 }));
 
-mongoose.connect(uri, { 
-    useNewUrlParser: true, 
+mongoose.connect(uri, {
+    useNewUrlParser: true,
     useUnifiedTopology: true,
     connectTimeoutMS: 60000,
     socketTimeoutMS: 60000,
     maxPoolSize: 10 // Ajusta el tamaño del pool según tus necesidades
 })
-    .then(() => console.log('Conexión a la base de datos establecida'))
+    .then(async () => {
+        console.log('Conexión a la base de datos establecida');
+        await initializeDatabase();
+    })
     .catch(err => {
         console.error('Error al conectar a la base de datos. Saliendo...', err);
         process.exit(1);
@@ -58,6 +61,35 @@ const Score = require('./models/Score');
 const Match = require('./models/Match');
 const Prediction = require('./models/Prediction');
 const adminRouter = require('./routes/admin');
+
+async function initializeDatabase() {
+    try {
+        // Verificar si existe el usuario administrador
+        const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
+        const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'Penca2024Ren';
+        const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
+
+        let admin = await User.findOne({ username: adminUsername });
+        if (!admin) {
+            console.log('No existe usuario administrador, creándolo...');
+            const hashedPassword = await bcrypt.hash(adminPassword, 10);
+            admin = new User({
+                username: adminUsername,
+                password: hashedPassword,
+                email: adminEmail,
+                role: 'admin',
+                valid: true
+            });
+            await admin.save();
+
+            await Score.create({ userId: admin._id, competition: 'Copa America 2024' });
+
+            console.log('Usuario administrador creado.');
+        }
+    } catch (error) {
+        console.error('Error al inicializar la base de datos:', error);
+    }
+}
 
 // Usar el middleware de control de caché
 app.use(cacheControl);

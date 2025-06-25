@@ -19,6 +19,9 @@ proyecto con al menos la URL de tu base de datos MongoDB:
 MONGODB_URI=mongodb://<usuario>:<password>@<host>/<basedatos>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
+# Credenciales del administrador por defecto
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=Penca2024Ren
 ```
 
 3. Inicia el servidor en modo desarrollo con **nodemon**:
@@ -28,6 +31,15 @@ npm run dev
 ```
 
 Para un entorno de producción puedes utilizar `npm start`.
+
+Al iniciarse por primera vez, la aplicación comprobará que exista la base de datos
+e insertará un usuario administrador por defecto si es necesario. Las credenciales
+pueden configurarse mediante las variables `DEFAULT_ADMIN_USERNAME` y
+`DEFAULT_ADMIN_PASSWORD` definidas en tu archivo `.env`. Si no se especifican,
+los valores por defecto son:
+
+- **Usuario:** `admin`
+- **Contraseña:** `Penca2024Ren`
 
 ## Estructura del proyecto
 
