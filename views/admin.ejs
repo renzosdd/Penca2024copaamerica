@@ -137,6 +137,8 @@
                     </div>
                     <button class="btn waves-effect waves-light" type="submit">Crear</button>
                 </form>
+                <h4>Competencias existentes</h4>
+                <ul id="competitionList" class="collection"></ul>
             </div>
         </div>
         <div id="settings" class="col s12">
@@ -276,6 +278,7 @@
                         if (response.ok) {
                             M.toast({html: 'Competencia creada', classes: 'green'});
                             this.reset();
+                            loadCompetitions();
                         } else {
                             const result = await response.json();
                             console.error('Error:', result.error);
@@ -287,6 +290,22 @@
                     }
                 });
             }
+
+            function loadCompetitions() {
+                const list = document.getElementById('competitionList');
+                if (!list) return;
+                fetch('/admin/competitions').then(r => r.json()).then(data => {
+                    list.innerHTML = '';
+                    data.forEach(c => {
+                        const li = document.createElement('li');
+                        li.className = 'collection-item';
+                        li.textContent = c.name;
+                        list.appendChild(li);
+                    });
+                });
+            }
+
+            loadCompetitions();
         });
     </script>
 </body>

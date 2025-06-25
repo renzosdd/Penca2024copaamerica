@@ -1,6 +1,41 @@
 document.addEventListener('DOMContentLoaded', async function() {
     const DEBUG = window.DEBUG === true;
-    function debugLog(...args) { if (DEBUG) console.log(...args); }
+
+    function debugLog(...args) {
+        if (DEBUG) {
+            console.log(...args);
+        }
+    }
+    var elems = document.querySelectorAll('.tabs');
+    var instances = M.Tabs.init(elems);
+
+    // Inicializar el dropdown
+    var dropdownElems = document.querySelectorAll('.dropdown-trigger');
+    var dropdownInstances = M.Dropdown.init(dropdownElems, { constrainWidth: false, coverTrigger: false });
+    var collapsibleElems = document.querySelectorAll('.collapsible');
+    var collapsibleInstances = M.Collapsible.init(collapsibleElems);
+
+    var pencaItems = document.querySelectorAll('#penca-collapsible li');
+    var selectedPencaId = null;
+    if (pencaItems.length) {
+        var storedPenca = localStorage.getItem('selectedPenca');
+        if (storedPenca) {
+            selectedPencaId = storedPenca;
+        } else {
+            selectedPencaId = pencaItems[0].dataset.id;
+            localStorage.setItem('selectedPenca', selectedPencaId);
+        }
+        pencaItems.forEach((item) => {
+            if (item.dataset.id === selectedPencaId) {
+                item.classList.add('active');
+            }
+            item.querySelector('.collapsible-header').addEventListener('click', () => {
+                selectedPencaId = item.dataset.id;
+                localStorage.setItem('selectedPenca', selectedPencaId);
+                window.location.reload();
+            });
+        });
+    }
 
     const pencas = window.PENCAS || [];
     const userRole = document.body.getAttribute('data-role');

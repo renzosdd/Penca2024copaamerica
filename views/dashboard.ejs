@@ -30,6 +30,7 @@
             </ul>
         </div>
     </header>
+
     <main>
         <div class="container">
             <% if (pencas && pencas.length) { %>
@@ -59,6 +60,7 @@
                 <% }); %>
             </ul>
             <% } %>
+
             <div id="join" class="row">
                 <div class="input-field col s12 m6">
                     <input id="join-code" type="text">
@@ -69,6 +71,7 @@
                 </div>
                 <div id="join-message" class="col s12"></div>
             </div>
+
             <% if (user.role === 'owner') { %>
             <div id="manage" class="row">
                 <div id="manage-content" class="col s12"></div>
@@ -76,6 +79,7 @@
             <% } %>
         </div>
     </main>
+
     <footer class="page-footer blue darken-3">
         <div class="container center-align">
             <a href="https://www.linkedin.com/in/renzodogliotti/">
@@ -86,21 +90,21 @@
             </a>
         </div>
     </footer>
-    
+
     <!-- Modal de Información -->
     <div id="info-modal" class="modal">
         <div class="modal-content">
             <h4>Reglas de la Penca</h4>
             <h5>Puntajes</h5>
             <p>
-                - Resultado exacto da 3 puntos.
-                - Indicar resultado (ganador o empate) da 1 punto.
+                - Resultado exacto da 3 puntos.<br>
+                - Indicar resultado (ganador o empate) da 1 punto.<br>
                 - Adivinar la cantidad de goles de uno de los dos equipos da 1 punto adicional.
             </p>
             <h5>Reglas</h5>
             <p>
-                - Solo se pueden modificar los resultados hasta media hora antes del partido
-                - En los cruces de cuartos de final, semifinal, tercer puesto y final solo se tomara en cuanta los 90 minutos y alargues para los resultados.
+                - Solo se pueden modificar los resultados hasta media hora antes del partido.<br>
+                - En los cruces de cuartos de final, semifinal, tercer puesto y final solo se toma en cuenta los 90 minutos y alargues para los resultados.
             </p>
         </div>
         <div class="modal-footer">
