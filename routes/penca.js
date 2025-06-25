@@ -79,10 +79,17 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
 router.post('/join', isAuthenticated, async (req, res) => {
   const { code, competition } = req.body;
   const userId = req.session.user._id;
+  const joined = req.session.user.pencas || [];
   try {
+    if (joined.length >= 3) {
+      return res.status(400).json({ error: 'You have reached the maximum number of pencas you can join' });
+    }
+
     const query = { code };
     if (competition) query.competition = competition;
+
     const penca = await Penca.findOne(query);
+
     if (!penca) return res.status(404).json({ error: 'Penca not found' });
 
     if (penca.participants.includes(userId) || penca.pendingRequests.includes(userId)) {
