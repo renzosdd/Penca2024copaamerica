@@ -12,16 +12,15 @@ predicciones de los partidos y consultar el ranking general.
 npm install
 ```
 
-2. Configura las variables de entorno. Crea un archivo `.env` en la raíz del 
-proyecto con al menos la URL de tu base de datos MongoDB:
+2. Configura las variables de entorno. Crea un archivo `.env` en la raíz del
+proyecto con la URL de tu base de datos MongoDB y las credenciales del administrador:
 
 ```bash
 MONGODB_URI=mongodb://<usuario>:<password>@<host>/<basedatos>
+DEFAULT_ADMIN_USERNAME=<usuario_admin>
+DEFAULT_ADMIN_PASSWORD=<contraseña_admin>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
-# Credenciales del administrador por defecto
-DEFAULT_ADMIN_USERNAME=admin
-DEFAULT_ADMIN_PASSWORD=Penca2024Ren
 ```
 
 3. Inicia el servidor en modo desarrollo con **nodemon**:
@@ -34,20 +33,21 @@ Para un entorno de producción puedes utilizar `npm start`.
 
 Al iniciarse por primera vez, la aplicación comprobará que exista la base de datos
 e insertará un usuario administrador por defecto si es necesario. Las credenciales
-
-- **Usuario:** `admin`
-- **Contraseña:** `Penca2024Ren`
+se tomarán de las variables `DEFAULT_ADMIN_USERNAME` y `DEFAULT_ADMIN_PASSWORD`
+definidas en tu archivo `.env`.
 
 ## Estructura del proyecto
 
 - **main.js** – punto de entrada de la aplicación y configuración de Express.
 - **middleware/** – middlewares de autenticación y control de caché.
-- **models/** – modelos de Mongoose (User, Match, Prediction, Score).
-- **routes/** – rutas de la aplicación: administración, partidos, predicciones y ranking.
+- **models/** – modelos de Mongoose (User, Match, Prediction, Score, Penca).
+- **routes/** – rutas de la aplicación: administración, partidos, predicciones, ranking y pencas.
 - **public/** – archivos estáticos (CSS, imágenes, scripts de cliente, uploads).
 - **views/** – plantillas EJS para las vistas HTML.
 - **matches.json** – datos de los partidos utilizados para inicializar la base.
 - **updateschema.js** – script auxiliar para crear o actualizar esquemas en MongoDB.
+
+El esquema `Penca` permite organizar competiciones privadas. Los usuarios se unen con un código y el propietario decide aprobar o eliminar participantes.
 
 Con esta estructura puedes navegar fácilmente por cada componente de la aplicación.
 

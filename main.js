@@ -10,18 +10,24 @@ const MongoStore = require('connect-mongo');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
 const cacheControl = require('./middleware/cacheControl');
 const ejs = require('ejs');
+const { DEFAULT_COMPETITION } = require('./config');
+const Competition = require('./models/Competition');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const uri = process.env.MONGODB_URI || 'mongodb+srv://admindbpenca:AdminDbPenca2024Ren@cluster0.ydlmrlh.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-//
-//'mongodb+srv://admindbpenca:AdminDbPenca2024Ren@pencacopaamerica2024.yispiqt.mongodb.net/penca_copa_america?retryWrites=true&w=majority&appName=PencaCopaAmerica2024';
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+    console.error('MONGODB_URI environment variable not provided. Exiting...');
+    process.exit(1);
+}
 
 
-console.log('Mongo URI:', uri);
+// Evitar exponer credenciales en los logs
+const maskedUri = uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:]+):([^@]+)@/, '$1****:****@');
+console.log('Mongo URI:', maskedUri);
 
 const mongooseOptions = {
     useNewUrlParser: true,
@@ -78,14 +84,27 @@ const Score = require('./models/Score');
 const Match = require('./models/Match');
 const Prediction = require('./models/Prediction');
 const adminRouter = require('./routes/admin');
+const pencaRouter = require('./routes/penca');
 
 async function initializeDatabase() {
     try {
         // Verificar si existe el usuario administrador
 
-        const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
-        const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'Penca2024Ren';
+        const adminUsername = process.env.DEFAULT_ADMIN_USERNAME;
+        const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
         const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
+        if (!adminUsername || !adminPassword) {
+            console.error('DEFAULT_ADMIN_USERNAME and DEFAULT_ADMIN_PASSWORD environment variables are required');
+            process.exit(1);
+        }
+
+        // Asegurar que exista la competencia por defecto
+        let competition = await Competition.findOne({ name: DEFAULT_COMPETITION });
+        if (!competition) {
+            competition = new Competition({ name: DEFAULT_COMPETITION });
+            await competition.save();
+            console.log(`Competencia creada: ${DEFAULT_COMPETITION}`);
+        }
 
         let admin = await User.findOne({ username: adminUsername });
         if (!admin) {
@@ -99,7 +118,7 @@ async function initializeDatabase() {
                 valid: true
             });
             await admin.save();
-            await Score.create({ userId: admin._id, competition: 'Copa America 2024' });
+            await Score.create({ userId: admin._id, competition: competition.name });
             console.log('Usuario administrador creado.');
         }
 
@@ -147,9 +166,12 @@ app.post('/login', async (req, res) => {
     console.log('Intento de inicio de sesión para el usuario:', username);
     try {
         const user = await User.findOne({ username });
-        console.log('Usuario encontrado:', user);
-        if (!user) {
+        if (user) {
+            console.log('Usuario encontrado:', user.username);
+        } else {
             console.log('Usuario no encontrado');
+        }
+        if (!user) {
             return res.status(401).json({ error: 'Usuario no encontrado' });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
@@ -159,7 +181,7 @@ app.post('/login', async (req, res) => {
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
         req.session.user = user;
-        console.log('Sesión establecida para el usuario:', req.session.user);
+        console.log('Sesión establecida para el usuario:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Error en el inicio de sesión', err);
@@ -206,11 +228,11 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         // Crear registro de puntaje
         const score = new Score({
             userId: user._id,
-            competition: 'Copa America 2024'
+            competition: DEFAULT_COMPETITION
         });
         await score.save();
         req.session.user = user;
-        console.log('Usuario registrado y sesión iniciada:', req.session.user);
+        console.log('Usuario registrado y sesión iniciada:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Error en el registro', err);
@@ -234,6 +256,7 @@ app.get('/avatar/:username', async (req, res) => {
 app.use('/matches', isAuthenticated, require('./routes/matches'));
 app.use('/predictions', isAuthenticated, require('./routes/predictions'));
 app.use('/ranking', isAuthenticated, require('./routes/ranking'));
+app.use('/pencas', isAuthenticated, pencaRouter);
 app.use('/admin', adminRouter);
 
 app.post('/logout', (req, res) => {
