@@ -4,6 +4,7 @@ const multer = require('multer');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
+const Competition = require('../models/Competition');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 
 const storage = multer.memoryStorage();
@@ -130,6 +131,41 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
         res.status(201).json({ pencaId: penca._id, code: penca.code });
     } catch (error) {
         console.error('Error creating penca:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const competitions = await Competition.find();
+        res.json(competitions);
+    } catch (error) {
+        console.error('Error listing competitions:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
+    try {
+        const { name, useApi } = req.body;
+        if (!name) {
+            return res.status(400).json({ error: 'Name required' });
+        }
+
+        const competition = new Competition({ name });
+        await competition.save();
+
+        if (req.file) {
+            const matchesData = JSON.parse(req.file.buffer.toString());
+            matchesData.forEach(m => { if (!m.competition) m.competition = name; });
+            await Match.insertMany(matchesData);
+        } else if (useApi === 'true') {
+            // TODO: Integrate API-Football fixture loading
+        }
+
+        res.status(201).json({ competitionId: competition._id });
+    } catch (error) {
+        console.error('Error creating competition:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

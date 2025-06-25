@@ -46,6 +46,7 @@
         <div class="nav-content">
             <ul class="tabs tabs-transparent blue darken-3">
                 <li class="tab"><a class="active" href="#users">Users</a></li>
+                <li class="tab"><a href="#competitions">Competitions</a></li>
                 <li class="tab"><a href="#settings">Settings</a></li>
             </ul>
         </div>
@@ -108,6 +109,33 @@
                         </div>
                     </div>
                     <button class="btn waves-effect waves-light" type="submit">Actualizar</button>
+                </form>
+            </div>
+        </div>
+        <div id="competitions" class="col s12">
+            <div class="container">
+                <h3>Nueva Competencia</h3>
+                <form id="createCompetitionForm" method="POST" action="/admin/competitions" enctype="multipart/form-data">
+                    <div class="input-field">
+                        <input id="competitionName" name="name" type="text" required>
+                        <label for="competitionName">Nombre</label>
+                    </div>
+                    <p>
+                        <label>
+                            <input type="checkbox" id="useApi" name="useApi" value="true" />
+                            <span>Cargar fixture desde API-Football</span>
+                        </label>
+                    </p>
+                    <div class="file-field input-field">
+                        <div class="btn">
+                            <span>Fixture JSON</span>
+                            <input type="file" name="fixture" accept="application/json">
+                        </div>
+                        <div class="file-path-wrapper">
+                            <input class="file-path validate" type="text">
+                        </div>
+                    </div>
+                    <button class="btn waves-effect waves-light" type="submit">Crear</button>
                 </form>
             </div>
         </div>
@@ -234,6 +262,31 @@
                     M.toast({html: 'Error al enviar la actualización', classes: 'red'});
                 }
             });
+
+            const compForm = document.getElementById('createCompetitionForm');
+            if (compForm) {
+                compForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    try {
+                        const response = await fetch('/admin/competitions', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (response.ok) {
+                            M.toast({html: 'Competencia creada', classes: 'green'});
+                            this.reset();
+                        } else {
+                            const result = await response.json();
+                            console.error('Error:', result.error);
+                            M.toast({html: 'Error al crear competencia', classes: 'red'});
+                        }
+                    } catch (error) {
+                        console.error('Error al crear competencia:', error);
+                        M.toast({html: 'Error al crear competencia', classes: 'red'});
+                    }
+                });
+            }
         });
     </script>
 </body>
