@@ -13,13 +13,15 @@ npm install
 ```
 
 2. Configura las variables de entorno. Crea un archivo `.env` en la raíz del
-proyecto con la URL de tu base de datos MongoDB y las credenciales del administrador:
+proyecto con la URL de tu base de datos MongoDB y las credenciales del administrador.
+La base de datos por defecto debe llamarse `pencas`:
 
 ```bash
-MONGODB_URI=mongodb://<usuario>:<password>@<host>/<basedatos>
+# Ejemplo de conexión local
+MONGODB_URI=mongodb://localhost:27017/pencas
 DEFAULT_ADMIN_USERNAME=<usuario_admin>
 DEFAULT_ADMIN_PASSWORD=<contraseña_admin>
-DEFAULT_COMPETITION=<nombre_competencia>
+DEFAULT_COMPETITION=<nombre>
 SESSION_SECRET=<tu_clave>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
