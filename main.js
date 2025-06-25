@@ -23,6 +23,14 @@ const uri = process.env.MONGODB_URI || 'mongodb+srv://admindbpenca:AdminDbPenca2
 
 console.log('Mongo URI:', uri);
 
+const mongooseOptions = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    connectTimeoutMS: 60000,
+    socketTimeoutMS: 60000,
+    maxPoolSize: 10 // Ajusta el tamaño del pool según tus necesidades
+};
+
 mongoose.set('strictQuery', true);
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -40,13 +48,7 @@ app.use(session({
     cookie: { maxAge: 30 * 60 * 1000 } // 30 minutos en milisegundos
 }));
 
-mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    connectTimeoutMS: 60000,
-    socketTimeoutMS: 60000,
-    maxPoolSize: 10 // Ajusta el tamaño del pool según tus necesidades
-})
+mongoose.connect(uri, mongooseOptions)
     .then(async () => {
         console.log('Conexión a la base de datos establecida');
         await initializeDatabase();
@@ -55,6 +57,21 @@ mongoose.connect(uri, {
         console.error('Error al conectar a la base de datos. Saliendo...', err);
         process.exit(1);
     });
+
+mongoose.connection.on('connected', () => {
+    console.log('Mongoose conectado a la base de datos');
+});
+
+mongoose.connection.on('error', (err) => {
+    console.error('Error en la conexión de Mongoose:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('Conexión de Mongoose perdida. Reintentando...');
+    mongoose.connect(uri, mongooseOptions).catch((err) => {
+        console.error('Error al reintentar la conexión de Mongoose:', err);
+    });
+});
 
 const User = require('./models/User');
 const Score = require('./models/Score');
