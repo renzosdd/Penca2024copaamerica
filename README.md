@@ -19,6 +19,7 @@ proyecto con la URL de tu base de datos MongoDB y las credenciales del administr
 MONGODB_URI=mongodb://<usuario>:<password>@<host>/<basedatos>
 DEFAULT_ADMIN_USERNAME=<usuario_admin>
 DEFAULT_ADMIN_PASSWORD=<contraseña_admin>
+DEFAULT_COMPETITION=<nombre_competencia>
 SESSION_SECRET=<tu_clave>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
