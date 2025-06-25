@@ -9,10 +9,12 @@ jest.mock('../models/Penca', () => {
 });
 
 jest.mock('../models/Competition', () => {
-  return jest.fn(function (data) {
+  const CompetitionMock = jest.fn(function (data) {
     Object.assign(this, data);
     this.save = jest.fn().mockResolvedValue(this);
   });
+  CompetitionMock.find = jest.fn();
+  return CompetitionMock;
 });
 
 jest.mock('../models/Match', () => ({
@@ -86,5 +88,17 @@ describe('Admin competition creation', () => {
     expect(res.status).toBe(201);
     expect(Competition).toHaveBeenCalledWith(expect.objectContaining({ name: 'Copa Test' }));
     expect(Match.insertMany).toHaveBeenCalled();
+  });
+
+  it('lists competitions', async () => {
+    Competition.find.mockResolvedValue([{ name: 'Copa Test' }]);
+
+    const app = express();
+    app.use('/admin', adminRouter);
+
+    const res = await request(app).get('/admin/competitions');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([{ name: 'Copa Test' }]);
   });
 });
