@@ -138,9 +138,7 @@ async function initializeDatabase() {
         // Prepopular partidos si la colección está vacía
         const matchCount = await Match.countDocuments();
         if (matchCount === 0) {
-            const matches = require('./matches.json');
-            await Match.insertMany(matches);
-            debugLog('Partidos prepopulados.');
+            debugLog('No hay partidos en la base de datos. Los partidos deberán cargarse desde las rutas de administración.');
         }
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
