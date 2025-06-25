@@ -4,11 +4,21 @@ const User = require('../models/User');
 const Prediction = require('../models/Prediction');
 const Match = require('../models/Match');
 const Score = require('../models/Score');
+const Penca = require('../models/Penca');
 const { DEFAULT_COMPETITION } = require('../config');
 
 // Función para calcular los puntajes
 async function calculateScores(pencaId) {
-    const users = await User.find({ valid: true });
+    let userFilter = { valid: true };
+    if (pencaId) {
+        const penca = await Penca.findById(pencaId).select('participants');
+        if (!penca) {
+            return [];
+        }
+        userFilter._id = { $in: penca.participants };
+    }
+
+    const users = await User.find(userFilter);
     const matches = await Match.find();
     const filter = pencaId ? { pencaId } : {};
     const predictions = await Prediction.find(filter);
