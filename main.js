@@ -135,12 +135,7 @@ async function initializeDatabase() {
             await Score.create({ userId: admin._id, competition: competition.name });
             debugLog('Usuario administrador creado.');
         }
-
-        // Prepopular partidos si la colección está vacía
-        const matchCount = await Match.countDocuments();
-        if (matchCount === 0) {
-            debugLog('No hay partidos en la base de datos. Los partidos deberán cargarse desde las rutas de administración.');
-        }
+        // Los partidos deben cargarse manualmente desde las herramientas de administración
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
     }
