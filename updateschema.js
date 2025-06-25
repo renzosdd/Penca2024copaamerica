@@ -4,6 +4,13 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const DEBUG = process.env.DEBUG === 'true';
+function debugLog(...args) {
+    if (DEBUG) {
+        console.log(...args);
+    }
+}
+
 const uri = process.env.MONGODB_URI;
 if (!uri) {
     console.error('MONGODB_URI environment variable not provided. Exiting...');
@@ -31,10 +38,10 @@ async function createSchema() {
         if (!adminUser) {
             const hashedPassword = await bcrypt.hash(adminPassword, 10);
             await usersCollection.insertOne({ username: adminUsername, password: hashedPassword, role: 'admin' });
-            console.log('Admin user created');
+            debugLog('Admin user created');
         }
 
-        console.log("Schema created successfully");
+        debugLog("Schema created successfully");
     } catch (error) {
         console.error("Error creating schema:", error);
     } finally {

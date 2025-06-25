@@ -15,6 +15,13 @@ const Competition = require('./models/Competition');
 
 dotenv.config();
 
+const DEBUG = process.env.DEBUG === 'true';
+function debugLog(...args) {
+    if (DEBUG) {
+        console.log(...args);
+    }
+}
+
 if (!process.env.SESSION_SECRET) {
     console.error('SESSION_SECRET is not defined. Exiting...');
     process.exit(1);
@@ -34,7 +41,7 @@ if (!uri) {
 
 // Evitar exponer credenciales en los logs
 const maskedUri = uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:]+):([^@]+)@/, '$1****:****@');
-console.log('Mongo URI:', maskedUri);
+debugLog('Mongo URI:', maskedUri);
 
 const mongooseOptions = {
     useNewUrlParser: true,
@@ -63,7 +70,7 @@ app.use(session({
 
 mongoose.connect(uri, mongooseOptions)
     .then(async () => {
-        console.log('Conexión a la base de datos establecida');
+        debugLog('Conexión a la base de datos establecida');
         await initializeDatabase();
     })
     .catch(err => {
@@ -72,7 +79,7 @@ mongoose.connect(uri, mongooseOptions)
     });
 
 mongoose.connection.on('connected', () => {
-    console.log('Mongoose conectado a la base de datos');
+    debugLog('Mongoose conectado a la base de datos');
 });
 
 mongoose.connection.on('error', (err) => {
@@ -80,7 +87,7 @@ mongoose.connection.on('error', (err) => {
 });
 
 mongoose.connection.on('disconnected', () => {
-    console.log('Conexión de Mongoose perdida. Reintentando...');
+    debugLog('Conexión de Mongoose perdida. Reintentando...');
     mongoose.connect(uri, mongooseOptions).catch((err) => {
         console.error('Error al reintentar la conexión de Mongoose:', err);
     });
@@ -110,12 +117,12 @@ async function initializeDatabase() {
         if (!competition) {
             competition = new Competition({ name: DEFAULT_COMPETITION });
             await competition.save();
-            console.log(`Competencia creada: ${DEFAULT_COMPETITION}`);
+            debugLog(`Competencia creada: ${DEFAULT_COMPETITION}`);
         }
 
         let admin = await User.findOne({ username: adminUsername });
         if (!admin) {
-            console.log('No existe usuario administrador, creándolo...');
+            debugLog('No existe usuario administrador, creándolo...');
             const hashedPassword = await bcrypt.hash(adminPassword, 10);
             admin = new User({
                 username: adminUsername,
@@ -126,7 +133,7 @@ async function initializeDatabase() {
             });
             await admin.save();
             await Score.create({ userId: admin._id, competition: competition.name });
-            console.log('Usuario administrador creado.');
+            debugLog('Usuario administrador creado.');
         }
 
         // Prepopular partidos si la colección está vacía
@@ -134,7 +141,7 @@ async function initializeDatabase() {
         if (matchCount === 0) {
             const matches = require('./matches.json');
             await Match.insertMany(matches);
-            console.log('Partidos prepopulados.');
+            debugLog('Partidos prepopulados.');
         }
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
@@ -165,30 +172,30 @@ app.get('/', (req, res) => {
 
 app.get('/dashboard', isAuthenticated, (req, res) => {
     const { user } = req.session;
-    res.render('dashboard', { user });
+    res.render('dashboard', { user, debug: DEBUG });
 });
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    console.log('Intento de inicio de sesión para el usuario:', username);
+    debugLog('Intento de inicio de sesión para el usuario:', username);
     try {
         const user = await User.findOne({ username });
         if (user) {
-            console.log('Usuario encontrado:', user.username);
+            debugLog('Usuario encontrado:', user.username);
         } else {
-            console.log('Usuario no encontrado');
+            debugLog('Usuario no encontrado');
         }
         if (!user) {
             return res.status(401).json({ error: 'Usuario no encontrado' });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
-        console.log('Coincidencia de contraseña:', passwordMatch);
+        debugLog('Coincidencia de contraseña:', passwordMatch);
         if (!passwordMatch) {
-            console.log('Contraseña incorrecta');
+            debugLog('Contraseña incorrecta');
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
         req.session.user = user;
-        console.log('Sesión establecida para el usuario:', user.username);
+        debugLog('Sesión establecida para el usuario:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Error en el inicio de sesión', err);
@@ -239,7 +246,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         });
         await score.save();
         req.session.user = user;
-        console.log('Usuario registrado y sesión iniciada:', user.username);
+        debugLog('Usuario registrado y sesión iniciada:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Error en el registro', err);
@@ -298,12 +305,12 @@ app.use((req, res) => {
 
 // Evento para cerrar la conexión de Mongoose al cerrar el servidor
 process.on('SIGINT', async () => {
-    console.log('Cerrando la conexión de Mongoose...');
+    debugLog('Cerrando la conexión de Mongoose...');
     await mongoose.connection.close();
-    console.log('Conexión de Mongoose cerrada.');
+    debugLog('Conexión de Mongoose cerrada.');
     process.exit(0);
 });
 
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
+    debugLog(`Servidor corriendo en el puerto ${PORT}`);
 });

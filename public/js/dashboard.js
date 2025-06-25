@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', async function() {
+    const DEBUG = window.DEBUG === true;
+    function debugLog(...args) {
+        if (DEBUG) {
+            console.log(...args);
+        }
+    }
     var elems = document.querySelectorAll('.tabs');
     var instances = M.Tabs.init(elems);
 
@@ -10,8 +16,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const username = document.querySelector('body').getAttribute('data-username');
 
     // Mostrar el rol y el nombre de usuario
-    console.log('User Role:', userRole);
-    console.log('Username:', username);
+    debugLog('User Role:', userRole);
+    debugLog('Username:', username);
 
     let matches = []; // Definir la variable matches en el contexto adecuado
 
@@ -26,9 +32,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         const now = new Date();
         const timeDifference = (matchDateTime - now) / 60000; // Diferencia en minutos
 
-        console.log(`currentTime (client): ${now}`);
-        console.log(`matchDateTime (client): ${matchDateTime}`);
-        console.log(`timeDifference (client): ${timeDifference} minutos`);
+        debugLog(`currentTime (client): ${now}`);
+        debugLog(`matchDateTime (client): ${matchDateTime}`);
+        debugLog(`timeDifference (client): ${timeDifference} minutos`);
 
         return timeDifference < 30;
     };
@@ -45,7 +51,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             return dateA - dateB;
         });
 
-        console.log('Matches fetched and sorted successfully');
+        debugLog('Matches fetched and sorted successfully');
 
         const predictionsResponse = await fetch('/predictions');
         const predictions = await predictionsResponse.json();
@@ -169,8 +175,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                 // Verificar si faltan menos de 30 minutos para el partido
                 const match = matches.find(m => m._id.toString() === data.matchId);
-                console.log('match.date:', match.date); // Agregar esta línea
-                console.log('match.time:', match.time); // Agregar esta línea
+                debugLog('match.date:', match.date); // Agregar esta línea
+                debugLog('match.time:', match.time); // Agregar esta línea
 
                 if (isLessThan30MinutesToMatch(match.date, match.time)) {
                     M.toast({html: 'No se puede enviar predicción dentro de los 30 minutos previos al partido', classes: 'red'});
@@ -187,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     });
                     const result = await response.json();
                     if (response.ok) {
-                        console.log('Predicción enviada exitosamente');
+                        debugLog('Predicción enviada exitosamente');
                         M.toast({html: 'Predicción actualizada correctamente!', classes: 'green'});
                         const matchCard = form.closest('.card');
                         if (matchCard) {
@@ -228,7 +234,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                         });
                         const result = await response.json();
                         if (response.ok) {
-                            console.log('Resultado enviado exitosamente');
+                            debugLog('Resultado enviado exitosamente');
                             M.toast({html: 'Resultado actualizado correctamente!', classes: 'green'});
                             // Recalcular puntaje de todos los usuarios
                             //await fetch('/ranking/recalculate', { method: 'POST' });

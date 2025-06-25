@@ -4,6 +4,13 @@ const Prediction = require('../models/Prediction');
 const Match = require('../models/Match'); // Importar el modelo de partidos
 const Penca = require('../models/Penca');
 
+const DEBUG = process.env.DEBUG === 'true';
+function debugLog(...args) {
+    if (DEBUG) {
+        console.log(...args);
+    }
+}
+
 router.get('/', async (req, res) => {
     try {
         const predictions = await Prediction.find();
@@ -40,12 +47,12 @@ router.post('/', async (req, res) => {
         const currentTime = new Date();
         const matchDateTime = new Date(`${match.date}T${match.time}:00`); // Combinar fecha y hora
 
-        console.log(`currentTime: ${currentTime}`);
-        console.log(`matchDateTime: ${matchDateTime}`);
+        debugLog(`currentTime: ${currentTime}`);
+        debugLog(`matchDateTime: ${matchDateTime}`);
 
         const timeDifference = (matchDateTime - currentTime) / 60000; // Diferencia en minutos
 
-        console.log(`timeDifference: ${timeDifference} minutos`);
+        debugLog(`timeDifference: ${timeDifference} minutos`);
 
         if (timeDifference < 30) {
             return res.status(400).json({ error: 'No se puede enviar la predicción dentro de los 30 minutos previos al inicio del partido' });
