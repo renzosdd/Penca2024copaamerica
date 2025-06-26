@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
         }
 
         const penca = await Penca.findById(pencaId);
-        if (!penca || !penca.participants.includes(user._id)) {
+        if (!penca || !penca.participants.some(id => id.equals(user._id))) {
             return res.status(403).json({ error: 'No pertenece a la penca' });
         }
 
