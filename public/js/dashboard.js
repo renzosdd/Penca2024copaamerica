@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     const joinBtn = document.getElementById('join-button');
-    if (joinBtn) {
+    if (userRole === 'user' && joinBtn) {
         joinBtn.addEventListener('click', async () => {
             const code = document.getElementById('join-code').value;
             try {

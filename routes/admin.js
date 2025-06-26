@@ -32,7 +32,7 @@ const jsonUpload = multer({
     }
 });
 
-// Servir la página de administración
+// Página de administración
 router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const users = await User.find().select('username');
@@ -43,7 +43,7 @@ router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Endpoint para obtener los datos de un usuario específico
+// Obtener datos de un usuario
 router.get('/user/:username', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username }).select('-password');
@@ -57,13 +57,12 @@ router.get('/user/:username', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Endpoint para actualizar el perfil del usuario
+// Actualizar perfil de usuario
 router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async (req, res) => {
     try {
         const { username, name, surname, email, dob, role, valid } = req.body;
         const avatar = req.file;
 
-        // Validar que el username no esté vacío
         if (!username) {
             return res.status(400).json({ error: 'El nombre de usuario es obligatorio' });
         }
@@ -74,13 +73,12 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Actualizar los datos del usuario
         if (name) user.name = name;
         if (surname) user.surname = surname;
         if (email) user.email = email;
         if (dob) user.dob = new Date(dob);
         if (role) user.role = role;
-        if (valid !== undefined) user.valid = valid === 'true'; // Convertir el string 'true'/'false' a boolean
+        if (valid !== undefined) user.valid = valid === 'true';
         if (avatar) {
             user.avatar = avatar.buffer;
             user.avatarContentType = avatar.mimetype;
@@ -95,6 +93,7 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
     }
 });
 
+// Crear nuevo owner
 router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { username, password, email, name, surname, dob } = req.body;
@@ -109,7 +108,7 @@ router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
         }
 
         const hashed = await bcrypt.hash(password, 10);
-        const user = new User({
+        const owner = new User({
             username,
             password: hashed,
             email,
@@ -120,14 +119,26 @@ router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
             valid: true
         });
 
-        await user.save();
-        res.status(201).json({ userId: user._id });
+        await owner.save();
+        res.status(201).json({ ownerId: owner._id });
     } catch (error) {
         console.error('Error creating owner:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
+// Listar owners existentes
+router.get('/owners', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const owners = await User.find({ role: 'owner' }).select('username _id');
+        res.json(owners);
+    } catch (error) {
+        console.error('Error listing owners:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Crear una penca con fixture opcional
 router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
     try {
         const { name, owner, participantLimit } = req.body;
@@ -153,7 +164,7 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
             owner: ownerUser._id,
             participantLimit: participantLimit ? Number(participantLimit) : undefined,
             fixture: fixtureIds,
-            participants: [ownerUser._id]
+            participants: []
         });
 
         await penca.save();
@@ -169,6 +180,7 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
     }
 });
 
+// Listar competiciones
 router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const competitions = await Competition.find().sort('name');
@@ -179,6 +191,7 @@ router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
+// Crear competición con fixture opcional
 router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
     try {
         const { name, useApi } = req.body;
@@ -191,7 +204,9 @@ router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixtur
 
         if (req.file) {
             const matchesData = JSON.parse(req.file.buffer.toString());
-            matchesData.forEach(m => { if (!m.competition) m.competition = name; });
+            matchesData.forEach(m => {
+                if (!m.competition) m.competition = name;
+            });
             await Match.insertMany(matchesData);
         } else if (String(useApi) === 'true') {
             // TODO: Integrate API-Football fixture loading
