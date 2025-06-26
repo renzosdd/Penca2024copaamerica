@@ -25,8 +25,12 @@ DEFAULT_COMPETITION=<nombre>
 SESSION_SECRET=<tu_clave>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
+# Límite de pencas que un usuario puede unir (3 por defecto)
+MAX_PENCAS_PER_USER=3
 ```
 Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
+El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
+útil si planeas varias competiciones en paralelo.
 
 3. Inicia el servidor en modo desarrollo con **nodemon**:
 
