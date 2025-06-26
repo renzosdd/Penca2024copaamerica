@@ -15,22 +15,22 @@ document.addEventListener('DOMContentLoaded', async function() {
     var collapsibleElems = document.querySelectorAll('.collapsible');
     var collapsibleInstances = M.Collapsible.init(collapsibleElems);
 
-    var pencaItems = document.querySelectorAll('#penca-collapsible li');
+    var pencaItems = document.querySelectorAll('#pencas-collapsible li');
     var selectedPencaId = null;
     if (pencaItems.length) {
         var storedPenca = localStorage.getItem('selectedPenca');
         if (storedPenca) {
             selectedPencaId = storedPenca;
         } else {
-            selectedPencaId = pencaItems[0].dataset.id;
+            selectedPencaId = pencaItems[0].dataset.pencaId;
             localStorage.setItem('selectedPenca', selectedPencaId);
         }
         pencaItems.forEach((item) => {
-            if (item.dataset.id === selectedPencaId) {
+            if (item.dataset.pencaId === selectedPencaId) {
                 item.classList.add('active');
             }
             item.querySelector('.collapsible-header').addEventListener('click', () => {
-                selectedPencaId = item.dataset.id;
+                selectedPencaId = item.dataset.pencaId;
                 localStorage.setItem('selectedPenca', selectedPencaId);
                 window.location.reload();
             });
