@@ -119,7 +119,7 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
             owner: ownerUser._id,
             participantLimit: participantLimit ? Number(participantLimit) : undefined,
             fixture: fixtureIds,
-            participants: [ownerUser._id]
+            participants: []
         });
 
         await penca.save();

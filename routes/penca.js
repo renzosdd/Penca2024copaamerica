@@ -50,11 +50,11 @@ router.post('/', isAuthenticated, async (req, res) => {
       owner: ownerId,
       participantLimit,
       competition: competition || DEFAULT_COMPETITION,
-      participants: [ownerId]
+      participants: []
     });
     await penca.save();
     await User.updateOne({ _id: ownerId }, {
-      $addToSet: { ownedPencas: penca._id, pencas: penca._id },
+      $addToSet: { ownedPencas: penca._id },
       $set: { role: 'owner' }
     });
     res.status(201).json({ pencaId: penca._id, code: penca.code });
@@ -88,6 +88,9 @@ router.post('/join', isAuthenticated, async (req, res) => {
   const userId = req.session.user._id;
   const joined = req.session.user.pencas || [];
   try {
+    if (req.session.user.role !== 'user') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
     if (joined.length >= 3) {
       return res.status(400).json({ error: 'You have reached the maximum number of pencas you can join' });
     }
