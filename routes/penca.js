@@ -11,7 +11,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     const filter = {};
     if (req.query.competition) filter.competition = req.query.competition;
     const pencas = await Penca.find(filter).select('name code competition');
-    res.json(pencas);
+    res.json(pencas); 
   } catch (err) {
     console.error('list pencas error', err);
     res.status(500).json({ error: 'Error listing pencas' });

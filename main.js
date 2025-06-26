@@ -293,6 +293,6 @@ process.on('SIGINT', async () => {
     process.exit(0);
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, () => { 
     debugLog(`Servidor corriendo en el puerto ${PORT}`);
 });

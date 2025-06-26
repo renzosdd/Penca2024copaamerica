@@ -10,7 +10,7 @@ function debugLog(...args) {
         console.log(...args);
     }
 }
-
+ 
 router.get('/', async (req, res) => {
     try {
         const predictions = await Prediction.find();
