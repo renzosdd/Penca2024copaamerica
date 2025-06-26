@@ -3,7 +3,7 @@ const router = express.Router();
 const Penca = require('../models/Penca');
 const User = require('../models/User');
 const { isAuthenticated } = require('../middleware/auth');
-const { DEFAULT_COMPETITION } = require('../config');
+const { DEFAULT_COMPETITION, MAX_PENCAS_PER_USER } = require('../config');
 
 // Listar todas las pencas (nombre y código)
 router.get('/', isAuthenticated, async (req, res) => {
@@ -91,8 +91,8 @@ router.post('/join', isAuthenticated, async (req, res) => {
     if (req.session.user.role !== 'user') {
       return res.status(403).json({ error: 'Forbidden' });
     }
-    if (joined.length >= 3) {
-      return res.status(400).json({ error: 'You have reached the maximum number of pencas you can join' });
+    if (joined.length >= MAX_PENCAS_PER_USER) {
+      return res.status(400).json({ error: `You have reached the maximum number of pencas you can join (${MAX_PENCAS_PER_USER})` });
     }
 
     const query = { code };
