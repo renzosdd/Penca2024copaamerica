@@ -32,7 +32,7 @@ const jsonUpload = multer({
     }
 });
 
-// Servir la página de administración
+// Página de administración
 router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const users = await User.find().select('username');
@@ -43,7 +43,7 @@ router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Endpoint para obtener los datos de un usuario específico
+// Obtener datos de un usuario
 router.get('/user/:username', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username }).select('-password');
@@ -57,13 +57,12 @@ router.get('/user/:username', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Endpoint para actualizar el perfil del usuario
+// Actualizar perfil de usuario
 router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async (req, res) => {
     try {
         const { username, name, surname, email, dob, role, valid } = req.body;
         const avatar = req.file;
 
-        // Validar que el username no esté vacío
         if (!username) {
             return res.status(400).json({ error: 'El nombre de usuario es obligatorio' });
         }
@@ -74,13 +73,12 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Actualizar los datos del usuario
         if (name) user.name = name;
         if (surname) user.surname = surname;
         if (email) user.email = email;
         if (dob) user.dob = new Date(dob);
         if (role) user.role = role;
-        if (valid !== undefined) user.valid = valid === 'true'; // Convertir el string 'true'/'false' a boolean
+        if (valid !== undefined) user.valid = valid === 'true';
         if (avatar) {
             user.avatar = avatar.buffer;
             user.avatarContentType = avatar.mimetype;
@@ -98,14 +96,17 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
 // Crear nuevo owner
 router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { username, password, email, name, surname } = req.body;
+        const { username, password, email, name, surname, dob } = req.body;
+
         if (!username || !password || !email) {
-            return res.status(400).json({ error: 'Required fields missing' });
+            return res.status(400).json({ error: 'Username, password and email are required' });
         }
+
         const existing = await User.findOne({ $or: [{ username }, { email }] });
         if (existing) {
-            return res.status(400).json({ error: 'User exists' });
+            return res.status(409).json({ error: 'Username or email already exists' });
         }
+
         const hashed = await bcrypt.hash(password, 10);
         const owner = new User({
             username,
@@ -113,9 +114,11 @@ router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
             email,
             name,
             surname,
+            dob,
             role: 'owner',
             valid: true
         });
+
         await owner.save();
         res.status(201).json({ ownerId: owner._id });
     } catch (error) {
@@ -135,6 +138,7 @@ router.get('/owners', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
+// Crear una penca con fixture opcional
 router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
     try {
         const { name, owner, participantLimit } = req.body;
@@ -176,6 +180,7 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
     }
 });
 
+// Listar competiciones
 router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const competitions = await Competition.find().sort('name');
@@ -186,6 +191,7 @@ router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
+// Crear competición con fixture opcional
 router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
     try {
         const { name, useApi } = req.body;
@@ -198,7 +204,9 @@ router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixtur
 
         if (req.file) {
             const matchesData = JSON.parse(req.file.buffer.toString());
-            matchesData.forEach(m => { if (!m.competition) m.competition = name; });
+            matchesData.forEach(m => {
+                if (!m.competition) m.competition = name;
+            });
             await Match.insertMany(matchesData);
         } else if (String(useApi) === 'true') {
             // TODO: Integrate API-Football fixture loading

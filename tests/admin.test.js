@@ -21,9 +21,15 @@ jest.mock('../models/Match', () => ({
   insertMany: jest.fn()
 }));
 
-jest.mock('../models/User', () => ({
-  findById: jest.fn()
-}));
+jest.mock('../models/User', () => {
+  const UserMock = jest.fn(function (data) {
+    Object.assign(this, data);
+    this.save = jest.fn().mockResolvedValue(this);
+  });
+  UserMock.findById = jest.fn();
+  UserMock.findOne = jest.fn();
+  return UserMock;
+});
 
 jest.mock('../middleware/auth', () => ({
   isAuthenticated: jest.fn((req, res, next) => next()),
@@ -100,5 +106,44 @@ describe('Admin competition creation', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([{ name: 'Copa Test' }]);
+  });
+});
+
+describe('Admin owner creation', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('creates a new owner', async () => {
+    User.findOne.mockResolvedValue(null);
+
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .post('/admin/owners')
+      .send({ username: 'owner1', password: 'pass', email: 'o1@example.com' });
+
+    expect(res.status).toBe(201);
+    expect(User).toHaveBeenCalledWith(expect.objectContaining({
+      username: 'owner1',
+      email: 'o1@example.com',
+      role: 'owner'
+    }));
+  });
+
+  it('fails when username or email exists', async () => {
+    User.findOne.mockResolvedValue({ _id: 'exists' });
+
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .post('/admin/owners')
+      .send({ username: 'owner1', password: 'pass', email: 'o1@example.com' });
+
+    expect(res.status).toBe(409);
   });
 });
