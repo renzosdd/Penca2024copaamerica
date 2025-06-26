@@ -47,6 +47,7 @@
             <ul class="tabs tabs-transparent blue darken-3">
                 <li class="tab"><a class="active" href="#users">Users</a></li>
                 <li class="tab"><a href="#competitions">Competitions</a></li>
+                <li class="tab"><a href="#pencas">Pencas</a></li>
                 <li class="tab"><a href="#settings">Settings</a></li>
             </ul>
         </div>
@@ -139,6 +140,60 @@
                 </form>
                 <h4>Competencias existentes</h4>
                 <ul id="competitionList" class="collection"></ul>
+            </div>
+        </div>
+        <div id="pencas" class="col s12">
+            <div class="container">
+                <h3>Nuevo Owner</h3>
+                <form id="createOwnerForm">
+                    <div class="input-field">
+                        <input id="ownerUsername" name="username" type="text" required>
+                        <label for="ownerUsername">Usuario</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="ownerPassword" name="password" type="password" required>
+                        <label for="ownerPassword">Contraseña</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="ownerEmail" name="email" type="email" required>
+                        <label for="ownerEmail">Email</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="ownerName" name="name" type="text">
+                        <label for="ownerName">Nombre</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="ownerSurname" name="surname" type="text">
+                        <label for="ownerSurname">Apellido</label>
+                    </div>
+                    <button class="btn waves-effect waves-light" type="submit">Crear Owner</button>
+                </form>
+
+                <h3>Nueva Penca</h3>
+                <form id="createPencaForm" enctype="multipart/form-data">
+                    <div class="input-field">
+                        <input id="pencaName" name="name" type="text" required>
+                        <label for="pencaName">Nombre</label>
+                    </div>
+                    <div class="input-field">
+                        <select id="pencaOwner" name="owner" required></select>
+                        <label for="pencaOwner">Owner</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="participantLimit" name="participantLimit" type="number">
+                        <label for="participantLimit">Límite de participantes</label>
+                    </div>
+                    <div class="file-field input-field">
+                        <div class="btn">
+                            <span>Fixture JSON</span>
+                            <input type="file" name="fixture" accept="application/json">
+                        </div>
+                        <div class="file-path-wrapper">
+                            <input class="file-path validate" type="text">
+                        </div>
+                    </div>
+                    <button class="btn waves-effect waves-light" type="submit">Crear Penca</button>
+                </form>
             </div>
         </div>
         <div id="settings" class="col s12">
@@ -291,6 +346,75 @@
                 });
             }
 
+            const ownerForm = document.getElementById('createOwnerForm');
+            if (ownerForm) {
+                ownerForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const fd = new FormData(ownerForm);
+                    const data = {};
+                    fd.forEach((v, k) => { data[k] = v; });
+                    try {
+                        const response = await fetch('/admin/owners', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+                        if (response.ok) {
+                            M.toast({html: 'Owner creado', classes: 'green'});
+                            ownerForm.reset();
+                            loadOwners();
+                        } else {
+                            const result = await response.json();
+                            console.error('Error:', result.error);
+                            M.toast({html: 'Error al crear owner', classes: 'red'});
+                        }
+                    } catch (error) {
+                        console.error('Error al crear owner:', error);
+                        M.toast({html: 'Error al crear owner', classes: 'red'});
+                    }
+                });
+            }
+
+            const pencaForm = document.getElementById('createPencaForm');
+            if (pencaForm) {
+                pencaForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(pencaForm);
+                    try {
+                        const response = await fetch('/admin/pencas', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (response.ok) {
+                            M.toast({html: 'Penca creada', classes: 'green'});
+                            pencaForm.reset();
+                        } else {
+                            const result = await response.json();
+                            console.error('Error:', result.error);
+                            M.toast({html: 'Error al crear penca', classes: 'red'});
+                        }
+                    } catch (error) {
+                        console.error('Error al crear penca:', error);
+                        M.toast({html: 'Error al crear penca', classes: 'red'});
+                    }
+                });
+            }
+
+            function loadOwners() {
+                const select = document.getElementById('pencaOwner');
+                if (!select) return;
+                fetch('/admin/owners').then(r => r.json()).then(data => {
+                    select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
+                    data.forEach(o => {
+                        const opt = document.createElement('option');
+                        opt.value = o._id;
+                        opt.textContent = o.username;
+                        select.appendChild(opt);
+                    });
+                    M.FormSelect.init(select);
+                });
+            }
+
             function loadCompetitions() {
                 const list = document.getElementById('competitionList');
                 if (!list) return;
@@ -306,6 +430,7 @@
             }
 
             loadCompetitions();
+            loadOwners();
         });
     </script>
 </body>
