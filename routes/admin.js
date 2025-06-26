@@ -219,4 +219,61 @@ router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixtur
     }
 });
 
+// Listar todas las pencas con información básica
+router.get('/pencas', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const pencas = await Penca.find().select('name code competition owner');
+        res.json(pencas);
+    } catch (error) {
+        console.error('Error listing pencas:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Eliminar una penca
+router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const penca = await Penca.findByIdAndDelete(req.params.id);
+        if (!penca) {
+            return res.status(404).json({ error: 'Penca not found' });
+        }
+        await User.updateMany({}, { $pull: { pencas: penca._id, ownedPencas: penca._id } });
+        res.json({ message: 'Penca deleted' });
+    } catch (error) {
+        console.error('Error deleting penca:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Eliminar una competencia
+router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const competition = await Competition.findByIdAndDelete(req.params.id);
+        if (!competition) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+        res.json({ message: 'Competition deleted' });
+    } catch (error) {
+        console.error('Error deleting competition:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Eliminar un owner
+router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const owner = await User.findById(req.params.id);
+        if (!owner) {
+            return res.status(404).json({ error: 'Owner not found' });
+        }
+        await Penca.deleteMany({ owner: owner._id });
+        await User.deleteOne({ _id: owner._id });
+        await User.updateMany({}, { $pull: { pencas: { $in: owner.ownedPencas } } });
+        res.json({ message: 'Owner deleted' });
+    } catch (error) {
+        console.error('Error deleting owner:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 module.exports = router;

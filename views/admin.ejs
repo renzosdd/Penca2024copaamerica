@@ -168,6 +168,8 @@
                     </div>
                     <button class="btn waves-effect waves-light" type="submit">Crear Owner</button>
                 </form>
+                <h4>Owners existentes</h4>
+                <ul id="ownerList" class="collection"></ul>
 
                 <h3>Nueva Penca</h3>
                 <form id="createPencaForm" enctype="multipart/form-data">
@@ -194,6 +196,8 @@
                     </div>
                     <button class="btn waves-effect waves-light" type="submit">Crear Penca</button>
                 </form>
+                <h4>Pencas existentes</h4>
+                <ul id="pencaList" class="collection"></ul>
             </div>
         </div>
         <div id="settings" class="col s12">
@@ -402,35 +406,103 @@
 
             function loadOwners() {
                 const select = document.getElementById('pencaOwner');
-                if (!select) return;
+                const list = document.getElementById('ownerList');
                 fetch('/admin/owners').then(r => r.json()).then(data => {
-                    select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
-                    data.forEach(o => {
-                        const opt = document.createElement('option');
-                        opt.value = o._id;
-                        opt.textContent = o.username;
-                        select.appendChild(opt);
-                    });
-                    M.FormSelect.init(select);
+                    if (select) {
+                        select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
+                        data.forEach(o => {
+                            const opt = document.createElement('option');
+                            opt.value = o._id;
+                            opt.textContent = o.username;
+                            select.appendChild(opt);
+                        });
+                        M.FormSelect.init(select);
+                    }
+                    if (list) {
+                        list.innerHTML = '';
+                        data.forEach(o => {
+                            const li = document.createElement('li');
+                            li.className = 'collection-item';
+                            li.textContent = o.username;
+                            const del = document.createElement('a');
+                            del.href = '#!';
+                            del.className = 'secondary-content delete-owner';
+                            del.dataset.id = o._id;
+                            del.innerHTML = '<i class="material-icons red-text">delete</i>';
+                            li.appendChild(del);
+                            list.appendChild(li);
+                        });
+                    }
                 });
             }
 
             function loadCompetitions() {
                 const list = document.getElementById('competitionList');
-                if (!list) return;
                 fetch('/admin/competitions').then(r => r.json()).then(data => {
+                    if (!list) return;
                     list.innerHTML = '';
                     data.forEach(c => {
                         const li = document.createElement('li');
                         li.className = 'collection-item';
                         li.textContent = c.name;
+                        const del = document.createElement('a');
+                        del.href = '#!';
+                        del.className = 'secondary-content delete-competition';
+                        del.dataset.id = c._id;
+                        del.innerHTML = '<i class="material-icons red-text">delete</i>';
+                        li.appendChild(del);
                         list.appendChild(li);
                     });
                 });
             }
 
+            function loadPencas() {
+                const list = document.getElementById('pencaList');
+                fetch('/admin/pencas').then(r => r.json()).then(data => {
+                    if (!list) return;
+                    list.innerHTML = '';
+                    data.forEach(p => {
+                        const li = document.createElement('li');
+                        li.className = 'collection-item';
+                        li.textContent = p.name + ' (' + p.code + ')';
+                        const del = document.createElement('a');
+                        del.href = '#!';
+                        del.className = 'secondary-content delete-penca';
+                        del.dataset.id = p._id;
+                        del.innerHTML = '<i class="material-icons red-text">delete</i>';
+                        li.appendChild(del);
+                        list.appendChild(li);
+                    });
+                });
+            }
+
+            document.addEventListener('click', async function(e) {
+                if (e.target.closest('.delete-competition')) {
+                    const id = e.target.closest('.delete-competition').dataset.id;
+                    if (confirm('¿Eliminar competencia?')) {
+                        const r = await fetch('/admin/competitions/' + id, { method: 'DELETE' });
+                        if (r.ok) loadCompetitions();
+                    }
+                }
+                if (e.target.closest('.delete-owner')) {
+                    const id = e.target.closest('.delete-owner').dataset.id;
+                    if (confirm('¿Eliminar owner?')) {
+                        const r = await fetch('/admin/owners/' + id, { method: 'DELETE' });
+                        if (r.ok) loadOwners();
+                    }
+                }
+                if (e.target.closest('.delete-penca')) {
+                    const id = e.target.closest('.delete-penca').dataset.id;
+                    if (confirm('¿Eliminar penca?')) {
+                        const r = await fetch('/admin/pencas/' + id, { method: 'DELETE' });
+                        if (r.ok) loadPencas();
+                    }
+                }
+            });
+
             loadCompetitions();
             loadOwners();
+            loadPencas();
         });
     </script>
 </body>
