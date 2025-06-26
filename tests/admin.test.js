@@ -28,6 +28,7 @@ jest.mock('../models/User', () => {
   });
   UserMock.findById = jest.fn();
   UserMock.findOne = jest.fn();
+  UserMock.deleteOne = jest.fn();
   return UserMock;
 });
 
@@ -145,5 +146,42 @@ describe('Admin owner creation', () => {
       .send({ username: 'owner1', password: 'pass', email: 'o1@example.com' });
 
     expect(res.status).toBe(409);
+  });
+});
+
+describe('Admin owner update and delete', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('updates an owner', async () => {
+    const owner = { _id: 'o1', role: 'owner', save: jest.fn().mockResolvedValue(true) };
+    User.findById.mockResolvedValue(owner);
+
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .put('/admin/owners/o1')
+      .send({ username: 'new' });
+
+    expect(res.status).toBe(200);
+    expect(owner.save).toHaveBeenCalled();
+    expect(owner.username).toBe('new');
+  });
+
+  it('deletes an owner', async () => {
+    const owner = { _id: 'o1', role: 'owner' };
+    User.findById.mockResolvedValue(owner);
+    User.deleteOne.mockResolvedValue({ deletedCount: 1 });
+
+    const app = express();
+    app.use('/admin', adminRouter);
+
+    const res = await request(app).delete('/admin/owners/o1');
+
+    expect(res.status).toBe(200);
+    expect(User.deleteOne).toHaveBeenCalledWith({ _id: 'o1' });
   });
 });

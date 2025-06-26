@@ -166,8 +166,11 @@
                         <input id="ownerSurname" name="surname" type="text">
                         <label for="ownerSurname">Apellido</label>
                     </div>
-                    <button class="btn waves-effect waves-light" type="submit">Crear Owner</button>
+                <button class="btn waves-effect waves-light" type="submit">Crear Owner</button>
                 </form>
+
+                <h4>Owners existentes</h4>
+                <ul id="ownerList" class="collection"></ul>
 
                 <h3>Nueva Penca</h3>
                 <form id="createPencaForm" enctype="multipart/form-data">
@@ -402,16 +405,68 @@
 
             function loadOwners() {
                 const select = document.getElementById('pencaOwner');
-                if (!select) return;
+                const list = document.getElementById('ownerList');
                 fetch('/admin/owners').then(r => r.json()).then(data => {
-                    select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
-                    data.forEach(o => {
-                        const opt = document.createElement('option');
-                        opt.value = o._id;
-                        opt.textContent = o.username;
-                        select.appendChild(opt);
+                    if (select) {
+                        select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
+                        data.forEach(o => {
+                            const opt = document.createElement('option');
+                            opt.value = o._id;
+                            opt.textContent = o.username;
+                            select.appendChild(opt);
+                        });
+                        M.FormSelect.init(select);
+                    }
+                    if (list) {
+                        list.innerHTML = '';
+                        data.forEach(o => {
+                            const li = document.createElement('li');
+                            li.className = 'collection-item';
+                            li.innerHTML = `<span>${o.username}</span>
+                                <a href="#!" class="secondary-content edit-owner" data-id="${o._id}" data-username="${o.username}" data-email="${o.email || ''}" data-name="${o.name || ''}" data-surname="${o.surname || ''}"><i class="material-icons">edit</i></a>
+                                <a href="#!" class="secondary-content delete-owner" data-id="${o._id}"><i class="material-icons red-text">delete</i></a>`;
+                            list.appendChild(li);
+                        });
+                        attachOwnerActions();
+                    }
+                });
+            }
+
+            function attachOwnerActions() {
+                document.querySelectorAll('.delete-owner').forEach(btn => {
+                    btn.addEventListener('click', async function() {
+                        if (!confirm('¿Eliminar owner?')) return;
+                        const res = await fetch(`/admin/owners/${this.dataset.id}`, { method: 'DELETE' });
+                        if (res.ok) {
+                            M.toast({html: 'Owner eliminado', classes: 'green'});
+                            loadOwners();
+                        } else {
+                            M.toast({html: 'Error al eliminar owner', classes: 'red'});
+                        }
                     });
-                    M.FormSelect.init(select);
+                });
+                document.querySelectorAll('.edit-owner').forEach(btn => {
+                    btn.addEventListener('click', async function() {
+                        const username = prompt('Usuario', this.dataset.username);
+                        if (username === null) return;
+                        const email = prompt('Email', this.dataset.email);
+                        if (email === null) return;
+                        const name = prompt('Nombre', this.dataset.name);
+                        if (name === null) return;
+                        const surname = prompt('Apellido', this.dataset.surname);
+                        if (surname === null) return;
+                        const res = await fetch(`/admin/owners/${this.dataset.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, email, name, surname })
+                        });
+                        if (res.ok) {
+                            M.toast({html: 'Owner actualizado', classes: 'green'});
+                            loadOwners();
+                        } else {
+                            M.toast({html: 'Error al actualizar owner', classes: 'red'});
+                        }
+                    });
                 });
             }
 

@@ -130,10 +130,47 @@ router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
 // Listar owners existentes
 router.get('/owners', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const owners = await User.find({ role: 'owner' }).select('username _id');
+        const owners = await User.find({ role: 'owner' }).select('username email name surname _id');
         res.json(owners);
     } catch (error) {
         console.error('Error listing owners:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Actualizar datos de un owner
+router.put('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { username, email, name, surname } = req.body;
+        const owner = await User.findById(id);
+        if (!owner || owner.role !== 'owner') {
+            return res.status(404).json({ error: 'Owner not found' });
+        }
+        if (username) owner.username = username;
+        if (email) owner.email = email;
+        if (name !== undefined) owner.name = name;
+        if (surname !== undefined) owner.surname = surname;
+        await owner.save();
+        res.status(200).json({ message: 'Owner updated' });
+    } catch (error) {
+        console.error('Error updating owner:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Eliminar un owner
+router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const owner = await User.findById(id);
+        if (!owner || owner.role !== 'owner') {
+            return res.status(404).json({ error: 'Owner not found' });
+        }
+        await User.deleteOne({ _id: id });
+        res.status(200).json({ message: 'Owner deleted' });
+    } catch (error) {
+        console.error('Error deleting owner:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
