@@ -8,20 +8,43 @@ const Penca = require('../models/Penca');
 const { DEFAULT_COMPETITION } = require('../config');
 
 // Función para calcular los puntajes
-async function calculateScores(pencaId) {
+async function calculateScores(pencaId, competition) {
     let userFilter = { valid: true };
+    let matchFilter = {};
+    let predictionFilter = {};
+    let penca;
+
     if (pencaId) {
-        const penca = await Penca.findById(pencaId).select('participants');
+        penca = await Penca.findById(pencaId).select('participants fixture competition');
         if (!penca) {
             return [];
         }
         userFilter._id = { $in: penca.participants };
+        predictionFilter.pencaId = pencaId;
+
+        if (Array.isArray(penca.fixture) && penca.fixture.length > 0) {
+            matchFilter._id = { $in: penca.fixture };
+            predictionFilter.matchId = { $in: penca.fixture };
+        } else if (penca.competition) {
+            matchFilter.competition = penca.competition;
+        }
+    }
+
+    if (competition && !pencaId) {
+        matchFilter.competition = competition;
     }
 
     const users = await User.find(userFilter);
-    const matches = await Match.find();
-    const filter = pencaId ? { pencaId } : {};
-    const predictions = await Prediction.find(filter);
+    const matches = await Match.find(matchFilter);
+
+    if (matchFilter._id || matchFilter.competition) {
+        const matchIds = matches.map(m => m._id);
+        if (!predictionFilter.matchId) {
+            predictionFilter.matchId = { $in: matchIds };
+        }
+    }
+
+    const predictions = await Prediction.find(predictionFilter);
 
     let scores = [];
 
@@ -65,8 +88,8 @@ async function calculateScores(pencaId) {
 // Endpoint para obtener el ranking
 router.get('/', async (req, res) => {
     try {
-        const { pencaId } = req.query;
-        const scores = await calculateScores(pencaId);
+        const { pencaId, competition } = req.query;
+        const scores = await calculateScores(pencaId, competition);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
@@ -74,14 +97,26 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Ranking por competencia (sin especificar penca)
+router.get('/competition/:competition', async (req, res) => {
+    try {
+        const scores = await calculateScores(null, req.params.competition);
+        res.json(scores);
+    } catch (err) {
+        console.error('Error al obtener el ranking por competencia:', err);
+        res.status(500).json({ error: 'Error al obtener el ranking' });
+    }
+});
+
 // Endpoint para recalcular los puntajes
 router.post('/recalculate', async (req, res) => {
     try {
-        const { pencaId } = req.query;
-        const scores = await calculateScores(pencaId);
+        const { pencaId, competition } = req.query;
+        const scores = await calculateScores(pencaId, competition);
+        const compName = competition || DEFAULT_COMPETITION;
         for (let score of scores) {
             await Score.updateOne(
-                { userId: score.userId, competition: DEFAULT_COMPETITION },
+                { userId: score.userId, competition: compName },
                 { $set: { score: score.score } },
                 { upsert: true }
             );
