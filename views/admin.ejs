@@ -140,6 +140,19 @@
                 </form>
                 <h4>Competencias existentes</h4>
                 <ul id="competitionList" class="collection"></ul>
+                <h4>Editar Competencia</h4>
+                <form id="editCompetitionForm">
+                    <div class="input-field">
+                        <select id="competitionSelectEdit"></select>
+                        <label for="competitionSelectEdit">Competencia</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="competitionNewName" type="text">
+                        <label for="competitionNewName">Nuevo nombre</label>
+                    </div>
+                    <button class="btn waves-effect waves-light" type="submit">Actualizar</button>
+                    <button class="btn waves-effect waves-light red" id="deleteCompetitionBtn">Eliminar</button>
+                </form>
             </div>
         </div>
         <div id="pencas" class="col s12">
@@ -194,6 +207,29 @@
                     </div>
                     <button class="btn waves-effect waves-light" type="submit">Crear Penca</button>
                 </form>
+                <h4>Editar Penca</h4>
+                <form id="editPencaForm">
+                    <div class="input-field">
+                        <select id="editPencaSelect"></select>
+                        <label for="editPencaSelect">Penca</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="editPencaName" type="text">
+                        <label for="editPencaName">Nombre</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="editParticipantLimit" type="number">
+                        <label for="editParticipantLimit">Límite de participantes</label>
+                    </div>
+                    <div class="input-field">
+                        <select id="editPencaOwner"></select>
+                        <label for="editPencaOwner">Owner</label>
+                    </div>
+                    <button class="btn waves-effect waves-light" type="submit">Actualizar</button>
+                    <button class="btn waves-effect waves-light red" id="deletePencaBtn">Eliminar</button>
+                </form>
+                <h4>Pencas existentes</h4>
+                <ul id="pencaList" class="collection"></ul>
             </div>
         </div>
         <div id="settings" class="col s12">
@@ -388,6 +424,7 @@
                         if (response.ok) {
                             M.toast({html: 'Penca creada', classes: 'green'});
                             pencaForm.reset();
+                            loadPencas();
                         } else {
                             const result = await response.json();
                             console.error('Error:', result.error);
@@ -400,37 +437,160 @@
                 });
             }
 
-            function loadOwners() {
-                const select = document.getElementById('pencaOwner');
-                if (!select) return;
-                fetch('/admin/owners').then(r => r.json()).then(data => {
-                    select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
-                    data.forEach(o => {
-                        const opt = document.createElement('option');
-                        opt.value = o._id;
-                        opt.textContent = o.username;
-                        select.appendChild(opt);
+            const editCompForm = document.getElementById('editCompetitionForm');
+            if (editCompForm) {
+                editCompForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const id = document.getElementById('competitionSelectEdit').value;
+                    const name = document.getElementById('competitionNewName').value;
+                    if (!id) return;
+                    const res = await fetch('/admin/competitions/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name })
                     });
-                    M.FormSelect.init(select);
+                    if (res.ok) {
+                        M.toast({html: 'Competencia actualizada', classes: 'green'});
+                        editCompForm.reset();
+                        loadCompetitions();
+                    } else {
+                        M.toast({html: 'Error al actualizar', classes: 'red'});
+                    }
+                });
+                document.getElementById('deleteCompetitionBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const id = document.getElementById('competitionSelectEdit').value;
+                    if (!id) return;
+                    const res = await fetch('/admin/competitions/' + id, { method: 'DELETE' });
+                    if (res.ok) {
+                        M.toast({html: 'Competencia eliminada', classes: 'green'});
+                        loadCompetitions();
+                    } else {
+                        M.toast({html: 'Error al eliminar', classes: 'red'});
+                    }
+                });
+            }
+
+            const editPencaForm = document.getElementById('editPencaForm');
+            if (editPencaForm) {
+                editPencaForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const id = document.getElementById('editPencaSelect').value;
+                    if (!id) return;
+                    const data = {
+                        name: document.getElementById('editPencaName').value,
+                        participantLimit: document.getElementById('editParticipantLimit').value,
+                        owner: document.getElementById('editPencaOwner').value
+                    };
+                    const res = await fetch('/admin/pencas/' + id, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    if (res.ok) {
+                        M.toast({html: 'Penca actualizada', classes: 'green'});
+                        editPencaForm.reset();
+                        loadPencas();
+                    } else {
+                        M.toast({html: 'Error al actualizar penca', classes: 'red'});
+                    }
+                });
+                document.getElementById('deletePencaBtn').addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const id = document.getElementById('editPencaSelect').value;
+                    if (!id) return;
+                    const res = await fetch('/admin/pencas/' + id, { method: 'DELETE' });
+                    if (res.ok) {
+                        M.toast({html: 'Penca eliminada', classes: 'green'});
+                        loadPencas();
+                    } else {
+                        M.toast({html: 'Error al eliminar penca', classes: 'red'});
+                    }
+                });
+            }
+
+            function loadOwners() {
+                const select1 = document.getElementById('pencaOwner');
+                const select2 = document.getElementById('editPencaOwner');
+                fetch('/admin/owners').then(r => r.json()).then(data => {
+                    if (select1) {
+                        select1.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
+                        data.forEach(o => {
+                            const opt = document.createElement('option');
+                            opt.value = o._id;
+                            opt.textContent = o.username;
+                            select1.appendChild(opt);
+                        });
+                        M.FormSelect.init(select1);
+                    }
+                    if (select2) {
+                        select2.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
+                        data.forEach(o => {
+                            const opt = document.createElement('option');
+                            opt.value = o._id;
+                            opt.textContent = o.username;
+                            select2.appendChild(opt);
+                        });
+                        M.FormSelect.init(select2);
+                    }
                 });
             }
 
             function loadCompetitions() {
                 const list = document.getElementById('competitionList');
-                if (!list) return;
+                const select = document.getElementById('competitionSelectEdit');
                 fetch('/admin/competitions').then(r => r.json()).then(data => {
-                    list.innerHTML = '';
-                    data.forEach(c => {
-                        const li = document.createElement('li');
-                        li.className = 'collection-item';
-                        li.textContent = c.name;
-                        list.appendChild(li);
-                    });
+                    if (list) {
+                        list.innerHTML = '';
+                        data.forEach(c => {
+                            const li = document.createElement('li');
+                            li.className = 'collection-item';
+                            li.textContent = c.name;
+                            list.appendChild(li);
+                        });
+                    }
+                    if (select) {
+                        select.innerHTML = '<option value="" disabled selected>Seleccione competencia</option>';
+                        data.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c._id;
+                            opt.textContent = c.name;
+                            select.appendChild(opt);
+                        });
+                        M.FormSelect.init(select);
+                    }
+                });
+            }
+
+            function loadPencas() {
+                const list = document.getElementById('pencaList');
+                const select = document.getElementById('editPencaSelect');
+                fetch('/pencas').then(r => r.json()).then(data => {
+                    if (list) {
+                        list.innerHTML = '';
+                        data.forEach(p => {
+                            const li = document.createElement('li');
+                            li.className = 'collection-item';
+                            li.textContent = p.name;
+                            list.appendChild(li);
+                        });
+                    }
+                    if (select) {
+                        select.innerHTML = '<option value="" disabled selected>Seleccione Penca</option>';
+                        data.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p._id;
+                            opt.textContent = p.name;
+                            select.appendChild(opt);
+                        });
+                        M.FormSelect.init(select);
+                    }
                 });
             }
 
             loadCompetitions();
             loadOwners();
+            loadPencas();
         });
     </script>
 </body>
