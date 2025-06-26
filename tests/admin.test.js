@@ -33,6 +33,7 @@ jest.mock('../models/User', () => {
   });
   UserMock.findById = jest.fn();
   UserMock.findOne = jest.fn();
+  UserMock.deleteOne = jest.fn();
   UserMock.updateOne = jest.fn();
   return UserMock;
 });
@@ -48,10 +49,12 @@ const User = require('../models/User');
 const Competition = require('../models/Competition');
 const adminRouter = require('../routes/admin');
 
+// -----------------------------
+// TESTS
+// -----------------------------
+
 describe('Admin penca creation', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
 
   it('creates a penca and loads matches', async () => {
     User.findById.mockResolvedValue({ _id: 'u1', ownedPencas: [], save: jest.fn().mockResolvedValue(true) });
@@ -80,9 +83,7 @@ describe('Admin penca creation', () => {
 });
 
 describe('Admin competition creation', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
 
   it('creates a competition with fixture', async () => {
     Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
@@ -116,9 +117,7 @@ describe('Admin competition creation', () => {
 });
 
 describe('Admin owner creation', () => {
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  afterEach(() => jest.clearAllMocks());
 
   it('creates a new owner', async () => {
     User.findOne.mockResolvedValue(null);
@@ -154,8 +153,43 @@ describe('Admin owner creation', () => {
   });
 });
 
+describe('Admin owner update and delete', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it('updates an owner', async () => {
+    const owner = { _id: 'o1', role: 'owner', save: jest.fn().mockResolvedValue(true) };
+    User.findById.mockResolvedValue(owner);
+
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .put('/admin/owners/o1')
+      .send({ username: 'new' });
+
+    expect(res.status).toBe(200);
+    expect(owner.save).toHaveBeenCalled();
+    expect(owner.username).toBe('new');
+  });
+
+  it('deletes an owner', async () => {
+    const owner = { _id: 'o1', role: 'owner' };
+    User.findById.mockResolvedValue(owner);
+    User.deleteOne.mockResolvedValue({ deletedCount: 1 });
+
+    const app = express();
+    app.use('/admin', adminRouter);
+
+    const res = await request(app).delete('/admin/owners/o1');
+
+    expect(res.status).toBe(200);
+    expect(User.deleteOne).toHaveBeenCalledWith({ _id: 'o1' });
+  });
+});
+
 describe('Admin competition modification', () => {
-  afterEach(() => { jest.clearAllMocks(); });
+  afterEach(() => jest.clearAllMocks());
 
   it('updates a competition', async () => {
     const comp = { _id: 'c1', save: jest.fn().mockResolvedValue(true) };
@@ -187,7 +221,7 @@ describe('Admin competition modification', () => {
 });
 
 describe('Admin penca modification', () => {
-  afterEach(() => { jest.clearAllMocks(); });
+  afterEach(() => jest.clearAllMocks());
 
   it('updates a penca owner', async () => {
     const penca = { _id: 'p1', owner: 'u1', save: jest.fn().mockResolvedValue(true) };

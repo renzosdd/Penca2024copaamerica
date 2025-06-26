@@ -179,8 +179,11 @@
                         <input id="ownerSurname" name="surname" type="text">
                         <label for="ownerSurname">Apellido</label>
                     </div>
-                    <button class="btn waves-effect waves-light" type="submit">Crear Owner</button>
+                <button class="btn waves-effect waves-light" type="submit">Crear Owner</button>
                 </form>
+
+                <h4>Owners existentes</h4>
+                <ul id="ownerList" class="collection"></ul>
 
                 <h3>Nueva Penca</h3>
                 <form id="createPencaForm" enctype="multipart/form-data">
@@ -509,32 +512,56 @@
                 });
             }
 
-            function loadOwners() {
-                const select1 = document.getElementById('pencaOwner');
-                const select2 = document.getElementById('editPencaOwner');
-                fetch('/admin/owners').then(r => r.json()).then(data => {
-                    if (select1) {
-                        select1.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
-                        data.forEach(o => {
-                            const opt = document.createElement('option');
-                            opt.value = o._id;
-                            opt.textContent = o.username;
-                            select1.appendChild(opt);
-                        });
-                        M.FormSelect.init(select1);
-                    }
-                    if (select2) {
-                        select2.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
-                        data.forEach(o => {
-                            const opt = document.createElement('option');
-                            opt.value = o._id;
-                            opt.textContent = o.username;
-                            select2.appendChild(opt);
-                        });
-                        M.FormSelect.init(select2);
-                    }
-                });
-            }
+           function loadOwners() {
+    const select1 = document.getElementById('pencaOwner');
+    const select2 = document.getElementById('editPencaOwner');
+    const list = document.getElementById('ownerList');
+
+    fetch('/admin/owners').then(r => r.json()).then(data => {
+        // Actualiza el select de creación de Penca
+        if (select1) {
+            select1.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
+            data.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o._id;
+                opt.textContent = o.username;
+                select1.appendChild(opt);
+            });
+            M.FormSelect.init(select1);
+        }
+
+        // Actualiza el select de edición de Penca
+        if (select2) {
+            select2.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
+            data.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o._id;
+                opt.textContent = o.username;
+                select2.appendChild(opt);
+            });
+            M.FormSelect.init(select2);
+        }
+
+        // Lista de owners
+        if (list) {
+            list.innerHTML = '';
+            data.forEach(o => {
+                const li = document.createElement('li');
+                li.className = 'collection-item';
+                li.innerHTML = `<span>${o.username}</span>
+                    <a href="#!" class="secondary-content edit-owner" data-id="${o._id}" data-username="${o.username}" data-email="${o.email || ''}" data-name="${o.name || ''}" data-surname="${o.surname || ''}">
+                        <i class="material-icons">edit</i>
+                    </a>
+                    <a href="#!" class="secondary-content delete-owner" data-id="${o._id}">
+                        <i class="material-icons red-text">delete</i>
+                    </a>`;
+                list.appendChild(li);
+            });
+            attachOwnerActions();
+        }
+    });
+}
+
 
             function loadCompetitions() {
                 const list = document.getElementById('competitionList');
