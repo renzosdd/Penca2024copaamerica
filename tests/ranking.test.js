@@ -49,4 +49,17 @@ describe('GET /ranking', () => {
     expect(res.body.length).toBe(1);
     expect(res.body[0].userId).toBe('u1');
   });
+
+  it('returns scores for a competition', async () => {
+    User.find.mockResolvedValue([{ _id: 'u1', username: 'compu' }]);
+    Match.find.mockResolvedValue([{ _id: 'm1', competition: 'c1', result1: 2, result2: 1 }]);
+    Prediction.find.mockResolvedValue([{ userId: 'u1', matchId: 'm1', result1: 2, result2: 1 }]);
+
+    const app = express();
+    app.use('/ranking', rankingRouter);
+
+    const res = await request(app).get('/ranking/competition/c1');
+    expect(res.status).toBe(200);
+    expect(res.body[0].userId).toBe('u1');
+  });
 });

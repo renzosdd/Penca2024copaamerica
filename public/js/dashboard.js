@@ -58,13 +58,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         const allPreds = await fetch('/predictions').then(r => r.json());
 
         for (const penca of pencas) {
-            const userPreds = allPreds.filter(p => p.username === username && p.pencaId === penca._id);
+            const pencaMatches = matches.filter(m => {
+                if (Array.isArray(penca.fixture) && penca.fixture.length) {
+                    return penca.fixture.some(id => id.toString() === m._id.toString());
+                }
+                if (penca.competition) {
+                    return m.competition === penca.competition;
+                }
+                return true;
+            });
+            const matchIds = pencaMatches.map(m => m._id.toString());
+            const userPreds = allPreds.filter(p => p.username === username && p.pencaId === penca._id && matchIds.includes(p.matchId.toString()));
             const matchesList = document.getElementById(`matches-list-${penca._id}`);
             const predsList = document.getElementById(`predictions-list-${penca._id}`);
             matchesList.innerHTML = '';
             predsList.innerHTML = '';
 
-            matches.forEach(match => {
+            pencaMatches.forEach(match => {
                 const team1Flag = normalizeName(match.team1);
                 const team2Flag = normalizeName(match.team2);
                 const userPrediction = userPreds.find(pr => pr.matchId.toString() === match._id.toString());

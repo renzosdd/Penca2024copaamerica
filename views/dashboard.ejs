@@ -18,9 +18,6 @@
                 <a href="#" data-target="info-modal" class="modal-trigger info-icon">
                     <img src="/images/info.png" alt="Info" class="circle responsive-img">
                 </a>
-                <% if (user.role === 'admin') { %>
-                    <a id="reset-matches-btn" class="btn red" style="margin-right: 10px;">Restablecer Partidos</a>
-                <% } %>
                 <a class="dropdown-trigger" href="#!" data-target="user-dropdown">
                     <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img">
                 </a>

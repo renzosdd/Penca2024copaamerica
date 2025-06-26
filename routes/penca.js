@@ -102,7 +102,10 @@ router.post('/join', isAuthenticated, async (req, res) => {
 
     if (!penca) return res.status(404).json({ error: 'Penca not found' });
 
-    if (penca.participants.includes(userId) || penca.pendingRequests.includes(userId)) {
+    if (
+      penca.participants.some(id => id.equals(userId)) ||
+      penca.pendingRequests.some(id => id.equals(userId))
+    ) {
       return res.status(400).json({ error: 'Already requested or member' });
     }
     if (penca.participantLimit && penca.participants.length >= penca.participantLimit) {
@@ -128,7 +131,7 @@ router.post('/approve/:pencaId/:userId', isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
     penca.pendingRequests = penca.pendingRequests.filter(id => id.toString() !== userId);
-    if (!penca.participants.includes(userId)) {
+    if (!penca.participants.some(id => id.equals(userId))) {
       penca.participants.push(userId);
       await User.updateOne({ _id: userId }, { $addToSet: { pencas: penca._id } });
     }

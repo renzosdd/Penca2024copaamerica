@@ -47,9 +47,7 @@ router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
 router.get('/user/:username', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username }).select('-password');
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        if (!user) return res.status(404).json({ error: 'User not found' });
         res.json(user);
     } catch (error) {
         console.error('Error al obtener los datos del usuario:', error);
@@ -63,15 +61,8 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
         const { username, name, surname, email, dob, role, valid } = req.body;
         const avatar = req.file;
 
-        if (!username) {
-            return res.status(400).json({ error: 'El nombre de usuario es obligatorio' });
-        }
-
         const user = await User.findOne({ username });
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
+        if (!user) return res.status(404).json({ error: 'User not found' });
 
         if (name) user.name = name;
         if (surname) user.surname = surname;
@@ -85,7 +76,6 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
         }
 
         await user.save();
-
         res.status(200).json({ message: 'User profile updated successfully' });
     } catch (error) {
         console.error('Error updating user profile:', error);
@@ -93,7 +83,7 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
     }
 });
 
-// Crear nuevo owner
+// Crear owner
 router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { username, password, email, name, surname, dob } = req.body;
@@ -103,9 +93,7 @@ router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
         }
 
         const existing = await User.findOne({ $or: [{ username }, { email }] });
-        if (existing) {
-            return res.status(409).json({ error: 'Username or email already exists' });
-        }
+        if (existing) return res.status(409).json({ error: 'Username or email already exists' });
 
         const hashed = await bcrypt.hash(password, 10);
         const owner = new User({
@@ -127,10 +115,10 @@ router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Listar owners existentes
+// Listar owners
 router.get('/owners', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const owners = await User.find({ role: 'owner' }).select('username _id');
+        const owners = await User.find({ role: 'owner' }).select('username email name surname _id');
         res.json(owners);
     } catch (error) {
         console.error('Error listing owners:', error);
@@ -138,18 +126,51 @@ router.get('/owners', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Crear una penca con fixture opcional
+// Actualizar owner
+router.put('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const owner = await User.findById(req.params.id);
+        if (!owner || owner.role !== 'owner') return res.status(404).json({ error: 'Owner not found' });
+
+        const { username, email, name, surname } = req.body;
+        if (username) owner.username = username;
+        if (email) owner.email = email;
+        if (name !== undefined) owner.name = name;
+        if (surname !== undefined) owner.surname = surname;
+
+        await owner.save();
+        res.status(200).json({ message: 'Owner updated' });
+    } catch (error) {
+        console.error('Error updating owner:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Eliminar owner
+router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const owner = await User.findById(req.params.id);
+        if (!owner) return res.status(404).json({ error: 'Owner not found' });
+
+        await Penca.deleteMany({ owner: owner._id });
+        await User.deleteOne({ _id: owner._id });
+        await User.updateMany({}, { $pull: { pencas: { $in: owner.ownedPencas } } });
+
+        res.json({ message: 'Owner deleted' });
+    } catch (error) {
+        console.error('Error deleting owner:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Crear penca
 router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
     try {
         const { name, owner, participantLimit } = req.body;
-        if (!name) {
-            return res.status(400).json({ error: 'Name required' });
-        }
+        if (!name) return res.status(400).json({ error: 'Name required' });
 
         const ownerUser = owner ? await User.findById(owner) : req.session.user;
-        if (!ownerUser) {
-            return res.status(404).json({ error: 'Owner not found' });
-        }
+        if (!ownerUser) return res.status(404).json({ error: 'Owner not found' });
 
         let fixtureIds = [];
         if (req.file) {
@@ -180,6 +201,82 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
     }
 });
 
+// Listar pencas
+router.get('/pencas', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const pencas = await Penca.find().select('name code competition owner');
+        res.json(pencas);
+    } catch (error) {
+        console.error('Error listing pencas:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Actualizar penca
+router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { name, participantLimit, owner } = req.body;
+        const penca = await Penca.findById(req.params.id);
+        if (!penca) return res.status(404).json({ error: 'Penca not found' });
+
+        if (owner && owner !== penca.owner.toString()) {
+            const newOwner = await User.findById(owner);
+            if (!newOwner) return res.status(404).json({ error: 'Owner not found' });
+
+            await User.updateOne({ _id: penca.owner }, { $pull: { ownedPencas: penca._id } });
+            await User.updateOne({ _id: newOwner._id }, { $addToSet: { ownedPencas: penca._id }, $set: { role: 'owner' } });
+            penca.owner = newOwner._id;
+        }
+
+        if (name) penca.name = name;
+        if (participantLimit !== undefined) penca.participantLimit = Number(participantLimit);
+
+        await penca.save();
+        res.json({ message: 'Penca updated' });
+    } catch (error) {
+        console.error('Error updating penca:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Eliminar penca
+router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const penca = await Penca.findByIdAndDelete(req.params.id);
+        if (!penca) return res.status(404).json({ error: 'Penca not found' });
+
+        await User.updateOne({ _id: penca.owner }, { $pull: { ownedPencas: penca._id } });
+        res.json({ message: 'Penca deleted' });
+    } catch (error) {
+        console.error('Error deleting penca:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Crear competencia
+router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
+    try {
+        const { name, useApi } = req.body;
+        if (!name) return res.status(400).json({ error: 'Name required' });
+
+        const competition = new Competition({ name });
+        await competition.save();
+
+        if (req.file) {
+            const matchesData = JSON.parse(req.file.buffer.toString());
+            matchesData.forEach(m => { if (!m.competition) m.competition = name; });
+            await Match.insertMany(matchesData);
+        } else if (String(useApi) === 'true') {
+            // TODO: Integrar API-Football
+        }
+
+        res.status(201).json({ competitionId: competition._id });
+    } catch (error) {
+        console.error('Error creating competition:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Listar competiciones
 router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
@@ -191,87 +288,31 @@ router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
-// Crear competición con fixture opcional
-router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
+// Actualizar competencia
+router.put('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, useApi } = req.body;
-        if (!name) {
-            return res.status(400).json({ error: 'Name required' });
-        }
+        const competition = await Competition.findById(req.params.id);
+        if (!competition) return res.status(404).json({ error: 'Competition not found' });
 
-        const competition = new Competition({ name });
+        if (req.body.name) competition.name = req.body.name;
         await competition.save();
 
-        if (req.file) {
-            const matchesData = JSON.parse(req.file.buffer.toString());
-            matchesData.forEach(m => {
-                if (!m.competition) m.competition = name;
-            });
-            await Match.insertMany(matchesData);
-        } else if (String(useApi) === 'true') {
-            // TODO: Integrate API-Football fixture loading
-        }
-
-        res.status(201).json({ competitionId: competition._id });
+        res.json({ message: 'Competition updated' });
     } catch (error) {
-        console.error('Error creating competition:', error);
+        console.error('Error updating competition:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// Listar todas las pencas con información básica
-router.get('/pencas', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const pencas = await Penca.find().select('name code competition owner');
-        res.json(pencas);
-    } catch (error) {
-        console.error('Error listing pencas:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Eliminar una penca
-router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const penca = await Penca.findByIdAndDelete(req.params.id);
-        if (!penca) {
-            return res.status(404).json({ error: 'Penca not found' });
-        }
-        await User.updateMany({}, { $pull: { pencas: penca._id, ownedPencas: penca._id } });
-        res.json({ message: 'Penca deleted' });
-    } catch (error) {
-        console.error('Error deleting penca:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Eliminar una competencia
+// Eliminar competencia
 router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const competition = await Competition.findByIdAndDelete(req.params.id);
-        if (!competition) {
-            return res.status(404).json({ error: 'Competition not found' });
-        }
+        if (!competition) return res.status(404).json({ error: 'Competition not found' });
+
         res.json({ message: 'Competition deleted' });
     } catch (error) {
         console.error('Error deleting competition:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Eliminar un owner
-router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const owner = await User.findById(req.params.id);
-        if (!owner) {
-            return res.status(404).json({ error: 'Owner not found' });
-        }
-        await Penca.deleteMany({ owner: owner._id });
-        await User.deleteOne({ _id: owner._id });
-        await User.updateMany({}, { $pull: { pencas: { $in: owner.ownedPencas } } });
-        res.json({ message: 'Owner deleted' });
-    } catch (error) {
-        console.error('Error deleting owner:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
