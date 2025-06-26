@@ -281,23 +281,6 @@ app.post('/logout', (req, res) => {
     });
 });
 
-app.post('/reset-matches', isAdmin, async (req, res) => {
-    try {
-        const matches = require('./matches.json');
-        
-        await Match.deleteMany({});
-        await Prediction.deleteMany({});
-        await Score.updateMany({}, { $set: { score: 0 } });
-
-        await Match.insertMany(matches);
-
-        res.json({ success: true, message: 'Partidos y predicciones reseteados, y puntajes inicializados' });
-    } catch (err) {
-        console.error('Error al resetear partidos y predicciones', err);
-        res.status(500).json({ error: 'Error al resetear partidos y predicciones' });
-    }
-});
-
 app.use((req, res) => {
     res.status(404).send('404: Página no encontrada');
 });

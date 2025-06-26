@@ -256,4 +256,74 @@ router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixtur
     }
 });
 
+// Update competition
+router.put('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const competition = await Competition.findById(req.params.id);
+        if (!competition) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+        if (req.body.name) competition.name = req.body.name;
+        await competition.save();
+        res.json({ message: 'Competition updated' });
+    } catch (error) {
+        console.error('Error updating competition:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete competition
+router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const competition = await Competition.findByIdAndDelete(req.params.id);
+        if (!competition) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+        res.json({ message: 'Competition deleted' });
+    } catch (error) {
+        console.error('Error deleting competition:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update penca
+router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { name, participantLimit, owner } = req.body;
+        const penca = await Penca.findById(req.params.id);
+        if (!penca) {
+            return res.status(404).json({ error: 'Penca not found' });
+        }
+
+        if (owner && owner !== penca.owner.toString()) {
+            const newOwner = await User.findById(owner);
+            if (!newOwner) return res.status(404).json({ error: 'Owner not found' });
+            await User.updateOne({ _id: penca.owner }, { $pull: { ownedPencas: penca._id } });
+            await User.updateOne({ _id: newOwner._id }, { $addToSet: { ownedPencas: penca._id }, $set: { role: 'owner' } });
+            penca.owner = newOwner._id;
+        }
+        if (name) penca.name = name;
+        if (participantLimit !== undefined) penca.participantLimit = Number(participantLimit);
+
+        await penca.save();
+        res.json({ message: 'Penca updated' });
+    } catch (error) {
+        console.error('Error updating penca:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete penca
+router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const penca = await Penca.findByIdAndDelete(req.params.id);
+        if (!penca) return res.status(404).json({ error: 'Penca not found' });
+        await User.updateOne({ _id: penca.owner }, { $pull: { ownedPencas: penca._id } });
+        res.json({ message: 'Penca deleted' });
+    } catch (error) {
+        console.error('Error deleting penca:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 module.exports = router;
