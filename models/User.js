@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema({
     ownedPencas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Penca' }],
     pencas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Penca' }]
 });
-
+ 
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;

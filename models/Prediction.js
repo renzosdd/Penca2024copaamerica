@@ -12,3 +12,4 @@ const predictionSchema = new mongoose.Schema({
 predictionSchema.index({ userId: 1, matchId: 1, pencaId: 1 }, { unique: true });
 
 module.exports = mongoose.models.Prediction || mongoose.model('Prediction', predictionSchema);
+ 

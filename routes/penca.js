@@ -17,7 +17,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: 'Error listing pencas' });
   }
 });
-
+ 
 // Pencas del owner logueado
 router.get('/mine', isAuthenticated, async (req, res) => {
   try {

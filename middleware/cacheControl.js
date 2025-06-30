@@ -8,3 +8,4 @@ function cacheControl(req, res, next) {
 }
 
 module.exports = cacheControl;
+ 

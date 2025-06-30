@@ -5,3 +5,4 @@ const competitionSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.models.Competition || mongoose.model('Competition', competitionSchema);
+ 

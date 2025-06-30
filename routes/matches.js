@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: 'Error retrieving matches' });
     }
 }); 
-
+ 
 router.post('/:id', isAdmin, async (req, res) => {
     try {
         const { result1, result2 } = req.body;

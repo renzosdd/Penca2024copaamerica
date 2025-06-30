@@ -13,7 +13,7 @@ async function calculateScores(pencaId, competition) {
     let matchFilter = {};
     let predictionFilter = {};
     let penca;
- 
+
     if (pencaId) {
         penca = await Penca.findById(pencaId).select('participants fixture competition');
         if (!penca) {

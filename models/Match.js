@@ -12,5 +12,5 @@ const matchSchema = new mongoose.Schema({
     result1: Number,
     result2: Number
 });
-
+ 
 module.exports = mongoose.models.Match || mongoose.model('Match', matchSchema);

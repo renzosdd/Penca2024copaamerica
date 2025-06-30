@@ -12,3 +12,4 @@ const pencaSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.models.Penca || mongoose.model('Penca', pencaSchema);
+ 
