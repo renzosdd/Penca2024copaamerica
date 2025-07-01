@@ -1,3 +1,4 @@
+/* === General Layout === */
 body {
     font-family: 'Roboto', sans-serif;
     background: #f9f9f9;
@@ -8,12 +9,29 @@ body {
     margin: 0;
 }
 
+.container {
+    flex: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-bottom: 50px;
+}
+
+/* === Header === */
 header {
-    background: #002f6c; /* Azul oscuro */
+    background: #002f6c;
     padding: 10px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 header .container {
@@ -36,25 +54,15 @@ header .container {
     margin-left: 10px;
 }
 
-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding-bottom: 50px; /* Agregar espacio al final para el footer */
-}
-
-.container {
-    flex: 1;
-}
-
+/* === Footer === */
 footer {
-    background: #002f6c; /* Azul oscuro */
+    background: #002f6c;
     padding: 10px 0;
     text-align: center;
     color: #fff;
     margin-top: auto;
     width: 100%;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .footer .footer-links {
@@ -80,28 +88,18 @@ footer {
     height: auto;
 }
 
-.small-icon {
-    width: 16px;
-    height: 16px;
-    margin-right: 5px;
-}
-
-.tick-icon {
-    width: 20px;
-    height: 20px;
-}
-
+/* === Match Cards === */
 .match-card {
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
-    transition: border 0.3s ease;
     padding: 15px;
     background: #fff;
+    transition: border 0.3s ease;
 }
 
 .match-card.saved {
-    border: 2px solid #28a745; /* Verde */
+    border: 2px solid #28a745;
 }
 
 .match-header {
@@ -149,38 +147,35 @@ footer {
     text-align: center;
 }
 
-.card-content {
-    padding: 10px;
-}
-
-form {
-    margin: 0;
-}
-
-.tabs .tab a {
-    color: #002f6c; /* Azul oscuro */
-}
-
-.tabs .tab a.active {
-    background-color: #ffd100; /* Amarillo */
-    color: #002f6c; /* Azul oscuro */
-}
-
-.tabs .indicator {
-    background-color: #002f6c; /* Azul oscuro */
-}
-
+/* === Buttons & Tabs === */
 .btn {
-    background-color: #ffd100; /* Amarillo */
+    background-color: #ffd100;
     border-radius: 25px;
+    transition: all 0.3s ease;
 }
 
 .btn:hover {
-    background-color: #e6b800; /* Amarillo más oscuro */
+    background-color: #e6b800;
 }
 
+.tabs .tab a {
+    color: #002f6c;
+}
+
+.tabs .tab a.active {
+    background-color: #ffd100;
+    color: #002f6c;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+}
+
+.tabs .indicator {
+    background-color: #002f6c;
+}
+
+/* === Table === */
 .table thead th {
-    background-color: #002f6c; /* Azul oscuro */
+    background-color: #002f6c;
     color: #fff;
 }
 
@@ -188,15 +183,18 @@ form {
     background-color: #f1f1f1;
 }
 
-.dropdown-content li>a, .dropdown-content li>span {
-    color: #002f6c; /* Azul oscuro */
+/* === Dropdowns === */
+.dropdown-content li>a,
+.dropdown-content li>span {
+    color: #002f6c;
 }
 
-.dropdown-content li>a:hover, .dropdown-content li>span:hover {
-    background-color: #ffd100; /* Amarillo */
+.dropdown-content li>a:hover,
+.dropdown-content li>span:hover {
+    background-color: #ffd100;
 }
 
-/* Login Page Styles */
+/* === Login Page === */
 .login-container {
     max-width: 400px;
     margin: 100px auto 50px auto;
@@ -219,13 +217,15 @@ form {
     width: 100%;
 }
 
-/* Modal Styles */
+/* === Modal === */
 .modal {
     max-width: 500px;
 }
 
 .modal-content {
-    padding: 20px;
+    padding: 30px;
+    font-size: 1rem;
+    line-height: 1.6;
 }
 
 .modal-footer {
@@ -233,13 +233,52 @@ form {
     text-align: right;
 }
 
-/* General Styles */
+.modal-footer .btn-flat {
+    color: #002f6c;
+    font-weight: 500;
+}
+
+/* === Ranking === */
+.collection-item.highlight-first {
+    background-color: #c8e6c9;
+}
+
+.avatar-small {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+}
+
+.flag {
+    width: 50px;
+    height: 35px;
+    object-fit: cover;
+}
+
+.collection-item.rank-1 {
+    background: linear-gradient(to right, #ffe082, #fff8e1);
+}
+.collection-item.rank-2 {
+    background: linear-gradient(to right, #cfd8dc, #eceff1);
+}
+.collection-item.rank-3 {
+    background: linear-gradient(to right, #ffe0b2, #fff3e0);
+}
+
+/* === Utils === */
 .center-align {
     text-align: center;
 }
 
 .right {
     float: right;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #002f6c;
+    margin-bottom: 20px;
 }
 
 .match-details {
@@ -268,24 +307,6 @@ form {
     }
 }
 
-/* Estilo del ranking */
-.collection-item.highlight-first {
-    background-color: #c8e6c9; /* Verde claro */
-}
-
-.avatar-small {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-}
-
-.flag {
-    width: 50px;
-    height: 35px;
-    object-fit: cover;
-}
-
-/* Mobile specific styles */
 @media (max-width: 600px) {
     .collection {
         padding: 0;
