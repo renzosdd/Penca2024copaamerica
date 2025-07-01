@@ -1,32 +1,33 @@
 <footer class="page-footer blue darken-3">
     <div class="container">
-        <% if (user && user.role === 'admin') { %>
-            <div class="row">
-                <div class="col l6 s12">
-                    <h5 class="white-text">Admin Panel</h5>
-                    <p class="grey-text text-lighten-4">Administra los usuarios y configuraciones del sistema.</p>
-                </div>
-                <div class="col l4 offset-l2 s12">
-                    <ul class="footer-links">
-                        <li><a href="https://www.linkedin.com/in/renzodogliotti/"><img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;"></a></li>
-                        <li><a href="https://github.com/renzosdd"><img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;"></a></li>
-                    </ul>
-                </div>
-            </div>
-        <% } else { %>
-            <div class="center-align">
-                <a href="https://www.linkedin.com/in/renzodogliotti/">
-                    <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;">
-                </a>
-                <a href="https://github.com/renzosdd">
-                    <img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;">
-                </a>
-            </div>
-        <% } %>
+      <% if (user && user.role === 'admin') { %>
+        <div class="row">
+          <div class="col l6 s12">
+            <h5 class="white-text">Admin Panel</h5>
+            <p class="grey-text text-lighten-4">Administra los usuarios y configuraciones del sistema.</p>
+          </div>
+          <div class="col l4 offset-l2 s12">
+            <ul class="footer-links">
+              <li><a href="https://www.linkedin.com/in/renzodogliotti/"><img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;"></a></li>
+              <li><a href="https://github.com/renzosdd"><img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;"></a></li>
+            </ul>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="center-align">
+          <a href="https://www.linkedin.com/in/renzodogliotti/">
+            <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;">
+          </a>
+          <a href="https://github.com/renzosdd">
+            <img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;">
+          </a>
+        </div>
+      <% } %>
     </div>
     <% if (user && user.role === 'admin') { %>
     <div class="footer-copyright">
-        <div class="container">© 2024 Ren, Todos los derechos reservados.</div>
+      <div class="container">&copy; 2024 Ren, Todos los derechos reservados.</div>
     </div>
     <% } %>
-</footer>
+  </footer>
+  

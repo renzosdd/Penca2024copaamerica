@@ -1,113 +1,119 @@
 <!DOCTYPE html>
 <html lang="es">
 <head> 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Copa América 2024</title>
-    <link rel="stylesheet" href="/css/materialize.min.css">
-    <link rel="stylesheet" href="/css/style.css">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - Copa América 2024</title>
+  <link rel="stylesheet" href="/css/materialize.min.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 </head>
 <body data-role="<%= user.role || '' %>" data-username="<%= user.username || '' %>">
-    <%- include('partials/header', { showInfo: true }) %>
+  <%- include('partials/header', { showInfo: true }) %>
 
-    <main class="section">
-        <div class="container">
-
-            <% if (pencas && pencas.length) { %>
-            <ul id="pencas-collapsible" class="collapsible popout">
-                <% pencas.forEach(function(p) { %>
-                <li data-penca-id="<%= p._id %>">
-                    <div class="collapsible-header blue lighten-4">
-                        <i class="material-icons">sports_soccer</i>
-                        <strong><%= p.name %></strong>
-                    </div>
-                    <div class="collapsible-body white z-depth-1">
-                        <div class="row">
-                            <div class="col s12 m6">
-                                <div class="card-panel blue lighten-5">
-                                    <h6 class="section-title">Fixture</h6>
-                                    <div id="matches-list-<%= p._id %>" class="row"></div>
-                                </div>
-                            </div>
-                            <div class="col s12 m6">
-                                <div class="card-panel green lighten-5">
-                                    <h6 class="section-title">Predicciones</h6>
-                                    <div id="predictions-list-<%= p._id %>" class="row"></div>
-                                </div>
-                            </div>
-                            <div class="col s12">
-                                <div class="card-panel amber lighten-5">
-                                    <h6 class="section-title">Ranking</h6>
-                                    <div id="ranking-list-<%= p._id %>" class="row"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-                <% }); %>
-            </ul>
-            <% } else { %>
-            <div class="card-panel yellow lighten-4 center-align">
-                <p class="grey-text text-darken-2">⚠️ Aún no formas parte de ninguna penca</p>
-            </div>
-            <% } %>
-
-            <% if (user.role === 'user') { %>
-            <div id="join" class="card-panel teal lighten-5">
-                <h6 class="section-title">¿Querés unirte a una penca?</h6>
-                <div class="row">
-                    <div class="input-field col s12 m6">
-                        <input id="join-code" name="joinCode" type="text" class="validate">
-                        <label for="join-code">Código de Penca</label>
-                    </div>
-                    <div class="col s12 m6">
-                        <button id="join-button" class="btn waves-effect waves-light teal darken-2">
-                            <i class="material-icons left">group_add</i>Solicitar Unirse
-                        </button>
-                    </div>
-                    <div id="join-message" class="col s12 red-text text-darken-2"></div>
+  <main class="section">
+    <div class="container">
+      <% if (pencas && pencas.length) { %>
+      <ul class="collapsible popout">
+        <% pencas.forEach(function(p) { %>
+        <li data-penca-id="<%= p._id %>">
+          <div class="collapsible-header blue lighten-4">
+            <i class="material-icons">sports_soccer</i><strong><%= p.name %></strong>
+          </div>
+          <div class="collapsible-body white">
+            <div class="row">
+              <div class="col s12 m6">
+                <div class="card-panel blue lighten-5">
+                  <h6 class="section-title">Fixture</h6>
+                  <div id="matches-list-<%= p._id %>" class="row"></div>
                 </div>
+              </div>
+              <div class="col s12 m6">
+                <div class="card-panel green lighten-5">
+                  <h6 class="section-title">Predicciones</h6>
+                  <div id="predictions-list-<%= p._id %>" class="row"></div>
+                </div>
+              </div>
+              <div class="col s12">
+                <div class="card-panel amber lighten-5">
+                  <h6 class="section-title">Ranking</h6>
+                  <div id="ranking-list-<%= p._id %>" class="row"></div>
+                </div>
+              </div>
             </div>
-            <% } %>
+          </div>
+        </li>
+        <% }); %>
+      </ul>
+      <% } else { %>
+      <div class="card-panel yellow lighten-4 center-align">
+        <p class="grey-text text-darken-2">⚠️ Aún no formas parte de ninguna penca</p>
+      </div>
+      <% } %>
 
-            <% if (user.role === 'owner') { %>
-            <div id="manage" class="card-panel deep-purple lighten-5">
-                <h6 class="section-title">Panel de Administración</h6>
-                <div id="manage-content" class="col s12"></div>
-            </div>
-            <% } %>
-
+      <% if (user.role === 'user') { %>
+      <div class="card-panel teal lighten-5">
+        <h6 class="section-title">¿Querés unirte a una penca?</h6>
+        <div class="row">
+          <div class="input-field col s12 m6">
+            <input id="join-code" name="joinCode" type="text" class="validate">
+            <label for="join-code">Código de Penca</label>
+          </div>
+          <div class="col s12 m6">
+            <button id="join-button" class="btn waves-effect waves-light teal darken-2">
+              <i class="material-icons left">group_add</i>Solicitar Unirse
+            </button>
+          </div>
+          <div id="join-message" class="col s12 red-text text-darken-2"></div>
         </div>
-    </main>
+      </div>
+      <% } %>
 
-    <%- include('partials/footer') %>
+      <% if (user.role === 'owner') { %>
+      <div class="card-panel deep-purple lighten-5">
+        <h6 class="section-title">Panel de Administración</h6>
+        <div id="manage-content" class="col s12"></div>
+      </div>
+      <% } %>
 
-    <!-- Modal de Información -->
-    <div id="info-modal" class="modal">
-        <div class="modal-content">
-            <h4>Reglas de la Penca</h4>
-            <h5>Puntajes</h5>
-            <p>
-                - Resultado exacto da 3 puntos.<br>
-                - Indicar resultado (ganador o empate) da 1 punto.<br>
-                - Adivinar la cantidad de goles de uno de los dos equipos da 1 punto adicional.
-            </p>
-            <h5>Reglas</h5>
-            <p>
-                - Solo se pueden modificar los resultados hasta media hora antes del partido.<br>
-                - En los cruces de cuartos de final, semifinal, tercer puesto y final solo se toma en cuenta los 90 minutos y alargues para los resultados.
-            </p>
-        </div>
-        <div class="modal-footer">
-            <a href="#!" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
-        </div>
     </div>
+  </main>
 
-    <script src="/js/materialize.min.js"></script>
-    <script>window.DEBUG = <%= JSON.stringify(Boolean(debug)) %>;</script>
-    <script>window.PENCAS = <%- JSON.stringify(pencas) %>;</script>
-    <script src="/js/dashboard.js"></script>
+  <%- include('partials/footer') %>
+
+  <!-- Modal -->
+  <div id="info-modal" class="modal">
+    <div class="modal-content">
+      <h4>Reglas de la Penca</h4>
+      <h5>Puntajes</h5>
+      <p>
+        - Resultado exacto da 3 puntos.<br>
+        - Indicar resultado (ganador o empate) da 1 punto.<br>
+        - Adivinar la cantidad de goles de uno de los dos equipos da 1 punto adicional.
+      </p>
+      <h5>Reglas</h5>
+      <p>
+        - Solo se pueden modificar los resultados hasta media hora antes del partido.<br>
+        - En cruces solo se consideran 90 minutos + alargues.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <a href="#" class="modal-close waves-effect waves-green btn-flat">Cerrar</a>
+    </div>
+  </div>
+
+  <script src="/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      M.Collapsible.init(document.querySelectorAll('.collapsible'));
+      M.Modal.init(document.querySelectorAll('.modal'));
+      M.Sidenav.init(document.querySelectorAll('.sidenav'));
+      M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), { coverTrigger: false });
+    });
+    window.DEBUG = <%= JSON.stringify(Boolean(debug)) %>;
+    window.PENCAS = <%- JSON.stringify(pencas) %>;
+  </script>
+  <script src="/js/dashboard.js"></script>
 </body>
 </html>
