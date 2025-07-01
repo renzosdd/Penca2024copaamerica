@@ -165,6 +165,9 @@ app.get('/', (req, res) => {
 
 app.get('/dashboard', isAuthenticated, async (req, res) => {
     const { user } = req.session;
+    if (user.role === 'admin') {
+        return res.redirect('/admin/edit');
+    }
     let pencas = [];
     try {
         pencas = await Penca.find({ participants: user._id }).select('name _id');
@@ -195,7 +198,8 @@ app.post('/login', async (req, res) => {
         }
         req.session.user = user;
         debugLog('Sesión establecida para el usuario:', user.username);
-        res.json({ success: true, redirectUrl: '/dashboard' });
+        const redirectUrl = user.role === 'admin' ? '/admin/edit' : '/dashboard';
+        res.json({ success: true, redirectUrl });
     } catch (err) {
         console.error('Error en el inicio de sesión', err);
         res.status(500).json({ error: 'Error interno del servidor' });
