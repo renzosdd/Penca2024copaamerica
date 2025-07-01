@@ -69,7 +69,111 @@
                 </form>
             </div>
         </div>
-        <!-- Aquí vendrían las secciones completas de competitions y pencas -->
+
+        <div id="competitions" class="col s12">
+            <div class="container">
+                <h3>Competitions</h3>
+                <form id="createCompetitionForm" class="row">
+                    <div class="input-field col s12 m6">
+                        <input id="competitionName" type="text" required>
+                        <label for="competitionName">Nombre</label>
+                    </div>
+                    <div class="input-field col s12 m6">
+                        <select id="competitionUseApi">
+                            <option value="false" selected>Cargar Fixture</option>
+                            <option value="true">Usar API</option>
+                        </select>
+                        <label>Fuente de datos</label>
+                    </div>
+                    <div class="file-field input-field col s12">
+                        <div class="btn">
+                            <span>Fixture JSON</span>
+                            <input id="competitionFixture" type="file" accept=".json">
+                        </div>
+                        <div class="file-path-wrapper">
+                            <input class="file-path validate" type="text">
+                        </div>
+                    </div>
+                    <div class="col s12">
+                        <button class="btn waves-effect waves-light" type="submit">Crear</button>
+                    </div>
+                </form>
+
+                <h4>Editar Competición</h4>
+                <form id="editCompetitionForm" class="row">
+                    <div class="input-field col s12">
+                        <select id="competitionSelectEdit"></select>
+                        <label>Competición</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <input id="competitionNameEdit" type="text">
+                        <label for="competitionNameEdit">Nuevo Nombre</label>
+                    </div>
+                    <div class="col s12">
+                        <button class="btn waves-effect waves-light" type="submit">Guardar</button>
+                    </div>
+                </form>
+
+                <ul id="competitionList" class="collection"></ul>
+            </div>
+        </div>
+
+        <div id="pencas" class="col s12">
+            <div class="container">
+                <h3>Pencas</h3>
+                <form id="createPencaForm" class="row">
+                    <div class="input-field col s12 m6">
+                        <input id="pencaName" type="text" required>
+                        <label for="pencaName">Nombre</label>
+                    </div>
+                    <div class="input-field col s12 m6">
+                        <input id="participantLimit" type="number">
+                        <label for="participantLimit">Límite de participantes</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <select id="pencaOwner"></select>
+                        <label>Owner</label>
+                    </div>
+                    <div class="file-field input-field col s12">
+                        <div class="btn">
+                            <span>Fixture JSON</span>
+                            <input id="pencaFixture" type="file" accept=".json">
+                        </div>
+                        <div class="file-path-wrapper">
+                            <input class="file-path validate" type="text">
+                        </div>
+                    </div>
+                    <div class="col s12">
+                        <button class="btn waves-effect waves-light" type="submit">Crear</button>
+                    </div>
+                </form>
+
+                <h4>Editar Penca</h4>
+                <form id="editPencaForm" class="row">
+                    <div class="input-field col s12">
+                        <select id="editPencaSelect"></select>
+                        <label>Penca</label>
+                    </div>
+                    <div class="input-field col s12 m6">
+                        <input id="editPencaName" type="text">
+                        <label for="editPencaName">Nuevo Nombre</label>
+                    </div>
+                    <div class="input-field col s12 m6">
+                        <input id="editPencaLimit" type="number">
+                        <label for="editPencaLimit">Límite de participantes</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <select id="editPencaOwner"></select>
+                        <label>Owner</label>
+                    </div>
+                    <div class="col s12">
+                        <button class="btn waves-effect waves-light" type="submit">Guardar</button>
+                    </div>
+                </form>
+
+                <ul id="pencaList" class="collection"></ul>
+            </div>
+        </div>
     </main>
     <footer class="page-footer blue darken-3">
         <div class="container">
@@ -205,6 +309,96 @@
             loadOwners();
             loadCompetitions();
             loadPencas();
+
+            const createCompetitionForm = document.getElementById('createCompetitionForm');
+            if (createCompetitionForm) {
+                createCompetitionForm.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const formData = new FormData();
+                    formData.append('name', document.getElementById('competitionName').value);
+                    formData.append('useApi', document.getElementById('competitionUseApi').value);
+                    const file = document.getElementById('competitionFixture').files[0];
+                    if (file) formData.append('fixture', file);
+                    const resp = await fetch('/admin/competitions', { method: 'POST', body: formData });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        M.toast({html: 'Competencia creada', classes: 'green'});
+                        createCompetitionForm.reset();
+                        loadCompetitions();
+                    } else {
+                        M.toast({html: data.error || 'Error', classes: 'red'});
+                    }
+                });
+            }
+
+            const editCompetitionForm = document.getElementById('editCompetitionForm');
+            if (editCompetitionForm) {
+                editCompetitionForm.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const id = document.getElementById('competitionSelectEdit').value;
+                    const name = document.getElementById('competitionNameEdit').value;
+                    const resp = await fetch(`/admin/competitions/${id}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ name })
+                    });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        M.toast({html: 'Competencia actualizada', classes: 'green'});
+                        loadCompetitions();
+                    } else {
+                        M.toast({html: data.error || 'Error', classes: 'red'});
+                    }
+                });
+            }
+
+            const createPencaForm = document.getElementById('createPencaForm');
+            if (createPencaForm) {
+                createPencaForm.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const formData = new FormData();
+                    formData.append('name', document.getElementById('pencaName').value);
+                    formData.append('participantLimit', document.getElementById('participantLimit').value);
+                    const owner = document.getElementById('pencaOwner').value;
+                    if (owner) formData.append('owner', owner);
+                    const file = document.getElementById('pencaFixture').files[0];
+                    if (file) formData.append('fixture', file);
+                    const resp = await fetch('/admin/pencas', { method: 'POST', body: formData });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        M.toast({html: 'Penca creada', classes: 'green'});
+                        createPencaForm.reset();
+                        loadPencas();
+                    } else {
+                        M.toast({html: data.error || 'Error', classes: 'red'});
+                    }
+                });
+            }
+
+            const editPencaForm = document.getElementById('editPencaForm');
+            if (editPencaForm) {
+                editPencaForm.addEventListener('submit', async e => {
+                    e.preventDefault();
+                    const id = document.getElementById('editPencaSelect').value;
+                    const payload = {
+                        name: document.getElementById('editPencaName').value,
+                        participantLimit: document.getElementById('editPencaLimit').value,
+                        owner: document.getElementById('editPencaOwner').value
+                    };
+                    const resp = await fetch(`/admin/pencas/${id}`, {
+                        method: 'PUT',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await resp.json();
+                    if (resp.ok) {
+                        M.toast({html: 'Penca actualizada', classes: 'green'});
+                        loadPencas();
+                    } else {
+                        M.toast({html: data.error || 'Error', classes: 'red'});
+                    }
+                });
+            }
         });
     </script>
 </body>
