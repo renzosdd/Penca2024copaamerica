@@ -1,6 +1,47 @@
 <div class="row">
-  <div class="col s12">
-    <h5>Owners Management</h5>
-    <p>Aún no se ha implementado la interfaz de administración de owners.</p>
-  </div>
+  <form id="owner-form" class="col s12">
+    <div class="row">
+      <div class="input-field col s12 m4">
+        <input id="ownerUser" name="username" type="text" required>
+        <label for="ownerUser">Username</label>
+      </div>
+      <div class="input-field col s12 m4">
+        <input id="ownerEmail" name="email" type="email" required>
+        <label for="ownerEmail">Email</label>
+      </div>
+      <div class="input-field col s12 m4">
+        <input id="ownerPassword" name="password" type="password" required>
+        <label for="ownerPassword">Contraseña</label>
+      </div>
+      <div class="col s12">
+        <button class="btn waves-effect" type="submit">Crear Owner</button>
+      </div>
+    </div>
+  </form>
 </div>
+
+<div class="row">
+  <form id="owner-edit-form" class="col s12">
+    <div class="row">
+      <div class="input-field col s12 m4">
+        <select id="ownerSelectEdit"></select>
+        <label>Owner</label>
+      </div>
+      <div class="input-field col s12 m4">
+        <input id="ownerEditUsername" type="text">
+        <label for="ownerEditUsername">Nuevo username</label>
+      </div>
+      <div class="input-field col s12 m4">
+        <input id="ownerEditEmail" type="email">
+        <label for="ownerEditEmail">Nuevo email</label>
+      </div>
+      <div class="col s12">
+        <button class="btn waves-effect" type="submit">Actualizar Owner</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<ul id="ownerList" class="collection with-header">
+  <li class="collection-header"><h5>Owners Existentes</h5></li>
+</ul>
