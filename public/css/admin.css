@@ -109,3 +109,8 @@ footer {
     height: 24px;
     border-radius: 50%;
 }
+
+/* Card spacing */
+.card {
+    margin-bottom: 20px;
+}
