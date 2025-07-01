@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     var dropdownElems = document.querySelectorAll('.dropdown-trigger');
     var dropdownInstances = M.Dropdown.init(dropdownElems, { constrainWidth: false, coverTrigger: false });
     var collapsibleElems = document.querySelectorAll('.collapsible');
-    var collapsibleInstances = M.Collapsible.init(collapsibleElems);
 
     var pencaItems = document.querySelectorAll('#pencas-collapsible li');
     var selectedPencaId = null;
@@ -26,15 +25,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             localStorage.setItem('selectedPenca', selectedPencaId);
         }
         pencaItems.forEach((item) => {
+            const header = item.querySelector('.collapsible-header');
+            const body = header.nextElementSibling;
             if (item.dataset.pencaId === selectedPencaId) {
-                item.classList.add('active');
+                header.classList.add('active');
+                if (body) body.style.display = 'block';
             }
-            item.querySelector('.collapsible-header').addEventListener('click', () => {
+            header.addEventListener('click', () => {
                 selectedPencaId = item.dataset.pencaId;
                 localStorage.setItem('selectedPenca', selectedPencaId);
-                window.location.reload();
             });
         });
+        M.Collapsible.init(collapsibleElems);
     }
 
     const pencas = window.PENCAS || [];
@@ -43,7 +45,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Inicializar Materialize
     M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), { constrainWidth: false, coverTrigger: false });
-    M.Collapsible.init(document.querySelectorAll('.collapsible'));
+    M.Modal.init(document.querySelectorAll('.modal'));
 
     const normalizeName = name => name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const isLessThan30MinutesToMatch = (matchDate, matchTime) => {
