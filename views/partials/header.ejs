@@ -13,7 +13,7 @@
                     <a href="#" data-target="mobile-demo" class="sidenav-trigger right"><i class="material-icons">menu</i></a>
                 <% } %>
                 <ul class="right hide-on-med-and-down">
-                    <% if (showInfo) { %>
+                    <% if (typeof showInfo !== 'undefined' && showInfo) { %>
                         <li>
                             <a href="#" data-target="info-modal" class="modal-trigger info-icon">
                                 <img src="/images/info.png" alt="Info" class="circle responsive-img" style="height: 40px;">
