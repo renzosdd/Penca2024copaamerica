@@ -117,6 +117,10 @@
             <select id="pencaOwner"></select>
             <label>Owner</label>
           </div>
+          <div class="input-field col s12">
+            <select id="pencaCompetition"></select>
+            <label>Competencia</label>
+          </div>
           <div class="file-field input-field col s12">
             <div class="btn">
               <span>Fixture JSON</span>
@@ -148,6 +152,10 @@
           <div class="input-field col s12">
             <select id="editPencaOwner"></select>
             <label>Owner</label>
+          </div>
+          <div class="input-field col s12">
+            <select id="editPencaCompetition"></select>
+            <label>Competencia</label>
           </div>
           <div class="col s12">
             <button class="btn waves-effect waves-light" type="submit">Guardar</button>
@@ -372,19 +380,23 @@
 
       function loadCompetitions() {
         const list = document.getElementById('competitionList');
-        const select = document.getElementById('competitionSelectEdit');
+        const selectComp = document.getElementById('competitionSelectEdit');
+        const selectPencaCreate = document.getElementById('pencaCompetition');
+        const selectPencaEdit = document.getElementById('editPencaCompetition');
         fetch('/admin/competitions').then(r => r.json()).then(data => {
           if (list) list.innerHTML = data.map(c => `<li class="collection-item">${c.name}</li>`).join('');
-          if (select) {
-            select.innerHTML = '<option value=\"\" disabled selected>Seleccione competencia</option>';
-            data.forEach(c => {
-              const opt = document.createElement('option');
-              opt.value = c._id;
-              opt.textContent = c.name;
-              select.appendChild(opt);
-            });
-            M.FormSelect.init(select);
-          }
+          [selectComp, selectPencaCreate, selectPencaEdit].forEach(select => {
+            if (select) {
+              select.innerHTML = '<option value=\"\" disabled selected>Seleccione competencia</option>';
+              data.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = select === selectComp ? c._id : c.name;
+                opt.textContent = c.name;
+                select.appendChild(opt);
+              });
+              M.FormSelect.init(select);
+            }
+          });
         });
       }
 

@@ -71,13 +71,15 @@ describe('Admin penca creation', () => {
       .field('name', 'Test')
       .field('owner', 'u1')
       .field('participantLimit', '10')
+      .field('competition', 'Comp1')
       .attach('fixture', Buffer.from(JSON.stringify(fixture)), 'fixture.json');
 
     expect(res.status).toBe(201);
     expect(Penca).toHaveBeenCalledWith(expect.objectContaining({
       name: 'Test',
       owner: 'u1',
-      participantLimit: 10
+      participantLimit: 10,
+      competition: 'Comp1'
     }));
     expect(Match.insertMany).toHaveBeenCalled();
   });
@@ -240,6 +242,22 @@ describe('Admin penca modification', () => {
     expect(res.status).toBe(200);
     expect(penca.owner).toBe('u2');
     expect(User.updateOne).toHaveBeenCalled();
+  });
+
+  it('updates a penca competition', async () => {
+    const penca = { _id: 'p1', save: jest.fn().mockResolvedValue(true) };
+    Penca.findById.mockResolvedValue(penca);
+
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .put('/admin/pencas/p1')
+      .send({ competition: 'NewComp' });
+
+    expect(res.status).toBe(200);
+    expect(penca.competition).toBe('NewComp');
   });
 
   it('deletes a penca', async () => {
