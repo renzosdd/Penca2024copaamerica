@@ -28,7 +28,8 @@ router.get('/mine', isAuthenticated, async (req, res) => {
 
     const pencas = await Penca.find(filter)
       .select('name code competition participants pendingRequests')
-      .populate('pendingRequests', 'username');
+      .populate('pendingRequests', 'username')
+      .populate('participants', 'username');
 
     res.json(pencas);
   } catch (err) {
