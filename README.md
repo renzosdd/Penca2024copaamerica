@@ -27,6 +27,13 @@ SESSION_SECRET=<tu_clave>
 PORT=3000
 # Límite de pencas que un usuario puede unir (3 por defecto)
 MAX_PENCAS_PER_USER=3
+# Credenciales para obtener fixtures desde API-Football
+FOOTBALL_API_KEY=<tu_api_key>
+# Identificador de liga y temporada
+FOOTBALL_LEAGUE_ID=<id_liga>
+FOOTBALL_SEASON=<temporada>
+# URL base opcional de la API
+FOOTBALL_API_URL=https://v3.football.api-sports.io
 ```
 Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
 El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
