@@ -71,7 +71,9 @@ Con esta estructura puedes navegar fácilmente por cada componente de la aplicac
 
 ## Pruebas
 
-Antes de ejecutar las pruebas, instala las dependencias del proyecto:
+
+Antes de ejecutar las pruebas es necesario instalar todas las dependencias,
+incluidas las de desarrollo. Ejecuta:
 
 ```bash
 npm install
