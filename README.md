@@ -4,6 +4,8 @@ Aplicación web desarrollada en **Node.js** y **Express** para administrar una
 penca de la Copa América 2024. Los usuarios pueden registrarse, realizar 
 predicciones de los partidos y consultar el ranking general.
 
+Esta aplicación requiere Node.js 18 o superior para utilizar la función `fetch` en el backend.
+
 ## Instalación
 
 1. Instala las dependencias del proyecto:

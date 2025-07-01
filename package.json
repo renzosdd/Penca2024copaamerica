@@ -25,5 +25,8 @@
     "supertest": "^6.3.3"
   },
   "author": "Ren",
-  "license": "ISC"
+  "license": "ISC",
+  "engines": {
+    "node": ">=18"
+  }
 }
