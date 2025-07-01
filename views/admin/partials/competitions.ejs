@@ -1,5 +1,6 @@
 <div class="row">
-    <form id="competition-form" class="col s12" method="POST" enctype="multipart/form-data" action="/admin/competitions">
+  <form id="competition-form" class="col s12" method="POST" enctype="multipart/form-data" action="/admin/competitions">
+    <div class="row">
       <div class="input-field col s12 m6">
         <input id="competitionName" name="name" type="text" required>
         <label for="competitionName">Nombre de la competencia</label>
@@ -22,8 +23,9 @@
       <div class="col s12 m6">
         <button class="btn waves-effect" type="submit">Crear competencia</button>
       </div>
-    </form>
-  </div>
+    </div>
+  </form>
+</div>
   
   <ul id="competitionList" class="collection with-header">
     <li class="collection-header"><h5>Competencias Existentes</h5></li>
