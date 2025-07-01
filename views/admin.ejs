@@ -26,16 +26,18 @@
     <div id="users" class="col s12">
       <div class="container">
         <h3>Editar Usuario</h3>
-        <div class="input-field col s12">
-          <select id="user-select">
-            <option value="" disabled selected>Elige un usuario</option>
-            <% users.forEach(function(user) { %>
-              <option value="<%= user.username %>"><%= user.username %></option>
-            <% }); %>
-          </select>
-          <label>Seleccionar Usuario</label>
+        <div class="row">
+          <div class="input-field col s12 m6">
+            <select id="user-select">
+              <option value="" disabled selected>Elige un usuario</option>
+              <% users.forEach(function(user) { %>
+                <option value="<%= user.username %>"><%= user.username %></option>
+              <% }); %>
+            </select>
+            <label>Seleccionar Usuario</label>
+          </div>
         </div>
-        <form id="editUserForm" method="POST" action="/admin/update" enctype="multipart/form-data">
+        <form id="editUserForm" class="row" method="POST" action="/admin/update" enctype="multipart/form-data">
           <!-- Aquí van los campos del usuario que se van a editar -->
         </form>
       </div>
@@ -85,7 +87,11 @@
           </div>
         </form>
 
-        <ul id="competitionList" class="collection"></ul>
+        <div class="row">
+          <div class="col s12">
+            <ul id="competitionList" class="collection"></ul>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -142,16 +148,24 @@
           </div>
         </form>
 
-        <ul id="pencaList" class="collection"></ul>
+        <div class="row">
+          <div class="col s12">
+            <ul id="pencaList" class="collection"></ul>
+          </div>
+        </div>
       </div>
     </div>
 
     <div id="settings" class="col s12">
       <div class="container">
         <h4>Configuraciones</h4>
-        <button id="recalculate-btn" class="btn waves-effect waves-light blue darken-3">
-          Recalcular Puntajes
-        </button>
+        <div class="row">
+          <div class="col s12 m6">
+            <button id="recalculate-btn" class="btn waves-effect waves-light blue darken-3">
+              Recalcular Puntajes
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </main>
