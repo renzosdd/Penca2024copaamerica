@@ -1,0 +1,58 @@
+<header>
+    <nav class="blue darken-3">
+        <div class="nav-wrapper container">
+            <a href="/" class="brand-logo">
+                <% if (user && user.role === 'admin') { %>
+                    Admin - <%= user.username %>
+                <% } else { %>
+                    <img src="/images/Logo.png" alt="Logo" class="responsive-img" style="height: 60px;">
+                <% } %>
+            </a>
+            <% if (user) { %>
+                <% if (user.role === 'admin') { %>
+                    <a href="#" data-target="mobile-demo" class="sidenav-trigger right"><i class="material-icons">menu</i></a>
+                <% } %>
+                <ul class="right hide-on-med-and-down">
+                    <% if (showInfo) { %>
+                        <li>
+                            <a href="#" data-target="info-modal" class="modal-trigger info-icon">
+                                <img src="/images/info.png" alt="Info" class="circle responsive-img" style="height: 40px;">
+                            </a>
+                        </li>
+                    <% } %>
+                    <li>
+                        <a class="dropdown-trigger" href="#!" data-target="user-dropdown">
+                            <% if (user.role === 'admin') { %>
+                                <i class="material-icons">account_circle</i>
+                            <% } else { %>
+                                <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img" style="height: 40px;">
+                            <% } %>
+                        </a>
+                    </li>
+                </ul>
+            <% } %>
+        </div>
+    </nav>
+    <% if (user) { %>
+        <ul id="user-dropdown" class="dropdown-content">
+            <% if (user.role === 'admin') { %>
+                <li><a href="/dashboard">Dashboard</a></li>
+            <% } %>
+            <li><a href="#" id="logout-button">Cerrar sesión</a></li>
+        </ul>
+    <% } %>
+    <% if (user && user.role === 'admin') { %>
+        <ul class="sidenav" id="mobile-demo">
+            <li><a href="/dashboard">Dashboard</a></li>
+            <li><a href="#" id="logout-button-mobile">Cerrar sesión</a></li>
+        </ul>
+        <div class="nav-content">
+            <ul class="tabs tabs-transparent blue darken-3">
+                <li class="tab"><a class="active" href="#users">Users</a></li>
+                <li class="tab"><a href="#competitions">Competitions</a></li>
+                <li class="tab"><a href="#pencas">Pencas</a></li>
+                <li class="tab"><a href="#settings">Settings</a></li>
+            </ul>
+        </div>
+    <% } %>
+</header>
