@@ -38,7 +38,7 @@ router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
         const users = await User.find().select('username');
         res.render('admin', { user: req.session.user, users });
     } catch (error) {
-        console.error('Error al cargar la página de administración:', error);
+        console.error('Admin edit load error:', error.message, error.stack);
         res.status(500).send('Error al cargar la página de administración');
     }
 });
