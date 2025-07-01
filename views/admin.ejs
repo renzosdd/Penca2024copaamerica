@@ -70,6 +70,14 @@
             </div>
         </div>
         <!-- Aquí vendrían las secciones completas de competitions y pencas -->
+        <div id="settings" class="col s12">
+            <div class="container">
+                <h4>Configuraciones</h4>
+                <button id="recalculate-btn" class="btn waves-effect waves-light blue darken-3">
+                    Recalcular Puntajes
+                </button>
+            </div>
+        </div>
     </main>
     <footer class="page-footer blue darken-3">
         <div class="container">
@@ -202,9 +210,29 @@
                 });
             }
 
+            function setupRecalculateButton() {
+                const btn = document.getElementById('recalculate-btn');
+                if (btn) {
+                    btn.addEventListener('click', async () => {
+                        try {
+                            const resp = await fetch('/ranking/recalculate', { method: 'POST' });
+                            if (resp.ok) {
+                                M.toast({html: 'Puntajes recalculados', classes: 'green'});
+                            } else {
+                                M.toast({html: 'Error al recalcular', classes: 'red'});
+                            }
+                        } catch (err) {
+                            console.error('recalculate error', err);
+                            M.toast({html: 'Error al recalcular', classes: 'red'});
+                        }
+                    });
+                }
+            }
+
             loadOwners();
             loadCompetitions();
             loadPencas();
+            setupRecalculateButton();
         });
     </script>
 </body>
