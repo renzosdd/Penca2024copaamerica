@@ -37,23 +37,25 @@
       </ul>
   
       <ul class="sidenav" id="mobile-nav">
-        <% if (user.role === 'admin') { %><li><a href="/dashboard">Dashboard</a></li><% } %>
+        <% if (user.role === 'admin') { %>
+          <li><a href="#users">Users</a></li>
+          <li><a href="#competitions">Competitions</a></li>
+          <li><a href="#pencas">Pencas</a></li>
+          <li><a href="#owners">Owners</a></li>
+          <li><a href="#settings">Settings</a></li>
+        <% } %>
         <li><form action="/logout" method="POST"><button type="submit" class="btn blue darken-2 white-text" style="width:100%;">Cerrar sesión</button></form></li>
       </ul>
     <% } %>
     <% if (user && user.role === 'admin') { %>
-        <ul class="sidenav" id="mobile-demo">
-            <li><a href="/dashboard">Dashboard</a></li>
-            <li><a href="#" id="logout-button-mobile">Cerrar sesión</a></li>
+      <div class="nav-content">
+        <ul class="tabs tabs-transparent blue darken-3">
+          <li class="tab"><a class="active" href="#users">Users</a></li>
+          <li class="tab"><a href="#competitions">Competitions</a></li>
+          <li class="tab"><a href="#pencas">Pencas</a></li>
+          <li class="tab"><a href="#owners">Owners</a></li>
+          <li class="tab"><a href="#settings">Settings</a></li>
         </ul>
-        <div class="nav-content">
-            <ul class="tabs tabs-transparent blue darken-3">
-                <li class="tab"><a class="active" href="#users">Users</a></li>
-                <li class="tab"><a href="#competitions">Competitions</a></li>
-                <li class="tab"><a href="#pencas">Pencas</a></li>
-                <li class="tab"><a href="#owners">Owners</a></li>
-                <li class="tab"><a href="#settings">Settings</a></li>
-            </ul>
-        </div>
+      </div>
     <% } %>
 </header>
