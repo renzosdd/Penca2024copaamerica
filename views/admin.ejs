@@ -1,355 +1,246 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Edit User</title>
-    <link rel="stylesheet" href="/css/materialize.min.css">
-    <link href="/css/admin.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        body {
-            display: flex;
-            min-height: 100vh;
-            flex-direction: column;
-        }
-        main {
-            flex: 1 0 auto;
-            padding-bottom: 20px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Edit User</title>
+  <link rel="stylesheet" href="/css/materialize.min.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      flex-direction: column;
+    }
+    main {
+      flex: 1 0 auto;
+      padding-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
-    <%- include('partials/header') %>
-    <main>
-        <div id="users" class="col s12">
-            <div class="container">
-                <h3>Editar Usuario</h3>
-                <div class="input-field col s12">
-                    <select id="user-select">
-                        <option value="" disabled selected>Elige un usuario</option>
-                        <% users.forEach(function(user) { %>
-                            <option value="<%= user.username %>"><%= user.username %></option>
-                        <% }); %>
-                    </select>
-                    <label>Seleccionar Usuario</label>
-                </div>
-                <form id="editUserForm" method="POST" action="/admin/update" enctype="multipart/form-data">
-                    <!-- Campos del usuario -->
-                </form>
-            </div>
+  <%- include('partials/header') %>
+
+  <main>
+    <div id="users" class="col s12">
+      <div class="container">
+        <h3>Editar Usuario</h3>
+        <div class="input-field col s12">
+          <select id="user-select">
+            <option value="" disabled selected>Elige un usuario</option>
+            <% users.forEach(function(user) { %>
+              <option value="<%= user.username %>"><%= user.username %></option>
+            <% }); %>
+          </select>
+          <label>Seleccionar Usuario</label>
         </div>
+        <form id="editUserForm" method="POST" action="/admin/update" enctype="multipart/form-data">
+          <!-- Aquí van los campos del usuario que se van a editar -->
+        </form>
+      </div>
+    </div>
 
-        <div id="competitions" class="col s12">
-            <div class="container">
-                <h3>Competitions</h3>
-                <form id="createCompetitionForm" class="row">
-                    <div class="input-field col s12 m6">
-                        <input id="competitionName" type="text" required>
-                        <label for="competitionName">Nombre</label>
-                    </div>
-                    <div class="input-field col s12 m6">
-                        <select id="competitionUseApi">
-                            <option value="false" selected>Cargar Fixture</option>
-                            <option value="true">Usar API</option>
-                        </select>
-                        <label>Fuente de datos</label>
-                    </div>
-                    <div class="file-field input-field col s12">
-                        <div class="btn">
-                            <span>Fixture JSON</span>
-                            <input id="competitionFixture" type="file" accept=".json">
-                        </div>
-                        <div class="file-path-wrapper">
-                            <input class="file-path validate" type="text">
-                        </div>
-                    </div>
-                    <div class="col s12">
-                        <button class="btn waves-effect waves-light" type="submit">Crear</button>
-                    </div>
-                </form>
-
-                <h4>Editar Competición</h4>
-                <form id="editCompetitionForm" class="row">
-                    <div class="input-field col s12">
-                        <select id="competitionSelectEdit"></select>
-                        <label>Competición</label>
-                    </div>
-                    <div class="input-field col s12">
-                        <input id="competitionNameEdit" type="text">
-                        <label for="competitionNameEdit">Nuevo Nombre</label>
-                    </div>
-                    <div class="col s12">
-                        <button class="btn waves-effect waves-light" type="submit">Guardar</button>
-                    </div>
-                </form>
-
-                <ul id="competitionList" class="collection"></ul>
+    <div id="competitions" class="col s12">
+      <div class="container">
+        <h3>Competencias</h3>
+        <form id="createCompetitionForm" class="row">
+          <div class="input-field col s12 m6">
+            <input id="competitionName" type="text" required />
+            <label for="competitionName">Nombre</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <select id="competitionUseApi">
+              <option value="false" selected>Cargar Fixture</option>
+              <option value="true">Usar API</option>
+            </select>
+            <label>Fuente de datos</label>
+          </div>
+          <div class="file-field input-field col s12">
+            <div class="btn">
+              <span>Fixture JSON</span>
+              <input id="competitionFixture" type="file" accept=".json" />
             </div>
-        </div>
-
-        <div id="pencas" class="col s12">
-            <div class="container">
-                <h3>Pencas</h3>
-                <form id="createPencaForm" class="row">
-                    <div class="input-field col s12 m6">
-                        <input id="pencaName" type="text" required>
-                        <label for="pencaName">Nombre</label>
-                    </div>
-                    <div class="input-field col s12 m6">
-                        <input id="participantLimit" type="number">
-                        <label for="participantLimit">Límite de participantes</label>
-                    </div>
-                    <div class="input-field col s12">
-                        <select id="pencaOwner"></select>
-                        <label>Owner</label>
-                    </div>
-                    <div class="file-field input-field col s12">
-                        <div class="btn">
-                            <span>Fixture JSON</span>
-                            <input id="pencaFixture" type="file" accept=".json">
-                        </div>
-                        <div class="file-path-wrapper">
-                            <input class="file-path validate" type="text">
-                        </div>
-                    </div>
-                    <div class="col s12">
-                        <button class="btn waves-effect waves-light" type="submit">Crear</button>
-                    </div>
-                </form>
-
-                <h4>Editar Penca</h4>
-                <form id="editPencaForm" class="row">
-                    <div class="input-field col s12">
-                        <select id="editPencaSelect"></select>
-                        <label>Penca</label>
-                    </div>
-                    <div class="input-field col s12 m6">
-                        <input id="editPencaName" type="text">
-                        <label for="editPencaName">Nuevo Nombre</label>
-                    </div>
-                    <div class="input-field col s12 m6">
-                        <input id="editPencaLimit" type="number">
-                        <label for="editPencaLimit">Límite de participantes</label>
-                    </div>
-                    <div class="input-field col s12">
-                        <select id="editPencaOwner"></select>
-                        <label>Owner</label>
-                    </div>
-                    <div class="col s12">
-                        <button class="btn waves-effect waves-light" type="submit">Guardar</button>
-                    </div>
-                </form>
-
-                <ul id="pencaList" class="collection"></ul>
+            <div class="file-path-wrapper">
+              <input class="file-path validate" type="text" />
             </div>
-        </div>
-    </main>
-    <%- include('partials/footer') %>
-    <script src="/js/materialize.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            M.Tabs.init(document.querySelectorAll('.tabs'));
-            M.FormSelect.init(document.querySelectorAll('select'));
-            M.Dropdown.init(document.querySelectorAll('.dropdown-trigger'), {
-                constrainWidth: false,
-                coverTrigger: false
-            });
-            M.Sidenav.init(document.querySelectorAll('.sidenav'));
+          </div>
+          <div class="col s12">
+            <button class="btn waves-effect waves-light" type="submit">Crear</button>
+          </div>
+        </form>
 
-            function loadOwners() {
-                const select1 = document.getElementById('pencaOwner');
-                const select2 = document.getElementById('editPencaOwner');
-                const list = document.getElementById('ownerList');
+        <h4>Editar Competencia</h4>
+        <form id="editCompetitionForm" class="row">
+          <div class="input-field col s12">
+            <select id="competitionSelectEdit"></select>
+            <label>Competencia</label>
+          </div>
+          <div class="input-field col s12">
+            <input id="competitionNameEdit" type="text" />
+            <label for="competitionNameEdit">Nuevo Nombre</label>
+          </div>
+          <div class="col s12">
+            <button class="btn waves-effect waves-light" type="submit">Guardar</button>
+          </div>
+        </form>
 
-                fetch('/admin/owners').then(r => r.json()).then(data => {
-                    if (select1) {
-                        select1.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
-                        data.forEach(o => {
-                            const opt = document.createElement('option');
-                            opt.value = o._id;
-                            opt.textContent = o.username;
-                            select1.appendChild(opt);
-                        });
-                        M.FormSelect.init(select1);
-                    }
+        <ul id="competitionList" class="collection"></ul>
+      </div>
+    </div>
 
-                    if (select2) {
-                        select2.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
-                        data.forEach(o => {
-                            const opt = document.createElement('option');
-                            opt.value = o._id;
-                            opt.textContent = o.username;
-                            select2.appendChild(opt);
-                        });
-                        M.FormSelect.init(select2);
-                    }
+    <div id="pencas" class="col s12">
+      <div class="container">
+        <h3>Pencas</h3>
+        <form id="createPencaForm" class="row">
+          <div class="input-field col s12 m6">
+            <input id="pencaName" type="text" required />
+            <label for="pencaName">Nombre</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <input id="participantLimit" type="number" />
+            <label for="participantLimit">Límite de participantes</label>
+          </div>
+          <div class="input-field col s12">
+            <select id="pencaOwner"></select>
+            <label>Owner</label>
+          </div>
+          <div class="file-field input-field col s12">
+            <div class="btn">
+              <span>Fixture JSON</span>
+              <input id="pencaFixture" type="file" accept=".json" />
+            </div>
+            <div class="file-path-wrapper">
+              <input class="file-path validate" type="text" />
+            </div>
+          </div>
+          <div class="col s12">
+            <button class="btn waves-effect waves-light" type="submit">Crear</button>
+          </div>
+        </form>
 
-                    if (list) {
-                        list.innerHTML = '';
-                        data.forEach(o => {
-                            const li = document.createElement('li');
-                            li.className = 'collection-item';
-                            li.innerHTML = `<span>${o.username}</span>
-                                <a href="#" class="secondary-content delete-owner" data-id="${o._id}">
-                                    <i class="material-icons red-text">delete</i>
-                                </a>`;
-                            list.appendChild(li);
-                        });
-                    }
-                }); 
+        <h4>Editar Penca</h4>
+        <form id="editPencaForm" class="row">
+          <div class="input-field col s12">
+            <select id="editPencaSelect"></select>
+            <label>Penca</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <input id="editPencaName" type="text" />
+            <label for="editPencaName">Nuevo Nombre</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <input id="editPencaLimit" type="number" />
+            <label for="editPencaLimit">Límite de participantes</label>
+          </div>
+          <div class="input-field col s12">
+            <select id="editPencaOwner"></select>
+            <label>Owner</label>
+          </div>
+          <div class="col s12">
+            <button class="btn waves-effect waves-light" type="submit">Guardar</button>
+          </div>
+        </form>
+
+        <ul id="pencaList" class="collection"></ul>
+      </div>
+    </div>
+
+    <div id="settings" class="col s12">
+      <div class="container">
+        <h4>Configuraciones</h4>
+        <button id="recalculate-btn" class="btn waves-effect waves-light blue darken-3">
+          Recalcular Puntajes
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <script src="/js/materialize.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      M.Tabs.init(document.querySelectorAll('.tabs'));
+      M.FormSelect.init(document.querySelectorAll('select'));
+
+      function loadOwners() {
+        const select1 = document.getElementById('pencaOwner');
+        const select2 = document.getElementById('editPencaOwner');
+        fetch('/admin/owners').then(r => r.json()).then(data => {
+          [select1, select2].forEach(select => {
+            if (select) {
+              select.innerHTML = '<option value=\"\" disabled selected>Seleccione Owner</option>';
+              data.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o._id;
+                opt.textContent = o.username;
+                select.appendChild(opt);
+              });
+              M.FormSelect.init(select);
             }
- 
-            function loadCompetitions() {
-                const list = document.getElementById('competitionList');
-                const select = document.getElementById('competitionSelectEdit');
-
-                fetch('/admin/competitions').then(r => r.json()).then(data => {
-                    if (list) {
-                        list.innerHTML = '';
-                        data.forEach(c => {
-                            const li = document.createElement('li');
-                            li.className = 'collection-item';
-                            li.textContent = c.name;
-                            list.appendChild(li);
-                        });
-                    }
-
-                    if (select) {
-                        select.innerHTML = '<option value="" disabled selected>Seleccione competencia</option>';
-                        data.forEach(c => {
-                            const opt = document.createElement('option');
-                            opt.value = c._id;
-                            opt.textContent = c.name;
-                            select.appendChild(opt);
-                        });
-                        M.FormSelect.init(select);
-                    }
-                });
-            }
-
-            function loadPencas() {
-                const list = document.getElementById('pencaList');
-                const select = document.getElementById('editPencaSelect');
-
-                fetch('/admin/pencas').then(r => r.json()).then(data => {
-                    if (list) {
-                        list.innerHTML = '';
-                        data.forEach(p => {
-                            const li = document.createElement('li');
-                            li.className = 'collection-item';
-                            li.textContent = p.name;
-                            list.appendChild(li);
-                        });
-                    }
-
-                    if (select) {
-                        select.innerHTML = '<option value="" disabled selected>Seleccione Penca</option>';
-                        data.forEach(p => {
-                            const opt = document.createElement('option');
-                            opt.value = p._id;
-                            opt.textContent = p.name;
-                            select.appendChild(opt);
-                        });
-                        M.FormSelect.init(select);
-                    }
-                });
-            }
-
-            loadOwners();
-            loadCompetitions();
-            loadPencas();
-
-            const createCompetitionForm = document.getElementById('createCompetitionForm');
-            if (createCompetitionForm) {
-                createCompetitionForm.addEventListener('submit', async e => {
-                    e.preventDefault();
-                    const formData = new FormData();
-                    formData.append('name', document.getElementById('competitionName').value);
-                    formData.append('useApi', document.getElementById('competitionUseApi').value);
-                    const file = document.getElementById('competitionFixture').files[0];
-                    if (file) formData.append('fixture', file);
-                    const resp = await fetch('/admin/competitions', { method: 'POST', body: formData });
-                    const data = await resp.json();
-                    if (resp.ok) {
-                        M.toast({html: 'Competencia creada', classes: 'green'});
-                        createCompetitionForm.reset();
-                        loadCompetitions();
-                    } else {
-                        M.toast({html: data.error || 'Error', classes: 'red'});
-                    }
-                });
-            }
-
-            const editCompetitionForm = document.getElementById('editCompetitionForm');
-            if (editCompetitionForm) {
-                editCompetitionForm.addEventListener('submit', async e => {
-                    e.preventDefault();
-                    const id = document.getElementById('competitionSelectEdit').value;
-                    const name = document.getElementById('competitionNameEdit').value;
-                    const resp = await fetch(`/admin/competitions/${id}`, {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ name })
-                    });
-                    const data = await resp.json();
-                    if (resp.ok) {
-                        M.toast({html: 'Competencia actualizada', classes: 'green'});
-                        loadCompetitions();
-                    } else {
-                        M.toast({html: data.error || 'Error', classes: 'red'});
-                    }
-                });
-            }
-
-            const createPencaForm = document.getElementById('createPencaForm');
-            if (createPencaForm) {
-                createPencaForm.addEventListener('submit', async e => {
-                    e.preventDefault();
-                    const formData = new FormData();
-                    formData.append('name', document.getElementById('pencaName').value);
-                    formData.append('participantLimit', document.getElementById('participantLimit').value);
-                    const owner = document.getElementById('pencaOwner').value;
-                    if (owner) formData.append('owner', owner);
-                    const file = document.getElementById('pencaFixture').files[0];
-                    if (file) formData.append('fixture', file);
-                    const resp = await fetch('/admin/pencas', { method: 'POST', body: formData });
-                    const data = await resp.json();
-                    if (resp.ok) {
-                        M.toast({html: 'Penca creada', classes: 'green'});
-                        createPencaForm.reset();
-                        loadPencas();
-                    } else {
-                        M.toast({html: data.error || 'Error', classes: 'red'});
-                    }
-                });
-            }
-
-            const editPencaForm = document.getElementById('editPencaForm');
-            if (editPencaForm) {
-                editPencaForm.addEventListener('submit', async e => {
-                    e.preventDefault();
-                    const id = document.getElementById('editPencaSelect').value;
-                    const payload = {
-                        name: document.getElementById('editPencaName').value,
-                        participantLimit: document.getElementById('editPencaLimit').value,
-                        owner: document.getElementById('editPencaOwner').value
-                    };
-                    const resp = await fetch(`/admin/pencas/${id}`, {
-                        method: 'PUT',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(payload)
-                    });
-                    const data = await resp.json();
-                    if (resp.ok) {
-                        M.toast({html: 'Penca actualizada', classes: 'green'});
-                        loadPencas();
-                    } else {
-                        M.toast({html: data.error || 'Error', classes: 'red'});
-                    }
-                });
-            }
+          });
         });
-    </script>
+      }
+
+      function loadCompetitions() {
+        const list = document.getElementById('competitionList');
+        const select = document.getElementById('competitionSelectEdit');
+        fetch('/admin/competitions').then(r => r.json()).then(data => {
+          if (list) list.innerHTML = data.map(c => `<li class="collection-item">${c.name}</li>`).join('');
+          if (select) {
+            select.innerHTML = '<option value=\"\" disabled selected>Seleccione competencia</option>';
+            data.forEach(c => {
+              const opt = document.createElement('option');
+              opt.value = c._id;
+              opt.textContent = c.name;
+              select.appendChild(opt);
+            });
+            M.FormSelect.init(select);
+          }
+        });
+      }
+
+      function loadPencas() {
+        const list = document.getElementById('pencaList');
+        const select = document.getElementById('editPencaSelect');
+        fetch('/admin/pencas').then(r => r.json()).then(data => {
+          if (list) list.innerHTML = data.map(p => `<li class="collection-item">${p.name}</li>`).join('');
+          if (select) {
+            select.innerHTML = '<option value=\"\" disabled selected>Seleccione Penca</option>';
+            data.forEach(p => {
+              const opt = document.createElement('option');
+              opt.value = p._id;
+              opt.textContent = p.name;
+              select.appendChild(opt);
+            });
+            M.FormSelect.init(select);
+          }
+        });
+      }
+
+      function setupRecalculateButton() {
+        const btn = document.getElementById('recalculate-btn');
+        if (btn) {
+          btn.addEventListener('click', async () => {
+            try {
+              const resp = await fetch('/ranking/recalculate', { method: 'POST' });
+              const msg = resp.ok ? 'Puntajes recalculados' : 'Error al recalcular';
+              const color = resp.ok ? 'green' : 'red';
+              M.toast({ html: msg, classes: color });
+            } catch (err) {
+              console.error(err);
+              M.toast({ html: 'Error al recalcular', classes: 'red' });
+            }
+          });
+        }
+      }
+
+      loadOwners();
+      loadCompetitions();
+      loadPencas();
+      setupRecalculateButton();
+    });
+  </script>
 </body>
 </html>
