@@ -10,64 +10,64 @@
 </head>
 <body>
 
-    <header>
-        <nav class="blue darken-3">
-            <div class="nav-wrapper container">
-                <a href="#" class="brand-logo"><img src="/images/Logo.png" alt="Logo" class="responsive-img" style="height: 60px;"></a>
-            </div>
-        </nav>
-    </header>
+    <%- include('partials/header') %>
 
     <main>
-        <div class="container login-container">
-            <h5>Login</h5>
-            <form id="login-form" action="/login" method="POST">
-                <div class="input-field">
-                    <input id="login-username" type="text" name="username" required>
-                    <label for="login-username">Nombre de usuario</label>
+        <div class="container">
+            <div class="row">
+                <div class="col s12 m6 offset-m3">
+                    <div class="login-container">
+                        <h5>Login</h5>
+                        <form id="login-form" action="/login" method="POST">
+                            <div class="input-field">
+                                <input id="login-username" type="text" name="username" required>
+                                <label for="login-username">Nombre de usuario</label>
+                            </div>
+                            <div class="input-field">
+                                <input id="login-password" type="password" name="password" required>
+                                <label for="login-password">Contraseña</label>
+                            </div>
+                            <button class="btn waves-effect waves-light blue darken-3" type="submit">Login</button>
+                        </form>
+                        <div class="center-align">
+                            <a href="#register-modal" class="btn-flat modal-trigger">Registrar</a>
+                        </div>
+                        <div id="error-message" class="red-text center-align"></div>
+                    </div>
                 </div>
-                <div class="input-field">
-                    <input id="login-password" type="password" name="password" required>
-                    <label for="login-password">Contraseña</label>
-                </div>
-                <button class="btn waves-effect waves-light blue darken-3" type="submit">Login</button>
-            </form>
-            <div class="center-align">
-                <a href="#register-modal" class="btn-flat modal-trigger">Registrar</a>
             </div>
-            <div id="error-message" class="red-text center-align"></div>
         </div>
 
         <!-- Modal de Registro -->
         <div id="register-modal" class="modal">
             <div class="modal-content">
                 <h4>Registrar usuario</h4>
-                <form id="register-form" enctype="multipart/form-data" action="/register" method="POST">
-                    <div class="input-field">
+                <form id="register-form" class="row" enctype="multipart/form-data" action="/register" method="POST">
+                    <div class="input-field col s12">
                         <input type="text" id="name" name="name">
                         <label for="name">Nombre</label>
                     </div>
-                    <div class="input-field">
+                    <div class="input-field col s12">
                         <input type="text" id="register-username" name="username" required>
                         <label for="register-username">Nombre de usuario *</label>
                     </div>
-                    <div class="input-field">
+                    <div class="input-field col s12">
                         <input type="password" id="register-password" name="password" required>
                         <label for="register-password">Contraseña *</label>
                     </div>
-                    <div class="input-field">
+                    <div class="input-field col s12">
                         <input type="email" id="email" name="email" required>
                         <label for="email">Email *</label>
                     </div>
-                    <div class="input-field">
+                    <div class="input-field col s12">
                         <input type="text" id="surname" name="surname">
                         <label for="surname">Apellido</label>
                     </div>
-                    <div class="input-field">
+                    <div class="input-field col s12">
                         <input type="date" id="dob" name="dob">
                         <label for="dob">Fecha de nacimiento</label>
                     </div>
-                    <div class="file-field input-field">
+                    <div class="file-field input-field col s12">
                         <div class="btn">
                             <span>Avatar</span>
                             <input type="file" name="avatar" accept="image/*">
@@ -76,22 +76,15 @@
                             <input class="file-path validate" type="text">
                         </div>
                     </div>
-                    <button class="btn waves-effect waves-light blue darken-3" type="submit">Registrarse</button>
+                    <div class="col s12">
+                        <button class="btn waves-effect waves-light blue darken-3" type="submit">Registrarse</button>
+                    </div>
                 </form>
             </div>
         </div>
     </main>
 
-    <footer class="page-footer blue darken-3">
-        <div class="container center-align">
-            <a href="https://www.linkedin.com/in/renzodogliotti/">
-                <img src="/images/linkedin.png" alt="LinkedIn" class="responsive-img" style="width: 24px; height: 24px;">
-            </a>
-            <a href="https://github.com/renzosdd">
-                <img src="/images/github.png" alt="GitHub" class="responsive-img" style="width: 24px; height: 24px;">
-            </a>
-        </div>
-    </footer>
+    <%- include('partials/footer') %>
 
     <script src="/js/materialize.min.js"></script>
     <script src="/js/login.js"></script> 
