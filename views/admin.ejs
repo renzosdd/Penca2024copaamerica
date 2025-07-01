@@ -159,12 +159,46 @@
             <ul id="pencaList" class="collection"></ul>
           </div>
         </div>
-      </div>
     </div>
+  </div>
 
-    <div id="settings" class="col s12">
-      <div class="container">
-        <h4>Configuraciones</h4>
+  <div id="owners" class="col s12">
+    <div class="container">
+      <h3>Owners</h3>
+      <form id="createOwnerForm" class="row">
+        <div class="input-field col s12 m6">
+          <input id="ownerUsername" type="text" required />
+          <label for="ownerUsername">Username</label>
+        </div>
+        <div class="input-field col s12 m6">
+          <input id="ownerPassword" type="password" required />
+          <label for="ownerPassword">Password</label>
+        </div>
+        <div class="input-field col s12 m6">
+          <input id="ownerEmail" type="email" required />
+          <label for="ownerEmail">Email</label>
+        </div>
+        <div class="input-field col s12 m6">
+          <input id="ownerName" type="text" />
+          <label for="ownerName">Nombre</label>
+        </div>
+        <div class="input-field col s12 m6">
+          <input id="ownerSurname" type="text" />
+          <label for="ownerSurname">Apellido</label>
+        </div>
+        <div class="col s12">
+          <button class="btn waves-effect waves-light" type="submit">Crear</button>
+        </div>
+      </form>
+
+      <h4>Lista de Owners</h4>
+      <ul id="ownerList" class="collection"></ul>
+    </div>
+  </div>
+
+  <div id="settings" class="col s12">
+    <div class="container">
+      <h4>Configuraciones</h4>
         <div class="row">
           <div class="col s12 m6">
             <button id="recalculate-btn" class="btn waves-effect waves-light blue darken-3">
@@ -208,10 +242,11 @@
       function loadOwners() {
         const select1 = document.getElementById('pencaOwner');
         const select2 = document.getElementById('editPencaOwner');
+        const list = document.getElementById('ownerList');
         fetch('/admin/owners').then(r => r.json()).then(data => {
           [select1, select2].forEach(select => {
             if (select) {
-              select.innerHTML = '<option value=\"\" disabled selected>Seleccione Owner</option>';
+              select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
               data.forEach(o => {
                 const opt = document.createElement('option');
                 opt.value = o._id;
@@ -221,6 +256,117 @@
               M.FormSelect.init(select);
             }
           });
+          if (list) {
+            list.innerHTML = '';
+            data.forEach(o => {
+              const li = document.createElement('li');
+              li.className = 'collection-item';
+              li.dataset.id = o._id;
+              li.dataset.username = o.username;
+              li.dataset.email = o.email;
+              li.dataset.name = o.name || '';
+              li.dataset.surname = o.surname || '';
+              li.innerHTML = `
+                <span class="title">${o.username}</span>
+                <p>${o.email}</p>
+                <div class="secondary-content">
+                  <a href="#" class="edit-owner-btn"><i class="material-icons">edit</i></a>
+                  <a href="#" class="delete-owner-btn"><i class="material-icons red-text">delete</i></a>
+                </div>`;
+              list.appendChild(li);
+            });
+          }
+        });
+      }
+
+      function setupOwnerForm() {
+        const form = document.getElementById('createOwnerForm');
+        if (!form) return;
+        form.addEventListener('submit', async e => {
+          e.preventDefault();
+          const data = {
+            username: document.getElementById('ownerUsername').value,
+            password: document.getElementById('ownerPassword').value,
+            email: document.getElementById('ownerEmail').value,
+            name: document.getElementById('ownerName').value,
+            surname: document.getElementById('ownerSurname').value
+          };
+          try {
+            const resp = await fetch('/admin/owners', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data)
+            });
+            const res = await resp.json();
+            if (resp.ok) {
+              form.reset();
+              M.updateTextFields();
+              loadOwners();
+              M.toast({ html: 'Owner creado', classes: 'green' });
+            } else {
+              M.toast({ html: res.error || 'Error', classes: 'red' });
+            }
+          } catch (err) {
+            console.error('create owner error', err);
+            M.toast({ html: 'Error', classes: 'red' });
+          }
+        });
+      }
+
+      function setupOwnerListActions() {
+        const list = document.getElementById('ownerList');
+        if (!list) return;
+        list.addEventListener('click', async e => {
+          const editBtn = e.target.closest('.edit-owner-btn');
+          const delBtn = e.target.closest('.delete-owner-btn');
+          if (editBtn) {
+            e.preventDefault();
+            const li = editBtn.closest('li');
+            const id = li.dataset.id;
+            const username = prompt('Username', li.dataset.username);
+            if (username === null) return;
+            const email = prompt('Email', li.dataset.email);
+            if (email === null) return;
+            const name = prompt('Nombre', li.dataset.name);
+            if (name === null) return;
+            const surname = prompt('Apellido', li.dataset.surname);
+            if (surname === null) return;
+            try {
+              const resp = await fetch(`/admin/owners/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, name, surname })
+              });
+              const res = await resp.json();
+              if (resp.ok) {
+                M.toast({ html: 'Owner actualizado', classes: 'green' });
+                loadOwners();
+              } else {
+                M.toast({ html: res.error || 'Error', classes: 'red' });
+              }
+            } catch (err) {
+              console.error('update owner error', err);
+              M.toast({ html: 'Error', classes: 'red' });
+            }
+          } else if (delBtn) {
+            e.preventDefault();
+            const li = delBtn.closest('li');
+            const id = li.dataset.id;
+            if (!confirm('Eliminar owner?')) return;
+            try {
+              const resp = await fetch(`/admin/owners/${id}`, { method: 'DELETE' });
+              const res = await resp.json();
+              if (resp.ok) {
+                M.toast({ html: 'Owner eliminado', classes: 'green' });
+                loadOwners();
+              } else {
+                M.toast({ html: res.error || 'Error', classes: 'red' });
+              }
+            } catch (err) {
+              console.error('delete owner error', err);
+              M.toast({ html: 'Error', classes: 'red' });
+            }
+          }
         });
       }
 
@@ -302,6 +448,8 @@
       loadOwners();
       loadCompetitions();
       loadPencas();
+      setupOwnerForm();
+      setupOwnerListActions();
       setupUserPagination();
       setupRecalculateButton();
     });
