@@ -35,7 +35,18 @@ const jsonUpload = multer({
 // Página de administración
 router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const users = await User.find().select('username');
+        const page = parseInt(req.query.page) || 0;
+        const limit = parseInt(req.query.limit) || 10;
+
+        const users = await User.find()
+            .select('username')
+            .skip(page * limit)
+            .limit(limit);
+
+        if (req.headers.accept && req.headers.accept.includes('application/json')) {
+            return res.json(users);
+        }
+
         res.render('admin', { user: req.session.user, users });
     } catch (error) {
         console.error('Admin edit load error:', error.message, error.stack);

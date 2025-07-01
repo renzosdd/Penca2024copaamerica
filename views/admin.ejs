@@ -36,6 +36,12 @@
             </select>
             <label>Seleccionar Usuario</label>
           </div>
+          <div class="col s6 m3">
+            <button id="prev-users" class="btn waves-effect waves-light" type="button">Anterior</button>
+          </div>
+          <div class="col s6 m3">
+            <button id="next-users" class="btn waves-effect waves-light" type="button">Siguiente</button>
+          </div>
         </div>
         <form id="editUserForm" class="row" method="POST" action="/admin/update" enctype="multipart/form-data">
           <!-- Aquí van los campos del usuario que se van a editar -->
@@ -178,6 +184,27 @@
       M.Tabs.init(document.querySelectorAll('.tabs'));
       M.FormSelect.init(document.querySelectorAll('select'));
 
+      let userPage = 0;
+      const userLimit = 10;
+
+      function loadUsers() {
+        const select = document.getElementById('user-select');
+        if (!select) return;
+
+        fetch(`/admin/edit?page=${userPage}&limit=${userLimit}`, { headers: { Accept: 'application/json' } })
+          .then(r => r.json())
+          .then(data => {
+            select.innerHTML = '<option value="" disabled selected>Elige un usuario</option>';
+            data.forEach(u => {
+              const opt = document.createElement('option');
+              opt.value = u.username;
+              opt.textContent = u.username;
+              select.appendChild(opt);
+            });
+            M.FormSelect.init(select);
+          });
+      }
+
       function loadOwners() {
         const select1 = document.getElementById('pencaOwner');
         const select2 = document.getElementById('editPencaOwner');
@@ -250,9 +277,32 @@
         }
       }
 
+      function setupUserPagination() {
+        const nextBtn = document.getElementById('next-users');
+        const prevBtn = document.getElementById('prev-users');
+        if (nextBtn) {
+          nextBtn.addEventListener('click', e => {
+            e.preventDefault();
+            userPage++;
+            loadUsers();
+          });
+        }
+        if (prevBtn) {
+          prevBtn.addEventListener('click', e => {
+            e.preventDefault();
+            if (userPage > 0) {
+              userPage--;
+              loadUsers();
+            }
+          });
+        }
+      }
+
+      loadUsers();
       loadOwners();
       loadCompetitions();
       loadPencas();
+      setupUserPagination();
       setupRecalculateButton();
     });
   </script>

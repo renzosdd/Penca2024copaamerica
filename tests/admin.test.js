@@ -35,6 +35,7 @@ jest.mock('../models/User', () => {
   UserMock.findOne = jest.fn();
   UserMock.deleteOne = jest.fn();
   UserMock.updateOne = jest.fn();
+  UserMock.find = jest.fn();
   return UserMock;
 });
 
@@ -251,5 +252,30 @@ describe('Admin penca modification', () => {
 
     expect(res.status).toBe(200);
     expect(User.updateOne).toHaveBeenCalled();
+  });
+});
+
+describe('Admin edit pagination', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it('paginates users based on query', async () => {
+    const query = {
+      select: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockResolvedValue([{ username: 'u1' }])
+    };
+    User.find.mockReturnValue(query);
+
+    const app = express();
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .get('/admin/edit')
+      .query({ page: '2', limit: '5' })
+      .set('Accept', 'application/json');
+
+    expect(res.status).toBe(200);
+    expect(query.skip).toHaveBeenCalledWith(10);
+    expect(query.limit).toHaveBeenCalledWith(5);
   });
 });
