@@ -119,3 +119,21 @@ footer {
 .tab-content {
     display: none;
 }
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .tabs {
+        display: flex;
+        overflow-x: auto;
+    }
+    .tabs::-webkit-scrollbar {
+        display: none;
+    }
+    .tabs .tab {
+        flex: 1 0 auto;
+    }
+    table.responsive-table td,
+    table.responsive-table th {
+        padding: 8px 5px;
+    }
+}
