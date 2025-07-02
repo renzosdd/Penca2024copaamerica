@@ -345,4 +345,3 @@ function initTabs() {
     setupRecalculateButton();
     setupDeleteHandlers();
   });
-  
