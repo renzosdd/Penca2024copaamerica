@@ -114,3 +114,8 @@ footer {
 .card {
     margin-bottom: 20px;
 }
+
+/* Admin tabs */
+.tab-content {
+    display: none;
+}

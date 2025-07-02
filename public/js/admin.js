@@ -1,7 +1,24 @@
 // public/js/admin.js
 
 function initTabs() {
-    M.Tabs.init(document.querySelectorAll('.tabs'));
+    const tabElems = document.querySelectorAll('.tabs');
+    M.Tabs.init(tabElems);
+    const links = document.querySelectorAll('.tabs a');
+    const contents = document.querySelectorAll('.tab-content');
+    if (links.length && contents.length) {
+      const activate = id => {
+        contents.forEach(c => {
+          c.style.display = c.id === id ? 'block' : 'none';
+        });
+      };
+      links.forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          activate(a.getAttribute('href').substring(1));
+        });
+      });
+      activate(links[0].getAttribute('href').substring(1));
+    }
   }
   
   function initSelects() {
