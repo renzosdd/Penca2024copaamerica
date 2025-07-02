@@ -70,35 +70,36 @@ function initTabs() {
   }
   
   function loadOwners() {
-    const select1 = document.getElementById('pencaOwner');
-    const select2 = document.getElementById('editPencaOwner');
-    const editSelect = document.getElementById('ownerSelectEdit');
-    const table = document.getElementById('ownerTable');
-    fetch('/admin/owners').then(r => r.json()).then(data => {
-      [select1, select2, editSelect].forEach(select => {
-        if (select) {
-          select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
-          data.forEach(o => {
-            const opt = document.createElement('option');
-            opt.value = o._id;
-            opt.textContent = o.username;
-            select.appendChild(opt);
-          });
-          initSelects();
-        }
-      });
-      if (table) {
-        const tbody = table.querySelector('tbody');
-        tbody.innerHTML = data.map(o => `
-          <tr>
-            <td>${o.username}</td>
-            <td class="right-align">
-              <a href="#" class="red-text delete-owner" data-id="${o._id}"><i class="material-icons">delete</i></a>
-            </td>
-          </tr>`).join('');
+  const select1 = document.getElementById('pencaOwner');
+  const select2 = document.getElementById('editPencaOwner');
+  const editSelect = document.getElementById('ownerSelectEdit');
+  const list = document.getElementById('ownerList'); // usamos la lista como en main
+  fetch('/admin/owners').then(r => r.json()).then(data => {
+    [select1, select2, editSelect].forEach(select => {
+      if (select) {
+        select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
+        data.forEach(o => {
+          const opt = document.createElement('option');
+          opt.value = o._id;
+          opt.textContent = o.username;
+          select.appendChild(opt);
+        });
+        initSelects();
       }
     });
-  }
+
+    if (list) {
+      list.innerHTML = data.map(o => `
+        <li class="collection-item">
+          ${o.username}
+          <a href="#" class="secondary-content red-text delete-owner" data-id="${o._id}">
+            <i class="material-icons">delete</i>
+          </a>
+        </li>`).join('');
+    }
+  });
+}
+
   
   function loadCompetitions() {
     const table = document.getElementById('competitionTable');
