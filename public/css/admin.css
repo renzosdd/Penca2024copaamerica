@@ -123,17 +123,21 @@ footer {
 /* Responsive adjustments */
 @media (max-width: 600px) {
     .tabs {
-        display: flex;
-        overflow-x: auto;
-    }
-    .tabs::-webkit-scrollbar {
         display: none;
     }
-    .tabs .tab {
-        flex: 1 0 auto;
+    #admin-accordion {
+        display: block;
+        margin-bottom: 20px;
+    }
+    #admin-accordion .tab-content {
+        display: block;
     }
     table.responsive-table td,
     table.responsive-table th {
         padding: 8px 5px;
     }
+}
+
+#admin-accordion {
+    display: none;
 }

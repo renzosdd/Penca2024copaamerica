@@ -329,6 +329,50 @@ function initTabs() {
       }
     });
   }
+
+  function toggleAdminLayout() {
+    const mobile = window.innerWidth < 600;
+    const tabs = document.querySelector('.tabs');
+    if (!tabs) return;
+    let accordion = document.getElementById('admin-accordion');
+    if (mobile) {
+      if (!accordion) {
+        accordion = document.createElement('ul');
+        accordion.id = 'admin-accordion';
+        accordion.className = 'collapsible';
+        const links = tabs.querySelectorAll('a');
+        links.forEach(link => {
+          const id = link.getAttribute('href').substring(1);
+          const content = document.getElementById(id);
+          if (content) {
+            const li = document.createElement('li');
+            const header = document.createElement('div');
+            header.className = 'collapsible-header';
+            header.textContent = link.textContent;
+            const body = document.createElement('div');
+            body.className = 'collapsible-body';
+            body.appendChild(content);
+            li.appendChild(header);
+            li.appendChild(body);
+            accordion.appendChild(li);
+          }
+        });
+        tabs.parentElement.insertBefore(accordion, tabs);
+        M.Collapsible.init(accordion);
+      }
+      tabs.style.display = 'none';
+    } else {
+      if (accordion) {
+        const items = accordion.querySelectorAll('.collapsible-body > div[id]');
+        items.forEach(section => {
+          tabs.parentElement.appendChild(section);
+        });
+        accordion.remove();
+      }
+      tabs.style.display = '';
+      initTabs();
+    }
+  }
   
   // Inicialización global
   window.addEventListener('DOMContentLoaded', () => {
@@ -344,5 +388,7 @@ function initTabs() {
     setupPencaEditForm();
     setupRecalculateButton();
     setupDeleteHandlers();
+    toggleAdminLayout();
+    window.addEventListener('resize', toggleAdminLayout);
   });
   
