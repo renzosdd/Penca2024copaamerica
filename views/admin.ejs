@@ -15,20 +15,29 @@
     <h4 class="center-align">Panel de Administración</h4>
 
     <div class="row">
+      <div class="col s12">
+        <ul class="tabs">
+          <li class="tab col s2"><a class="active" href="#users">Users</a></li>
+          <li class="tab col s2"><a href="#competitions">Competitions</a></li>
+          <li class="tab col s2"><a href="#pencas">Pencas</a></li>
+          <li class="tab col s2"><a href="#owners">Owners</a></li>
+          <li class="tab col s2"><a href="#settings">Settings</a></li>
+        </ul>
+      </div>
 
-      <div id="users" class="col s12">
+      <div id="users" class="col s12 tab-content">
         <%- include('admin/partials/users') %>
       </div>
-      <div id="competitions" class="col s12">
+      <div id="competitions" class="col s12 tab-content">
         <%- include('admin/partials/competitions') %>
       </div>
-      <div id="pencas" class="col s12">
+      <div id="pencas" class="col s12 tab-content">
         <%- include('admin/partials/pencas') %>
       </div>
-      <div id="owners" class="col s12">
+      <div id="owners" class="col s12 tab-content">
         <%- include('admin/partials/owners') %>
       </div>
-      <div id="settings" class="col s12">
+      <div id="settings" class="col s12 tab-content">
         <%- include('admin/partials/settings') %>
       </div>
     </div>

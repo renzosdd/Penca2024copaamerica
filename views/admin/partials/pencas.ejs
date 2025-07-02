@@ -1,11 +1,14 @@
 <div class="row">
-  <form id="penca-form" class="col s12" method="POST" enctype="multipart/form-data" action="/admin/pencas">
-    <div class="row">
-      <div class="input-field col s12 m4">
-        <input id="pencaName" name="name" type="text" required>
-        <label for="pencaName">Nombre de la penca</label>
-      </div>
-      <div class="input-field col s12 m4">
+  <div class="card">
+    <div class="card-content">
+      <span class="card-title">Crear penca</span>
+      <form id="penca-form" method="POST" enctype="multipart/form-data" action="/admin/pencas">
+        <div class="row">
+        <div class="input-field col s12 m4">
+          <input id="pencaName" name="name" type="text" required>
+          <label for="pencaName">Nombre de la penca</label>
+        </div>
+        <div class="input-field col s12 m4">
         <input id="pencaLimit" name="participantLimit" type="number" min="1">
         <label for="pencaLimit">Límite de participantes</label>
       </div>
@@ -22,14 +25,52 @@
           <input class="file-path validate" type="text" placeholder="Sube fixture opcional">
         </div>
       </div>
-      <div class="col s12">
-        <button class="btn waves-effect" type="submit">Crear Penca</button>
-      </div>
+        <div class="col s12">
+          <button class="btn waves-effect" type="submit">Crear Penca</button>
+        </div>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </div>
-  
+
+<div class="row">
+  <div class="card">
+    <div class="card-content">
+      <span class="card-title">Editar penca</span>
+      <form id="penca-edit-form">
+        <div class="row">
+        <div class="input-field col s12 m4">
+          <select id="editPencaSelect"></select>
+          <label>Penca</label>
+        </div>
+      <div class="input-field col s12 m4">
+        <input id="editPencaName" type="text">
+        <label for="editPencaName">Nuevo nombre</label>
+      </div>
+      <div class="input-field col s12 m4">
+        <input id="editPencaLimit" type="number" min="1">
+        <label for="editPencaLimit">Nuevo límite</label>
+      </div>
+      <div class="input-field col s12 m4">
+        <select id="editPencaOwner"></select>
+        <label>Owner</label>
+      </div>
+      <div class="input-field col s12 m4">
+        <select id="editPencaCompetition"></select>
+        <label>Competencia</label>
+      </div>
+        <div class="col s12">
+          <button class="btn waves-effect" type="submit">Actualizar Penca</button>
+        </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card">
   <ul id="pencaList" class="collection with-header">
     <li class="collection-header"><h5>Pencas existentes</h5></li>
   </ul>
-  
+</div>

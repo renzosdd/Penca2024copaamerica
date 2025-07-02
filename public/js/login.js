@@ -1,11 +1,23 @@
 document.addEventListener('DOMContentLoaded', function() {
     var elems = document.querySelectorAll('.modal');
-    var instances = M.Modal.init(elems);
+    M.Modal.init(elems);
 
     var elemsDropdown = document.querySelectorAll('.dropdown-trigger');
-    var instancesDropdown = M.Dropdown.init(elemsDropdown, {
+    M.Dropdown.init(elemsDropdown, {
         constrainWidth: false,
         coverTrigger: false
+    });
+
+    document.querySelectorAll('.modal-trigger').forEach(function(trigger) {
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            var targetSelector = trigger.getAttribute('href') || trigger.dataset.target;
+            var modal = document.querySelector(targetSelector);
+            if (modal) {
+                var instance = M.Modal.getInstance(modal) || M.Modal.init([modal])[0];
+                instance.open();
+            }
+        });
     });
 });
 
