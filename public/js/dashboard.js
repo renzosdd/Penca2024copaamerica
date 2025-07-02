@@ -303,12 +303,70 @@ document.addEventListener('DOMContentLoaded', async function() {
             const pencas = await resp.json();
             const container = document.getElementById('manage-content');
             pencas.forEach(p => {
-                const div = document.createElement('div');
-                div.innerHTML = `<h5>${p.name}</h5>`;
-                const pending = document.createElement('ul');
-                pending.innerHTML = p.pendingRequests.map(u => `<li>${u.username || u}</li>`).join('');
-                div.appendChild(pending);
-                container.appendChild(div);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-content">
+                        <span class="card-title">${p.name}</span>
+                        <h6>Solicitudes pendientes</h6>
+                        <ul class="collection pending"></ul>
+                        <h6>Participantes</h6>
+                        <ul class="collection participants"></ul>
+                    </div>`;
+                const pendingList = card.querySelector('.pending');
+                p.pendingRequests.forEach(u => {
+                    const li = document.createElement('li');
+                    li.className = 'collection-item';
+                    li.textContent = u.username || u;
+                    li.innerHTML += ` <a href="#" class="approve secondary-content" data-penca="${p._id}" data-user="${u._id || u}"><i class="material-icons">check</i></a>`;
+                    pendingList.appendChild(li);
+                });
+                const partList = card.querySelector('.participants');
+                p.participants.forEach(u => {
+                    const li = document.createElement('li');
+                    li.className = 'collection-item';
+                    li.textContent = u.username || u;
+                    li.innerHTML += ` <a href="#" class="remove secondary-content red-text" data-penca="${p._id}" data-user="${u._id || u}"><i class="material-icons">delete</i></a>`;
+                    partList.appendChild(li);
+                });
+                container.appendChild(card);
+            });
+
+            container.addEventListener('click', async e => {
+                const approveBtn = e.target.closest('.approve');
+                const removeBtn = e.target.closest('.remove');
+                if (approveBtn) {
+                    e.preventDefault();
+                    const { penca, user } = approveBtn.dataset;
+                    try {
+                        const resp = await fetch(`/pencas/approve/${penca}/${user}`, { method: 'POST' });
+                        if (resp.ok) {
+                            approveBtn.parentElement.remove();
+                            M.toast({ html: 'Participante aprobado', classes: 'green' });
+                        } else {
+                            M.toast({ html: 'Error al aprobar', classes: 'red' });
+                        }
+                    } catch (err) {
+                        console.error('approve error', err);
+                        M.toast({ html: 'Error al aprobar', classes: 'red' });
+                    }
+                }
+                if (removeBtn) {
+                    e.preventDefault();
+                    const { penca, user } = removeBtn.dataset;
+                    try {
+                        const resp = await fetch(`/pencas/participant/${penca}/${user}`, { method: 'DELETE' });
+                        if (resp.ok) {
+                            removeBtn.parentElement.remove();
+                            M.toast({ html: 'Participante eliminado', classes: 'green' });
+                        } else {
+                            M.toast({ html: 'Error al eliminar', classes: 'red' });
+                        }
+                    } catch (err) {
+                        console.error('remove participant error', err);
+                        M.toast({ html: 'Error al eliminar', classes: 'red' });
+                    }
+                }
             });
         } catch (err) {
             console.error('load owner pencas error', err);

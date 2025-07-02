@@ -1,7 +1,24 @@
 // public/js/admin.js
 
 function initTabs() {
-    M.Tabs.init(document.querySelectorAll('.tabs'));
+    const tabElems = document.querySelectorAll('.tabs');
+    M.Tabs.init(tabElems);
+    const links = document.querySelectorAll('.tabs a');
+    const contents = document.querySelectorAll('.tab-content');
+    if (links.length && contents.length) {
+      const activate = id => {
+        contents.forEach(c => {
+          c.style.display = c.id === id ? 'block' : 'none';
+        });
+      };
+      links.forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          activate(a.getAttribute('href').substring(1));
+        });
+      });
+      activate(links[0].getAttribute('href').substring(1));
+    }
   }
   
   function initSelects() {
@@ -55,8 +72,10 @@ function initTabs() {
   function loadOwners() {
     const select1 = document.getElementById('pencaOwner');
     const select2 = document.getElementById('editPencaOwner');
+    const editSelect = document.getElementById('ownerSelectEdit');
+    const table = document.getElementById('ownerTable');
     fetch('/admin/owners').then(r => r.json()).then(data => {
-      [select1, select2].forEach(select => {
+      [select1, select2, editSelect].forEach(select => {
         if (select) {
           select.innerHTML = '<option value="" disabled selected>Seleccione Owner</option>';
           data.forEach(o => {
@@ -68,19 +87,32 @@ function initTabs() {
           initSelects();
         }
       });
+      if (table) {
+        const tbody = table.querySelector('tbody');
+        tbody.innerHTML = data.map(o => `
+          <tr>
+            <td>${o.username}</td>
+            <td class="right-align">
+              <a href="#" class="red-text delete-owner" data-id="${o._id}"><i class="material-icons">delete</i></a>
+            </td>
+          </tr>`).join('');
+      }
     });
   }
   
   function loadCompetitions() {
-    const list = document.getElementById('competitionList');
+    const table = document.getElementById('competitionTable');
     const select = document.getElementById('competitionSelectEdit');
     fetch('/admin/competitions').then(r => r.json()).then(data => {
-      if (list) {
-        list.innerHTML = data.map(c => `
-          <li class="collection-item">
-            ${c.name}
-            <a href="#" class="secondary-content red-text delete-competition" data-id="${c._id}"><i class="material-icons">delete</i></a>
-          </li>`).join('');
+      if (table) {
+        const tbody = table.querySelector('tbody');
+        tbody.innerHTML = data.map(c => `
+          <tr>
+            <td>${c.name}</td>
+            <td class="right-align">
+              <a href="#" class="red-text delete-competition" data-id="${c._id}"><i class="material-icons">delete</i></a>
+            </td>
+          </tr>`).join('');
       }
       if (select) {
         select.innerHTML = '<option value="" disabled selected>Seleccione competencia</option>';
@@ -92,19 +124,33 @@ function initTabs() {
         });
         initSelects();
       }
+      const compSelectEdit = document.getElementById('editPencaCompetition');
+      if (compSelectEdit) {
+        compSelectEdit.innerHTML = '<option value="" disabled selected>Seleccione competencia</option>';
+        data.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c._id;
+          opt.textContent = c.name;
+          compSelectEdit.appendChild(opt);
+        });
+        initSelects();
+      }
     });
   }
   
   function loadPencas() {
-    const list = document.getElementById('pencaList');
+    const table = document.getElementById('pencaTable');
     const select = document.getElementById('editPencaSelect');
     fetch('/admin/pencas').then(r => r.json()).then(data => {
-      if (list) {
-        list.innerHTML = data.map(p => `
-          <li class="collection-item">
-            ${p.name}
-            <a href="#" class="secondary-content red-text delete-penca" data-id="${p._id}"><i class="material-icons">delete</i></a>
-          </li>`).join('');
+      if (table) {
+        const tbody = table.querySelector('tbody');
+        tbody.innerHTML = data.map(p => `
+          <tr>
+            <td>${p.name}</td>
+            <td class="right-align">
+              <a href="#" class="red-text delete-penca" data-id="${p._id}"><i class="material-icons">delete</i></a>
+            </td>
+          </tr>`).join('');
       }
       if (select) {
         select.innerHTML = '<option value="" disabled selected>Seleccione Penca</option>';
@@ -115,6 +161,119 @@ function initTabs() {
           select.appendChild(opt);
         });
         initSelects();
+      }
+    });
+  }
+
+  function setupOwnerForms() {
+    const form = document.getElementById('owner-form');
+    form?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const data = {
+        username: document.getElementById('ownerUser').value,
+        email: document.getElementById('ownerEmail').value,
+        password: document.getElementById('ownerPassword').value
+      };
+      try {
+        const resp = await fetch('/admin/owners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (resp.ok) {
+          form.reset();
+          loadOwners();
+          M.toast({ html: 'Owner creado', classes: 'green' });
+        } else {
+          M.toast({ html: 'Error al crear owner', classes: 'red' });
+        }
+      } catch (err) {
+        console.error(err);
+        M.toast({ html: 'Error al crear owner', classes: 'red' });
+      }
+    });
+
+    const edit = document.getElementById('owner-edit-form');
+    edit?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('ownerSelectEdit').value;
+      const data = {
+        username: document.getElementById('ownerEditUsername').value || undefined,
+        email: document.getElementById('ownerEditEmail').value || undefined
+      };
+      try {
+        const resp = await fetch(`/admin/owners/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (resp.ok) {
+          edit.reset();
+          loadOwners();
+          M.toast({ html: 'Owner actualizado', classes: 'green' });
+        } else {
+          M.toast({ html: 'Error al actualizar', classes: 'red' });
+        }
+      } catch (err) {
+        console.error(err);
+        M.toast({ html: 'Error al actualizar', classes: 'red' });
+      }
+    });
+  }
+
+  function setupCompetitionEditForm() {
+    const form = document.getElementById('competition-edit-form');
+    form?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('competitionSelectEdit').value;
+      const name = document.getElementById('competitionNewName').value;
+      try {
+        const resp = await fetch(`/admin/competitions/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        if (resp.ok) {
+          form.reset();
+          loadCompetitions();
+          M.toast({ html: 'Competencia actualizada', classes: 'green' });
+        } else {
+          M.toast({ html: 'Error al actualizar competencia', classes: 'red' });
+        }
+      } catch (err) {
+        console.error(err);
+        M.toast({ html: 'Error al actualizar competencia', classes: 'red' });
+      }
+    });
+  }
+
+  function setupPencaEditForm() {
+    const form = document.getElementById('penca-edit-form');
+    form?.addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('editPencaSelect').value;
+      const data = {
+        name: document.getElementById('editPencaName').value || undefined,
+        participantLimit: document.getElementById('editPencaLimit').value || undefined,
+        owner: document.getElementById('editPencaOwner').value || undefined,
+        competition: document.getElementById('editPencaCompetition').value || undefined
+      };
+      try {
+        const resp = await fetch(`/admin/pencas/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (resp.ok) {
+          form.reset();
+          loadPencas();
+          M.toast({ html: 'Penca actualizada', classes: 'green' });
+        } else {
+          M.toast({ html: 'Error al actualizar penca', classes: 'red' });
+        }
+      } catch (err) {
+        console.error(err);
+        M.toast({ html: 'Error al actualizar penca', classes: 'red' });
       }
     });
   }
@@ -157,6 +316,16 @@ function initTabs() {
             .catch(err => console.error(err));
         }
       }
+
+      if (e.target.closest('.delete-owner')) {
+        e.preventDefault();
+        const id = e.target.closest('.delete-owner').dataset.id;
+        if (confirm('¿Eliminar owner?')) {
+          fetch(`/admin/owners/${id}`, { method: 'DELETE' })
+            .then(() => loadOwners())
+            .catch(err => console.error(err));
+        }
+      }
     });
   }
   
@@ -169,6 +338,9 @@ function initTabs() {
     loadOwners();
     loadCompetitions();
     loadPencas();
+    setupOwnerForms();
+    setupCompetitionEditForm();
+    setupPencaEditForm();
     setupRecalculateButton();
     setupDeleteHandlers();
   });

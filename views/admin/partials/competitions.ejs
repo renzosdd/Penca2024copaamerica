@@ -1,11 +1,14 @@
 <div class="row">
-  <form id="competition-form" class="col s12" method="POST" enctype="multipart/form-data" action="/admin/competitions">
-    <div class="row">
-      <div class="input-field col s12 m6">
-        <input id="competitionName" name="name" type="text" required>
-        <label for="competitionName">Nombre de la competencia</label>
-      </div>
-      <div class="file-field input-field col s12 m6">
+  <div class="card">
+    <div class="card-content">
+      <span class="card-title">Crear competencia</span>
+      <form id="competition-form" method="POST" enctype="multipart/form-data" action="/admin/competitions">
+        <div class="row">
+        <div class="input-field col s12 m6">
+          <input id="competitionName" name="name" type="text" required>
+          <label for="competitionName">Nombre de la competencia</label>
+        </div>
+        <div class="file-field input-field col s12 m6">
         <div class="btn">
           <span>Fixture JSON</span>
           <input type="file" name="fixture" accept="application/json">
@@ -20,14 +23,49 @@
           <span>Usar API de fútbol</span>
         </label>
       </div>
-      <div class="col s12 m6">
-        <button class="btn waves-effect" type="submit">Crear competencia</button>
-      </div>
+        <div class="col s12 m6">
+          <button class="btn waves-effect" type="submit">Crear competencia</button>
+        </div>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </div>
-  
-  <ul id="competitionList" class="collection with-header">
-    <li class="collection-header"><h5>Competencias Existentes</h5></li>
-  </ul>
-  
+
+<div class="row">
+  <div class="card">
+    <div class="card-content">
+      <span class="card-title">Editar competencia</span>
+      <form id="competition-edit-form">
+        <div class="row">
+          <div class="input-field col s12 m6">
+            <select id="competitionSelectEdit"></select>
+            <label>Competencia</label>
+          </div>
+          <div class="input-field col s12 m6">
+            <input id="competitionNewName" type="text">
+            <label for="competitionNewName">Nuevo nombre</label>
+          </div>
+          <div class="col s12">
+            <button class="btn waves-effect" type="submit">Actualizar competencia</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-content">
+    <span class="card-title">Competencias Existentes</span>
+    <table id="competitionTable" class="highlight responsive-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th class="right-align">Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
