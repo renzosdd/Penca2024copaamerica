@@ -5,7 +5,7 @@
           <% if (user && user.role === 'admin') { %>
             Admin - <%= user.username %>
           <% } else { %>
-            <img src="/images/Logo.png" alt="Logo" class="responsive-img" style="height: 60px;">
+            <img src="/images/Logo.png" alt="Logo" class="responsive-img logo-img">
           <% } %>
         </a>
         <% if (user) { %>
@@ -14,13 +14,13 @@
             <% if (typeof showInfo !== 'undefined' && showInfo) { %>
               <li>
                 <a href="#" data-target="info-modal" class="modal-trigger">
-                  <img src="/images/info.png" alt="Info" class="circle responsive-img" style="height: 40px;">
+                  <img src="/images/info.png" alt="Info" class="circle responsive-img icon-40">
                 </a>
               </li>
             <% } %>
             <li>
               <a class="dropdown-trigger" href="#" data-target="user-dropdown">
-                <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img" style="height: 40px;">
+                <img src="<%= user.avatar ? '/avatar/' + user.username : '/images/avatar.webp' %>" alt="Avatar" class="circle responsive-img icon-40">
               </a>
             </li>
           </ul>
@@ -44,7 +44,7 @@
           <li><a href="#owners">Owners</a></li>
           <li><a href="#settings">Settings</a></li>
         <% } %>
-        <li><form action="/logout" method="POST"><button type="submit" class="btn blue darken-2 white-text" style="width:100%;">Cerrar sesión</button></form></li>
+        <li><form action="/logout" method="POST"><button type="submit" class="btn blue darken-2 white-text btn-block">Cerrar sesión</button></form></li>
       </ul>
     <% } %>
   <% if (user && user.role === 'admin') { %>
