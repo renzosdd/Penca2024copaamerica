@@ -146,6 +146,8 @@ app.use(cacheControl);
 
 // Servir archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
+// Archivos estáticos generados por Vite
+app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
 
 app.use((req, res, next) => {
     res.locals.user = req.session.user;
@@ -160,7 +162,8 @@ app.get('/', (req, res) => {
     if (req.session.user) {
         return res.redirect('/dashboard');
     }
-    res.render('login');
+    // Enviar la aplicación React compilada
+    res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 
 app.get('/dashboard', isAuthenticated, async (req, res) => {

@@ -47,6 +47,12 @@ El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usua
 npm run dev
 ```
 
+Si modificas el frontend de React, genera los archivos estáticos con:
+
+```bash
+cd frontend && npm run build
+```
+
 Para un entorno de producción puedes utilizar `npm start`.
 
 Al iniciarse por primera vez, la aplicación comprobará que exista la base de datos
@@ -62,6 +68,7 @@ definidas en tu archivo `.env`.
 - **routes/** – rutas de la aplicación: administración, partidos, predicciones, ranking y pencas.
 - **public/** – archivos estáticos (CSS, imágenes, scripts de cliente, uploads).
 - **views/** – plantillas EJS para las vistas HTML.
+- **frontend/** – aplicación React compilada con Vite.
 - **matches.json** – datos de ejemplo de los partidos que pueden cargarse desde las rutas de administración.
 - **updateschema.js** – script auxiliar para crear o actualizar esquemas en MongoDB.
 
