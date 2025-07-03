@@ -1,0 +1,22 @@
+/* === Login Page === */
+.login-container {
+    max-width: 400px;
+    margin: 100px auto 50px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.login-container h5 {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.login-container .input-field {
+    margin-bottom: 20px;
+}
+
+.login-container .btn {
+    width: 100%;
+}

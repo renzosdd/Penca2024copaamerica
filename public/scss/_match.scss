@@ -1,0 +1,106 @@
+/* === Match Cards === */
+.match-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    transition: border 0.3s ease;
+}
+
+.match-card.saved {
+    border: 2px solid #28a745;
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.match-header .team {
+    display: flex;
+    align-items: center;
+}
+
+.match-header .team img {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+}
+
+.match-header .vs {
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.date-time {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.date-time .info {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
+}
+
+.date-time .info img {
+    margin-right: 5px;
+}
+
+.input-field.inline input {
+    width: 50px;
+    margin-right: 5px;
+    text-align: center;
+}
+
+.match-details {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.match-details .input-field.inline {
+    margin: 0 10px;
+}
+
+.match-details button {
+    margin-top: 10px;
+    width: 100%;
+}
+
+@media (min-width: 600px) {
+    .match-details {
+        flex-direction: row;
+    }
+
+    .match-details button {
+        width: auto;
+    }
+}
+
+@media (max-width: 600px) {
+    .collection {
+        padding: 0;
+    }
+
+    .collection .collection-item {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .collection .collection-item .title {
+        font-weight: bold;
+    }
+
+    .collection .collection-item p {
+        margin: 5px 0;
+    }
+}

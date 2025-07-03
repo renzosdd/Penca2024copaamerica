@@ -1,0 +1,25 @@
+/* === Buttons & Tabs === */
+.btn {
+    background-color: #ffd100;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #e6b800;
+}
+
+.tabs .tab a {
+    color: #002f6c;
+}
+
+.tabs .tab a.active {
+    background-color: #ffd100;
+    color: #002f6c;
+    font-weight: bold;
+    border-radius: 8px 8px 0 0;
+}
+
+.tabs .indicator {
+    background-color: #002f6c;
+}

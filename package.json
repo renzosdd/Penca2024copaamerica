@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js",
-    "test": "jest"
+    "test": "jest",
+    "build-css": "sass public/scss/style.scss public/css/style.css"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
@@ -22,7 +23,8 @@
   "devDependencies": {
     "nodemon": "^2.0.12",
     "jest": "^29.7.0",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "sass": "^1.69.0"
   },
   "author": "Ren",
   "license": "ISC",
