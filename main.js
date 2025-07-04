@@ -9,7 +9,6 @@ const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
 const cacheControl = require('./middleware/cacheControl');
-const ejs = require('ejs');
 const { DEFAULT_COMPETITION } = require('./config');
 const Competition = require('./models/Competition');
 const Penca = require("./models/Penca");
@@ -154,9 +153,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Configurar EJS como motor de vistas
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', (req, res) => {
     if (req.session.user) {
@@ -171,13 +167,23 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
     if (user.role === 'admin') {
         return res.redirect('/admin/edit');
     }
-    let pencas = [];
-    try {
-        pencas = await Penca.find({ participants: user._id }).select('name _id');
-    } catch (err) {
-        console.error('dashboard pencas error', err);
+    // Enviar la aplicación React para el dashboard
+    res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
+});
+
+// Datos para el dashboard en React
+app.get('/api/dashboard', isAuthenticated, async (req, res) => {
+    const { user } = req.session;
+    if (user.role === 'admin') {
+        return res.status(403).json({ error: 'Admins must use /admin/edit' });
     }
-    res.render('dashboard', { user, pencas, debug: DEBUG });
+    try {
+        const pencas = await Penca.find({ participants: user._id }).select('name _id');
+        res.json({ user: { username: user.username, role: user.role }, pencas });
+    } catch (err) {
+        console.error('dashboard api error', err);
+        res.status(500).json({ error: 'Error retrieving dashboard data' });
+    }
 });
 
 app.post('/login', async (req, res) => {
