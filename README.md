@@ -55,6 +55,7 @@ cd frontend && npm run build
 
 En Vercel la compilación del frontend se realiza automáticamente durante el despliegue con `npm run vercel-build` y la carpeta `frontend/dist` queda disponible en producción.
 
+
 Para un entorno de producción puedes utilizar `npm start`.
 
 Al iniciarse por primera vez, la aplicación comprobará que exista la base de datos
@@ -83,11 +84,13 @@ Con esta estructura puedes navegar fácilmente por cada componente de la aplicac
 ## Pruebas
 
 
-Antes de ejecutar las pruebas es necesario instalar todas las dependencias,
-incluidas las de desarrollo. Ejecuta:
+Antes de ejecutar las pruebas asegúrate de instalar todas las dependencias de
+desarrollo. Para obtener una instalación reproducible puedes utilizar `npm ci`
+tanto en la raíz del proyecto como dentro de `frontend/`:
 
 ```bash
-npm install
+npm ci
+cd frontend && npm ci
 ```
 
 En entornos de integración continua puedes ejecutar el script `scripts/setup-tests.sh` o utilizar `npm ci` para garantizar instalaciones reproducibles.
