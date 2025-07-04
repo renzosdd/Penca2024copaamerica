@@ -39,7 +39,9 @@ export default function Login() {
         </div>
         <button className="btn waves-effect waves-light blue darken-3" type="submit" style={{ width: '100%' }}>Ingresar</button>
       </form>
-      {error && <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>
+      {error && (
+        <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>
+      )}
     </div>
   );
 }

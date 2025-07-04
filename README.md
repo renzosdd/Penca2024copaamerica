@@ -53,7 +53,8 @@ Si modificas el frontend de React, genera los archivos estáticos con:
 cd frontend && npm run build
 ```
 
-En Vercel la compilación del frontend se realiza automáticamente durante el despliegue.
+En Vercel la compilación del frontend se realiza automáticamente durante el despliegue con `npm run vercel-build` y la carpeta `frontend/dist` queda disponible en producción.
+
 
 Para un entorno de producción puedes utilizar `npm start`.
 
