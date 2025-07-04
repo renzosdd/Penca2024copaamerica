@@ -3,9 +3,13 @@
   "builds": [
     {
       "src": "main.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": "frontend/dist/**"
+      }
     }
   ],
+  "buildCommand": "npm run vercel-build",
   "routes": [
     { "src": "/api/(.*)", "dest": "/main.js" },
     { "src": "/login", "dest": "/main.js" },
