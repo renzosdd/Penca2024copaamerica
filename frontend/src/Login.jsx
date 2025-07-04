@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,7 +18,11 @@ export default function Login() {
       });
       const data = await res.json();
       if (res.ok && data.redirectUrl) {
-        window.location.href = data.redirectUrl;
+        if (data.redirectUrl === '/dashboard') {
+          navigate('/dashboard');
+        } else {
+          window.location.href = data.redirectUrl;
+        }
       } else {
         setError(data.error || 'Error');
       }
