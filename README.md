@@ -1,8 +1,9 @@
 # Penca Copa América 2024
 
-Aplicación web desarrollada en **Node.js** y **Express** para administrar una 
-penca de la Copa América 2024. Los usuarios pueden registrarse, realizar 
-predicciones de los partidos y consultar el ranking general.
+Aplicación web desarrollada en **Node.js** y **Express** con un frontend en
+**React**. Permite administrar una penca de la Copa América 2024. Los usuarios
+pueden registrarse, realizar predicciones de los partidos y consultar el
+ranking general.
 
 Esta aplicación requiere Node.js 18 o superior para utilizar la función `fetch` en el backend.
 
@@ -69,9 +70,8 @@ definidas en tu archivo `.env`.
 - **middleware/** – middlewares de autenticación y control de caché.
 - **models/** – modelos de Mongoose (User, Match, Prediction, Score, Penca).
 - **routes/** – rutas de la aplicación: administración, partidos, predicciones, ranking y pencas.
-- **public/** – archivos estáticos (CSS, imágenes, scripts de cliente, uploads).
-- **views/** – plantillas EJS para las vistas HTML.
-- **frontend/** – aplicación React compilada con Vite.
+- **public/** – archivos estáticos (CSS e imágenes).
+- **frontend/** – frontend de React compilado con Vite.
 - **matches.json** – datos de ejemplo de los partidos que pueden cargarse desde las rutas de administración.
 - **updateschema.js** – script auxiliar para crear o actualizar esquemas en MongoDB.
 
