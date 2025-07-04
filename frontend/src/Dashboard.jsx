@@ -23,10 +23,8 @@ export default function Dashboard() {
       <h5>Mis Pencas</h5>
       {pencas.length === 0 && <p>No est\u00e1s en ninguna penca.</p>}
       {pencas.map((p) => (
-        <div key={p._id} className="card">
-          <div className="card-content">
-            <span className="card-title">{p.name}</span>
-          </div>
+        <div key={p._id} style={{ padding: '1rem', border: '1px solid #ccc', marginBottom: '1rem', borderRadius: '4px' }}>
+          <strong>{p.name}</strong>
         </div>
       ))}
     </div>

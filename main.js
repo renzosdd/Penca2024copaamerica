@@ -9,7 +9,6 @@ const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
 const cacheControl = require('./middleware/cacheControl');
-const ejs = require('ejs');
 const { DEFAULT_COMPETITION } = require('./config');
 const Competition = require('./models/Competition');
 const Penca = require("./models/Penca");
@@ -154,9 +153,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// Configurar EJS como motor de vistas
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', (req, res) => {
     if (req.session.user) {

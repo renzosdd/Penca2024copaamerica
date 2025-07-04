@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const bcrypt = require('bcrypt');
+const path = require('path');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
@@ -48,7 +49,7 @@ router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
             return res.json(users);
         }
 
-        res.render('admin', { user: req.session.user, users });
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
     } catch (error) {
         console.error('Admin edit load error:', error.message, error.stack);
         res.status(500).send('Error al cargar la página de administración');

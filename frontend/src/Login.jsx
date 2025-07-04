@@ -43,7 +43,7 @@ export default function Login() {
           <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           <label htmlFor="login-password" className="active">Contraseña</label>
         </div>
-        <button className="btn waves-effect waves-light blue darken-3" type="submit" style={{ width: '100%' }}>Ingresar</button>
+        <button className="btn" type="submit" style={{ width: '100%' }}>Ingresar</button>
       </form>
       {error && (
         <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>
