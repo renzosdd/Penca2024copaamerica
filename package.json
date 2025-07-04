@@ -7,7 +7,8 @@
     "start": "node main.js",
     "dev": "nodemon main.js",
     "test": "jest",
-    "build-css": "sass public/scss/style.scss public/css/style.css"
+    "build-css": "sass public/scss/style.scss public/css/style.css",
+    "vercel-build": "npm install --prefix frontend && npm run build --prefix frontend"
   },
   "dependencies": {
     "bcrypt": "^5.0.1",
