@@ -84,16 +84,16 @@ Con esta estructura puedes navegar fácilmente por cada componente de la aplicac
 ## Administración de resultados
 
 Los administradores registran los marcadores finales desde `/admin/edit` en el
-apartado **Matches**. Al finalizar la fase de grupos se ejecuta el endpoint
-`/admin/recalculate-bracket` (disponible como botón *Recalcular bracket* en el
-panel) para generar los cruces de eliminación directa.
+apartado **Matches**. Cada vez que se guarda un resultado el sistema actualiza
+de forma automática las llaves de eliminación directa. También existe el
+endpoint `/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel)
+para forzar manualmente el recálculo si fuera necesario.
 
 ### Ejemplo de uso
 
 1. Ingresa el resultado de cada encuentro y guarda los cambios.
-2. Cuando todos los grupos tengan sus marcadores presiona **Recalcular bracket**.
-3. Consulta `/bracket` para ver la llave con los enfrentamientos
-   actualizados.
+2. La llave del knockout se recalculará automáticamente al guardar.
+3. Consulta `/bracket` para ver los enfrentamientos actualizados.
 
 ## Nuevos endpoints
 
