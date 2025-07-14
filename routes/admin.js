@@ -9,6 +9,7 @@ const Penca = require('../models/Penca');
 const Competition = require('../models/Competition');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
+const { updateEliminationMatches } = require('../utils/bracket');
 
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -365,6 +366,17 @@ router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) =>
         res.json({ message: 'Competition deleted' });
     } catch (error) {
         console.error('Error deleting competition:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Recalcular llaves de eliminatoria manualmente
+router.post('/recalculate-bracket/:competition', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        await updateEliminationMatches(req.params.competition);
+        res.json({ message: 'Bracket recalculated' });
+    } catch (error) {
+        console.error('Error recalculating bracket:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
