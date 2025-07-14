@@ -1,6 +1,7 @@
 const Match = require('../models/Match');
 const { calculateGroupStandings } = require('../utils/bracket');
 
+
 jest.mock('../models/Match', () => ({
   find: jest.fn(),
   updateOne: jest.fn()
@@ -25,5 +26,6 @@ describe('Bracket helpers', () => {
     expect(Match.find).toHaveBeenCalledWith({ competition: 'Copa' });
     expect(standings['Grupo A'].map(t => t.team)).toEqual(['A1', 'A2', 'A3']);
     expect(standings['Grupo B'].map(t => t.team)).toEqual(['B2', 'B3', 'B1']);
+
   });
 });
