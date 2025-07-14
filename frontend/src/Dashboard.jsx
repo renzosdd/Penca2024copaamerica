@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import GroupTable from './GroupTable';
 import EliminationBracket from './EliminationBracket';
 import { Button, Card, CardContent } from '@mui/material';
+import MUIBracket from './MUIBracket';
+
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -232,6 +234,7 @@ export default function Dashboard() {
         <div style={{ marginTop: '2rem' }}>
           <h5>Eliminatorias</h5>
           <EliminationBracket bracket={bracket} />
+          <MUIBracket bracket={bracket} />
         </div>
       )}
 
