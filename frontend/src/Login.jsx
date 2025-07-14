@@ -1,5 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Button,
+  Card,
+  CardContent,
+  TextField,
+  Typography
+} from '@mui/material';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -32,22 +39,43 @@ export default function Login() {
   };
 
   return (
-    <div className="login-container card">
-      <h5>Iniciar Sesión</h5>
-      <form onSubmit={handleSubmit}>
-        <div className="input-field">
-          <input id="login-username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
-          <label htmlFor="login-username" className="active">Nombre de usuario</label>
-        </div>
-        <div className="input-field">
-          <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          <label htmlFor="login-password" className="active">Contraseña</label>
-        </div>
-        <button className="btn" type="submit">Ingresar</button>
-      </form>
-      {error && (
-        <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>
-      )}
-    </div>
+    <Card className="login-container">
+      <CardContent>
+        <Typography variant="h5" gutterBottom>
+          Iniciar Sesión
+        </Typography>
+        <form onSubmit={handleSubmit}>
+          <div className="input-field">
+            <TextField
+              id="login-username"
+              label="Nombre de usuario"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              fullWidth
+              margin="normal"
+            />
+          </div>
+          <div className="input-field">
+            <TextField
+              id="login-password"
+              label="Contraseña"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              fullWidth
+              margin="normal"
+            />
+          </div>
+          <Button variant="contained" type="submit" fullWidth>
+            Ingresar
+          </Button>
+        </form>
+        {error && (
+          <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

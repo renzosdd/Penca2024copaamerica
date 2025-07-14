@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import GroupTable from './GroupTable';
 import EliminationBracket from './EliminationBracket';
+import { Button, Card, CardContent } from '@mui/material';
 import MUIBracket from './MUIBracket';
+
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -163,40 +165,45 @@ export default function Dashboard() {
         const ranking = rankings[p._id] || [];
         return (
           <div key={p._id} style={{ marginBottom: '1rem' }}>
-            <div
-              style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}
+            <Card
+              style={{ padding: '1rem', cursor: 'pointer' }}
               onClick={() => setOpen(open === p._id ? null : p._id)}
             >
-              <strong>{p.name}</strong>
-            </div>
+              <CardContent>
+                <strong>{p.name}</strong>
+              </CardContent>
+            </Card>
             {open === p._id && (
-              <div style={{ border: '1px solid #ccc', borderTop: 'none', padding: '1rem' }}>
+              <Card style={{ marginTop: '0', borderTop: 'none', padding: '1rem' }}>
+                <CardContent>
                 {pMatches.map(m => {
                   const pr = getPrediction(p._id, m._id) || {};
                   return (
-                    <div key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
-                      <div className="match-header">
-                        <div className="team">
-                          <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
-                          <span className="team-name">{m.team1}</span>
-                        </div>
-                        <span className="vs">vs</span>
-                        <div className="team">
-                          <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
-                          <span className="team-name">{m.team2}</span>
-                        </div>
-                      </div>
-                      <div className="match-details">
-                        <form onSubmit={e => handlePrediction(e, p._id, m._id)}>
-                          <div className="input-field inline">
-                            <input name="result1" type="number" defaultValue={pr.result1 || ''} required />
-                            <span>-</span>
-                            <input name="result2" type="number" defaultValue={pr.result2 || ''} required />
+                    <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
+                      <CardContent>
+                        <div className="match-header">
+                          <div className="team">
+                            <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
+                            <span className="team-name">{m.team1}</span>
                           </div>
-                          <button className="btn" type="submit">Guardar</button>
-                        </form>
-                      </div>
-                    </div>
+                          <span className="vs">vs</span>
+                          <div className="team">
+                            <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
+                            <span className="team-name">{m.team2}</span>
+                          </div>
+                        </div>
+                        <div className="match-details">
+                          <form onSubmit={e => handlePrediction(e, p._id, m._id)}>
+                            <div className="input-field inline">
+                              <input name="result1" type="number" defaultValue={pr.result1 || ''} required />
+                              <span>-</span>
+                              <input name="result2" type="number" defaultValue={pr.result2 || ''} required />
+                            </div>
+                            <Button variant="contained" type="submit">Guardar</Button>
+                          </form>
+                        </div>
+                      </CardContent>
+                    </Card>
                   );
                 })}
                 <div style={{ marginTop: '1rem' }}>
@@ -209,7 +216,8 @@ export default function Dashboard() {
                     ))}
                   </ul>
                 </div>
-              </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         );
@@ -234,7 +242,7 @@ export default function Dashboard() {
         <div style={{ marginTop: '2rem' }}>
           <h6>Unirse a una Penca</h6>
           <input type="text" value={joinCode} onChange={e => setJoinCode(e.target.value)} placeholder="Código" />
-          <button className="btn" onClick={handleJoin} style={{ marginLeft: '10px' }}>Solicitar</button>
+          <Button variant="contained" onClick={handleJoin} style={{ marginLeft: '10px' }}>Solicitar</Button>
           {joinMsg && <div style={{ marginTop: '0.5rem' }}>{joinMsg}</div>}
         </div>
       )}
