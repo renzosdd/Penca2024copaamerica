@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import GroupTable from './GroupTable';
+import EliminationBracket from './EliminationBracket';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -10,6 +12,8 @@ export default function Dashboard() {
   const [joinCode, setJoinCode] = useState('');
   const [joinMsg, setJoinMsg] = useState('');
   const [ownerPencas, setOwnerPencas] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [bracket, setBracket] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -44,6 +48,24 @@ export default function Dashboard() {
       }
     }
     loadData();
+  }, [pencas]);
+
+  useEffect(() => {
+    async function loadExtras() {
+      if (!pencas.length) return;
+      const comp = pencas[0].competition;
+      try {
+        const [gRes, bRes] = await Promise.all([
+          fetch(`/groups/${encodeURIComponent(comp)}`),
+          fetch(`/bracket/${encodeURIComponent(comp)}`)
+        ]);
+        if (gRes.ok) setGroups(await gRes.json());
+        if (bRes.ok) setBracket(await bRes.json());
+      } catch (err) {
+        console.error('extra data error', err);
+      }
+    }
+    loadExtras();
   }, [pencas]);
 
   async function loadRanking(id) {
@@ -191,6 +213,20 @@ export default function Dashboard() {
           </div>
         );
       })}
+
+      {groups.length > 0 && (
+        <div style={{ marginTop: '2rem' }}>
+          <h5>Grupos</h5>
+          <GroupTable groups={groups} />
+        </div>
+      )}
+
+      {bracket && (
+        <div style={{ marginTop: '2rem' }}>
+          <h5>Eliminatorias</h5>
+          <EliminationBracket bracket={bracket} />
+        </div>
+      )}
 
       {user && user.role === 'user' && (
         <div style={{ marginTop: '2rem' }}>
