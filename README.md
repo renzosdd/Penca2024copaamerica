@@ -105,10 +105,10 @@ Con esta estructura puedes navegar fácilmente por cada componente de la aplicac
 ## Administración de resultados
 
 Los administradores registran los marcadores finales desde `/admin/edit` en el
-apartado **Matches**. Cada vez que se guarda un resultado el sistema actualiza
-de forma automática las llaves de eliminación directa. También existe el
-endpoint `/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel)
-para forzar manualmente el recálculo si fuera necesario.
+apartado **Matches**. Al guardar un resultado la aplicación actualiza
+automáticamente la llave del knockout. El endpoint
+`/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel) queda
+como opción de respaldo para recalcular manualmente si fuera necesario.
 
 ### Ejemplo de uso
 
