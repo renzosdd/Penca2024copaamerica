@@ -32,7 +32,7 @@ export default function Login() {
   };
 
   return (
-    <div className="container" style={{ maxWidth: '400px', marginTop: '2rem' }}>
+    <div className="login-container card">
       <h5>Iniciar Sesión</h5>
       <form onSubmit={handleSubmit}>
         <div className="input-field">
@@ -43,7 +43,7 @@ export default function Login() {
           <input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           <label htmlFor="login-password" className="active">Contraseña</label>
         </div>
-        <button className="btn" type="submit" style={{ width: '100%' }}>Ingresar</button>
+        <button className="btn" type="submit">Ingresar</button>
       </form>
       {error && (
         <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>
