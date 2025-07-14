@@ -82,6 +82,7 @@ async function calculateScores(pencaId, competition) {
         });
     }
 
+    scores.sort((a, b) => b.score - a.score);
     return scores;
 }
 
