@@ -55,28 +55,76 @@ async function updateEliminationMatches(competition) {
         return standings[`Grupo ${group}`] && standings[`Grupo ${group}`][pos] && standings[`Grupo ${group}`][pos].team;
     }
 
-    const pairs = [
-        ['Ganador A', team('A', 0)],
-        ['Segundo A', team('A', 1)],
-        ['Ganador B', team('B', 0)],
-        ['Segundo B', team('B', 1)],
-        ['Ganador C', team('C', 0)],
-        ['Segundo C', team('C', 1)],
-        ['Ganador D', team('D', 0)],
-        ['Segundo D', team('D', 1)]
-    ];
+    const groupLetters = Object.keys(standings).map(g => g.replace('Grupo ', '')).sort();
 
-    for (const [placeholder, realTeam] of pairs) {
-        if (realTeam) {
+    if (groupLetters.length > 4) {
+        // Mundial 2026 style with Round of 32
+        const r32Pairs = [
+            ['A1', team('A', 0)], ['B2', team('B', 1)],
+            ['C1', team('C', 0)], ['D2', team('D', 1)],
+            ['E1', team('E', 0)], ['F2', team('F', 1)],
+            ['G1', team('G', 0)], ['H2', team('H', 1)],
+            ['I1', team('I', 0)], ['J2', team('J', 1)],
+            ['K1', team('K', 0)], ['L2', team('L', 1)],
+            ['B1', team('B', 0)], ['A2', team('A', 1)],
+            ['D1', team('D', 0)], ['C2', team('C', 1)],
+            ['F1', team('F', 0)], ['E2', team('E', 1)],
+            ['H1', team('H', 0)], ['G2', team('G', 1)],
+            ['J1', team('J', 0)], ['I2', team('I', 1)],
+            ['L1', team('L', 0)], ['K2', team('K', 1)]
+        ];
+
+        for (const [placeholder, realTeam] of r32Pairs) {
+            if (realTeam) {
+                await Match.updateOne(
+                    { competition, group_name: 'Ronda de 32', $or: [{ team1: placeholder }, { team2: placeholder }] },
+                    [{
+                        $set: {
+                            team1: { $cond: [{ $eq: ['$team1', placeholder] }, realTeam, '$team1'] },
+                            team2: { $cond: [{ $eq: ['$team2', placeholder] }, realTeam, '$team2'] }
+                        }
+                    }]
+                );
+            }
+        }
+
+        const thirdRank = rankThirdPlacedTeams(standings).slice(0, 8);
+        for (const t of thirdRank) {
             await Match.updateOne(
-                { competition, group_name: 'Cuartos de final', $or: [{ team1: placeholder }, { team2: placeholder }] },
+                { competition, group_name: 'Ronda de 32', $or: [{ team1: `${t.group}3` }, { team2: `${t.group}3` }] },
                 [{
                     $set: {
-                        team1: { $cond: [{ $eq: ['$team1', placeholder] }, realTeam, '$team1'] },
-                        team2: { $cond: [{ $eq: ['$team2', placeholder] }, realTeam, '$team2'] }
+                        team1: { $cond: [{ $eq: ['$team1', `${t.group}3`] }, t.team, '$team1'] },
+                        team2: { $cond: [{ $eq: ['$team2', `${t.group}3`] }, t.team, '$team2'] }
                     }
                 }]
             );
+        }
+    } else {
+        // Copa America style with 4 groups
+        const pairs = [
+            ['Ganador A', team('A', 0)],
+            ['Segundo A', team('A', 1)],
+            ['Ganador B', team('B', 0)],
+            ['Segundo B', team('B', 1)],
+            ['Ganador C', team('C', 0)],
+            ['Segundo C', team('C', 1)],
+            ['Ganador D', team('D', 0)],
+            ['Segundo D', team('D', 1)]
+        ];
+
+        for (const [placeholder, realTeam] of pairs) {
+            if (realTeam) {
+                await Match.updateOne(
+                    { competition, group_name: 'Cuartos de final', $or: [{ team1: placeholder }, { team2: placeholder }] },
+                    [{
+                        $set: {
+                            team1: { $cond: [{ $eq: ['$team1', placeholder] }, realTeam, '$team1'] },
+                            team2: { $cond: [{ $eq: ['$team2', placeholder] }, realTeam, '$team2'] }
+                        }
+                    }]
+                );
+            }
         }
     }
 
@@ -139,4 +187,25 @@ async function updateEliminationMatches(competition) {
     }
 }
 
-module.exports = { calculateGroupStandings, updateEliminationMatches };
+function rankThirdPlacedTeams(standings) {
+    const thirds = [];
+    for (const [group, teams] of Object.entries(standings)) {
+        if (teams[2]) {
+            thirds.push({
+                group: group.replace('Grupo ', ''),
+                team: teams[2].team,
+                points: teams[2].points,
+                gd: teams[2].gd,
+                gf: teams[2].gf
+            });
+        }
+    }
+    thirds.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.gd !== a.gd) return b.gd - a.gd;
+        return b.gf - a.gf;
+    });
+    return thirds;
+}
+
+module.exports = { calculateGroupStandings, updateEliminationMatches, rankThirdPlacedTeams };
