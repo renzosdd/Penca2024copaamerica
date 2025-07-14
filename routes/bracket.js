@@ -1,0 +1,33 @@
+const express = require('express');
+const router = express.Router();
+const Match = require('../models/Match');
+
+function labelRound(name) {
+  const n = name.toLowerCase();
+  if (n.includes('cuartos')) return 'Cuartos de final';
+  if (n.includes('semi')) return 'Semifinales';
+  if (n.includes('tercer')) return 'Tercer puesto';
+  if (n.includes('final')) return 'Final';
+  return null;
+}
+
+router.get('/:competition', async (req, res) => {
+  try {
+    const matches = await Match.find({ competition: req.params.competition });
+    const bracket = {};
+    for (const m of matches) {
+      const round = labelRound(m.group_name || '');
+      if (!round) continue;
+      bracket[round] = bracket[round] || [];
+      bracket[round].push(m);
+    }
+    Object.values(bracket).forEach(arr =>
+      arr.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`))
+    );
+    res.json(bracket);
+  } catch (err) {
+    res.status(500).json({ error: 'Error retrieving bracket' });
+  }
+});
+
+module.exports = router;
