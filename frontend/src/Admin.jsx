@@ -299,6 +299,7 @@ export default function Admin() {
             {pencas.map(p => (
               <li key={p._id} className="collection-item">
                 <input type="text" value={p.name || ''} onChange={e => updatePencaField(p._id, 'name', e.target.value)} />
+                <input type="text" value={p.code || ''} readOnly style={{ marginLeft: '10px', width: '90px' }} />
                 <select value={p.owner} onChange={e => updatePencaField(p._id, 'owner', e.target.value)} style={{ marginLeft: '10px' }}>
                   {owners.map(o => (
                     <option key={o._id} value={o._id}>{o.username}</option>

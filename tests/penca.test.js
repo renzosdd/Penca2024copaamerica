@@ -111,3 +111,39 @@ describe('Penca participant approval and removal', () => {
     expect(User.updateOne).toHaveBeenCalledWith({ _id: 'u2' }, { $pull: { pencas: penca._id } });
   });
 });
+
+describe('Penca listing includes code', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns code when listing all pencas', async () => {
+    const query = { select: jest.fn().mockResolvedValue([{ name: 'P1', code: 'ABCD' }]) };
+    Penca.find = jest.fn().mockReturnValue(query);
+
+    const app = express();
+    app.use('/pencas', pencaRouter);
+
+    const res = await request(app).get('/pencas');
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toHaveProperty('code', 'ABCD');
+  });
+
+  it('returns code for owner pencas', async () => {
+    const pencaData = [{ name: 'P2', code: 'EFGH', participants: [], pendingRequests: [] }];
+    const query = { select: jest.fn(() => query), populate: jest.fn() };
+    query.select.mockReturnValue(query);
+    query.populate
+      .mockReturnValueOnce(query)
+      .mockResolvedValueOnce(pencaData);
+    Penca.find = jest.fn().mockReturnValue(query);
+
+    const app = express();
+    app.use((req, res, next) => { req.session = { user: { _id: 'o1' } }; next(); });
+    app.use('/pencas', pencaRouter);
+
+    const res = await request(app).get('/pencas/mine');
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toHaveProperty('code', 'EFGH');
+  });
+});

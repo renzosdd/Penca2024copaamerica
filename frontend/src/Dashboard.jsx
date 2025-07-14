@@ -249,7 +249,7 @@ export default function Dashboard() {
 
       {user && user.role === 'owner' && ownerPencas.map(op => (
         <div key={op._id} style={{ marginTop: '2rem' }}>
-          <h6>{op.name}</h6>
+          <h6>{op.name} - {op.code}</h6>
           <h6>Solicitudes</h6>
           <ul className="collection">
             {op.pendingRequests.map(u => (

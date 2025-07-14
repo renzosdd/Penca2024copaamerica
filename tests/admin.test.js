@@ -85,6 +85,23 @@ describe('Admin penca creation', () => {
   });
 });
 
+describe('Admin penca listing', () => {
+  afterEach(() => jest.clearAllMocks());
+
+  it('lists pencas with codes', async () => {
+    const query = { select: jest.fn().mockResolvedValue([{ name: 'P1', code: 'ABCD' }]) };
+    Penca.find.mockReturnValue(query);
+
+    const app = express();
+    app.use('/admin', adminRouter);
+
+    const res = await request(app).get('/admin/pencas');
+
+    expect(res.status).toBe(200);
+    expect(res.body[0]).toHaveProperty('code', 'ABCD');
+  });
+});
+
 describe('Admin competition creation', () => {
   afterEach(() => jest.clearAllMocks());
 
