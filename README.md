@@ -54,6 +54,27 @@ Si modificas el frontend de React, genera los archivos estáticos con:
 cd frontend && npm run build
 ```
 
+## Bracket MUI Prototype
+
+El proyecto incluye un componente de prueba que utiliza la librería
+`@g-loot/react-tournament-brackets` con estilos de **MUI**. Para visualizarlo
+en el dashboard necesitas instalar las dependencias adicionales del frontend:
+
+```bash
+cd frontend
+npm install @mui/material @emotion/react @emotion/styled \
+  @g-loot/react-tournament-brackets
+```
+
+Luego inicia el servidor de desarrollo de Vite:
+
+```bash
+npm run dev
+```
+
+Al entrar al panel se mostrará un bloque llamado *Bracket Prototype* con la
+llave de eliminatorias.
+
 En Vercel la compilación del frontend se realiza automáticamente durante el despliegue con `npm run vercel-build` y la carpeta `frontend/dist` queda disponible en producción.
 
 
