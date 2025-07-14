@@ -29,4 +29,22 @@ router.post('/:id', isAdmin, async (req, res) => {
     }
 });
 
+router.put('/:id', isAdmin, async (req, res) => {
+    try {
+        const { team1, team2, date, time } = req.body;
+        const match = await Match.findById(req.params.id);
+        if (!match) {
+            return res.status(404).json({ error: 'Match not found' });
+        }
+        if (team1 !== undefined) match.team1 = team1;
+        if (team2 !== undefined) match.team2 = team2;
+        if (date !== undefined) match.date = date;
+        if (time !== undefined) match.time = time;
+        await match.save();
+        res.json({ message: 'Match updated' });
+    } catch (err) {
+        res.status(500).json({ error: 'Error updating match' });
+    }
+});
+
 module.exports = router;

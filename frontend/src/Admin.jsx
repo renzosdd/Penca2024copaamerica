@@ -4,6 +4,7 @@ export default function Admin() {
   const [competitions, setCompetitions] = useState([]);
   const [owners, setOwners] = useState([]);
   const [pencas, setPencas] = useState([]);
+  const [matches, setMatches] = useState([]);
 
   const [newCompetition, setNewCompetition] = useState('');
   const [competitionFile, setCompetitionFile] = useState(null);
@@ -15,7 +16,7 @@ export default function Admin() {
   }, []);
 
   async function loadAll() {
-    await Promise.all([loadCompetitions(), loadOwners(), loadPencas()]);
+    await Promise.all([loadCompetitions(), loadOwners(), loadPencas(), loadMatches()]);
   }
 
   async function loadCompetitions() {
@@ -42,6 +43,15 @@ export default function Admin() {
       if (res.ok) setPencas(await res.json());
     } catch (err) {
       console.error('load pencas error', err);
+    }
+  }
+
+  async function loadMatches() {
+    try {
+      const res = await fetch('/matches');
+      if (res.ok) setMatches(await res.json());
+    } catch (err) {
+      console.error('load matches error', err);
     }
   }
 
@@ -184,6 +194,24 @@ export default function Admin() {
     }
   }
 
+  const updateMatchField = (id, field, value) => {
+    setMatches(ms => ms.map(m => m._id === id ? { ...m, [field]: value } : m));
+  };
+
+  async function saveMatch(match) {
+    try {
+      const { team1, team2, date, time } = match;
+      const res = await fetch(`/matches/${match._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team1, team2, date, time })
+      });
+      if (res.ok) loadMatches();
+    } catch (err) {
+      console.error('update match error', err);
+    }
+  }
+
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>Administración</h5>
@@ -262,9 +290,24 @@ export default function Admin() {
               <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); savePenca(p); }}>💾</a>
               <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deletePenca(p._id); }}>✖</a>
             </li>
-          ))}
-        </ul>
-      </section>
-    </div>
+      ))}
+      </ul>
+    </section>
+
+    <section style={{ marginTop: '2rem' }}>
+      <h6>Matches</h6>
+      <ul className="collection">
+        {matches.map(m => (
+          <li key={m._id} className="collection-item">
+            <input type="text" value={m.team1 || ''} onChange={e => updateMatchField(m._id, 'team1', e.target.value)} />
+            <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
+            <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
+            <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
+            <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
   );
 }
