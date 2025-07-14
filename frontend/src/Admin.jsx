@@ -6,6 +6,7 @@ export default function Admin() {
   const [pencas, setPencas] = useState([]);
 
   const [newCompetition, setNewCompetition] = useState('');
+  const [competitionFile, setCompetitionFile] = useState(null);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '' });
 
@@ -47,13 +48,16 @@ export default function Admin() {
   async function createCompetition(e) {
     e.preventDefault();
     try {
+      const data = new FormData();
+      data.append('name', newCompetition);
+      if (competitionFile) data.append('fixture', competitionFile);
       const res = await fetch('/admin/competitions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newCompetition })
+        body: data
       });
       if (res.ok) {
         setNewCompetition('');
+        setCompetitionFile(null);
         loadCompetitions();
       }
     } catch (err) {
@@ -131,16 +135,21 @@ export default function Admin() {
     }
   }
 
+  const [pencaFile, setPencaFile] = useState(null);
+
   async function createPenca(e) {
     e.preventDefault();
     try {
+      const data = new FormData();
+      Object.entries(pencaForm).forEach(([k, v]) => data.append(k, v));
+      if (pencaFile) data.append('fixture', pencaFile);
       const res = await fetch('/admin/pencas', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pencaForm)
+        body: data
       });
       if (res.ok) {
         setPencaForm({ name: '', owner: '', competition: '' });
+        setPencaFile(null);
         loadPencas();
       }
     } catch (err) {
@@ -183,6 +192,7 @@ export default function Admin() {
         <h6>Competencias</h6>
         <form onSubmit={createCompetition} style={{ marginBottom: '1rem' }}>
           <input type="text" value={newCompetition} onChange={e => setNewCompetition(e.target.value)} placeholder="Nombre" required />
+          <input type="file" accept=".json" onChange={e => setCompetitionFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
           <button className="btn" type="submit" style={{ marginLeft: '10px' }}>Crear</button>
         </form>
         <ul className="collection">
@@ -232,6 +242,7 @@ export default function Admin() {
               <option key={c._id} value={c.name}>{c.name}</option>
             ))}
           </select>
+          <input type="file" accept=".json" onChange={e => setPencaFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
           <button className="btn" type="submit" style={{ marginLeft: '10px' }}>Crear</button>
         </form>
         <ul className="collection">
