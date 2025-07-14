@@ -42,4 +42,23 @@ describe('Predictions Routes', () => {
     expect(res.body.message).toBe('Predicción guardada');
     expect(Prediction).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1', matchId: 'm1' }));
   });
+
+  it('rejects prediction when match is less than 30 minutes away', async () => {
+    Prediction.findOne.mockResolvedValue(null);
+    const soon = new Date(Date.now() + 15 * 60 * 1000);
+    const date = soon.toISOString().split('T')[0];
+    const time = soon.toTimeString().slice(0,5);
+    Match.findById.mockResolvedValue({ date, time });
+
+    const app = express();
+    app.use(express.json());
+    app.use((req, res, next) => { req.session = { user: { _id: 'u1', username: 'tester' } }; next(); });
+    app.use('/predictions', predictionsRouter);
+
+    const res = await request(app)
+      .post('/predictions')
+      .send({ matchId: 'm1', result1: 2, result2: 1 });
+
+    expect(res.status).toBe(400);
+  });
 });
