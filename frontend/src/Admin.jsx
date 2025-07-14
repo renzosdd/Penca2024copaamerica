@@ -195,18 +195,34 @@ export default function Admin() {
   }
 
   const updateMatchField = (id, field, value) => {
-    setMatches(ms => ms.map(m => m._id === id ? { ...m, [field]: value } : m));
+    // only allow numeric values for result inputs but keep empty string
+    if (field === 'result1' || field === 'result2') {
+      if (value === '' || /^\d*$/.test(value)) {
+        setMatches(ms => ms.map(m => m._id === id ? { ...m, [field]: value } : m));
+      }
+    } else {
+      setMatches(ms => ms.map(m => m._id === id ? { ...m, [field]: value } : m));
+    }
   };
 
   async function saveMatch(match) {
     try {
       const { team1, team2, date, time } = match;
-      const res = await fetch(`/matches/${match._id}`, {
+      const resInfo = await fetch(`/matches/${match._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ team1, team2, date, time })
       });
-      if (res.ok) loadMatches();
+
+      const res1 = match.result1 === '' ? null : Number(match.result1);
+      const res2 = match.result2 === '' ? null : Number(match.result2);
+      const resScore = await fetch(`/matches/${match._id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ result1: res1, result2: res2 })
+      });
+
+      if (resInfo.ok && resScore.ok) loadMatches();
     } catch (err) {
       console.error('update match error', err);
     }
@@ -303,6 +319,8 @@ export default function Admin() {
             <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
             <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
             <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
+            <input type="number" value={m.result1 ?? ''} onChange={e => updateMatchField(m._id, 'result1', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
+            <input type="number" value={m.result2 ?? ''} onChange={e => updateMatchField(m._id, 'result2', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
             <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
           </li>
         ))}
