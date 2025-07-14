@@ -81,6 +81,27 @@ El esquema `Penca` permite organizar competiciones privadas. Los usuarios se une
 
 Con esta estructura puedes navegar fácilmente por cada componente de la aplicación.
 
+## Administración de resultados
+
+Los administradores registran los marcadores finales desde `/admin/edit` en el
+apartado **Matches**. Al finalizar la fase de grupos se ejecuta el endpoint
+`/admin/recalculate-bracket` (disponible como botón *Recalcular bracket* en el
+panel) para generar los cruces de eliminación directa.
+
+### Ejemplo de uso
+
+1. Ingresa el resultado de cada encuentro y guarda los cambios.
+2. Cuando todos los grupos tengan sus marcadores presiona **Recalcular bracket**.
+3. Consulta `/bracket` para ver la llave con los enfrentamientos
+   actualizados.
+
+## Nuevos endpoints
+
+- `GET /groups` – devuelve las tablas de posiciones actuales.
+- `GET /bracket` – muestra la llave del knockout según la última recalculación.
+- `POST /admin/recalculate-bracket` – fuerza el nuevo cálculo del bracket con
+  los resultados cargados.
+
 ## Pruebas
 
 
@@ -99,4 +120,14 @@ Para lanzar todas las pruebas:
 
 ```bash
 npm test
+```
+
+## Desarrollo
+
+Todo el código sigue las reglas del estilo **Google‑2025**. Si modificas los
+componentes de React, recuerda reconstruir el frontend para que Express pueda
+servir la última versión:
+
+```bash
+cd frontend && npm run build
 ```
