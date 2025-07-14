@@ -150,10 +150,23 @@ export default function Dashboard() {
   };
 
   const filterMatches = p => {
+    let list = [];
     if (Array.isArray(p.fixture) && p.fixture.length) {
-      return matches.filter(m => p.fixture.includes(m._id));
+      list = matches.filter(m => p.fixture.includes(m._id));
+    } else {
+      list = matches.filter(m => m.competition === p.competition);
     }
-    return matches.filter(m => m.competition === p.competition);
+    list.sort(
+      (a, b) =>
+        new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`)
+    );
+    const grouped = {};
+    list.forEach(m => {
+      const g = m.group_name || 'Otros';
+      if (!grouped[g]) grouped[g] = [];
+      grouped[g].push(m);
+    });
+    return grouped;
   };
 
   return (
@@ -176,36 +189,88 @@ export default function Dashboard() {
             {open === p._id && (
               <Card style={{ marginTop: '0', borderTop: 'none', padding: '1rem' }}>
                 <CardContent>
-                {pMatches.map(m => {
-                  const pr = getPrediction(p._id, m._id) || {};
-                  return (
-                    <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
-                      <CardContent>
-                        <div className="match-header">
-                          <div className="team">
-                            <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
-                            <span className="team-name">{m.team1}</span>
-                          </div>
-                          <span className="vs">vs</span>
-                          <div className="team">
-                            <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
-                            <span className="team-name">{m.team2}</span>
-                          </div>
+                {Object.keys(pMatches)
+                  .filter(g => g.startsWith('Grupo'))
+                  .sort()
+                  .map(g => (
+                    <div key={g} style={{ marginBottom: '1rem' }}>
+                      <h6>{g}</h6>
+                      {pMatches[g].map(m => {
+                        const pr = getPrediction(p._id, m._id) || {};
+                        return (
+                          <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
+                            <CardContent>
+                              <div className="match-header">
+                                <div className="team">
+                                  <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
+                                  <span className="team-name">{m.team1}</span>
+                                </div>
+                                <span className="vs">vs</span>
+                                <div className="team">
+                                  <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
+                                  <span className="team-name">{m.team2}</span>
+                                </div>
+                              </div>
+                              <div className="match-details">
+                                <form onSubmit={e => handlePrediction(e, p._id, m._id)}>
+                                  <div className="input-field inline">
+                                    <input name="result1" type="number" defaultValue={pr.result1 || ''} required />
+                                    <span>-</span>
+                                    <input name="result2" type="number" defaultValue={pr.result2 || ''} required />
+                                  </div>
+                                  <Button variant="contained" type="submit">Guardar</Button>
+                                </form>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  ))}
+
+                {!bracket && (
+                  <div style={{ marginTop: '1rem' }}>
+                    <h6>Eliminatorias</h6>
+                    {['Cuartos de final', 'Semifinales', 'Tercer puesto', 'Final']
+                      .filter(r => pMatches[r])
+                      .map(r => (
+                        <div key={r} style={{ marginBottom: '1rem' }}>
+                          <h6>{r}</h6>
+                          {pMatches[r].map(m => {
+                            const pr = getPrediction(p._id, m._id) || {};
+                            return (
+                              <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
+                                <CardContent>
+                                  <div className="match-header">
+                                    <div className="team">
+                                      <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
+                                      <span className="team-name">{m.team1}</span>
+                                    </div>
+                                    <span className="vs">vs</span>
+                                    <div className="team">
+                                      <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
+                                      <span className="team-name">{m.team2}</span>
+                                    </div>
+                                  </div>
+                                  <div className="match-details">
+                                    <form onSubmit={e => handlePrediction(e, p._id, m._id)}>
+                                      <div className="input-field inline">
+                                        <input name="result1" type="number" defaultValue={pr.result1 || ''} required />
+                                        <span>-</span>
+                                        <input name="result2" type="number" defaultValue={pr.result2 || ''} required />
+                                      </div>
+                                      <Button variant="contained" type="submit">Guardar</Button>
+                                    </form>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
                         </div>
-                        <div className="match-details">
-                          <form onSubmit={e => handlePrediction(e, p._id, m._id)}>
-                            <div className="input-field inline">
-                              <input name="result1" type="number" defaultValue={pr.result1 || ''} required />
-                              <span>-</span>
-                              <input name="result2" type="number" defaultValue={pr.result2 || ''} required />
-                            </div>
-                            <Button variant="contained" type="submit">Guardar</Button>
-                          </form>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                      ))}
+                  </div>
+                )}
+
                 <div style={{ marginTop: '1rem' }}>
                   <h6>Ranking</h6>
                   <ul className="collection">
