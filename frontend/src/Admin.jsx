@@ -311,18 +311,18 @@ export default function Admin() {
           <h6>Pencas</h6>
           <form onSubmit={createPenca} style={{ marginBottom: '1rem' }}>
             <input type="text" value={pencaForm.name} onChange={e => setPencaForm({ ...pencaForm, name: e.target.value })} placeholder="Nombre" required />
-            <select value={pencaForm.owner} onChange={e => setPencaForm({ ...pencaForm, owner: e.target.value })} required>
+            <Select value={pencaForm.owner} onChange={e => setPencaForm({ ...pencaForm, owner: e.target.value })} required>
               <option value="" disabled>Owner</option>
               {owners.map(o => (
                 <option key={o._id} value={o._id}>{o.username}</option>
               ))}
-            </select>
-            <select value={pencaForm.competition} onChange={e => setPencaForm({ ...pencaForm, competition: e.target.value })} required style={{ marginLeft: '10px' }}>
+            </Select>
+            <Select value={pencaForm.competition} onChange={e => setPencaForm({ ...pencaForm, competition: e.target.value })} required style={{ marginLeft: '10px' }}>
               <option value="" disabled>Competencia</option>
               {competitions.map(c => (
                 <option key={c._id} value={c.name}>{c.name}</option>
               ))}
-            </select>
+            </Select>
             <FormControlLabel
               control={<Checkbox checked={pencaForm.isPublic} onChange={e => setPencaForm({ ...pencaForm, isPublic: e.target.checked })} />}
               label="Pública"
@@ -336,16 +336,16 @@ export default function Admin() {
               <li key={p._id} className="collection-item">
                 <input type="text" value={p.name || ''} onChange={e => updatePencaField(p._id, 'name', e.target.value)} />
                 <input type="text" value={p.code || ''} readOnly style={{ marginLeft: '10px', width: '90px' }} />
-                <select value={p.owner} onChange={e => updatePencaField(p._id, 'owner', e.target.value)} style={{ marginLeft: '10px' }}>
+                <Select value={p.owner} onChange={e => updatePencaField(p._id, 'owner', e.target.value)} style={{ marginLeft: '10px' }}>
                   {owners.map(o => (
                     <option key={o._id} value={o._id}>{o.username}</option>
                   ))}
-                </select>
-                <select value={p.competition} onChange={e => updatePencaField(p._id, 'competition', e.target.value)} style={{ marginLeft: '10px' }}>
+                </Select>
+                <Select value={p.competition} onChange={e => updatePencaField(p._id, 'competition', e.target.value)} style={{ marginLeft: '10px' }}>
                   {competitions.map(c => (
                     <option key={c._id} value={c.name}>{c.name}</option>
                   ))}
-                </select>
+                </Select>
                 <FormControlLabel
                   control={<Checkbox checked={p.isPublic || false} onChange={e => updatePencaField(p._id, 'isPublic', e.target.checked)} />}
                   label="Pública"
