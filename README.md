@@ -138,7 +138,8 @@ npm ci
 cd frontend && npm ci
 ```
 
-En entornos de integración continua puedes ejecutar el script `scripts/setup-tests.sh` o utilizar `npm ci` para garantizar instalaciones reproducibles.
+En entornos de integración continua puedes ejecutar el script `scripts/setup-tests.sh` o utilizar `npm ci` para garantizar instalaciones reproducibles. Este repositorio incluye
+un workflow de GitHub Actions (`.github/workflows/ci.yml`) que instala las dependencias con `npm ci` antes de ejecutar `npm test`.
 
 Para lanzar todas las pruebas:
 
