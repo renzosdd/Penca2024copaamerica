@@ -100,6 +100,8 @@ Los partidos ya no se insertan automáticamente al iniciar la aplicación. Debes
 
 El esquema `Penca` permite organizar competiciones privadas. Los usuarios se unen con un código y el propietario decide aprobar o eliminar participantes.
 
+Los owners cuentan con un panel propio disponible en `/owner` para administrar sus pencas. Desde allí pueden aprobar o rechazar solicitudes de ingreso y revisar el ranking de cada penca.
+
 Con esta estructura puedes navegar fácilmente por cada componente de la aplicación.
 
 ## Administración de resultados
@@ -122,6 +124,7 @@ como opción de respaldo para recalcular manualmente si fuera necesario.
 - `GET /bracket` – muestra la llave del knockout según la última recalculación.
 - `POST /admin/recalculate-bracket` – fuerza el nuevo cálculo del bracket con
   los resultados cargados.
+- `GET /api/owner` – devuelve las pencas administradas por el owner autenticado.
 
 ## Pruebas
 
