@@ -8,6 +8,7 @@ import {
   AccordionDetails,
   Typography
 } from '@mui/material';
+import GroupTable from './GroupTable';
 
 
 export default function Admin() {
@@ -15,6 +16,7 @@ export default function Admin() {
   const [owners, setOwners] = useState([]);
   const [pencas, setPencas] = useState([]);
   const [matches, setMatches] = useState([]);
+  const [groups, setGroups] = useState({});
 
   const [newCompetition, setNewCompetition] = useState('');
   const [competitionFile, setCompetitionFile] = useState(null);
@@ -59,10 +61,30 @@ export default function Admin() {
   async function loadMatches() {
     try {
       const res = await fetch('/matches');
-      if (res.ok) setMatches(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setMatches(data);
+        const comps = Array.from(new Set(data.map(m => m.competition)));
+        if (comps.length) await loadGroups(comps);
+      }
     } catch (err) {
       console.error('load matches error', err);
     }
+  }
+
+  async function loadGroups(comps) {
+    const result = {};
+    await Promise.all(
+      comps.map(async c => {
+        try {
+          const r = await fetch(`/groups/${encodeURIComponent(c)}`);
+          if (r.ok) result[c] = await r.json();
+        } catch (err) {
+          console.error('load groups error', err);
+        }
+      })
+    );
+    setGroups(result);
   }
 
   async function createCompetition(e) {
@@ -361,6 +383,11 @@ export default function Admin() {
                     </li>
                   ))}
                 </ul>
+                {(() => {
+                  const comp = groupedMatches[g][0]?.competition;
+                  const t = groups[comp]?.filter(gr => gr.group === g) || [];
+                  return t.length ? <GroupTable groups={t} /> : null;
+                })()}
               </AccordionDetails>
             </Accordion>
           ))}
