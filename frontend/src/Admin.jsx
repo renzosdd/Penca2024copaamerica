@@ -8,6 +8,7 @@ import {
   AccordionDetails,
   Typography
 } from '@mui/material';
+import roundOrder from './roundOrder';
 
 
 export default function Admin() {
@@ -342,7 +343,16 @@ export default function Admin() {
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
           <h6>Matches</h6>
-          {Object.keys(groupedMatches).sort().map(g => (
+          {Object.keys(groupedMatches)
+            .sort((a, b) => {
+              const ai = roundOrder.indexOf(a);
+              const bi = roundOrder.indexOf(b);
+              if (ai === -1 && bi === -1) return a.localeCompare(b);
+              if (ai === -1) return 1;
+              if (bi === -1) return -1;
+              return ai - bi;
+            })
+            .map(g => (
             <Accordion key={g} sx={{ marginTop: '1rem' }}>
               <AccordionSummary expandIcon="\u25BC">
                 <Typography variant="subtitle1">{g}</Typography>
