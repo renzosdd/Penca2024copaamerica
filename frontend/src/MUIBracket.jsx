@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import { SingleEliminationBracket, Match } from '@g-loot/react-tournament-brackets';
+import roundOrder from './roundOrder';
 
 export default function MUIBracket({ bracket }) {
   const matches = useMemo(() => {
     if (!bracket) return [];
-    const rounds = ['Cuartos de final', 'Semifinales', 'Tercer puesto', 'Final'];
+    const rounds = roundOrder.slice(4);
     let id = 1;
     const list = [];
     for (const round of rounds) {
