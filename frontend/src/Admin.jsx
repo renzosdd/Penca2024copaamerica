@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, CardContent } from '@mui/material';
+import { Button, Card, CardContent, Accordion, AccordionSummary, AccordionDetails, Typography } from '@mui/material';
 
 export default function Admin() {
   const [competitions, setCompetitions] = useState([]);
@@ -233,25 +233,30 @@ export default function Admin() {
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>Administración</h5>
 
-      <Card style={{ marginTop: '2rem', padding: '1rem' }}>
-        <CardContent>
-          <h6>Competencias</h6>
+      <Accordion className="admin-accordion" style={{ marginTop: '2rem' }}>
+        <AccordionSummary expandIcon="▶">
+          <Typography variant="subtitle1">Competencias</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
           <form onSubmit={createCompetition} style={{ marginBottom: '1rem' }}>
             <input type="text" value={newCompetition} onChange={e => setNewCompetition(e.target.value)} placeholder="Nombre" required />
             <input type="file" accept=".json" onChange={e => setCompetitionFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
             <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>Crear</Button>
           </form>
-          <ul className="collection">
-            {competitions.map(c => (
-              <li key={c._id} className="collection-item">
+          {competitions.map(c => (
+            <Accordion key={c._id} className="competition-item">
+              <AccordionSummary expandIcon="▶">
+                <Typography>{c.name}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
                 <input type="text" value={c.name} onChange={e => updateCompetitionField(c._id, e.target.value)} />
                 <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveCompetition(c); }}>💾</a>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteCompetition(c._id); }}>✖</a>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </AccordionDetails>
+      </Accordion>
 
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
