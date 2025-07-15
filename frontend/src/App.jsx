@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './Login';
+import Register from './Register';
 import Dashboard from './Dashboard';
 import Admin from './Admin';
 import OwnerPanel from './OwnerPanel';
@@ -12,6 +13,7 @@ export default function App() {
       <Header />
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/owner" element={<OwnerPanel />} />
         <Route path="/admin/edit" element={<Admin />} />
