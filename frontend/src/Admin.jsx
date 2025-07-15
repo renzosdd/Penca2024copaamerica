@@ -417,6 +417,7 @@ export default function Admin() {
               sx={{ ml: 1, minWidth: 120 }}
             >
               <MenuItem value="" disabled>Competencia</MenuItem>
+
               {competitions.map(c => (
                 <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
               ))}
