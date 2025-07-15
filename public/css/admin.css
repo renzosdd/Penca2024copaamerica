@@ -37,26 +37,6 @@ h3 {
     color: #002f6c; /* Azul oscuro */
 }
 
-.input-field {
-    margin-bottom: 20px;
-}
-
-.btn {
-    background-color: #ffd100; /* Amarillo */
-    border-radius: 25px;
-}
-
-.btn:hover {
-    background-color: #e6b800; /* Amarillo más oscuro */
-}
-
-.file-field .btn {
-    background-color: #002f6c; /* Azul oscuro */
-}
-
-.file-field .btn:hover {
-    background-color: #001c48; /* Azul oscuro más oscuro */
-}
 
 .tabs .tab a {
     color: #002f6c; /* Azul oscuro */

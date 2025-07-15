@@ -141,23 +141,7 @@ footer {
     margin-right: 5px;
 }
 
-.input-field.inline input {
-    width: 50px;
-    margin-right: 5px;
-    text-align: center;
-}
-
 /* === Buttons & Tabs === */
-.btn {
-    background-color: #6200ee;
-    color: #ffffff;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
-}
-
-.btn:hover {
-    background-color: #5800d6;
-}
 
 .tabs .tab a {
     color: #002f6c;
@@ -210,13 +194,6 @@ footer {
     text-align: center;
 }
 
-.login-container .input-field {
-    margin-bottom: 20px;
-}
-
-.login-container .btn {
-    width: 100%;
-}
 
 /* === Modal === */
 .modal {
@@ -271,9 +248,6 @@ footer {
     height: 60px;
 }
 
-.btn-block {
-    width: 100%;
-}
 
 .collection-item.rank-1 {
     background: linear-gradient(to right, #ffe082, #fff8e1);
@@ -356,8 +330,3 @@ footer {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.input-field input {
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    padding: 0.5rem;
-}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import GroupTable from './GroupTable';
 import EliminationBracket from './EliminationBracket';
-import { Button, Card, CardContent } from '@mui/material';
+import { Button, Card, CardContent, TextField } from '@mui/material';
 import MUIBracket from './MUIBracket';
 import roundOrder from './roundOrder';
 
@@ -238,9 +238,23 @@ export default function Dashboard() {
                               <div className="match-details">
                                 <form onSubmit={e => handlePrediction(e, p._id, m._id)}>
                                   <div className="input-field inline">
-                                    <input name="result1" type="number" defaultValue={pr.result1 || ''} required />
+                                    <TextField
+                                      name="result1"
+                                      type="number"
+                                      defaultValue={pr.result1 || ''}
+                                      required
+                                      size="small"
+                                      sx={{ width: 60 }}
+                                    />
                                     <span>-</span>
-                                    <input name="result2" type="number" defaultValue={pr.result2 || ''} required />
+                                    <TextField
+                                      name="result2"
+                                      type="number"
+                                      defaultValue={pr.result2 || ''}
+                                      required
+                                      size="small"
+                                      sx={{ width: 60, ml: 1 }}
+                                    />
                                   </div>
                                   <Button variant="contained" type="submit">Guardar</Button>
                                 </form>
@@ -285,9 +299,23 @@ export default function Dashboard() {
                                   <div className="match-details">
                                     <form onSubmit={e => handlePrediction(e, p._id, m._id)}>
                                       <div className="input-field inline">
-                                        <input name="result1" type="number" defaultValue={pr.result1 || ''} required />
+                                        <TextField
+                                          name="result1"
+                                          type="number"
+                                          defaultValue={pr.result1 || ''}
+                                          required
+                                          size="small"
+                                          sx={{ width: 60 }}
+                                        />
                                         <span>-</span>
-                                        <input name="result2" type="number" defaultValue={pr.result2 || ''} required />
+                                        <TextField
+                                          name="result2"
+                                          type="number"
+                                          defaultValue={pr.result2 || ''}
+                                          required
+                                          size="small"
+                                          sx={{ width: 60, ml: 1 }}
+                                        />
                                       </div>
                                       <Button variant="contained" type="submit">Guardar</Button>
                                     </form>
@@ -330,8 +358,13 @@ export default function Dashboard() {
       {user && user.role === 'user' && (
         <div style={{ marginTop: '2rem' }}>
           <h6>Unirse a una Penca</h6>
-          <input type="text" value={joinCode} onChange={e => setJoinCode(e.target.value)} placeholder="Código" />
-          <Button variant="contained" onClick={handleJoin} style={{ marginLeft: '10px' }}>Solicitar</Button>
+          <TextField
+            value={joinCode}
+            onChange={e => setJoinCode(e.target.value)}
+            label="Código"
+            size="small"
+          />
+          <Button variant="contained" onClick={handleJoin} sx={{ ml: 1 }}>Solicitar</Button>
           {joinMsg && <div style={{ marginTop: '0.5rem' }}>{joinMsg}</div>}
         </div>
       )}
