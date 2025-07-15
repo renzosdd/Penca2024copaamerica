@@ -374,25 +374,41 @@ export default function Admin() {
                 <Typography variant="subtitle1">{comp}</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <ul className="collection">
-                  {groupedMatches[g].map(m => (
-                    <li key={m._id} className="collection-item">
-                      <input type="text" value={m.team1 || ''} onChange={e => updateMatchField(m._id, 'team1', e.target.value)} />
-                      <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
-                      <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
-                      <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
-                      <input type="number" value={m.result1 ?? ''} onChange={e => updateMatchField(m._id, 'result1', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
-                      <input type="number" value={m.result2 ?? ''} onChange={e => updateMatchField(m._id, 'result2', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
-                      <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
-                    </li>
+                {Object.keys(matchesByCompetition[comp])
+                  .sort((a, b) => {
+                    const ai = roundOrder.indexOf(a);
+                    const bi = roundOrder.indexOf(b);
+                    if (ai === -1 && bi === -1) return a.localeCompare(b);
+                    if (ai === -1) return 1;
+                    if (bi === -1) return -1;
+                    return ai - bi;
+                  })
+                  .map(g => (
+                    <Accordion key={g} sx={{ marginTop: '0.5rem', marginLeft: '1rem' }}>
+                      <AccordionSummary expandIcon="\u25BC">
+                        <Typography variant="subtitle2">{g}</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <ul className="collection">
+                          {matchesByCompetition[comp][g].map(m => (
+                            <li key={m._id} className="collection-item">
+                              <input type="text" value={m.team1 || ''} onChange={e => updateMatchField(m._id, 'team1', e.target.value)} />
+                              <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
+                              <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
+                              <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
+                              <input type="number" value={m.result1 ?? ''} onChange={e => updateMatchField(m._id, 'result1', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
+                              <input type="number" value={m.result2 ?? ''} onChange={e => updateMatchField(m._id, 'result2', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
+                              <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
+                            </li>
+                          ))}
+                        </ul>
+                        {(() => {
+                          const t = groups[comp]?.filter(gr => gr.group === g) || [];
+                          return t.length ? <GroupTable groups={t} /> : null;
+                        })()}
+                      </AccordionDetails>
+                    </Accordion>
                   ))}
-                </ul>
-                {(() => {
-                  const comp = groupedMatches[g][0]?.competition;
-                  const t = groups[comp]?.filter(gr => gr.group === g) || [];
-                  return t.length ? <GroupTable groups={t} /> : null;
-                })()}
-
               </AccordionDetails>
             </Accordion>
           ))}
