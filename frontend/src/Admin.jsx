@@ -19,7 +19,7 @@ export default function Admin() {
   const [matches, setMatches] = useState([]);
   const [groups, setGroups] = useState({});
 
-  const [newCompetition, setNewCompetition] = useState('');
+  const [newCompetition, setNewCompetition] = useState({ name: '', groupsCount: '', integrantsPerGroup: '' });
   const [competitionFile, setCompetitionFile] = useState(null);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '' });
@@ -92,14 +92,16 @@ export default function Admin() {
     e.preventDefault();
     try {
       const data = new FormData();
-      data.append('name', newCompetition);
+      data.append('name', newCompetition.name);
+      if (newCompetition.groupsCount) data.append('groupsCount', newCompetition.groupsCount);
+      if (newCompetition.integrantsPerGroup) data.append('integrantsPerGroup', newCompetition.integrantsPerGroup);
       if (competitionFile) data.append('fixture', competitionFile);
       const res = await fetch('/admin/competitions', {
         method: 'POST',
         body: data
       });
       if (res.ok) {
-        setNewCompetition('');
+        setNewCompetition({ name: '', groupsCount: '', integrantsPerGroup: '' });
         setCompetitionFile(null);
         loadCompetitions();
       }
@@ -108,8 +110,8 @@ export default function Admin() {
     }
   }
 
-  const updateCompetitionField = (id, value) => {
-    setCompetitions(cs => cs.map(c => c._id === id ? { ...c, name: value } : c));
+  const updateCompetitionField = (id, field, value) => {
+    setCompetitions(cs => cs.map(c => c._id === id ? { ...c, [field]: value } : c));
   };
 
   async function saveCompetition(comp) {
@@ -117,7 +119,11 @@ export default function Admin() {
       const res = await fetch(`/admin/competitions/${comp._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: comp.name })
+        body: JSON.stringify({
+          name: comp.name,
+          groupsCount: comp.groupsCount === '' ? null : Number(comp.groupsCount),
+          integrantsPerGroup: comp.integrantsPerGroup === '' ? null : Number(comp.integrantsPerGroup)
+        })
       });
       if (res.ok) loadCompetitions();
     } catch (err) {
@@ -280,7 +286,9 @@ export default function Admin() {
         </AccordionSummary>
         <AccordionDetails>
           <form onSubmit={createCompetition} style={{ marginBottom: '1rem' }}>
-            <input type="text" value={newCompetition} onChange={e => setNewCompetition(e.target.value)} placeholder="Nombre" required />
+            <input type="text" value={newCompetition.name} onChange={e => setNewCompetition({ ...newCompetition, name: e.target.value })} placeholder="Nombre" required />
+            <input type="number" value={newCompetition.groupsCount} onChange={e => setNewCompetition({ ...newCompetition, groupsCount: e.target.value })} placeholder="Grupos" style={{ marginLeft: '10px', width: '80px' }} />
+            <input type="number" value={newCompetition.integrantsPerGroup} onChange={e => setNewCompetition({ ...newCompetition, integrantsPerGroup: e.target.value })} placeholder="Integrantes" style={{ marginLeft: '10px', width: '100px' }} />
             <input type="file" accept=".json" onChange={e => setCompetitionFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
             <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>Crear</Button>
           </form>
@@ -290,7 +298,9 @@ export default function Admin() {
                 <Typography>{c.name}</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <input type="text" value={c.name} onChange={e => updateCompetitionField(c._id, e.target.value)} />
+                <input type="text" value={c.name} onChange={e => updateCompetitionField(c._id, 'name', e.target.value)} />
+                <input type="number" value={c.groupsCount ?? ''} onChange={e => updateCompetitionField(c._id, 'groupsCount', e.target.value)} style={{ marginLeft: '10px', width: '80px' }} />
+                <input type="number" value={c.integrantsPerGroup ?? ''} onChange={e => updateCompetitionField(c._id, 'integrantsPerGroup', e.target.value)} style={{ marginLeft: '10px', width: '100px' }} />
                 <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveCompetition(c); }}>💾</a>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteCompetition(c._id); }}>✖</a>
               </AccordionDetails>
