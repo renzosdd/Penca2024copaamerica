@@ -6,6 +6,7 @@ const pencaSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   competition: { type: String, required: true },
   participantLimit: { type: Number, default: 20 },
+  isPublic: { type: Boolean, default: false },
   fixture: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Match' }],
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]

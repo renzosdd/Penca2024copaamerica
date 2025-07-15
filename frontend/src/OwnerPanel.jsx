@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent } from '@mui/material';
+import { Card, CardContent, Checkbox, FormControlLabel, Button } from '@mui/material';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
@@ -65,6 +65,19 @@ export default function OwnerPanel() {
     }
   }
 
+  async function togglePublic(pId, value) {
+    try {
+      const res = await fetch(`/pencas/${pId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: value })
+      });
+      if (res.ok) loadData();
+    } catch (err) {
+      console.error('toggle public error', err);
+    }
+  }
+
   const filterMatches = p => {
     let list = [];
     if (Array.isArray(p.fixture) && p.fixture.length) {
@@ -93,7 +106,13 @@ export default function OwnerPanel() {
         return (
           <Card key={p._id} style={{ marginBottom: '1rem', padding: '1rem' }}>
             <CardContent>
-              <strong>{p.name} - {p.code}</strong>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <strong style={{ marginRight: '10px' }}>{p.name} - {p.code}</strong>
+                <FormControlLabel
+                  control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
+                  label="Pública"
+                />
+              </div>
               {Object.keys(pMatches)
                 .filter(g => g.startsWith('Grupo'))
                 .sort()

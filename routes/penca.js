@@ -10,6 +10,7 @@ router.get('/', isAuthenticated, async (req, res) => {
   try {
     const filter = {};
     if (req.query.competition) filter.competition = req.query.competition;
+    if (req.query.public === 'true') filter.isPublic = true;
     const pencas = await Penca.find(filter).select('name code competition');
     res.json(pencas); 
   } catch (err) {
@@ -41,7 +42,7 @@ router.get('/mine', isAuthenticated, async (req, res) => {
 
 // Crear una penca
 router.post('/', isAuthenticated, async (req, res) => {
-  const { name, participantLimit, competition } = req.body;
+  const { name, participantLimit, competition, isPublic } = req.body;
   const ownerId = req.session.user._id;
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
   try {
@@ -51,6 +52,7 @@ router.post('/', isAuthenticated, async (req, res) => {
       owner: ownerId,
       participantLimit,
       competition: competition || DEFAULT_COMPETITION,
+      isPublic: isPublic === true || isPublic === 'true',
       participants: []
     });
     await penca.save();
@@ -80,6 +82,25 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error('get penca error', err);
     res.status(500).json({ error: 'Error getting penca' });
+  }
+});
+
+// Actualizar una penca (owner)
+router.put('/:pencaId', isAuthenticated, async (req, res) => {
+  const { pencaId } = req.params;
+  const { isPublic } = req.body;
+  try {
+    const penca = await Penca.findById(pencaId);
+    if (!penca) return res.status(404).json({ error: 'Penca not found' });
+    if (penca.owner.toString() !== req.session.user._id.toString() && req.session.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    if (isPublic !== undefined) penca.isPublic = isPublic === true || isPublic === 'true';
+    await penca.save();
+    res.json({ message: 'Penca updated' });
+  } catch (err) {
+    console.error('update penca error', err);
+    res.status(500).json({ error: 'Error updating penca' });
   }
 });
 
