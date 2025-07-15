@@ -10,10 +10,28 @@ async function calculateGroupStandings(competition) {
 
         if (!standings[group]) standings[group] = {};
         if (!standings[group][match.team1]) {
-            standings[group][match.team1] = { team: match.team1, points: 0, gf: 0, ga: 0, gd: 0 };
+            standings[group][match.team1] = {
+                team: match.team1,
+                points: 0,
+                gf: 0,
+                ga: 0,
+                gd: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0
+            };
         }
         if (!standings[group][match.team2]) {
-            standings[group][match.team2] = { team: match.team2, points: 0, gf: 0, ga: 0, gd: 0 };
+            standings[group][match.team2] = {
+                team: match.team2,
+                points: 0,
+                gf: 0,
+                ga: 0,
+                gd: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0
+            };
         }
 
         if (match.result1 === undefined || match.result2 === undefined) continue;
@@ -27,11 +45,17 @@ async function calculateGroupStandings(competition) {
 
         if (match.result1 > match.result2) {
             t1.points += 3;
+            t1.wins += 1;
+            t2.losses += 1;
         } else if (match.result1 < match.result2) {
             t2.points += 3;
+            t2.wins += 1;
+            t1.losses += 1;
         } else {
             t1.points += 1;
             t2.points += 1;
+            t1.draws += 1;
+            t2.draws += 1;
         }
         t1.gd = t1.gf - t1.ga;
         t2.gd = t2.gf - t2.ga;

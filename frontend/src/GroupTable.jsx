@@ -22,6 +22,9 @@ export default function GroupTable({ groups }) {
                 <TableRow>
                   <TableCell>Equipo</TableCell>
                   <TableCell>Pts</TableCell>
+                  <TableCell>W</TableCell>
+                  <TableCell>D</TableCell>
+                  <TableCell>L</TableCell>
                   <TableCell>DG</TableCell>
                   <TableCell>GF</TableCell>
                 </TableRow>
@@ -33,6 +36,9 @@ export default function GroupTable({ groups }) {
                     <TableRow key={t.team}>
                       <TableCell>{t.team}</TableCell>
                       <TableCell>{t.points}</TableCell>
+                      <TableCell>{t.wins}</TableCell>
+                      <TableCell>{t.draws}</TableCell>
+                      <TableCell>{t.losses}</TableCell>
                       <TableCell>{t.gd}</TableCell>
                       <TableCell>{t.gf}</TableCell>
                     </TableRow>
