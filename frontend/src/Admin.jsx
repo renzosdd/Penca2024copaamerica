@@ -9,10 +9,13 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Typography
+  Typography,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
+import CompetitionWizard from './CompetitionWizard';
 
 
 export default function Admin() {
@@ -22,10 +25,9 @@ export default function Admin() {
   const [matches, setMatches] = useState([]);
   const [groups, setGroups] = useState({});
 
-  const [newCompetition, setNewCompetition] = useState({ name: '', groupsCount: '', integrantsPerGroup: '' });
-  const [competitionFile, setCompetitionFile] = useState(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
-  const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '' });
+  const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
 
   useEffect(() => {
     loadAll();
@@ -91,27 +93,6 @@ export default function Admin() {
     setGroups(result);
   }
 
-  async function createCompetition(e) {
-    e.preventDefault();
-    try {
-      const data = new FormData();
-      data.append('name', newCompetition.name);
-      if (newCompetition.groupsCount) data.append('groupsCount', newCompetition.groupsCount);
-      if (newCompetition.integrantsPerGroup) data.append('integrantsPerGroup', newCompetition.integrantsPerGroup);
-      if (competitionFile) data.append('fixture', competitionFile);
-      const res = await fetch('/admin/competitions', {
-        method: 'POST',
-        body: data
-      });
-      if (res.ok) {
-        setNewCompetition({ name: '', groupsCount: '', integrantsPerGroup: '' });
-        setCompetitionFile(null);
-        loadCompetitions();
-      }
-    } catch (err) {
-      console.error('create competition error', err);
-    }
-  }
 
   const updateCompetitionField = (id, field, value) => {
     setCompetitions(cs => cs.map(c => c._id === id ? { ...c, [field]: value } : c));
@@ -200,7 +181,7 @@ export default function Admin() {
         body: data
       });
       if (res.ok) {
-        setPencaForm({ name: '', owner: '', competition: '' });
+        setPencaForm({ name: '', owner: '', competition: '', isPublic: false });
         setPencaFile(null);
         loadPencas();
       }
@@ -215,11 +196,11 @@ export default function Admin() {
 
   async function savePenca(penca) {
     try {
-      const { name, owner, competition, participantLimit } = penca;
+      const { name, owner, competition, participantLimit, isPublic } = penca;
       const res = await fetch(`/admin/pencas/${penca._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, owner, competition, participantLimit })
+        body: JSON.stringify({ name, owner, competition, participantLimit, isPublic })
       });
       if (res.ok) loadPencas();
     } catch (err) {
@@ -315,6 +296,7 @@ export default function Admin() {
             <input type="file" accept=".json" onChange={e => setCompetitionFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
             <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
           </form>
+
           {competitions.map(c => (
             <Accordion key={c._id} className="competition-item">
               <AccordionSummary expandIcon="▶">
@@ -438,7 +420,13 @@ export default function Admin() {
               {competitions.map(c => (
                 <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
               ))}
-            </Select>
+            </select>
+            <FormControlLabel
+              control={<Checkbox checked={pencaForm.isPublic} onChange={e => setPencaForm({ ...pencaForm, isPublic: e.target.checked })} />}
+              label="Pública"
+              style={{ marginLeft: '10px' }}
+            />
+
             <input type="file" accept=".json" onChange={e => setPencaFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
             <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
           </form>
@@ -475,7 +463,13 @@ export default function Admin() {
                   {competitions.map(c => (
                     <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
                   ))}
-                </Select>
+
+                </select>
+                <FormControlLabel
+                  control={<Checkbox checked={p.isPublic || false} onChange={e => updatePencaField(p._id, 'isPublic', e.target.checked)} />}
+                  label="Pública"
+                  style={{ marginLeft: '10px' }}
+                />
                 <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); savePenca(p); }}>💾</a>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deletePenca(p._id); }}>✖</a>
               </li>
@@ -567,6 +561,11 @@ export default function Admin() {
           ))}
         </CardContent>
       </Card>
+      <CompetitionWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onCreated={loadCompetitions}
+      />
   </div>
   );
 }
