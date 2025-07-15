@@ -141,6 +141,8 @@ footer {
     margin-right: 5px;
 }
 
+/* === Buttons & Tabs === */
+
 .input-field.inline input {
     width: 50px;
     margin-right: 5px;
@@ -257,13 +259,6 @@ footer {
     text-align: center;
 }
 
-.login-container .input-field {
-    margin-bottom: 20px;
-}
-
-.login-container .btn {
-    width: 100%;
-}
 
 /* === Modal === */
 .modal {
@@ -301,6 +296,21 @@ footer {
     width: 50px;
     height: 35px;
     object-fit: cover;
+}
+
+/* === Helper Classes === */
+.icon-24 {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-40 {
+    width: 40px;
+    height: 40px;
+}
+
+.logo-img {
+    height: 60px;
 }
 
 .collection-item.rank-1 {
@@ -360,3 +370,4 @@ body {
   border: 1px solid #ccc;
   padding: 0.5rem;
 }
+
