@@ -141,3 +141,12 @@ footer {
 #admin-accordion {
     display: none;
 }
+
+/* Accordion styling for admin page */
+.admin-accordion .MuiAccordion-root {
+    margin-bottom: 10px;
+}
+.admin-accordion .MuiAccordionDetails-root {
+    display: flex;
+    align-items: center;
+}
