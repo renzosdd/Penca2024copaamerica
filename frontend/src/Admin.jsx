@@ -420,7 +420,7 @@ export default function Admin() {
               {competitions.map(c => (
                 <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
               ))}
-            </select>
+            </Select>
             <FormControlLabel
               control={<Checkbox checked={pencaForm.isPublic} onChange={e => setPencaForm({ ...pencaForm, isPublic: e.target.checked })} />}
               label="Pública"
@@ -464,7 +464,7 @@ export default function Admin() {
                     <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
                   ))}
 
-                </select>
+                </Select>
                 <FormControlLabel
                   control={<Checkbox checked={p.isPublic || false} onChange={e => updatePencaField(p._id, 'isPublic', e.target.checked)} />}
                   label="Pública"
