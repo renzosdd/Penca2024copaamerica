@@ -239,10 +239,12 @@ export default function Admin() {
     }
   }
 
-  const groupedMatches = matches.reduce((acc, m) => {
-    const g = m.group_name || 'Otros';
-    if (!acc[g]) acc[g] = [];
-    acc[g].push(m);
+  const matchesByCompetition = matches.reduce((acc, m) => {
+    const comp = m.competition || 'Otros';
+    const round = m.group_name || 'Otros';
+    if (!acc[comp]) acc[comp] = {};
+    if (!acc[comp][round]) acc[comp][round] = [];
+    acc[comp][round].push(m);
     return acc;
   }, {});
 
@@ -343,34 +345,35 @@ export default function Admin() {
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
           <h6>Matches</h6>
-          {Object.keys(groupedMatches)
-            .sort((a, b) => {
-              const ai = roundOrder.indexOf(a);
-              const bi = roundOrder.indexOf(b);
-              if (ai === -1 && bi === -1) return a.localeCompare(b);
-              if (ai === -1) return 1;
-              if (bi === -1) return -1;
-              return ai - bi;
-            })
-            .map(g => (
-            <Accordion key={g} sx={{ marginTop: '1rem' }}>
+          {Object.keys(matchesByCompetition).sort().map(comp => (
+            <Accordion key={comp} sx={{ marginTop: '1rem' }}>
+
               <AccordionSummary expandIcon="\u25BC">
-                <Typography variant="subtitle1">{g}</Typography>
+                <Typography variant="subtitle1">{comp}</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <ul className="collection">
-                  {groupedMatches[g].map(m => (
-                    <li key={m._id} className="collection-item">
-                      <input type="text" value={m.team1 || ''} onChange={e => updateMatchField(m._id, 'team1', e.target.value)} />
-                      <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
-                      <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
-                      <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
-                      <input type="number" value={m.result1 ?? ''} onChange={e => updateMatchField(m._id, 'result1', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
-                      <input type="number" value={m.result2 ?? ''} onChange={e => updateMatchField(m._id, 'result2', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
-                      <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
-                    </li>
-                  ))}
-                </ul>
+                {Object.keys(matchesByCompetition[comp]).sort().map(r => (
+                  <Accordion key={r} sx={{ marginTop: '0.5rem', marginLeft: '1rem' }}>
+                    <AccordionSummary expandIcon="\u25BC">
+                      <Typography variant="subtitle2">{r}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <ul className="collection">
+                        {matchesByCompetition[comp][r].map(m => (
+                          <li key={m._id} className="collection-item">
+                            <input type="text" value={m.team1 || ''} onChange={e => updateMatchField(m._id, 'team1', e.target.value)} />
+                            <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
+                            <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
+                            <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
+                            <input type="number" value={m.result1 ?? ''} onChange={e => updateMatchField(m._id, 'result1', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
+                            <input type="number" value={m.result2 ?? ''} onChange={e => updateMatchField(m._id, 'result2', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
+                            <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
+                          </li>
+                        ))}
+                      </ul>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
               </AccordionDetails>
             </Accordion>
           ))}
