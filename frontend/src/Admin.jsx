@@ -29,6 +29,13 @@ export default function Admin() {
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
 
+  const [newCompetition, setNewCompetition] = useState({
+    name: '',
+    groupsCount: '',
+    integrantsPerGroup: ''
+  });
+  const [competitionFile, setCompetitionFile] = useState(null);
+
   useEffect(() => {
     loadAll();
   }, []);
@@ -121,6 +128,26 @@ export default function Admin() {
       if (res.ok) loadCompetitions();
     } catch (err) {
       console.error('delete competition error', err);
+    }
+  }
+
+  async function createCompetition(e) {
+    e.preventDefault();
+    try {
+      const data = new FormData();
+      Object.entries(newCompetition).forEach(([k, v]) => data.append(k, v));
+      if (competitionFile) data.append('fixture', competitionFile);
+      const res = await fetch('/admin/competitions', {
+        method: 'POST',
+        body: data
+      });
+      if (res.ok) {
+        setNewCompetition({ name: '', groupsCount: '', integrantsPerGroup: '' });
+        setCompetitionFile(null);
+        loadCompetitions();
+      }
+    } catch (err) {
+      console.error('create competition error', err);
     }
   }
 
