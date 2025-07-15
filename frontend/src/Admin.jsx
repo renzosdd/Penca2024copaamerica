@@ -9,6 +9,7 @@ import {
   Typography
 } from '@mui/material';
 import GroupTable from './GroupTable';
+import roundOrder from './roundOrder';
 
 
 export default function Admin() {
@@ -260,10 +261,12 @@ export default function Admin() {
     }
   }
 
-  const groupedMatches = matches.reduce((acc, m) => {
-    const g = m.group_name || 'Otros';
-    if (!acc[g]) acc[g] = [];
-    acc[g].push(m);
+  const matchesByCompetition = matches.reduce((acc, m) => {
+    const comp = m.competition || 'Otros';
+    const round = m.group_name || 'Otros';
+    if (!acc[comp]) acc[comp] = {};
+    if (!acc[comp][round]) acc[comp][round] = [];
+    acc[comp][round].push(m);
     return acc;
   }, {});
 
@@ -364,10 +367,11 @@ export default function Admin() {
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
           <h6>Matches</h6>
-          {Object.keys(groupedMatches).sort().map(g => (
-            <Accordion key={g} sx={{ marginTop: '1rem' }}>
+          {Object.keys(matchesByCompetition).sort().map(comp => (
+            <Accordion key={comp} sx={{ marginTop: '1rem' }}>
+
               <AccordionSummary expandIcon="\u25BC">
-                <Typography variant="subtitle1">{g}</Typography>
+                <Typography variant="subtitle1">{comp}</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <ul className="collection">
@@ -388,6 +392,7 @@ export default function Admin() {
                   const t = groups[comp]?.filter(gr => gr.group === g) || [];
                   return t.length ? <GroupTable groups={t} /> : null;
                 })()}
+
               </AccordionDetails>
             </Accordion>
           ))}

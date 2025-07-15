@@ -3,6 +3,7 @@ import GroupTable from './GroupTable';
 import EliminationBracket from './EliminationBracket';
 import { Button, Card, CardContent } from '@mui/material';
 import MUIBracket from './MUIBracket';
+import roundOrder from './roundOrder';
 
 
 export default function Dashboard() {
@@ -207,7 +208,14 @@ export default function Dashboard() {
                 <CardContent>
                 {Object.keys(pMatches)
                   .filter(g => g.startsWith('Grupo'))
-                  .sort()
+                  .sort((a, b) => {
+                    const ai = roundOrder.indexOf(a);
+                    const bi = roundOrder.indexOf(b);
+                    if (ai === -1 && bi === -1) return a.localeCompare(b);
+                    if (ai === -1) return 1;
+                    if (bi === -1) return -1;
+                    return ai - bi;
+                  })
                   .map(g => (
                     <div key={g} style={{ marginBottom: '1rem' }}>
                       <h6>{g}</h6>
@@ -252,7 +260,8 @@ export default function Dashboard() {
                 {!bracket && (
                   <div style={{ marginTop: '1rem' }}>
                     <h6>Eliminatorias</h6>
-                    {['Cuartos de final', 'Semifinales', 'Tercer puesto', 'Final']
+                    {roundOrder
+                      .slice(4)
                       .filter(r => pMatches[r])
                       .map(r => (
                         <div key={r} style={{ marginBottom: '1rem' }}>
