@@ -6,7 +6,12 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Typography
+  Typography,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
@@ -280,9 +285,22 @@ export default function Admin() {
         </AccordionSummary>
         <AccordionDetails>
           <form onSubmit={createCompetition} style={{ marginBottom: '1rem' }}>
-            <input type="text" value={newCompetition} onChange={e => setNewCompetition(e.target.value)} placeholder="Nombre" required />
-            <input type="file" accept=".json" onChange={e => setCompetitionFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
-            <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>Crear</Button>
+            <TextField
+              label="Nombre"
+              value={newCompetition}
+              onChange={e => setNewCompetition(e.target.value)}
+              required
+              size="small"
+            />
+            <input
+              type="file"
+              accept=".json"
+              onChange={e => setCompetitionFile(e.target.files[0])}
+              style={{ marginLeft: '10px' }}
+            />
+            <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>
+              Crear
+            </Button>
           </form>
           {competitions.map(c => (
             <Accordion key={c._id} className="competition-item">
@@ -290,9 +308,14 @@ export default function Admin() {
                 <Typography>{c.name}</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <input type="text" value={c.name} onChange={e => updateCompetitionField(c._id, e.target.value)} />
-                <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveCompetition(c); }}>💾</a>
-                <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteCompetition(c._id); }}>✖</a>
+                <TextField
+                  value={c.name}
+                  onChange={e => updateCompetitionField(c._id, e.target.value)}
+                  size="small"
+                  sx={{ marginRight: '10px' }}
+                />
+                <Button onClick={() => saveCompetition(c)} size="small">💾</Button>
+                <Button color="error" onClick={() => deleteCompetition(c._id)} size="small" sx={{ marginLeft: '1rem' }}>✖</Button>
               </AccordionDetails>
             </Accordion>
           ))}
@@ -303,18 +326,53 @@ export default function Admin() {
         <CardContent>
           <h6>Owners</h6>
           <form onSubmit={createOwner} style={{ marginBottom: '1rem' }}>
-            <input type="text" value={ownerForm.username} onChange={e => setOwnerForm({ ...ownerForm, username: e.target.value })} placeholder="Username" required />
-            <input type="password" value={ownerForm.password} onChange={e => setOwnerForm({ ...ownerForm, password: e.target.value })} placeholder="Password" required />
-            <input type="email" value={ownerForm.email} onChange={e => setOwnerForm({ ...ownerForm, email: e.target.value })} placeholder="Email" required />
-            <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>Crear</Button>
+            <TextField
+              label="Username"
+              value={ownerForm.username}
+              onChange={e => setOwnerForm({ ...ownerForm, username: e.target.value })}
+              required
+              size="small"
+              sx={{ marginRight: '10px' }}
+            />
+            <TextField
+              label="Password"
+              type="password"
+              value={ownerForm.password}
+              onChange={e => setOwnerForm({ ...ownerForm, password: e.target.value })}
+              required
+              size="small"
+              sx={{ marginRight: '10px' }}
+            />
+            <TextField
+              label="Email"
+              type="email"
+              value={ownerForm.email}
+              onChange={e => setOwnerForm({ ...ownerForm, email: e.target.value })}
+              required
+              size="small"
+            />
+            <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>
+              Crear
+            </Button>
           </form>
           <ul className="collection">
             {owners.map(o => (
               <li key={o._id} className="collection-item">
-                <input type="text" value={o.username || ''} onChange={e => updateOwnerField(o._id, 'username', e.target.value)} />
-                <input type="email" value={o.email || ''} onChange={e => updateOwnerField(o._id, 'email', e.target.value)} style={{ marginLeft: '10px' }} />
-                <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveOwner(o); }}>💾</a>
-                <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteOwner(o._id); }}>✖</a>
+                <TextField
+                  value={o.username || ''}
+                  onChange={e => updateOwnerField(o._id, 'username', e.target.value)}
+                  size="small"
+                  sx={{ marginRight: '10px' }}
+                />
+                <TextField
+                  value={o.email || ''}
+                  type="email"
+                  onChange={e => updateOwnerField(o._id, 'email', e.target.value)}
+                  size="small"
+                  sx={{ marginRight: '10px' }}
+                />
+                <Button onClick={() => saveOwner(o)} size="small">💾</Button>
+                <Button color="error" onClick={() => deleteOwner(o._id)} size="small" sx={{ marginLeft: '1rem' }}>✖</Button>
               </li>
             ))}
           </ul>
@@ -325,39 +383,95 @@ export default function Admin() {
         <CardContent>
           <h6>Pencas</h6>
           <form onSubmit={createPenca} style={{ marginBottom: '1rem' }}>
-            <input type="text" value={pencaForm.name} onChange={e => setPencaForm({ ...pencaForm, name: e.target.value })} placeholder="Nombre" required />
-            <select value={pencaForm.owner} onChange={e => setPencaForm({ ...pencaForm, owner: e.target.value })} required>
-              <option value="" disabled>Owner</option>
+            <TextField
+              label="Nombre"
+              value={pencaForm.name}
+              onChange={e => setPencaForm({ ...pencaForm, name: e.target.value })}
+              required
+              size="small"
+              sx={{ marginRight: '10px' }}
+            />
+            <TextField
+              select
+              label="Owner"
+              value={pencaForm.owner}
+              onChange={e => setPencaForm({ ...pencaForm, owner: e.target.value })}
+              required
+              size="small"
+              sx={{ marginRight: '10px', minWidth: 120 }}
+            >
+              <MenuItem value="" disabled>
+                Owner
+              </MenuItem>
               {owners.map(o => (
-                <option key={o._id} value={o._id}>{o.username}</option>
+                <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
               ))}
-            </select>
-            <select value={pencaForm.competition} onChange={e => setPencaForm({ ...pencaForm, competition: e.target.value })} required style={{ marginLeft: '10px' }}>
-              <option value="" disabled>Competencia</option>
+            </TextField>
+            <TextField
+              select
+              label="Competencia"
+              value={pencaForm.competition}
+              onChange={e => setPencaForm({ ...pencaForm, competition: e.target.value })}
+              required
+              size="small"
+              sx={{ marginRight: '10px', minWidth: 150 }}
+            >
+              <MenuItem value="" disabled>
+                Competencia
+              </MenuItem>
               {competitions.map(c => (
-                <option key={c._id} value={c.name}>{c.name}</option>
+                <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
               ))}
-            </select>
-            <input type="file" accept=".json" onChange={e => setPencaFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
-            <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>Crear</Button>
+            </TextField>
+            <input
+              type="file"
+              accept=".json"
+              onChange={e => setPencaFile(e.target.files[0])}
+              style={{ marginLeft: '10px' }}
+            />
+            <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>
+              Crear
+            </Button>
           </form>
           <ul className="collection">
             {pencas.map(p => (
               <li key={p._id} className="collection-item">
-                <input type="text" value={p.name || ''} onChange={e => updatePencaField(p._id, 'name', e.target.value)} />
-                <input type="text" value={p.code || ''} readOnly style={{ marginLeft: '10px', width: '90px' }} />
-                <select value={p.owner} onChange={e => updatePencaField(p._id, 'owner', e.target.value)} style={{ marginLeft: '10px' }}>
+                <TextField
+                  value={p.name || ''}
+                  onChange={e => updatePencaField(p._id, 'name', e.target.value)}
+                  size="small"
+                  sx={{ marginRight: '10px' }}
+                />
+                <TextField
+                  value={p.code || ''}
+                  size="small"
+                  InputProps={{ readOnly: true }}
+                  sx={{ marginRight: '10px', width: '90px' }}
+                />
+                <TextField
+                  select
+                  value={p.owner}
+                  onChange={e => updatePencaField(p._id, 'owner', e.target.value)}
+                  size="small"
+                  sx={{ marginRight: '10px', minWidth: 120 }}
+                >
                   {owners.map(o => (
-                    <option key={o._id} value={o._id}>{o.username}</option>
+                    <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
                   ))}
-                </select>
-                <select value={p.competition} onChange={e => updatePencaField(p._id, 'competition', e.target.value)} style={{ marginLeft: '10px' }}>
+                </TextField>
+                <TextField
+                  select
+                  value={p.competition}
+                  onChange={e => updatePencaField(p._id, 'competition', e.target.value)}
+                  size="small"
+                  sx={{ marginRight: '10px', minWidth: 150 }}
+                >
                   {competitions.map(c => (
-                    <option key={c._id} value={c.name}>{c.name}</option>
+                    <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
                   ))}
-                </select>
-                <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); savePenca(p); }}>💾</a>
-                <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deletePenca(p._id); }}>✖</a>
+                </TextField>
+                <Button onClick={() => savePenca(p)} size="small">💾</Button>
+                <Button color="error" onClick={() => deletePenca(p._id)} size="small" sx={{ marginLeft: '1rem' }}>✖</Button>
               </li>
             ))}
           </ul>
@@ -392,13 +506,49 @@ export default function Admin() {
                         <ul className="collection">
                           {matchesByCompetition[comp][g].map(m => (
                             <li key={m._id} className="collection-item">
-                              <input type="text" value={m.team1 || ''} onChange={e => updateMatchField(m._id, 'team1', e.target.value)} />
-                              <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
-                              <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
-                              <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
-                              <input type="number" value={m.result1 ?? ''} onChange={e => updateMatchField(m._id, 'result1', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
-                              <input type="number" value={m.result2 ?? ''} onChange={e => updateMatchField(m._id, 'result2', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
-                              <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
+                              <TextField
+                                value={m.team1 || ''}
+                                onChange={e => updateMatchField(m._id, 'team1', e.target.value)}
+                                size="small"
+                                sx={{ marginRight: '10px' }}
+                              />
+                              <TextField
+                                value={m.team2 || ''}
+                                onChange={e => updateMatchField(m._id, 'team2', e.target.value)}
+                                size="small"
+                                sx={{ marginRight: '10px' }}
+                              />
+                              <TextField
+                                type="date"
+                                value={m.date || ''}
+                                onChange={e => updateMatchField(m._id, 'date', e.target.value)}
+                                size="small"
+                                sx={{ marginRight: '10px' }}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                              <TextField
+                                type="time"
+                                value={m.time || ''}
+                                onChange={e => updateMatchField(m._id, 'time', e.target.value)}
+                                size="small"
+                                sx={{ marginRight: '10px' }}
+                                InputLabelProps={{ shrink: true }}
+                              />
+                              <TextField
+                                type="number"
+                                value={m.result1 ?? ''}
+                                onChange={e => updateMatchField(m._id, 'result1', e.target.value)}
+                                size="small"
+                                sx={{ marginRight: '10px', width: '60px' }}
+                              />
+                              <TextField
+                                type="number"
+                                value={m.result2 ?? ''}
+                                onChange={e => updateMatchField(m._id, 'result2', e.target.value)}
+                                size="small"
+                                sx={{ marginRight: '10px', width: '60px' }}
+                              />
+                              <Button onClick={() => saveMatch(m)} size="small">💾</Button>
                             </li>
                           ))}
                         </ul>

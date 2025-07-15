@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent } from '@mui/material';
+import { Card, CardContent, Button } from '@mui/material';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
@@ -163,7 +163,7 @@ export default function OwnerPanel() {
                 {p.pendingRequests.map(u => (
                   <li key={u._id || u} className="collection-item">
                     {u.username || u}
-                    <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); approve(p._id, u._id || u); }}>✔</a>
+                    <Button onClick={() => approve(p._id, u._id || u)} size="small">✔</Button>
                   </li>
                 ))}
               </ul>
@@ -172,7 +172,7 @@ export default function OwnerPanel() {
                 {p.participants.map(u => (
                   <li key={u._id || u} className="collection-item">
                     {u.username || u}
-                    <a href="#" className="secondary-content red-text" onClick={e => { e.preventDefault(); removeParticipant(p._id, u._id || u); }}>✖</a>
+                    <Button color="error" onClick={() => removeParticipant(p._id, u._id || u)} size="small">✖</Button>
                   </li>
                 ))}
               </ul>
