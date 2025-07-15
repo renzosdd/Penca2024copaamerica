@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, CardContent } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardContent,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography
+} from '@mui/material';
 
 export default function Admin() {
   const [competitions, setCompetitions] = useState([]);
@@ -229,6 +237,13 @@ export default function Admin() {
     }
   }
 
+  const groupedMatches = matches.reduce((acc, m) => {
+    const g = m.group_name || 'Otros';
+    if (!acc[g]) acc[g] = [];
+    acc[g].push(m);
+    return acc;
+  }, {});
+
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>Administración</h5>
@@ -321,19 +336,28 @@ export default function Admin() {
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
           <h6>Matches</h6>
-          <ul className="collection">
-            {matches.map(m => (
-              <li key={m._id} className="collection-item">
-                <input type="text" value={m.team1 || ''} onChange={e => updateMatchField(m._id, 'team1', e.target.value)} />
-                <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
-                <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
-                <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
-                <input type="number" value={m.result1 ?? ''} onChange={e => updateMatchField(m._id, 'result1', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
-                <input type="number" value={m.result2 ?? ''} onChange={e => updateMatchField(m._id, 'result2', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
-                <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
-              </li>
-            ))}
-          </ul>
+          {Object.keys(groupedMatches).sort().map(g => (
+            <Accordion key={g} sx={{ marginTop: '1rem' }}>
+              <AccordionSummary expandIcon="\u25BC">
+                <Typography variant="subtitle1">{g}</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <ul className="collection">
+                  {groupedMatches[g].map(m => (
+                    <li key={m._id} className="collection-item">
+                      <input type="text" value={m.team1 || ''} onChange={e => updateMatchField(m._id, 'team1', e.target.value)} />
+                      <input type="text" value={m.team2 || ''} onChange={e => updateMatchField(m._id, 'team2', e.target.value)} style={{ marginLeft: '10px' }} />
+                      <input type="date" value={m.date || ''} onChange={e => updateMatchField(m._id, 'date', e.target.value)} style={{ marginLeft: '10px' }} />
+                      <input type="time" value={m.time || ''} onChange={e => updateMatchField(m._id, 'time', e.target.value)} style={{ marginLeft: '10px' }} />
+                      <input type="number" value={m.result1 ?? ''} onChange={e => updateMatchField(m._id, 'result1', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
+                      <input type="number" value={m.result2 ?? ''} onChange={e => updateMatchField(m._id, 'result2', e.target.value)} style={{ marginLeft: '10px', width: '60px' }} />
+                      <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(m); }}>💾</a>
+                    </li>
+                  ))}
+                </ul>
+              </AccordionDetails>
+            </Accordion>
+          ))}
         </CardContent>
       </Card>
   </div>
