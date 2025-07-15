@@ -272,10 +272,14 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
 // Crear competencia
 router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
     try {
-        const { name, useApi } = req.body;
+        const { name, useApi, groupsCount, integrantsPerGroup } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
-        const competition = new Competition({ name });
+        const competition = new Competition({
+            name,
+            groupsCount: groupsCount ? Number(groupsCount) : undefined,
+            integrantsPerGroup: integrantsPerGroup ? Number(integrantsPerGroup) : undefined
+        });
         await competition.save();
 
         if (req.file) {
@@ -321,6 +325,27 @@ router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixtur
             if (matchesData.length) {
                 await Match.insertMany(matchesData);
             }
+        } else if (competition.groupsCount && competition.integrantsPerGroup) {
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const matches = [];
+            for (let g = 0; g < competition.groupsCount; g++) {
+                const group = `Grupo ${letters[g]}`;
+                for (let i = 1; i <= competition.integrantsPerGroup; i++) {
+                    for (let j = i + 1; j <= competition.integrantsPerGroup; j++) {
+                        matches.push({
+                            team1: `${letters[g]}${i}`,
+                            team2: `${letters[g]}${j}`,
+                            competition: name,
+                            group_name: group,
+                            series: 'Fase de grupos',
+                            tournament: name
+                        });
+                    }
+                }
+            }
+            if (matches.length) {
+                await Match.insertMany(matches);
+            }
         }
 
         res.status(201).json({ competitionId: competition._id });
@@ -348,6 +373,12 @@ router.put('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (!competition) return res.status(404).json({ error: 'Competition not found' });
 
         if (req.body.name) competition.name = req.body.name;
+        if (req.body.groupsCount !== undefined) {
+            competition.groupsCount = Number(req.body.groupsCount);
+        }
+        if (req.body.integrantsPerGroup !== undefined) {
+            competition.integrantsPerGroup = Number(req.body.integrantsPerGroup);
+        }
         await competition.save();
 
         res.json({ message: 'Competition updated' });
