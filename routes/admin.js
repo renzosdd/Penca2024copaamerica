@@ -180,7 +180,7 @@ router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
 // Crear penca
 router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
     try {
-        const { name, owner, participantLimit, competition } = req.body;
+        const { name, owner, participantLimit, competition, isPublic } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
         const ownerUser = owner ? await User.findById(owner) : req.session.user;
@@ -199,6 +199,7 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
             owner: ownerUser._id,
             competition: competition || DEFAULT_COMPETITION,
             participantLimit: participantLimit ? Number(participantLimit) : undefined,
+            isPublic: isPublic === true || isPublic === 'true',
             fixture: fixtureIds,
             participants: []
         });
@@ -230,7 +231,7 @@ router.get('/pencas', isAuthenticated, isAdmin, async (req, res) => {
 // Actualizar penca
 router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, participantLimit, owner, competition } = req.body;
+        const { name, participantLimit, owner, competition, isPublic } = req.body;
         const penca = await Penca.findById(req.params.id);
         if (!penca) return res.status(404).json({ error: 'Penca not found' });
 
@@ -246,6 +247,7 @@ router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (name) penca.name = name;
         if (participantLimit !== undefined) penca.participantLimit = Number(participantLimit);
         if (competition) penca.competition = competition;
+        if (isPublic !== undefined) penca.isPublic = isPublic === true || isPublic === 'true';
 
         await penca.save();
         res.json({ message: 'Penca updated' });

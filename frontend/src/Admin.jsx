@@ -6,7 +6,9 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Typography
+  Typography,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
@@ -22,7 +24,7 @@ export default function Admin() {
   const [newCompetition, setNewCompetition] = useState({ name: '', groupsCount: '', integrantsPerGroup: '' });
   const [competitionFile, setCompetitionFile] = useState(null);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
-  const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '' });
+  const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
 
   useEffect(() => {
     loadAll();
@@ -197,7 +199,7 @@ export default function Admin() {
         body: data
       });
       if (res.ok) {
-        setPencaForm({ name: '', owner: '', competition: '' });
+        setPencaForm({ name: '', owner: '', competition: '', isPublic: false });
         setPencaFile(null);
         loadPencas();
       }
@@ -212,11 +214,11 @@ export default function Admin() {
 
   async function savePenca(penca) {
     try {
-      const { name, owner, competition, participantLimit } = penca;
+      const { name, owner, competition, participantLimit, isPublic } = penca;
       const res = await fetch(`/admin/pencas/${penca._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, owner, competition, participantLimit })
+        body: JSON.stringify({ name, owner, competition, participantLimit, isPublic })
       });
       if (res.ok) loadPencas();
     } catch (err) {
@@ -348,6 +350,11 @@ export default function Admin() {
                 <option key={c._id} value={c.name}>{c.name}</option>
               ))}
             </select>
+            <FormControlLabel
+              control={<Checkbox checked={pencaForm.isPublic} onChange={e => setPencaForm({ ...pencaForm, isPublic: e.target.checked })} />}
+              label="Pública"
+              style={{ marginLeft: '10px' }}
+            />
             <input type="file" accept=".json" onChange={e => setPencaFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
             <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>Crear</Button>
           </form>
@@ -366,6 +373,11 @@ export default function Admin() {
                     <option key={c._id} value={c.name}>{c.name}</option>
                   ))}
                 </select>
+                <FormControlLabel
+                  control={<Checkbox checked={p.isPublic || false} onChange={e => updatePencaField(p._id, 'isPublic', e.target.checked)} />}
+                  label="Pública"
+                  style={{ marginLeft: '10px' }}
+                />
                 <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); savePenca(p); }}>💾</a>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deletePenca(p._id); }}>✖</a>
               </li>
