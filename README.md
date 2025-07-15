@@ -130,15 +130,18 @@ como opción de respaldo para recalcular manualmente si fuera necesario.
 
 
 Antes de ejecutar las pruebas asegúrate de instalar todas las dependencias de
-desarrollo. Para obtener una instalación reproducible puedes utilizar `npm ci`
-tanto en la raíz del proyecto como dentro de `frontend/`:
+desarrollo. Para obtener una instalación reproducible ejecuta `npm ci` en la raíz
+del proyecto. El frontend no incluye `package-lock.json`, por lo que allí debes
+usar `npm install`:
 
 ```bash
 npm ci
-cd frontend && npm ci
+cd frontend && npm install
 ```
 
-En entornos de integración continua puedes ejecutar el script `scripts/setup-tests.sh` o utilizar `npm ci` para garantizar instalaciones reproducibles.
+En entornos de integración continua puedes ejecutar el script `scripts/setup-tests.sh`,
+que utilizará `npm ci` o `npm install` según corresponda para garantizar instalaciones
+reproducibles.
 
 Para lanzar todas las pruebas:
 
