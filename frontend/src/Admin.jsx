@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
+import CompetitionWizard from './CompetitionWizard';
 
 
 export default function Admin() {
@@ -19,8 +20,7 @@ export default function Admin() {
   const [matches, setMatches] = useState([]);
   const [groups, setGroups] = useState({});
 
-  const [newCompetition, setNewCompetition] = useState({ name: '', groupsCount: '', integrantsPerGroup: '' });
-  const [competitionFile, setCompetitionFile] = useState(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '' });
 
@@ -88,27 +88,6 @@ export default function Admin() {
     setGroups(result);
   }
 
-  async function createCompetition(e) {
-    e.preventDefault();
-    try {
-      const data = new FormData();
-      data.append('name', newCompetition.name);
-      if (newCompetition.groupsCount) data.append('groupsCount', newCompetition.groupsCount);
-      if (newCompetition.integrantsPerGroup) data.append('integrantsPerGroup', newCompetition.integrantsPerGroup);
-      if (competitionFile) data.append('fixture', competitionFile);
-      const res = await fetch('/admin/competitions', {
-        method: 'POST',
-        body: data
-      });
-      if (res.ok) {
-        setNewCompetition({ name: '', groupsCount: '', integrantsPerGroup: '' });
-        setCompetitionFile(null);
-        loadCompetitions();
-      }
-    } catch (err) {
-      console.error('create competition error', err);
-    }
-  }
 
   const updateCompetitionField = (id, field, value) => {
     setCompetitions(cs => cs.map(c => c._id === id ? { ...c, [field]: value } : c));
@@ -285,13 +264,7 @@ export default function Admin() {
           <Typography variant="subtitle1">Competencias</Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <form onSubmit={createCompetition} style={{ marginBottom: '1rem' }}>
-            <input type="text" value={newCompetition.name} onChange={e => setNewCompetition({ ...newCompetition, name: e.target.value })} placeholder="Nombre" required />
-            <input type="number" value={newCompetition.groupsCount} onChange={e => setNewCompetition({ ...newCompetition, groupsCount: e.target.value })} placeholder="Grupos" style={{ marginLeft: '10px', width: '80px' }} />
-            <input type="number" value={newCompetition.integrantsPerGroup} onChange={e => setNewCompetition({ ...newCompetition, integrantsPerGroup: e.target.value })} placeholder="Integrantes" style={{ marginLeft: '10px', width: '100px' }} />
-            <input type="file" accept=".json" onChange={e => setCompetitionFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
-            <Button variant="contained" type="submit" style={{ marginLeft: '10px' }}>Crear</Button>
-          </form>
+          <Button variant="contained" onClick={() => setWizardOpen(true)} style={{ marginBottom: '1rem' }}>Nueva competencia</Button>
           {competitions.map(c => (
             <Accordion key={c._id} className="competition-item">
               <AccordionSummary expandIcon="▶">
@@ -424,6 +397,11 @@ export default function Admin() {
           ))}
         </CardContent>
       </Card>
+      <CompetitionWizard
+        open={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onCreated={loadCompetitions}
+      />
   </div>
   );
 }
