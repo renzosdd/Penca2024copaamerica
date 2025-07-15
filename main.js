@@ -156,6 +156,12 @@ app.use((req, res, next) => {
 
 app.get('/', (req, res) => {
     if (req.session.user) {
+        if (req.session.user.role === 'admin') {
+            return res.redirect('/admin/edit');
+        }
+        if (req.session.user.role === 'owner') {
+            return res.redirect('/owner');
+        }
         return res.redirect('/dashboard');
     }
     // Enviar la aplicación React compilada
@@ -167,7 +173,21 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
     if (user.role === 'admin') {
         return res.redirect('/admin/edit');
     }
+    if (user.role === 'owner') {
+        return res.redirect('/owner');
+    }
     // Enviar la aplicación React para el dashboard
+    res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
+});
+
+app.get('/owner', isAuthenticated, async (req, res) => {
+    const { user } = req.session;
+    if (user.role !== 'owner') {
+        if (user.role === 'admin') {
+            return res.redirect('/admin/edit');
+        }
+        return res.redirect('/dashboard');
+    }
     res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 
@@ -183,6 +203,23 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error('dashboard api error', err);
         res.status(500).json({ error: 'Error retrieving dashboard data' });
+    }
+});
+
+app.get('/api/owner', isAuthenticated, async (req, res) => {
+    const { user } = req.session;
+    if (user.role !== 'owner') {
+        return res.status(403).json({ error: 'Owners only' });
+    }
+    try {
+        const pencas = await Penca.find({ owner: user._id })
+            .select('name code competition participants pendingRequests')
+            .populate('participants', 'username')
+            .populate('pendingRequests', 'username');
+        res.json({ user: { username: user.username, role: user.role }, pencas });
+    } catch (err) {
+        console.error('owner api error', err);
+        res.status(500).json({ error: 'Error retrieving owner data' });
     }
 });
 
@@ -207,7 +244,12 @@ app.post('/login', async (req, res) => {
         }
         req.session.user = user;
         debugLog('Sesión establecida para el usuario:', user.username);
-        const redirectUrl = user.role === 'admin' ? '/admin/edit' : '/dashboard';
+        let redirectUrl = '/dashboard';
+        if (user.role === 'admin') {
+            redirectUrl = '/admin/edit';
+        } else if (user.role === 'owner') {
+            redirectUrl = '/owner';
+        }
         res.json({ success: true, redirectUrl });
     } catch (err) {
         console.error('Error en el inicio de sesión', err);
