@@ -10,5 +10,10 @@ fi
 
 # Install frontend dev dependencies if the frontend folder exists and they aren't installed
 if [ -d frontend ]; then
-  (cd frontend && [ ! -d node_modules ] && npm ci)
+  (cd frontend && [ ! -d node_modules ] && \
+    if [ -f package-lock.json ]; then
+      npm ci
+    else
+      npm install
+    fi)
 fi
