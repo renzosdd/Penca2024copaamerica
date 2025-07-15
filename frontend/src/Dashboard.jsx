@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [joinCode, setJoinCode] = useState('');
   const [joinMsg, setJoinMsg] = useState('');
   const [ownerPencas, setOwnerPencas] = useState([]);
-  const [groups, setGroups] = useState([]);
+  const [groups, setGroups] = useState({});
   const [bracket, setBracket] = useState(null);
 
   useEffect(() => {
@@ -43,7 +43,12 @@ export default function Dashboard() {
           fetch('/matches'),
           fetch('/predictions')
         ]);
-        if (mRes.ok) setMatches(await mRes.json());
+        if (mRes.ok) {
+          const data = await mRes.json();
+          setMatches(data);
+          const comps = Array.from(new Set(data.map(m => m.competition)));
+          if (comps.length) await loadGroups(comps);
+        }
         if (pRes.ok) setPreds(await pRes.json());
         pencas.forEach(p => loadRanking(p._id));
         if (user && user.role === 'owner') loadOwnerPencas();
@@ -59,12 +64,8 @@ export default function Dashboard() {
       if (!pencas.length) return;
       const comp = pencas[0].competition;
       try {
-        const [gRes, bRes] = await Promise.all([
-          fetch(`/groups/${encodeURIComponent(comp)}`),
-          fetch(`/bracket/${encodeURIComponent(comp)}`)
-        ]);
-        if (gRes.ok) setGroups(await gRes.json());
-        if (bRes.ok) setBracket(await bRes.json());
+        const res = await fetch(`/bracket/${encodeURIComponent(comp)}`);
+        if (res.ok) setBracket(await res.json());
       } catch (err) {
         console.error('extra data error', err);
       }
@@ -93,6 +94,21 @@ export default function Dashboard() {
     } catch (err) {
       console.error('owner pencas error', err);
     }
+  }
+
+  async function loadGroups(comps) {
+    const result = {};
+    await Promise.all(
+      comps.map(async c => {
+        try {
+          const r = await fetch(`/groups/${encodeURIComponent(c)}`);
+          if (r.ok) result[c] = await r.json();
+        } catch (err) {
+          console.error('load groups error', err);
+        }
+      })
+    );
+    setGroups(result);
   }
 
   const getPrediction = (pencaId, matchId) =>
@@ -233,6 +249,11 @@ export default function Dashboard() {
                           </Card>
                         );
                       })}
+                      {(() => {
+                        const comp = p.competition;
+                        const t = groups[comp]?.filter(gr => gr.group === g) || [];
+                        return t.length ? <GroupTable groups={t} /> : null;
+                      })()}
                     </div>
                   ))}
 
@@ -297,12 +318,6 @@ export default function Dashboard() {
         );
       })}
 
-      {groups.length > 0 && (
-        <div style={{ marginTop: '2rem' }}>
-          <h5>Grupos</h5>
-          <GroupTable groups={groups} />
-        </div>
-      )}
 
       {bracket && (
         <div style={{ marginTop: '2rem' }}>
