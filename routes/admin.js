@@ -27,10 +27,11 @@ const upload = multer({
 const jsonUpload = multer({
     storage: multer.memoryStorage(),
     fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/json') {
+        const allowed = ['application/json', 'text/csv'];
+        if (allowed.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Solo se permiten archivos JSON'));
+            cb(new Error('Solo se permiten archivos JSON o CSV'));
         }
     }
 });

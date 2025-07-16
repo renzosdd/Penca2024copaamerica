@@ -10,6 +10,39 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [teamsPerGroup, setTeamsPerGroup] = useState(2);
   const [teams, setTeams] = useState([]);
 
+  const handleFileUpload = e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const text = ev.target.result;
+      let names = [];
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        names = text
+          .split(/\r?\n/)
+          .map(l => l.trim())
+          .filter(Boolean);
+      } else {
+        try {
+          const arr = JSON.parse(text);
+          if (Array.isArray(arr)) names = arr;
+        } catch (err) {
+          console.error('failed to parse file', err);
+        }
+      }
+      const arr = [];
+      for (let g = 0; g < groupsCount; g++) {
+        const group = [];
+        for (let t = 0; t < teamsPerGroup; t++) {
+          group.push(names[g * teamsPerGroup + t] || '');
+        }
+        arr.push(group);
+      }
+      setTeams(arr);
+    };
+    reader.readAsText(file);
+  };
+
   useEffect(() => {
     if (open) {
       setStep(0);
@@ -30,10 +63,21 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
 
   const next = () => {
     if (step === 0) {
-      const initial = Array.from({ length: groupsCount }, () =>
-        Array.from({ length: teamsPerGroup }, () => '')
-      );
-      setTeams(initial);
+      if (teams.length === 0) {
+        const initial = Array.from({ length: groupsCount }, () =>
+          Array.from({ length: teamsPerGroup }, () => '')
+        );
+        setTeams(initial);
+      } else {
+        setTeams(prev => {
+          const arr = Array.from({ length: groupsCount }, (_, g) =>
+            Array.from({ length: teamsPerGroup }, (_, t) =>
+              (prev[g] && prev[g][t]) ? prev[g][t] : ''
+            )
+          );
+          return arr;
+        });
+      }
       setStep(1);
     } else {
       submit();
@@ -105,6 +149,12 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               placeholder="Integrantes"
               style={{ marginLeft: '10px', width: '100px' }}
               min={2}
+            />
+            <input
+              type="file"
+              accept=".json,.csv"
+              onChange={handleFileUpload}
+              style={{ display: 'block', marginTop: '10px' }}
             />
           </div>
         )}
