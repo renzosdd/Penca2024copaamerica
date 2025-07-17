@@ -80,6 +80,8 @@ export default function Admin() {
         setMatchesByCompetition(ms => ({ ...ms, [comp._id]: data }));
         if (data.length) await loadGroups([comp.name]);
       }
+      setMatches(data);
+      if (comps.length) await loadGroups(comps);
     } catch (err) {
       console.error('load matches error', err);
     }
