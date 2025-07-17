@@ -13,8 +13,16 @@ export default function OwnerPanel() {
   useEffect(() => {
     async function loadMatches() {
       try {
-        const res = await fetch('/matches');
-        if (res.ok) setMatches(await res.json());
+        const comps = Array.from(new Set(pencas.map(p => p.competition)));
+        const data = [];
+        for (const c of comps) {
+          const r = await fetch(`/competitions/${encodeURIComponent(c)}/matches`);
+          if (r.ok) {
+            const list = await r.json();
+            data.push(...list);
+          }
+        }
+        setMatches(data);
       } catch (err) {
         console.error('load matches error', err);
       }
