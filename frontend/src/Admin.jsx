@@ -202,6 +202,8 @@ export default function Admin() {
         body: JSON.stringify(pencaForm)
       });
       if (res.ok) {
+        const comp = competitions.find(c => c.name === pencaForm.competition);
+        if (comp) loadCompetitionMatches(comp);
         setPencaForm({ name: '', owner: '', competition: '', isPublic: false });
         loadPencas();
       }
