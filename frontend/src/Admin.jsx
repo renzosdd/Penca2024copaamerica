@@ -17,7 +17,6 @@ import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import CompetitionWizard from './CompetitionWizard';
 
-
 export default function Admin() {
   const [competitions, setCompetitions] = useState([]);
   const [owners, setOwners] = useState([]);
@@ -29,7 +28,6 @@ export default function Admin() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
-
 
   useEffect(() => {
     loadAll();
@@ -69,13 +67,12 @@ export default function Admin() {
   async function loadCompetitionMatches(comp) {
     try {
       const res = await fetch(`/admin/competitions/${comp._id}/matches`);
-      if (res.ok) {
-        const data = await res.json();
-        setMatchesByCompetition(ms => ({ ...ms, [comp._id]: data }));
-        if (data.length) await loadGroups([comp.name]);
+      if (!res.ok) return;
+      const data = await res.json();
+      setMatchesByCompetition(ms => ({ ...ms, [comp._id]: data }));
+      if (data.length) {
+        await loadGroups([comp.name]);
       }
-      setMatches(data);
-      if (comps.length) await loadGroups(comps);
     } catch (err) {
       console.error('load matches error', err);
     }
@@ -96,7 +93,6 @@ export default function Admin() {
     setGroups(result);
   }
 
-
   const updateCompetitionField = (id, field, value) => {
     setCompetitions(cs => cs.map(c => c._id === id ? { ...c, [field]: value } : c));
   };
@@ -109,8 +105,8 @@ export default function Admin() {
         body: JSON.stringify({
           name: comp.name,
           groupsCount: comp.groupsCount === '' ? null : Number(comp.groupsCount),
-          integrantsPerGroup: comp.integrantsPerGroup === '' ? null : Number(comp.integrantsPerGroup)
-        })
+          integrantsPerGroup: comp.integrantsPerGroup === '' ? null : Number(comp.integrantsPerGroup),
+        }),
       });
       if (res.ok) loadCompetitions();
     } catch (err) {
@@ -127,14 +123,13 @@ export default function Admin() {
     }
   }
 
-
   async function createOwner(e) {
     e.preventDefault();
     try {
       const res = await fetch('/admin/owners', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ownerForm)
+        body: JSON.stringify(ownerForm),
       });
       if (res.ok) {
         setOwnerForm({ username: '', password: '', email: '' });
@@ -155,7 +150,7 @@ export default function Admin() {
       const res = await fetch(`/admin/owners/${owner._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, name, surname })
+        body: JSON.stringify({ username, email, name, surname }),
       });
       if (res.ok) loadOwners();
     } catch (err) {
@@ -178,7 +173,7 @@ export default function Admin() {
       const res = await fetch('/admin/pencas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(pencaForm)
+        body: JSON.stringify(pencaForm),
       });
       if (res.ok) {
         const comp = competitions.find(c => c.name === pencaForm.competition);
@@ -201,7 +196,7 @@ export default function Admin() {
       const res = await fetch(`/admin/pencas/${penca._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, owner, competition, participantLimit, isPublic })
+        body: JSON.stringify({ name, owner, competition, participantLimit, isPublic }),
       });
       if (res.ok) loadPencas();
     } catch (err) {
@@ -219,18 +214,17 @@ export default function Admin() {
   }
 
   const updateMatchField = (compId, id, field, value) => {
-    // only allow numeric values for result inputs but keep empty string
     if (field === 'result1' || field === 'result2') {
       if (value === '' || /^\d*$/.test(value)) {
         setMatchesByCompetition(ms => ({
           ...ms,
-          [compId]: ms[compId].map(m => m._id === id ? { ...m, [field]: value } : m)
+          [compId]: ms[compId].map(m => m._id === id ? { ...m, [field]: value } : m),
         }));
       }
     } else {
       setMatchesByCompetition(ms => ({
         ...ms,
-        [compId]: ms[compId].map(m => m._id === id ? { ...m, [field]: value } : m)
+        [compId]: ms[compId].map(m => m._id === id ? { ...m, [field]: value } : m),
       }));
     }
   };
@@ -241,7 +235,7 @@ export default function Admin() {
       const resInfo = await fetch(`/admin/competitions/${compId}/matches/${match._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team1, team2, date, time })
+        body: JSON.stringify({ team1, team2, date, time }),
       });
 
       const res1 = match.result1 === '' ? null : Number(match.result1);
@@ -249,7 +243,7 @@ export default function Admin() {
       const resScore = await fetch(`/admin/competitions/${compId}/matches/${match._id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ result1: res1, result2: res2 })
+        body: JSON.stringify({ result1: res1, result2: res2 }),
       });
 
       if (resInfo.ok && resScore.ok) loadCompetitionMatches({ _id: compId, name: match.competition });
@@ -262,17 +256,17 @@ export default function Admin() {
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>Administración</h5>
 
+      {/* Competencias */}
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
           <h6>Competencias</h6>
-          <Button variant="contained" type="button" onClick={() => setWizardOpen(true)} sx={{ mb: 2 }}>
+          <Button variant="contained" onClick={() => setWizardOpen(true)} sx={{ mb: 2 }}>
             Nueva competencia
           </Button>
 
           {competitions.map(c => (
             <Accordion
               key={c._id}
-              className="competition-item"
               expanded={expandedComp === c._id}
               onChange={(_, exp) => {
                 setExpandedComp(exp ? c._id : null);
@@ -305,90 +299,85 @@ export default function Admin() {
                 <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveCompetition(c); }}>💾</a>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteCompetition(c._id); }}>✖</a>
 
-                {matchesByCompetition[c._id] && Object.keys(
+                {matchesByCompetition[c._id] && Object.entries(
                   matchesByCompetition[c._id].reduce((acc, m) => {
                     const round = m.group_name || 'Otros';
-                    if (!acc[round]) acc[round] = [];
-                    acc[round].push(m);
+                    (acc[round] = acc[round] || []).push(m);
                     return acc;
                   }, {})
-                ).sort((a, b) => {
+                ).sort(([a], [b]) => {
                   const ai = roundOrder.indexOf(a);
                   const bi = roundOrder.indexOf(b);
                   if (ai === -1 && bi === -1) return a.localeCompare(b);
                   if (ai === -1) return 1;
                   if (bi === -1) return -1;
                   return ai - bi;
-                }).map(g => {
-                  const matches = matchesByCompetition[c._id].filter(m => (m.group_name || 'Otros') === g);
-                  return (
-                    <Accordion key={g} sx={{ marginTop: '0.5rem' }}>
-                      <AccordionSummary expandIcon="\u25BC">
-                        <Typography variant="subtitle2">{g}</Typography>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <ul className="collection">
-                          {matches.map(m => (
-                            <li key={m._id} className="collection-item">
-                              <TextField
-                                value={m.team1 || ''}
-                                onChange={e => updateMatchField(c._id, m._id, 'team1', e.target.value)}
-                                size="small"
-                              />
-                              <TextField
-                                value={m.team2 || ''}
-                                onChange={e => updateMatchField(c._id, m._id, 'team2', e.target.value)}
-                                size="small"
-                                sx={{ ml: 1 }}
-                              />
-                              <TextField
-                                type="date"
-                                value={m.date || ''}
-                                onChange={e => updateMatchField(c._id, m._id, 'date', e.target.value)}
-                                size="small"
-                                sx={{ ml: 1 }}
-                              />
-                              <TextField
-                                type="time"
-                                value={m.time || ''}
-                                onChange={e => updateMatchField(c._id, m._id, 'time', e.target.value)}
-                                size="small"
-                                sx={{ ml: 1 }}
-                              />
-                              <TextField
-                                type="number"
-                                value={m.result1 ?? ''}
-                                onChange={e => updateMatchField(c._id, m._id, 'result1', e.target.value)}
-                                size="small"
-                                sx={{ ml: 1, width: 60 }}
-                              />
-                              <TextField
-                                type="number"
-                                value={m.result2 ?? ''}
-                                onChange={e => updateMatchField(c._id, m._id, 'result2', e.target.value)}
-                                size="small"
-                                sx={{ ml: 1, width: 60 }}
-                              />
-                              <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(c._id, m); }}>💾</a>
-                            </li>
-                          ))}
-                        </ul>
-                        {(() => {
-                          const t = groups[c.name]?.filter(gr => gr.group === g) || [];
-                          return t.length ? <GroupTable groups={t} /> : null;
-                        })()}
-                      </AccordionDetails>
-                    </Accordion>
-                  );
-                })}
-              {/* close competition accordion */}
+                }).map(([round, ms]) => (
+                  <Accordion key={round} sx={{ mt: 1 }}>
+                    <AccordionSummary expandIcon="▼">
+                      <Typography variant="subtitle2">{round}</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <ul className="collection">
+                        {ms.map(m => (
+                          <li key={m._id} className="collection-item">
+                            <TextField
+                              value={m.team1 || ''}
+                              onChange={e => updateMatchField(c._id, m._id, 'team1', e.target.value)}
+                              size="small"
+                            />
+                            <TextField
+                              value={m.team2 || ''}
+                              onChange={e => updateMatchField(c._id, m._id, 'team2', e.target.value)}
+                              size="small"
+                              sx={{ ml: 1 }}
+                            />
+                            <TextField
+                              type="date"
+                              value={m.date || ''}
+                              onChange={e => updateMatchField(c._id, m._id, 'date', e.target.value)}
+                              size="small"
+                              sx={{ ml: 1 }}
+                            />
+                            <TextField
+                              type="time"
+                              value={m.time || ''}
+                              onChange={e => updateMatchField(c._id, m._id, 'time', e.target.value)}
+                              size="small"
+                              sx={{ ml: 1 }}
+                            />
+                            <TextField
+                              type="number"
+                              value={m.result1 ?? ''}
+                              onChange={e => updateMatchField(c._id, m._id, 'result1', e.target.value)}
+                              size="small"
+                              sx={{ ml: 1, width: 60 }}
+                            />
+                            <TextField
+                              type="number"
+                              value={m.result2 ?? ''}
+                              onChange={e => updateMatchField(c._id, m._id, 'result2', e.target.value)}
+                              size="small"
+                              sx={{ ml: 1, width: 60 }}
+                            />
+                            <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(c._id, m); }}>💾</a>
+                          </li>
+                        ))}
+                      </ul>
+                      {groups[c.name]?.filter(gr => gr.group === round).length ? (
+                        <GroupTable groups={groups[c.name].filter(gr => gr.group === round)} />
+                      ) : null}
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
               </AccordionDetails>
             </Accordion>
           ))}
-        </AccordionDetails>
-      </Accordion>
 
+        </CardContent>
+      </Card>
 
+      {/* Owners */}
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
           <h6>Owners</h6>
@@ -443,6 +432,7 @@ export default function Admin() {
         </CardContent>
       </Card>
 
+      {/* Pencas */}
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
           <h6>Pencas</h6>
@@ -476,7 +466,6 @@ export default function Admin() {
               sx={{ ml: 1, minWidth: 120 }}
             >
               <MenuItem value="" disabled>Competencia</MenuItem>
-
               {competitions.map(c => (
                 <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
               ))}
@@ -484,9 +473,8 @@ export default function Admin() {
             <FormControlLabel
               control={<Checkbox checked={pencaForm.isPublic} onChange={e => setPencaForm({ ...pencaForm, isPublic: e.target.checked })} />}
               label="Pública"
-              style={{ marginLeft: '10px' }}
+              sx={{ ml: 1 }}
             />
-
             <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
           </form>
           <ul className="collection">
@@ -522,12 +510,11 @@ export default function Admin() {
                   {competitions.map(c => (
                     <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
                   ))}
-
                 </Select>
                 <FormControlLabel
                   control={<Checkbox checked={p.isPublic || false} onChange={e => updatePencaField(p._id, 'isPublic', e.target.checked)} />}
                   label="Pública"
-                  style={{ marginLeft: '10px' }}
+                  sx={{ ml: 1 }}
                 />
                 <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); savePenca(p); }}>💾</a>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deletePenca(p._id); }}>✖</a>
@@ -542,6 +529,6 @@ export default function Admin() {
         onClose={() => setWizardOpen(false)}
         onCreated={loadCompetitions}
       />
-  </div>
+    </div>
   );
 }
