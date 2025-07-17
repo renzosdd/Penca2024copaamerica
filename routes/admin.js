@@ -24,17 +24,6 @@ const upload = multer({
     }
 });
  
-const jsonUpload = multer({
-    storage: multer.memoryStorage(),
-    fileFilter: (req, file, cb) => {
-        const allowed = ['application/json', 'text/csv'];
-        if (allowed.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Solo se permiten archivos JSON o CSV'));
-        }
-    }
-});
 
 // Página de administración
 router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
@@ -179,7 +168,7 @@ router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Crear penca
-router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
+router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { name, owner, participantLimit, competition, isPublic } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
@@ -273,7 +262,7 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Crear competencia
-router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
+router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { name, useApi, groupsCount, integrantsPerGroup } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
