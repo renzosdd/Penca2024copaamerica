@@ -24,17 +24,6 @@ const upload = multer({
     }
 });
  
-const jsonUpload = multer({
-    storage: multer.memoryStorage(),
-    fileFilter: (req, file, cb) => {
-        const allowed = ['application/json', 'text/csv'];
-        if (allowed.includes(file.mimetype)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Solo se permiten archivos JSON o CSV'));
-        }
-    }
-});
 
 // Página de administración
 router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
