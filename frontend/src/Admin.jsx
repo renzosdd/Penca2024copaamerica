@@ -381,10 +381,13 @@ export default function Admin() {
                     </Accordion>
                   );
                 })}
+              {/* close competition accordion */}
+              </AccordionDetails>
+            </Accordion>
+          ))}
+        </AccordionDetails>
+      </Accordion>
 
-              ))}
-        </CardContent>
-      </Card>
 
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
