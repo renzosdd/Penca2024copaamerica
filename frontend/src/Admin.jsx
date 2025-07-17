@@ -322,6 +322,7 @@ export default function Admin() {
             />
             <input type="file" accept=".json" onChange={e => setCompetitionFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
             <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
+            <Button variant="contained" type="button" onClick={() => setWizardOpen(true)} sx={{ ml: 1 }}>Usar asistente</Button>
           </form>
 
           {competitions.map(c => (
