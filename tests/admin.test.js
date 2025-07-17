@@ -57,22 +57,16 @@ const adminRouter = require('../routes/admin');
 describe('Admin penca creation', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('creates a penca and loads matches', async () => {
+  it('creates a penca', async () => {
     User.findById.mockResolvedValue({ _id: 'u1', ownedPencas: [], save: jest.fn().mockResolvedValue(true) });
-    Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
 
     const app = express();
+    app.use(express.json());
     app.use('/admin', adminRouter);
-
-    const fixture = [{ team1: 'A', team2: 'B' }];
 
     const res = await request(app)
       .post('/admin/pencas')
-      .field('name', 'Test')
-      .field('owner', 'u1')
-      .field('participantLimit', '10')
-      .field('competition', 'Comp1')
-      .attach('fixture', Buffer.from(JSON.stringify(fixture)), 'fixture.json');
+      .send({ name: 'Test', owner: 'u1', participantLimit: '10', competition: 'Comp1' });
 
     expect(res.status).toBe(201);
     expect(Penca).toHaveBeenCalledWith(expect.objectContaining({
@@ -81,7 +75,7 @@ describe('Admin penca creation', () => {
       participantLimit: 10,
       competition: 'Comp1'
     }));
-    expect(Match.insertMany).toHaveBeenCalled();
+    expect(Match.insertMany).not.toHaveBeenCalled();
   });
 });
 
