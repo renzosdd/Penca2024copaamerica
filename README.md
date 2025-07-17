@@ -110,7 +110,7 @@ Con esta estructura puedes navegar fácilmente por cada componente de la aplicac
 
 ### Asistente de competencias
 
-Dentro del panel de administración (`/admin/edit`) encontrarás la sección **Competencias**. Haz clic en el botón **Nueva competencia** para abrir el asistente. Allí podrás indicar la cantidad de grupos y equipos por grupo o cargar un archivo de fixture.
+Dentro del panel de administración (`/admin/edit`) encontrarás la sección **Competencias**. Haz clic en el botón **Nueva competencia** para abrir el asistente. Allí podrás indicar la cantidad de grupos y equipos por grupo o cargar un archivo de fixture. El asistente ahora envía la lista de partidos generados al backend, por lo que los nombres de los equipos se guardan automáticamente.
 
 Para replicar el Mundial 2026 utiliza el archivo `worldcup2026_placeholder.json` incluido en la raíz del repositorio al momento de cargar el fixture. Configura además `DEFAULT_COMPETITION=Mundial 2026` en tu archivo `.env` para que la aplicación asigne ese torneo por defecto.
 
