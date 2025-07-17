@@ -10,7 +10,6 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [teamsPerGroup, setTeamsPerGroup] = useState(2);
   const [teams, setTeams] = useState([]);
 
-
   useEffect(() => {
     if (open) {
       setStep(0);
@@ -81,7 +80,12 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
     try {
       const res = await fetch('/admin/competitions', {
         method: 'POST',
-        body: data
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          groupsCount,
+          integrantsPerGroup: teamsPerGroup
+        })
       });
       if (res.ok) {
         if (onCreated) onCreated();
@@ -121,6 +125,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               style={{ marginLeft: '10px', width: '100px' }}
               min={2}
             />
+
           </div>
         )}
         {step === 1 && (
