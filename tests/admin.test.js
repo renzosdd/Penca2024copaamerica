@@ -57,7 +57,8 @@ const adminRouter = require('../routes/admin');
 describe('Admin penca creation', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('creates a penca', async () => {
+  it('creates a penca without fixture', async () => {
+
     User.findById.mockResolvedValue({ _id: 'u1', ownedPencas: [], save: jest.fn().mockResolvedValue(true) });
 
     const app = express();
@@ -66,7 +67,11 @@ describe('Admin penca creation', () => {
 
     const res = await request(app)
       .post('/admin/pencas')
-      .send({ name: 'Test', owner: 'u1', participantLimit: '10', competition: 'Comp1' });
+      .field('name', 'Test')
+      .field('owner', 'u1')
+      .field('participantLimit', '10')
+      .field('competition', 'Comp1');
+
 
     expect(res.status).toBe(201);
     expect(Penca).toHaveBeenCalledWith(expect.objectContaining({
@@ -108,10 +113,12 @@ describe('Admin competition creation', () => {
 
     const res = await request(app)
       .post('/admin/competitions')
-      .send({ name: 'Copa Test', groupsCount: 1, integrantsPerGroup: 2 });
+      .field('name', 'Copa Test');
 
     expect(res.status).toBe(201);
     expect(Competition).toHaveBeenCalledWith(expect.objectContaining({ name: 'Copa Test' }));
+    expect(Match.insertMany).not.toHaveBeenCalled();
+
   });
 
   it('lists competitions', async () => {
