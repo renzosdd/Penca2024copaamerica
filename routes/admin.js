@@ -328,6 +328,46 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
             }
             if (matches.length) {
                 await Match.insertMany(matches);
+
+                if (competition.groupsCount === 4) {
+                    const elim = [
+                        { team1: 'Ganador A', team2: 'Segundo B', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador B', team2: 'Segundo A', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador C', team2: 'Segundo D', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador D', team2: 'Segundo C', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Semifinal 1', team2: 'Semifinal 2', competition: name, group_name: 'Semifinales', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Semifinal 3', team2: 'Semifinal 4', competition: name, group_name: 'Semifinales', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Perdedor Semifinal 1', team2: 'Perdedor Semifinal 2', competition: name, group_name: 'Tercer puesto', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador Semifinal 1', team2: 'Ganador Semifinal 2', competition: name, group_name: 'Final', series: 'Eliminatorias', tournament: name }
+                    ];
+                    await Match.insertMany(elim);
+                } else if (competition.groupsCount > 4) {
+                    const r32Pairs = [
+                        ['A1','B2'], ['C1','D2'], ['E1','F2'], ['G1','H2'],
+                        ['I1','J2'], ['K1','L2'], ['B1','A2'], ['D1','C2'],
+                        ['F1','E2'], ['H1','G2'], ['J1','I2'], ['L1','K2'],
+                        ['A3','C3'], ['E3','G3'], ['I3','K3'], ['B3','D3']
+                    ];
+                    const elim = r32Pairs.map(([t1,t2]) => ({
+                        team1: t1,
+                        team2: t2,
+                        competition: name,
+                        group_name: 'Ronda de 32',
+                        series: 'Eliminatorias',
+                        tournament: name
+                    }));
+                    elim.push(
+                        { team1: 'Ganador R32-1', team2: 'Ganador R32-2', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador R32-3', team2: 'Ganador R32-4', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador R32-5', team2: 'Ganador R32-6', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador R32-7', team2: 'Ganador R32-8', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador QF1', team2: 'Ganador QF2', competition: name, group_name: 'Semifinal', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador QF3', team2: 'Ganador QF4', competition: name, group_name: 'Semifinal', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Perdedor SF1', team2: 'Perdedor SF2', competition: name, group_name: 'Tercer puesto', series: 'Eliminatorias', tournament: name },
+                        { team1: 'Ganador SF1', team2: 'Ganador SF2', competition: name, group_name: 'Final', series: 'Eliminatorias', tournament: name }
+                    );
+                    await Match.insertMany(elim);
+                }
             }
         }
 
