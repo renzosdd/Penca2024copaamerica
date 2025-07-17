@@ -42,9 +42,9 @@ Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
 El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
 útil si planeas varias competiciones en paralelo.
 
-La variable `DEFAULT_COMPETITION` define el nombre de la competencia principal. Al
-iniciar la aplicación se creará automáticamente si aún no existe y se asignará por
-defecto a los usuarios y puntajes nuevos.
+La variable `DEFAULT_COMPETITION` define el nombre de la competencia principal.
+Debes crearla desde el asistente de competencias en el panel de administración
+para que pueda asignarse por defecto a nuevos usuarios y puntajes.
 
 3. Inicia el servidor en modo desarrollo con **nodemon**:
 
