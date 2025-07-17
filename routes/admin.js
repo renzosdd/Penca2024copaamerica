@@ -404,6 +404,59 @@ router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) =>
     }
 });
 
+// Obtener partidos de una competencia
+router.get('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const matches = await Match.find({ competition: req.params.id });
+        res.json(matches);
+    } catch (error) {
+        console.error('Error listing matches:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Actualizar datos de un partido
+router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const match = await Match.findById(req.params.matchId);
+        if (!match || match.competition !== req.params.id) {
+            return res.status(404).json({ error: 'Match not found' });
+        }
+
+        const { team1, team2, date, time } = req.body;
+        if (team1 !== undefined) match.team1 = team1;
+        if (team2 !== undefined) match.team2 = team2;
+        if (date !== undefined) match.date = date;
+        if (time !== undefined) match.time = time;
+
+        await match.save();
+        res.json({ message: 'Match updated' });
+    } catch (error) {
+        console.error('Error updating match:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Actualizar resultado de un partido y recalcular eliminatorias
+router.post('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const match = await Match.findById(req.params.matchId);
+        if (!match || match.competition !== req.params.id) {
+            return res.status(404).json({ error: 'Match not found' });
+        }
+
+        const { result1, result2 } = req.body;
+        match.result1 = result1;
+        match.result2 = result2;
+        await match.save();
+        await updateEliminationMatches(match.competition);
+        res.json({ message: 'Match result updated' });
+    } catch (error) {
+        console.error('Error updating match result:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Recalcular llaves de eliminatoria manualmente
 router.post('/recalculate-bracket/:competition', isAuthenticated, isAdmin, async (req, res) => {
     try {

@@ -321,7 +321,6 @@ app.get('/avatar/:username', async (req, res) => {
     }
 });
 
-app.use('/matches', isAuthenticated, require('./routes/matches'));
 app.use('/predictions', isAuthenticated, require('./routes/predictions'));
 app.use('/ranking', isAuthenticated, require('./routes/ranking'));
 app.use('/groups', isAuthenticated, require('./routes/groups').router);
