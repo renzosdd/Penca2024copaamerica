@@ -116,11 +116,12 @@ Para replicar el Mundial 2026 utiliza el archivo `worldcup2026_placeholder.json`
 
 ## Administración de resultados
 
-Los administradores registran los marcadores finales desde `/admin/edit` en el
-apartado **Matches**. Al guardar un resultado la aplicación actualiza
+Los administradores registran los marcadores finales desde `/admin/edit` dentro
+del acordeón de cada competencia. Allí pueden ver y actualizar todos los
+encuentros de forma agrupada. Al guardar un resultado la aplicación actualiza
 automáticamente la llave del knockout. El endpoint
-`/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel) queda
-como opción de respaldo para recalcular manualmente si fuera necesario.
+`/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel) queda como
+opción de respaldo para recalcular manualmente si fuera necesario.
 
 ### Ejemplo de uso
 
@@ -135,6 +136,7 @@ como opción de respaldo para recalcular manualmente si fuera necesario.
 - `POST /admin/recalculate-bracket` – fuerza el nuevo cálculo del bracket con
   los resultados cargados.
 - `GET /api/owner` – devuelve las pencas administradas por el owner autenticado.
+- `GET /competitions/:competition/matches` – lista los partidos de la competencia indicada.
 
 ## Pruebas
 
