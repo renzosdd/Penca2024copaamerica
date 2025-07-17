@@ -428,7 +428,7 @@ export default function Admin() {
                     </Accordion>
                   );
                 })}
-
+              {/* close competition accordion */}
               </AccordionDetails>
             </Accordion>
           ))}
