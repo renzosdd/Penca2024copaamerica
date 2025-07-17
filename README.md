@@ -42,6 +42,10 @@ Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
 El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
 útil si planeas varias competiciones en paralelo.
 
+La variable `DEFAULT_COMPETITION` define el nombre de la competencia principal. Al
+iniciar la aplicación se creará automáticamente si aún no existe y se asignará por
+defecto a los usuarios y puntajes nuevos.
+
 3. Inicia el servidor en modo desarrollo con **nodemon**:
 
 ```bash
@@ -103,6 +107,12 @@ El esquema `Penca` permite organizar competiciones privadas. Los usuarios se une
 Los owners cuentan con un panel propio disponible en `/owner` para administrar sus pencas. Desde allí pueden aprobar o rechazar solicitudes de ingreso y revisar el ranking de cada penca.
 
 Con esta estructura puedes navegar fácilmente por cada componente de la aplicación.
+
+### Asistente de competencias
+
+Dentro del panel de administración (`/admin/edit`) encontrarás la sección **Competencias**. Haz clic en el botón **Nueva competencia** para abrir el asistente. Allí podrás indicar la cantidad de grupos y equipos por grupo o cargar un archivo de fixture.
+
+Para replicar el Mundial 2026 utiliza el archivo `worldcup2026_placeholder.json` incluido en la raíz del repositorio al momento de cargar el fixture. Configura además `DEFAULT_COMPETITION=Mundial 2026` en tu archivo `.env` para que la aplicación asigne ese torneo por defecto.
 
 ## Administración de resultados
 
