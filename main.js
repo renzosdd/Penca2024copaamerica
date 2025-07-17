@@ -300,7 +300,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
-
+ 
 app.get('/avatar/:username', async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username });
