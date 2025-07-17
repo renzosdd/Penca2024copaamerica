@@ -268,7 +268,7 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Crear competencia
-router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
+router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { name, useApi, groupsCount, integrantsPerGroup } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
@@ -280,11 +280,7 @@ router.post('/competitions', isAuthenticated, isAdmin, jsonUpload.single('fixtur
         });
         await competition.save();
 
-        if (req.file) {
-            const matchesData = JSON.parse(req.file.buffer.toString());
-            matchesData.forEach(m => { if (!m.competition) m.competition = name; });
-            await Match.insertMany(matchesData);
-        } else if (String(useApi) === 'true') {
+        if (String(useApi) === 'true') {
             const {
                 FOOTBALL_API_KEY,
                 FOOTBALL_LEAGUE_ID,

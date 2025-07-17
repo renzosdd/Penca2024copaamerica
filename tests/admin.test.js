@@ -99,22 +99,19 @@ describe('Admin penca listing', () => {
 describe('Admin competition creation', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('creates a competition with fixture', async () => {
+  it('creates a competition', async () => {
     Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
 
     const app = express();
+    app.use(express.json());
     app.use('/admin', adminRouter);
-
-    const fixture = [{ team1: 'A', team2: 'B' }];
 
     const res = await request(app)
       .post('/admin/competitions')
-      .field('name', 'Copa Test')
-      .attach('fixture', Buffer.from(JSON.stringify(fixture)), 'fixture.json');
+      .send({ name: 'Copa Test', groupsCount: 1, integrantsPerGroup: 2 });
 
     expect(res.status).toBe(201);
     expect(Competition).toHaveBeenCalledWith(expect.objectContaining({ name: 'Copa Test' }));
-    expect(Match.insertMany).toHaveBeenCalled();
   });
 
   it('lists competitions', async () => {
