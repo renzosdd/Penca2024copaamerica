@@ -1,8 +1,9 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@mui/material';
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = async () => {
     try {
@@ -19,9 +20,11 @@ export default function Header() {
         <Link to="/" className="logo">
           <img src="/images/Logo.png" alt="Logo" className="logo-img" />
         </Link>
-        <Button variant="contained" color="secondary" onClick={handleLogout}>
-          Logout
-        </Button>
+        {location.pathname !== '/' && (
+          <Button variant="contained" color="secondary" onClick={handleLogout}>
+            Logout
+          </Button>
+        )}
       </div>
     </header>
   );

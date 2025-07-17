@@ -66,7 +66,7 @@ export default function Admin() {
 
   async function loadCompetitionMatches(comp) {
     try {
-      const res = await fetch(`/admin/competitions/${comp._id}/matches`);
+      const res = await fetch(`/admin/competitions/${encodeURIComponent(comp.name)}/matches`);
       if (!res.ok) return;
       const data = await res.json();
       setMatchesByCompetition(ms => ({ ...ms, [comp._id]: data }));
@@ -232,7 +232,7 @@ export default function Admin() {
   async function saveMatch(compId, match) {
     try {
       const { team1, team2, date, time } = match;
-      const resInfo = await fetch(`/admin/competitions/${compId}/matches/${match._id}`, {
+      const resInfo = await fetch(`/admin/competitions/${encodeURIComponent(match.competition)}/matches/${match._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ team1, team2, date, time }),
@@ -240,7 +240,7 @@ export default function Admin() {
 
       const res1 = match.result1 === '' ? null : Number(match.result1);
       const res2 = match.result2 === '' ? null : Number(match.result2);
-      const resScore = await fetch(`/admin/competitions/${compId}/matches/${match._id}`, {
+      const resScore = await fetch(`/admin/competitions/${encodeURIComponent(match.competition)}/matches/${match._id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ result1: res1, result2: res2 }),
