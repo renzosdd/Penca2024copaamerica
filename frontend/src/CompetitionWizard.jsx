@@ -9,6 +9,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [groupsCount, setGroupsCount] = useState(1);
   const [teamsPerGroup, setTeamsPerGroup] = useState(2);
   const [teams, setTeams] = useState([]);
+  const [fixtureFile, setFixtureFile] = useState(null);
 
   const handleFileUpload = e => {
     const file = e.target.files && e.target.files[0];
@@ -43,6 +44,11 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
     reader.readAsText(file);
   };
 
+  const handleFixtureUpload = e => {
+    const file = e.target.files && e.target.files[0];
+    setFixtureFile(file || null);
+  };
+
   useEffect(() => {
     if (open) {
       setStep(0);
@@ -50,6 +56,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       setGroupsCount(1);
       setTeamsPerGroup(2);
       setTeams([]);
+      setFixtureFile(null);
     }
   }, [open]);
 
@@ -63,6 +70,10 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
 
   const next = () => {
     if (step === 0) {
+      if (fixtureFile) {
+        submit();
+        return;
+      }
       if (teams.length === 0) {
         const initial = Array.from({ length: groupsCount }, () =>
           Array.from({ length: teamsPerGroup }, () => '')
@@ -85,28 +96,35 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   };
 
   const submit = async () => {
-    const matches = [];
-    for (let g = 0; g < groupsCount; g++) {
-      const groupName = `Grupo ${letters[g]}`;
-      for (let i = 0; i < teamsPerGroup; i++) {
-        for (let j = i + 1; j < teamsPerGroup; j++) {
-          matches.push({
-            team1: teams[g][i],
-            team2: teams[g][j],
-            competition: name,
-            group_name: groupName,
-            series: 'Fase de grupos',
-            tournament: name
-          });
-        }
-      }
-    }
     const data = new FormData();
     data.append('name', name);
     data.append('groupsCount', groupsCount);
     data.append('integrantsPerGroup', teamsPerGroup);
-    const blob = new Blob([JSON.stringify(matches)], { type: 'application/json' });
-    data.append('fixture', blob, 'fixture.json');
+
+    if (fixtureFile) {
+      data.append('fixture', fixtureFile, fixtureFile.name);
+    } else {
+      const matches = [];
+      for (let g = 0; g < groupsCount; g++) {
+        const groupName = `Grupo ${letters[g]}`;
+        for (let i = 0; i < teamsPerGroup; i++) {
+          for (let j = i + 1; j < teamsPerGroup; j++) {
+            matches.push({
+              team1: teams[g][i],
+              team2: teams[g][j],
+              competition: name,
+              group_name: groupName,
+              series: 'Fase de grupos',
+              tournament: name
+            });
+          }
+        }
+      }
+      const blob = new Blob([JSON.stringify(matches)], {
+        type: 'application/json'
+      });
+      data.append('fixture', blob, 'fixture.json');
+    }
     try {
       const res = await fetch('/admin/competitions', {
         method: 'POST',
@@ -154,6 +172,12 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               type="file"
               accept=".json,.csv"
               onChange={handleFileUpload}
+              style={{ display: 'block', marginTop: '10px' }}
+            />
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleFixtureUpload}
               style={{ display: 'block', marginTop: '10px' }}
             />
           </div>
