@@ -9,7 +9,7 @@ import roundOrder from './roundOrder';
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [pencas, setPencas] = useState([]);
-  const [matches, setMatches] = useState([]);
+  const [matches, setMatches] = useState({});
   const [preds, setPreds] = useState([]);
   const [rankings, setRankings] = useState({});
   const [open, setOpen] = useState(null);
@@ -39,16 +39,21 @@ export default function Dashboard() {
     async function loadData() {
       if (!pencas.length) return;
       try {
-        const [mRes, pRes] = await Promise.all([
-          fetch('/matches'),
-          fetch('/predictions')
-        ]);
-        if (mRes.ok) {
-          const data = await mRes.json();
-          setMatches(data);
-          const comps = Array.from(new Set(data.map(m => m.competition)));
-          if (comps.length) await loadGroups(comps);
-        }
+        const comps = Array.from(new Set(pencas.map(p => p.competition)));
+        const matchesByComp = {};
+        await Promise.all(
+          comps.map(async c => {
+            try {
+              const r = await fetch(`/matches/competition/${encodeURIComponent(c)}`);
+              if (r.ok) matchesByComp[c] = await r.json();
+            } catch (err) {
+              console.error('load matches error', err);
+            }
+          })
+        );
+        setMatches(matchesByComp);
+        if (comps.length) await loadGroups(comps);
+        const pRes = await fetch('/predictions');
         if (pRes.ok) setPreds(await pRes.json());
         pencas.forEach(p => loadRanking(p._id));
         if (user && user.role === 'owner') loadOwnerPencas();
@@ -168,10 +173,11 @@ export default function Dashboard() {
 
   const filterMatches = p => {
     let list = [];
+    const compMatches = matches[p.competition] || [];
     if (Array.isArray(p.fixture) && p.fixture.length) {
-      list = matches.filter(m => p.fixture.includes(m._id));
+      list = compMatches.filter(m => p.fixture.includes(m._id));
     } else {
-      list = matches.filter(m => m.competition === p.competition);
+      list = compMatches;
     }
     list.sort(
       (a, b) =>

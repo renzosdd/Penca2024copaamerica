@@ -4,7 +4,7 @@ import { Card, CardContent, Checkbox, FormControlLabel, Button } from '@mui/mate
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
   const [rankings, setRankings] = useState({});
-  const [matches, setMatches] = useState([]);
+  const [matches, setMatches] = useState({});
 
   useEffect(() => {
     loadData();
@@ -12,12 +12,19 @@ export default function OwnerPanel() {
 
   useEffect(() => {
     async function loadMatches() {
-      try {
-        const res = await fetch('/matches');
-        if (res.ok) setMatches(await res.json());
-      } catch (err) {
-        console.error('load matches error', err);
-      }
+      const comps = Array.from(new Set(pencas.map(p => p.competition)));
+      const result = {};
+      await Promise.all(
+        comps.map(async c => {
+          try {
+            const r = await fetch(`/matches/competition/${encodeURIComponent(c)}`);
+            if (r.ok) result[c] = await r.json();
+          } catch (err) {
+            console.error('load matches error', err);
+          }
+        })
+      );
+      setMatches(result);
     }
     if (pencas.length) loadMatches();
   }, [pencas]);
@@ -80,10 +87,11 @@ export default function OwnerPanel() {
 
   const filterMatches = p => {
     let list = [];
+    const compMatches = matches[p.competition] || [];
     if (Array.isArray(p.fixture) && p.fixture.length) {
-      list = matches.filter(m => p.fixture.includes(m._id));
+      list = compMatches.filter(m => p.fixture.includes(m._id));
     } else {
-      list = matches.filter(m => m.competition === p.competition);
+      list = compMatches;
     }
     list.sort(
       (a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`)

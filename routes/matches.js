@@ -11,7 +11,17 @@ router.get('/', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Error retrieving matches' });
     }
-}); 
+});
+
+// Matches for a specific competition
+router.get('/competition/:competition', async (req, res) => {
+    try {
+        const matches = await Match.find({ competition: req.params.competition });
+        res.json(matches);
+    } catch (err) {
+        res.status(500).json({ error: 'Error retrieving matches' });
+    }
+});
  
 router.post('/:id', isAdmin, async (req, res) => {
     try {
