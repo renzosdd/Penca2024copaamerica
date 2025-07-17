@@ -370,7 +370,7 @@ router.put('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
+ 
 // Eliminar competencia
 router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
