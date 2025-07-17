@@ -10,7 +10,6 @@ const MongoStore = require('connect-mongo');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
 const cacheControl = require('./middleware/cacheControl');
 const { DEFAULT_COMPETITION } = require('./config');
-const Competition = require('./models/Competition');
 const Penca = require("./models/Penca");
 
 dotenv.config();
@@ -112,14 +111,7 @@ async function initializeDatabase() {
             process.exit(1);
         }
 
-        // Asegurar que exista la competencia por defecto
-        let competition = await Competition.findOne({ name: DEFAULT_COMPETITION });
-        if (!competition) {
-            competition = new Competition({ name: DEFAULT_COMPETITION });
-            await competition.save();
-            debugLog(`Competencia creada: ${DEFAULT_COMPETITION}`);
-        }
-
+        // Crear usuario administrador si no existe
         let admin = await User.findOne({ username: adminUsername });
         if (!admin) {
             debugLog('No existe usuario administrador, creándolo...');
@@ -132,7 +124,7 @@ async function initializeDatabase() {
                 valid: true
             });
             await admin.save();
-            await Score.create({ userId: admin._id, competition: competition.name });
+            await Score.create({ userId: admin._id, competition: DEFAULT_COMPETITION });
             debugLog('Usuario administrador creado.');
         }
         // Los partidos deben cargarse manualmente desde las herramientas de administración

@@ -30,11 +30,6 @@ export default function Admin() {
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
 
-  const [newCompetition, setNewCompetition] = useState({
-    name: '',
-    groupsCount: '',
-    integrantsPerGroup: ''
-  });
 
   useEffect(() => {
     loadAll();
@@ -132,22 +127,6 @@ export default function Admin() {
     }
   }
 
-  async function createCompetition(e) {
-    e.preventDefault();
-    try {
-      const res = await fetch('/admin/competitions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newCompetition)
-      });
-      if (res.ok) {
-        setNewCompetition({ name: '', groupsCount: '', integrantsPerGroup: '' });
-        loadCompetitions();
-      }
-    } catch (err) {
-      console.error('create competition error', err);
-    }
-  }
 
   async function createOwner(e) {
     e.preventDefault();
@@ -283,38 +262,12 @@ export default function Admin() {
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>Administración</h5>
 
-      <Accordion className="admin-accordion" style={{ marginTop: '2rem' }}>
-        <AccordionSummary expandIcon="▶">
-          <Typography variant="subtitle1">Competencias</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <form onSubmit={createCompetition} style={{ marginBottom: '1rem' }}>
-            <TextField
-              value={newCompetition.name}
-              onChange={e => setNewCompetition({ ...newCompetition, name: e.target.value })}
-              label="Nombre"
-              required
-              size="small"
-            />
-            <TextField
-              type="number"
-              value={newCompetition.groupsCount}
-              onChange={e => setNewCompetition({ ...newCompetition, groupsCount: e.target.value })}
-              label="Grupos"
-              size="small"
-              sx={{ ml: 1, width: 80 }}
-            />
-            <TextField
-              type="number"
-              value={newCompetition.integrantsPerGroup}
-              onChange={e => setNewCompetition({ ...newCompetition, integrantsPerGroup: e.target.value })}
-              label="Integrantes"
-              size="small"
-              sx={{ ml: 1, width: 100 }}
-            />
-            <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
-            <Button variant="contained" type="button" onClick={() => setWizardOpen(true)} sx={{ ml: 1 }}>Usar asistente</Button>
-          </form>
+      <Card style={{ marginTop: '2rem', padding: '1rem' }}>
+        <CardContent>
+          <h6>Competencias</h6>
+          <Button variant="contained" type="button" onClick={() => setWizardOpen(true)} sx={{ mb: 2 }}>
+            Nueva competencia
+          </Button>
 
           {competitions.map(c => (
             <Accordion
@@ -429,11 +382,9 @@ export default function Admin() {
                   );
                 })}
 
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </AccordionDetails>
-      </Accordion>
+              ))}
+        </CardContent>
+      </Card>
 
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
