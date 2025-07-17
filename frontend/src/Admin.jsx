@@ -197,21 +197,16 @@ export default function Admin() {
     }
   }
 
-  const [pencaFile, setPencaFile] = useState(null);
-
   async function createPenca(e) {
     e.preventDefault();
     try {
-      const data = new FormData();
-      Object.entries(pencaForm).forEach(([k, v]) => data.append(k, v));
-      if (pencaFile) data.append('fixture', pencaFile);
       const res = await fetch('/admin/pencas', {
         method: 'POST',
-        body: data
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pencaForm)
       });
       if (res.ok) {
         setPencaForm({ name: '', owner: '', competition: '', isPublic: false });
-        setPencaFile(null);
         loadPencas();
       }
     } catch (err) {
@@ -541,7 +536,6 @@ export default function Admin() {
               style={{ marginLeft: '10px' }}
             />
 
-            <input type="file" accept=".json" onChange={e => setPencaFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
             <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
           </form>
           <ul className="collection">

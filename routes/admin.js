@@ -179,7 +179,7 @@ router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Crear penca
-router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), async (req, res) => {
+router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { name, owner, participantLimit, competition, isPublic } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
@@ -188,11 +188,6 @@ router.post('/pencas', isAuthenticated, isAdmin, jsonUpload.single('fixture'), a
         if (!ownerUser) return res.status(404).json({ error: 'Owner not found' });
 
         let fixtureIds = [];
-        if (req.file) {
-            const matchesData = JSON.parse(req.file.buffer.toString());
-            const created = await Match.insertMany(matchesData);
-            fixtureIds = created.map(m => m._id);
-        }
 
         const penca = new Penca({
             name,
