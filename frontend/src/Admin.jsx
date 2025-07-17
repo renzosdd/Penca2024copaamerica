@@ -35,7 +35,6 @@ export default function Admin() {
     groupsCount: '',
     integrantsPerGroup: ''
   });
-  const [competitionFile, setCompetitionFile] = useState(null);
 
   useEffect(() => {
     loadAll();
@@ -136,16 +135,13 @@ export default function Admin() {
   async function createCompetition(e) {
     e.preventDefault();
     try {
-      const data = new FormData();
-      Object.entries(newCompetition).forEach(([k, v]) => data.append(k, v));
-      if (competitionFile) data.append('fixture', competitionFile);
       const res = await fetch('/admin/competitions', {
         method: 'POST',
-        body: data
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCompetition)
       });
       if (res.ok) {
         setNewCompetition({ name: '', groupsCount: '', integrantsPerGroup: '' });
-        setCompetitionFile(null);
         loadCompetitions();
       }
     } catch (err) {
@@ -319,7 +315,6 @@ export default function Admin() {
               size="small"
               sx={{ ml: 1, width: 100 }}
             />
-            <input type="file" accept=".json" onChange={e => setCompetitionFile(e.target.files[0])} style={{ marginLeft: '10px' }} />
             <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
             <Button variant="contained" type="button" onClick={() => setWizardOpen(true)} sx={{ ml: 1 }}>Usar asistente</Button>
           </form>
