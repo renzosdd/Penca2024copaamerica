@@ -39,16 +39,19 @@ export default function Dashboard() {
     async function loadData() {
       if (!pencas.length) return;
       try {
-        const [mRes, pRes] = await Promise.all([
-          fetch('/matches'),
-          fetch('/predictions')
-        ]);
-        if (mRes.ok) {
-          const data = await mRes.json();
-          setMatches(data);
-          const comps = Array.from(new Set(data.map(m => m.competition)));
-          if (comps.length) await loadGroups(comps);
+        const comps = Array.from(new Set(pencas.map(p => p.competition)));
+        const matchesData = [];
+        for (const c of comps) {
+          const r = await fetch(`/competitions/${encodeURIComponent(c)}/matches`);
+          if (r.ok) {
+            const list = await r.json();
+            matchesData.push(...list);
+          }
         }
+        setMatches(matchesData);
+        if (comps.length) await loadGroups(comps);
+
+        const pRes = await fetch('/predictions');
         if (pRes.ok) setPreds(await pRes.json());
         pencas.forEach(p => loadRanking(p._id));
         if (user && user.role === 'owner') loadOwnerPencas();

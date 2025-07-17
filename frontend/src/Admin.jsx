@@ -41,7 +41,8 @@ export default function Admin() {
   }, []);
 
   async function loadAll() {
-    await Promise.all([loadCompetitions(), loadOwners(), loadPencas(), loadMatches()]);
+    await Promise.all([loadCompetitions(), loadOwners(), loadPencas()]);
+    await loadMatches();
   }
 
   async function loadCompetitions() {
@@ -73,13 +74,17 @@ export default function Admin() {
 
   async function loadMatches() {
     try {
-      const res = await fetch('/matches');
-      if (res.ok) {
-        const data = await res.json();
-        setMatches(data);
-        const comps = Array.from(new Set(data.map(m => m.competition)));
-        if (comps.length) await loadGroups(comps);
+      const comps = competitions.map(c => c.name);
+      const data = [];
+      for (const c of comps) {
+        const r = await fetch(`/competitions/${encodeURIComponent(c)}/matches`);
+        if (r.ok) {
+          const list = await r.json();
+          data.push(...list);
+        }
       }
+      setMatches(data);
+      if (comps.length) await loadGroups(comps);
     } catch (err) {
       console.error('load matches error', err);
     }
