@@ -13,6 +13,8 @@ import {
   Checkbox,
   FormControlLabel,
   IconButton
+  Snackbar,
+  Alert
 } from '@mui/material';
 import Save from '@mui/icons-material/Save';
 import GroupTable from './GroupTable';
@@ -30,6 +32,18 @@ export default function Admin() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
+  const [savingMatch, setSavingMatch] = useState({});
+  const [savingRound, setSavingRound] = useState({});
+  const [generating, setGenerating] = useState({});
+  const [snack, setSnack] = useState({ open: false, message: '', severity: 'success' });
+
+  const showSnack = (message, severity = 'success') => {
+    setSnack({ open: true, message, severity });
+  };
+
+  const handleSnackClose = () => {
+    setSnack(s => ({ ...s, open: false }));
+  };
 
   useEffect(() => {
     loadAll();
@@ -130,15 +144,24 @@ export default function Admin() {
   }
 
   async function generateBracket(comp) {
+    setGenerating(g => ({ ...g, [comp._id]: true }));
     try {
       const res = await fetch(`/admin/generate-bracket/${encodeURIComponent(comp.name)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ qualifiersPerGroup: Number(comp.qualifiersPerGroup || 2) })
       });
-      if (res.ok) loadCompetitionMatches(comp);
+      if (res.ok) {
+        loadCompetitionMatches(comp);
+        showSnack('Eliminatorias generadas');
+      } else {
+        showSnack('Error al generar eliminatorias', 'error');
+      }
     } catch (err) {
       console.error('generate bracket error', err);
+      showSnack('Error al generar eliminatorias', 'error');
+    } finally {
+      setGenerating(g => ({ ...g, [comp._id]: false }));
     }
   }
 
@@ -249,6 +272,8 @@ export default function Admin() {
   };
 
   async function saveMatch(compId, match, skipRefresh = false) {
+    setSavingMatch(s => ({ ...s, [match._id]: true }));
+    let success = false;
     try {
       const { team1, team2, date, time } = match;
       const resInfo = await fetch(`/admin/competitions/${encodeURIComponent(match.competition)}/matches/${match._id}`, {
@@ -265,12 +290,20 @@ export default function Admin() {
         body: JSON.stringify({ result1: res1, result2: res2 }),
       });
 
-      if (resInfo.ok && resScore.ok && !skipRefresh) {
+      success = resInfo.ok && resScore.ok;
+      if (success && !skipRefresh) {
         loadCompetitionMatches({ _id: compId, name: match.competition });
+        showSnack('Partido guardado');
+      } else if (!success && !skipRefresh) {
+        showSnack('Error al guardar partido', 'error');
       }
     } catch (err) {
       console.error('update match error', err);
+      if (!skipRefresh) showSnack('Error al guardar partido', 'error');
+    } finally {
+      setSavingMatch(s => ({ ...s, [match._id]: false }));
     }
+    return success;
   }
 
 
@@ -294,9 +327,23 @@ export default function Admin() {
     const matches = (matchesByCompetition[compId] || []).filter(
       m => (m.group_name || 'Otros') === round
     );
-    await Promise.all(matches.map(m => saveMatch(compId, m, true)));
-    if (matches.length) {
-      loadCompetitionMatches({ _id: compId, name: matches[0].competition });
+    const key = `${compId}-${round}`;
+    setSavingRound(r => ({ ...r, [key]: true }));
+    try {
+      const results = await Promise.all(matches.map(m => saveMatch(compId, m, true)));
+      if (matches.length) {
+        loadCompetitionMatches({ _id: compId, name: matches[0].competition });
+      }
+      if (results.every(Boolean)) {
+        showSnack('Ronda guardada');
+      } else {
+        showSnack('Error al guardar ronda', 'error');
+      }
+    } catch (err) {
+      console.error('save round error', err);
+      showSnack('Error al guardar ronda', 'error');
+    } finally {
+      setSavingRound(r => ({ ...r, [key]: false }));
     }
   }
 
@@ -351,7 +398,7 @@ export default function Admin() {
                   size="small"
                   sx={{ ml: 1, width: 100 }}
                 />
-                <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)}>
+                <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)} disabled={generating[c._id]}>
                   Generar/Actualizar eliminatorias
                 </Button>
                 <IconButton size="small" className="secondary-content" onClick={() => saveCompetition(c)}>
@@ -421,7 +468,7 @@ export default function Admin() {
                               sx={{ ml: 1, width: 60 }}
                             />
                             <span className="secondary-content">
-                              <IconButton size="small" onClick={() => saveMatch(c._id, m)}>
+                              <IconButton size="small" onClick={() => saveMatch(c._id, m)} disabled={savingMatch[m._id]}>
                                 <Save fontSize="small" />
                               </IconButton>
                             </span>
@@ -431,7 +478,7 @@ export default function Admin() {
                       <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, round)}>
                         Guardar orden
                       </Button>
-                      <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, round)}>
+                      <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, round)} disabled={savingRound[`${c._id}-${round}`]}> 
                         Guardar ronda
                       </Button>
                       {groups[c.name]?.filter(gr => gr.group === round).length ? (
@@ -603,6 +650,11 @@ export default function Admin() {
         onClose={() => setWizardOpen(false)}
         onCreated={loadCompetitions}
       />
+      <Snackbar open={snack.open} autoHideDuration={3000} onClose={handleSnackClose}>
+        <Alert onClose={handleSnackClose} severity={snack.severity} sx={{ width: '100%' }}>
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
