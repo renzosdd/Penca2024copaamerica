@@ -19,6 +19,12 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
+  function canPredict(match) {
+    const start = new Date(`${match.date}T${match.time}:00`);
+    const diff = (start - new Date()) / 60000;
+    return diff >= 30;
+  }
+
   const pMatches = (() => {
     let list = [];
     if (Array.isArray(penca.fixture) && penca.fixture.length) {
@@ -70,10 +76,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               .map(g => (
                 <div key={g} style={{ marginBottom: '1rem' }}>
                   <h6>{g}</h6>
-                  {pMatches[g].map(m => {
-                    const pr = getPrediction(penca._id, m._id) || {};
-                    return (
-                      <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
+                      {pMatches[g].map(m => {
+                        const pr = getPrediction(penca._id, m._id) || {};
+                        const editable = canPredict(m);
+                        return (
+                          <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
                         <CardContent>
                           <div className="match-header">
                             <div className="team">
@@ -96,6 +103,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                   required
                                   size="small"
                                   sx={{ width: 60 }}
+                                  disabled={!editable}
                                 />
                                 <span>-</span>
                                 <TextField
@@ -105,9 +113,10 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                   required
                                   size="small"
                                   sx={{ width: 60, ml: 1 }}
+                                  disabled={!editable}
                                 />
                               </div>
-                              <Button variant="contained" type="submit">Guardar</Button>
+                              <Button variant="contained" type="submit" disabled={!editable}>Guardar</Button>
                             </form>
                           </div>
                         </CardContent>
@@ -133,6 +142,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                       <h6>{r}</h6>
                       {pMatches[r].map(m => {
                         const pr = getPrediction(penca._id, m._id) || {};
+                        const editable = canPredict(m);
                         return (
                           <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
                             <CardContent>
@@ -157,6 +167,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                       required
                                       size="small"
                                       sx={{ width: 60 }}
+                                      disabled={!editable}
                                     />
                                     <span>-</span>
                                     <TextField
@@ -166,9 +177,10 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                       required
                                       size="small"
                                       sx={{ width: 60, ml: 1 }}
+                                      disabled={!editable}
                                     />
                                   </div>
-                                  <Button variant="contained" type="submit">Guardar</Button>
+                                  <Button variant="contained" type="submit" disabled={!editable}>Guardar</Button>
                                 </form>
                               </div>
                             </CardContent>
