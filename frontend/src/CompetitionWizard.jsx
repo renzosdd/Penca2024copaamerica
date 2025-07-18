@@ -1,5 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField
+} from '@mui/material';
 
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -97,36 +104,39 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       <DialogContent>
         {step === 0 && (
           <div>
-            <input
-              type="text"
+            <TextField
+              label="Nombre"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Nombre"
               required
+              size="small"
             />
-            <input
+            <TextField
               type="number"
+              label="Grupos"
               value={groupsCount}
               onChange={e => setGroupsCount(Number(e.target.value))}
-              placeholder="Grupos"
-              style={{ marginLeft: '10px', width: '80px' }}
-              min={1}
+              size="small"
+              sx={{ ml: 1, width: 80 }}
+              inputProps={{ min: 1 }}
             />
-            <input
+            <TextField
               type="number"
+              label="Integrantes"
               value={teamsPerGroup}
               onChange={e => setTeamsPerGroup(Number(e.target.value))}
-              placeholder="Integrantes"
-              style={{ marginLeft: '10px', width: '100px' }}
-              min={2}
+              size="small"
+              sx={{ ml: 1, width: 100 }}
+              inputProps={{ min: 2 }}
             />
-            <input
+            <TextField
               type="number"
+              label="Clasificados"
               value={qualifiersPerGroup}
               onChange={e => setQualifiersPerGroup(Number(e.target.value))}
-              placeholder="Clasificados"
-              style={{ marginLeft: '10px', width: '100px' }}
-              min={1}
+              size="small"
+              sx={{ ml: 1, width: 100 }}
+              inputProps={{ min: 1 }}
             />
 
           </div>
@@ -137,13 +147,14 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               <div key={gi} style={{ marginBottom: '1rem' }}>
                 <h6>{`Grupo ${letters[gi]}`}</h6>
                 {group.map((team, ti) => (
-                  <input
+                  <TextField
                     key={ti}
-                    type="text"
+                    label={`Equipo ${ti + 1}`}
                     value={team}
                     onChange={e => updateTeam(gi, ti, e.target.value)}
-                    placeholder={`Equipo ${ti + 1}`}
-                    style={{ display: 'block', marginBottom: '5px' }}
+                    size="small"
+                    fullWidth
+                    sx={{ mb: 1 }}
                   />
                 ))}
               </div>
