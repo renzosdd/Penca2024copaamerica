@@ -259,7 +259,7 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
 // Crear competencia
 router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, useApi, groupsCount, integrantsPerGroup, fixture } = req.body;
+        const { name, useApi, groupsCount, integrantsPerGroup, fixture, autoGenerate } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
         const competition = new Competition({
@@ -314,7 +314,7 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
             if (matchesData.length) {
                 await Match.insertMany(matchesData);
             }
-        } else if (competition.groupsCount && competition.integrantsPerGroup) {
+        } else if (String(autoGenerate) === 'true' && competition.groupsCount && competition.integrantsPerGroup) {
             const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
             const matches = [];
             for (let g = 0; g < competition.groupsCount; g++) {
