@@ -103,6 +103,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                   required
                                   size="small"
                                   sx={{ width: 60 }}
+                                  inputProps={{ min: 0 }}
                                   disabled={!editable}
                                 />
                                 <span>-</span>
@@ -113,6 +114,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                   required
                                   size="small"
                                   sx={{ width: 60, ml: 1 }}
+                                  inputProps={{ min: 0 }}
                                   disabled={!editable}
                                 />
                               </div>
@@ -167,6 +169,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                       required
                                       size="small"
                                       sx={{ width: 60 }}
+                                      inputProps={{ min: 0 }}
                                       disabled={!editable}
                                     />
                                     <span>-</span>
@@ -177,6 +180,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                       required
                                       size="small"
                                       sx={{ width: 60, ml: 1 }}
+                                      inputProps={{ min: 0 }}
                                       disabled={!editable}
                                     />
                                   </div>
