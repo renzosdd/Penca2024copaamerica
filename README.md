@@ -112,6 +112,8 @@ Con esta estructura puedes navegar fácilmente por cada componente de la aplicac
 
 Dentro del panel de administración (`/admin/edit`) encontrarás la sección **Competencias**. Haz clic en el botón **Nueva competencia** para abrir el asistente. Allí podrás indicar la cantidad de grupos y equipos por grupo o cargar un archivo de fixture.
 
+Si generas los encuentros de la fase de grupos desde aquí sin usar un fixture externo, la aplicación añadirá automáticamente las llaves de eliminación. Para torneos con 4 grupos se crean los cruces de cuartos, semifinales, tercer puesto y final. En competencias con más de cuatro grupos también se generan los enfrentamientos de “Ronda de 32”.
+
 Para replicar el Mundial 2026 utiliza el archivo `worldcup2026_placeholder.json` incluido en la raíz del repositorio al momento de cargar el fixture. Configura además `DEFAULT_COMPETITION=Mundial 2026` en tu archivo `.env` para que la aplicación asigne ese torneo por defecto.
 
 ## Administración de resultados
