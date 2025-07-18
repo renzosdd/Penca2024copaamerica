@@ -9,7 +9,7 @@ const Penca = require('../models/Penca');
 const Competition = require('../models/Competition');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
-const { updateEliminationMatches } = require('../utils/bracket');
+const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
 
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -259,13 +259,14 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
 // Crear competencia
 router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, useApi, groupsCount, integrantsPerGroup, fixture, autoGenerate } = req.body;
+        const { name, useApi, groupsCount, integrantsPerGroup, qualifiersPerGroup, fixture, autoGenerate } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
         const competition = new Competition({
             name,
             groupsCount: groupsCount ? Number(groupsCount) : undefined,
-            integrantsPerGroup: integrantsPerGroup ? Number(integrantsPerGroup) : undefined
+            integrantsPerGroup: integrantsPerGroup ? Number(integrantsPerGroup) : undefined,
+            qualifiersPerGroup: qualifiersPerGroup ? Number(qualifiersPerGroup) : undefined
         });
         await competition.save();
 
@@ -408,6 +409,9 @@ router.put('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (req.body.integrantsPerGroup !== undefined) {
             competition.integrantsPerGroup = Number(req.body.integrantsPerGroup);
         }
+        if (req.body.qualifiersPerGroup !== undefined) {
+            competition.qualifiersPerGroup = Number(req.body.qualifiersPerGroup);
+        }
         await competition.save();
 
         res.json({ message: 'Competition updated' });
@@ -479,6 +483,19 @@ router.post('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, asyn
         res.json({ message: 'Match result updated' });
     } catch (error) {
         console.error('Error updating match result:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Generar o actualizar eliminatorias
+router.post('/generate-bracket/:competition', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const q = Number(req.body.qualifiersPerGroup || 2);
+        await Match.deleteMany({ competition: req.params.competition, series: 'Eliminatorias' });
+        await generateEliminationBracket(req.params.competition, q);
+        res.json({ message: 'Bracket generated' });
+    } catch (error) {
+        console.error('Error generating bracket:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

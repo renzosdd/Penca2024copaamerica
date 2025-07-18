@@ -8,6 +8,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [name, setName] = useState('');
   const [groupsCount, setGroupsCount] = useState(1);
   const [teamsPerGroup, setTeamsPerGroup] = useState(2);
+  const [qualifiersPerGroup, setQualifiersPerGroup] = useState(2);
   const [teams, setTeams] = useState([]);
 
   useEffect(() => {
@@ -16,6 +17,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       setName('');
       setGroupsCount(1);
       setTeamsPerGroup(2);
+      setQualifiersPerGroup(2);
       setTeams([]);
     }
   }, [open]);
@@ -76,6 +78,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
           name,
           groupsCount,
           integrantsPerGroup: teamsPerGroup,
+          qualifiersPerGroup,
           fixture: matches
         })
       });
@@ -116,6 +119,14 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               placeholder="Integrantes"
               style={{ marginLeft: '10px', width: '100px' }}
               min={2}
+            />
+            <input
+              type="number"
+              value={qualifiersPerGroup}
+              onChange={e => setQualifiersPerGroup(Number(e.target.value))}
+              placeholder="Clasificados"
+              style={{ marginLeft: '10px', width: '100px' }}
+              min={1}
             />
 
           </div>
