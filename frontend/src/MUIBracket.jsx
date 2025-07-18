@@ -17,7 +17,7 @@ export default function MUIBracket({ bracket }) {
           name: round,
           nextMatchId: null,
           tournamentRoundText: round,
-          startTime: new Date(`${m.date}T${m.time}`),
+          startTime: `${m.date}T${m.time}`,
           state: 'SCHEDULED',
           participants: [
             { id: m.team1, name: m.team1 },
@@ -31,12 +31,6 @@ export default function MUIBracket({ bracket }) {
 
   if (!matches.length) return null;
 
-  const theme = {
-    textColor: '#212121',
-    matchBackground: '#fafafa',
-    score: { background: '#1976d2' }
-  };
-
   return (
     <Box sx={{ mt: 3 }}>
       <Typography variant="h6" gutterBottom>Bracket Prototype</Typography>
@@ -44,7 +38,6 @@ export default function MUIBracket({ bracket }) {
         <SingleEliminationBracket
           matchComponent={Match}
           matches={matches}
-          theme={theme}
         />
       </Paper>
     </Box>
