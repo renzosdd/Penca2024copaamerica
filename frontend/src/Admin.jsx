@@ -69,6 +69,9 @@ export default function Admin() {
       const res = await fetch(`/admin/competitions/${encodeURIComponent(comp.name)}/matches`);
       if (!res.ok) return;
       const data = await res.json();
+      data.forEach((m, i) => {
+        if (m.order === undefined || m.order === null) m.order = i;
+      });
       setMatchesByCompetition(ms => ({ ...ms, [comp._id]: data }));
       if (data.length) {
         await loadGroups([comp.name]);
@@ -266,6 +269,40 @@ export default function Admin() {
     }
   }
 
+  function moveMatch(compId, round, id, dir) {
+    setMatchesByCompetition(ms => {
+      const arr = ms[compId].map(m => ({ ...m }));
+      const roundMs = arr.filter(m => (m.group_name || 'Otros') === round);
+      roundMs.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      const idx = roundMs.findIndex(m => m._id === id);
+      const target = roundMs[idx + dir];
+      if (!target) return ms;
+      const current = roundMs[idx];
+      const tmp = current.order ?? idx;
+      current.order = target.order ?? (idx + dir);
+      target.order = tmp;
+      const update = new Map(roundMs.map(m => [m._id, m]));
+      const result = arr.map(m => update.get(m._id) || m);
+      return { ...ms, [compId]: result };
+    });
+  }
+
+  async function saveOrder(comp, round) {
+    const list = (matchesByCompetition[comp._id] || [])
+      .filter(m => (m.group_name || 'Otros') === round)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map(m => m._id);
+    try {
+      await fetch(`/admin/competitions/${encodeURIComponent(comp.name)}/knockout-order`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: list })
+      });
+    } catch (err) {
+      console.error('save order error', err);
+    }
+  }
+
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>Administración</h5>
@@ -343,7 +380,7 @@ export default function Admin() {
                     </AccordionSummary>
                     <AccordionDetails>
                       <ul className="collection">
-                        {ms.map(m => (
+                        {ms.map((m, idx) => (
                           <li key={m._id} className="collection-item">
                             <TextField
                               value={m.team1 || ''}
@@ -384,10 +421,17 @@ export default function Admin() {
                               size="small"
                               sx={{ ml: 1, width: 60 }}
                             />
-                            <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveMatch(c._id, m); }}>💾</a>
+                            <span className="secondary-content">
+                              <a href="#" onClick={e => { e.preventDefault(); moveMatch(c._id, round, m._id, -1); }}>▲</a>
+                              <a href="#" style={{ marginLeft: '0.5rem' }} onClick={e => { e.preventDefault(); moveMatch(c._id, round, m._id, 1); }}>▼</a>
+                              <a href="#" style={{ marginLeft: '0.5rem' }} onClick={e => { e.preventDefault(); saveMatch(c._id, m); }}>💾</a>
+                            </span>
                           </li>
                         ))}
                       </ul>
+                      <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, round)}>
+                        Guardar orden
+                      </Button>
                       {groups[c.name]?.filter(gr => gr.group === round).length ? (
                         <GroupTable groups={groups[c.name].filter(gr => gr.group === round)} />
                       ) : null}

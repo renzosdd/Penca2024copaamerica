@@ -3,7 +3,8 @@ const express = require('express');
 
 jest.mock('../models/Match', () => ({
   find: jest.fn(),
-  findById: jest.fn()
+  findById: jest.fn(),
+  updateOne: jest.fn()
 }));
 
 jest.mock('../utils/bracket', () => ({
@@ -68,5 +69,19 @@ describe('Admin match management', () => {
     expect(match.result1).toBe(2);
     expect(match.result2).toBe(1);
     expect(updateEliminationMatches).toHaveBeenCalledWith('c1');
+  });
+
+  it('updates knockout match order', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .put('/admin/competitions/c1/knockout-order')
+      .send({ order: ['m1', 'm2'] });
+
+    expect(res.status).toBe(200);
+    expect(Match.updateOne).toHaveBeenCalledWith({ _id: 'm1', competition: 'c1' }, { order: 0 });
+    expect(Match.updateOne).toHaveBeenCalledWith({ _id: 'm2', competition: 'c1' }, { order: 1 });
   });
 });

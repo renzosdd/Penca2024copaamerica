@@ -445,6 +445,23 @@ router.get('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, re
     }
 });
 
+// Actualizar orden de partidos knockout
+router.put('/competitions/:id/knockout-order', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { order } = req.body;
+        if (!Array.isArray(order)) {
+            return res.status(400).json({ error: 'order array required' });
+        }
+        await Promise.all(order.map((id, idx) =>
+            Match.updateOne({ _id: id, competition: req.params.id }, { order: idx })
+        ));
+        res.json({ message: 'Order updated' });
+    } catch (error) {
+        console.error('Error updating match order:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Actualizar datos de un partido
 router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
     try {

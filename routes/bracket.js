@@ -22,7 +22,10 @@ router.get('/:competition', async (req, res) => {
       bracket[round].push(m);
     }
     Object.values(bracket).forEach(arr =>
-      arr.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`))
+      arr.sort((a, b) => {
+        if (a.order != null && b.order != null) return a.order - b.order;
+        return new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`);
+      })
     );
     res.json(bracket);
   } catch (err) {
