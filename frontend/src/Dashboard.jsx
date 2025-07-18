@@ -1,7 +1,19 @@
 import { useEffect, useState } from 'react';
 import GroupTable from './GroupTable';
 import EliminationBracket from './EliminationBracket';
-import { Button, Card, CardContent, TextField } from '@mui/material';
+import {
+  Button,
+  Card,
+  CardContent,
+  TextField,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography
+} from '@mui/material';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import MUIBracket from './MUIBracket';
 import roundOrder from './roundOrder';
 
@@ -18,6 +30,7 @@ export default function Dashboard() {
   const [ownerPencas, setOwnerPencas] = useState([]);
   const [groups, setGroups] = useState({});
   const [bracket, setBracket] = useState(null);
+  const [infoPenca, setInfoPenca] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -203,7 +216,18 @@ export default function Dashboard() {
               onClick={() => setOpen(open === p._id ? null : p._id)}
             >
               <CardContent>
-                <strong>{p.name}</strong>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <strong>{p.name}</strong>
+                  <IconButton
+                    size="small"
+                    onClick={e => {
+                      e.stopPropagation();
+                      setInfoPenca(p);
+                    }}
+                  >
+                    <InfoOutlined fontSize="small" />
+                  </IconButton>
+                </div>
               </CardContent>
             </Card>
             {open === p._id && (
@@ -395,6 +419,27 @@ export default function Dashboard() {
           </ul>
         </div>
       ))}
+
+      <Dialog open={!!infoPenca} onClose={() => setInfoPenca(null)}>
+        <DialogTitle>{infoPenca?.name}</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="subtitle2" gutterBottom>
+            Reglas
+          </Typography>
+          <Typography variant="body2" paragraph>
+            {infoPenca?.rules || 'Sin reglas definidas'}
+          </Typography>
+          <Typography variant="subtitle2" gutterBottom>
+            Premios
+          </Typography>
+          <Typography variant="body2">
+            {infoPenca?.prizes || 'Sin premios definidos'}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setInfoPenca(null)}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
