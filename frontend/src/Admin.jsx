@@ -271,23 +271,6 @@ export default function Admin() {
     }
   }
 
-  function moveMatch(compId, round, id, dir) {
-    setMatchesByCompetition(ms => {
-      const arr = ms[compId].map(m => ({ ...m }));
-      const roundMs = arr.filter(m => (m.group_name || 'Otros') === round);
-      roundMs.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      const idx = roundMs.findIndex(m => m._id === id);
-      const target = roundMs[idx + dir];
-      if (!target) return ms;
-      const current = roundMs[idx];
-      const tmp = current.order ?? idx;
-      current.order = target.order ?? (idx + dir);
-      target.order = tmp;
-      const update = new Map(roundMs.map(m => [m._id, m]));
-      const result = arr.map(m => update.get(m._id) || m);
-      return { ...ms, [compId]: result };
-    });
-  }
 
   async function saveOrder(comp, round) {
     const list = (matchesByCompetition[comp._id] || [])
@@ -434,9 +417,7 @@ export default function Admin() {
                               sx={{ ml: 1, width: 60 }}
                             />
                             <span className="secondary-content">
-                              <a href="#" onClick={e => { e.preventDefault(); moveMatch(c._id, round, m._id, -1); }}>▲</a>
-                              <a href="#" style={{ marginLeft: '0.5rem' }} onClick={e => { e.preventDefault(); moveMatch(c._id, round, m._id, 1); }}>▼</a>
-                              <a href="#" style={{ marginLeft: '0.5rem' }} onClick={e => { e.preventDefault(); saveMatch(c._id, m); }}>💾</a>
+                              <a href="#" onClick={e => { e.preventDefault(); saveMatch(c._id, m); }}>💾</a>
                             </span>
                           </li>
                         ))}
