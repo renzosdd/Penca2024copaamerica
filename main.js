@@ -206,7 +206,7 @@ app.get('/api/owner', isAuthenticated, async (req, res) => {
     }
     try {
         const pencas = await Penca.find({ owner: user._id })
-            .select('name code competition participants pendingRequests')
+            .select('name code competition participants pendingRequests rules prizes isPublic fixture')
             .populate('participants', 'username')
             .populate('pendingRequests', 'username');
         res.json({ user: { username: user.username, role: user.role }, pencas });

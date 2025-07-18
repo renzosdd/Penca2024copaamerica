@@ -147,3 +147,32 @@ describe('Penca listing includes code', () => {
     expect(res.body[0]).toHaveProperty('code', 'EFGH');
   });
 });
+
+describe('Penca rules and prizes update', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('updates rules and prizes', async () => {
+    const penca = {
+      _id: 'p1',
+      owner: 'o1',
+      save: jest.fn().mockResolvedValue(true)
+    };
+    Penca.findById = jest.fn().mockResolvedValue(penca);
+
+    const app = express();
+    app.use(express.json());
+    app.use((req, res, next) => { req.session = { user: { _id: 'o1' } }; next(); });
+    app.use('/pencas', pencaRouter);
+
+    const res = await request(app)
+      .put('/pencas/p1')
+      .send({ rules: 'new', prizes: 'prize' });
+
+    expect(res.status).toBe(200);
+    expect(penca.rules).toBe('new');
+    expect(penca.prizes).toBe('prize');
+    expect(penca.save).toHaveBeenCalled();
+  });
+});

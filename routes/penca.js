@@ -28,7 +28,7 @@ router.get('/mine', isAuthenticated, async (req, res) => {
     }
 
     const pencas = await Penca.find(filter)
-      .select('name code competition participants pendingRequests')
+      .select('name code competition participants pendingRequests rules prizes isPublic fixture')
       .populate('pendingRequests', 'username')
       .populate('participants', 'username');
 
@@ -88,7 +88,7 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
 // Actualizar una penca (owner)
 router.put('/:pencaId', isAuthenticated, async (req, res) => {
   const { pencaId } = req.params;
-  const { isPublic } = req.body;
+  const { isPublic, rules, prizes } = req.body;
   try {
     const penca = await Penca.findById(pencaId);
     if (!penca) return res.status(404).json({ error: 'Penca not found' });
@@ -96,6 +96,8 @@ router.put('/:pencaId', isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
     if (isPublic !== undefined) penca.isPublic = isPublic === true || isPublic === 'true';
+    if (rules !== undefined) penca.rules = rules;
+    if (prizes !== undefined) penca.prizes = prizes;
     await penca.save();
     res.json({ message: 'Penca updated' });
   } catch (err) {
