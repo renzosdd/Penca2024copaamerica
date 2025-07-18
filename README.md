@@ -110,7 +110,7 @@ Con esta estructura puedes navegar fácilmente por cada componente de la aplicac
 
 ### Asistente de competencias
 
-Dentro del panel de administración (`/admin/edit`) encontrarás la sección **Competencias**. Haz clic en el botón **Nueva competencia** para abrir el asistente. Allí podrás indicar la cantidad de grupos y equipos por grupo o cargar un archivo de fixture.
+Dentro del panel de administración (`/admin/edit`) encontrarás la sección **Competencias**. Haz clic en el botón **Nueva competencia** para abrir el asistente. Allí podrás indicar la cantidad de grupos y equipos por grupo o cargar un archivo de fixture. El asistente ahora envía la lista de partidos generados al backend, por lo que los nombres de los equipos se guardan automáticamente.
 
 Si generas los encuentros de la fase de grupos desde aquí sin usar un fixture externo, la aplicación añadirá automáticamente las llaves de eliminación. Para torneos con 4 grupos se crean los cruces de cuartos, semifinales, tercer puesto y final. En competencias con más de cuatro grupos también se generan los enfrentamientos de “Ronda de 32”.
 

@@ -52,31 +52,22 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   };
 
   const submit = async () => {
-    const data = new FormData();
-    data.append('name', name);
-    data.append('groupsCount', groupsCount);
-    data.append('integrantsPerGroup', teamsPerGroup);
-
     const matches = [];
-      for (let g = 0; g < groupsCount; g++) {
-        const groupName = `Grupo ${letters[g]}`;
-        for (let i = 0; i < teamsPerGroup; i++) {
-          for (let j = i + 1; j < teamsPerGroup; j++) {
-            matches.push({
-              team1: teams[g][i],
-              team2: teams[g][j],
-              competition: name,
-              group_name: groupName,
-              series: 'Fase de grupos',
-              tournament: name
-            });
-          }
+    for (let g = 0; g < groupsCount; g++) {
+      const groupName = `Grupo ${letters[g]}`;
+      for (let i = 0; i < teamsPerGroup; i++) {
+        for (let j = i + 1; j < teamsPerGroup; j++) {
+          matches.push({
+            team1: teams[g][i],
+            team2: teams[g][j],
+            competition: name,
+            group_name: groupName,
+            series: 'Fase de grupos',
+            tournament: name
+          });
         }
       }
-    const blob = new Blob([JSON.stringify(matches)], {
-      type: 'application/json'
-    });
-    data.append('fixture', blob, 'fixture.json');
+    }
     try {
       const res = await fetch('/admin/competitions', {
         method: 'POST',
@@ -84,7 +75,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
         body: JSON.stringify({
           name,
           groupsCount,
-          integrantsPerGroup: teamsPerGroup
+          integrantsPerGroup: teamsPerGroup,
+          fixture: matches
         })
       });
       if (res.ok) {

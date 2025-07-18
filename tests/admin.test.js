@@ -121,6 +121,29 @@ describe('Admin competition creation', () => {
 
   });
 
+  it('creates a competition with fixture', async () => {
+    Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
+
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const fixture = [
+      { team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
+    ];
+
+    const res = await request(app)
+      .post('/admin/competitions')
+      .send({ name: 'Copa', fixture });
+
+    expect(res.status).toBe(201);
+    expect(Match.insertMany).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ team1: 'A', team2: 'B', competition: 'Copa' })
+      ])
+    );
+  });
+
   it('lists competitions', async () => {
     Competition.find.mockResolvedValue([{ name: 'Copa Test' }]);
 
