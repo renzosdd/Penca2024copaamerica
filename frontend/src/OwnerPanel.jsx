@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, Checkbox, FormControlLabel, Button } from '@mui/material';
+import {
+  Card,
+  CardContent,
+  Checkbox,
+  FormControlLabel,
+  Button,
+  TextField
+} from '@mui/material';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
@@ -70,6 +77,25 @@ export default function OwnerPanel() {
       if (res.ok) loadData();
     } catch (err) {
       console.error('remove participant error', err);
+    }
+  }
+
+  const updateField = (id, field, value) => {
+    setPencas(ps => ps.map(p => p._id === id ? { ...p, [field]: value } : p));
+  };
+
+  async function saveInfo(id) {
+    const penca = pencas.find(p => p._id === id);
+    if (!penca) return;
+    try {
+      const res = await fetch(`/pencas/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rules: penca.rules, prizes: penca.prizes })
+      });
+      if (res.ok) loadData();
+    } catch (err) {
+      console.error('save info error', err);
     }
   }
 
@@ -185,6 +211,33 @@ export default function OwnerPanel() {
                     ))}
                   </div>
                 ))}
+
+              <TextField
+                label="Reglamento"
+                value={p.rules || ''}
+                onChange={e => updateField(p._id, 'rules', e.target.value)}
+                multiline
+                fullWidth
+                size="small"
+                sx={{ mt: 1 }}
+              />
+              <TextField
+                label="Premios"
+                value={p.prizes || ''}
+                onChange={e => updateField(p._id, 'prizes', e.target.value)}
+                multiline
+                fullWidth
+                size="small"
+                sx={{ mt: 1 }}
+              />
+              <Button
+                size="small"
+                variant="contained"
+                sx={{ mt: 1 }}
+                onClick={() => saveInfo(p._id)}
+              >
+                Guardar
+              </Button>
               <h6>Solicitudes</h6>
               <ul className="collection">
                 {p.pendingRequests.map(u => (
