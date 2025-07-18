@@ -11,8 +11,10 @@ import {
   AccordionDetails,
   Typography,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  IconButton
 } from '@mui/material';
+import Save from '@mui/icons-material/Save';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import CompetitionWizard from './CompetitionWizard';
@@ -352,7 +354,9 @@ export default function Admin() {
                 <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)}>
                   Generar/Actualizar eliminatorias
                 </Button>
-                <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveCompetition(c); }}>💾</a>
+                <IconButton size="small" className="secondary-content" onClick={() => saveCompetition(c)}>
+                  <Save fontSize="small" />
+                </IconButton>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteCompetition(c._id); }}>✖</a>
 
                 {matchesByCompetition[c._id] && Object.entries(
@@ -417,7 +421,9 @@ export default function Admin() {
                               sx={{ ml: 1, width: 60 }}
                             />
                             <span className="secondary-content">
-                              <a href="#" onClick={e => { e.preventDefault(); saveMatch(c._id, m); }}>💾</a>
+                              <IconButton size="small" onClick={() => saveMatch(c._id, m)}>
+                                <Save fontSize="small" />
+                              </IconButton>
                             </span>
                           </li>
                         ))}
@@ -488,7 +494,9 @@ export default function Admin() {
                   size="small"
                   sx={{ ml: 1 }}
                 />
-                <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveOwner(o); }}>💾</a>
+                <IconButton size="small" className="secondary-content" onClick={() => saveOwner(o)}>
+                  <Save fontSize="small" />
+                </IconButton>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteOwner(o._id); }}>✖</a>
               </li>
             ))}
@@ -580,7 +588,9 @@ export default function Admin() {
                   label="Pública"
                   sx={{ ml: 1 }}
                 />
-                <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); savePenca(p); }}>💾</a>
+                <IconButton size="small" className="secondary-content" onClick={() => savePenca(p)}>
+                  <Save fontSize="small" />
+                </IconButton>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deletePenca(p._id); }}>✖</a>
               </li>
             ))}
