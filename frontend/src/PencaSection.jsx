@@ -9,13 +9,23 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Typography
+  Typography,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
 } from '@mui/material';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 
-export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, bracket }) {
+export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking }) {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
@@ -63,86 +73,25 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       {open && (
         <Card style={{ marginTop: '0', borderTop: 'none', padding: '1rem' }}>
           <CardContent>
-            {Object.keys(pMatches)
-              .filter(g => g.startsWith('Grupo'))
-              .sort((a, b) => {
-                const ai = roundOrder.indexOf(a);
-                const bi = roundOrder.indexOf(b);
-                if (ai === -1 && bi === -1) return a.localeCompare(b);
-                if (ai === -1) return 1;
-                if (bi === -1) return -1;
-                return ai - bi;
-              })
-              .map(g => (
-                <div key={g} style={{ marginBottom: '1rem' }}>
-                  <h6>{g}</h6>
+            <Accordion>
+              <AccordionSummary expandIcon="▶">
+                <Typography>Predicciones</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {Object.keys(pMatches)
+                  .filter(g => g.startsWith('Grupo'))
+                  .sort((a, b) => {
+                    const ai = roundOrder.indexOf(a);
+                    const bi = roundOrder.indexOf(b);
+                    if (ai === -1 && bi === -1) return a.localeCompare(b);
+                    if (ai === -1) return 1;
+                    if (bi === -1) return -1;
+                    return ai - bi;
+                  })
+                  .map(g => (
+                    <div key={g} style={{ marginBottom: '1rem' }}>
+                      <h6>{g}</h6>
                       {pMatches[g].map(m => {
-                        const pr = getPrediction(penca._id, m._id) || {};
-                        const editable = canPredict(m);
-                        return (
-                          <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
-                        <CardContent>
-                          <div className="match-header">
-                            <div className="team">
-                              <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
-                              <span className="team-name">{m.team1}</span>
-                            </div>
-                            <span className="vs">vs</span>
-                            <div className="team">
-                              <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
-                              <span className="team-name">{m.team2}</span>
-                            </div>
-                          </div>
-                          <div className="match-details">
-                            <form onSubmit={e => handlePrediction(e, penca._id, m._id)}>
-                              <div className="input-field inline">
-                                <TextField
-                                  name="result1"
-                                  type="number"
-                                  defaultValue={pr.result1 || ''}
-                                  required
-                                  size="small"
-                                  sx={{ width: 60 }}
-                                  inputProps={{ min: 0 }}
-                                  disabled={!editable}
-                                />
-                                <span>-</span>
-                                <TextField
-                                  name="result2"
-                                  type="number"
-                                  defaultValue={pr.result2 || ''}
-                                  required
-                                  size="small"
-                                  sx={{ width: 60, ml: 1 }}
-                                  inputProps={{ min: 0 }}
-                                  disabled={!editable}
-                                />
-                              </div>
-                              <Button variant="contained" type="submit" disabled={!editable}>Guardar</Button>
-                            </form>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                  {(() => {
-                    const comp = penca.competition;
-                    const t = groups[comp]?.filter(gr => gr.group === g) || [];
-                    return t.length ? <GroupTable groups={t} /> : null;
-                  })()}
-                </div>
-              ))}
-
-            {!bracket && (
-              <div style={{ marginTop: '1rem' }}>
-                <h6>Eliminatorias</h6>
-                {roundOrder
-                  .slice(4)
-                  .filter(r => pMatches[r])
-                  .map(r => (
-                    <div key={r} style={{ marginBottom: '1rem' }}>
-                      <h6>{r}</h6>
-                      {pMatches[r].map(m => {
                         const pr = getPrediction(penca._id, m._id) || {};
                         const editable = canPredict(m);
                         return (
@@ -193,19 +142,184 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                       })}
                     </div>
                   ))}
-              </div>
-            )}
 
-            <div style={{ marginTop: '1rem' }}>
-              <h6>Ranking</h6>
-              <ul className="collection">
-                {ranking.map((u, idx) => (
-                  <li key={u.userId} className={`collection-item rank-${idx + 1}`.trim()}>
-                    <img src={u.avatar} alt={u.username} className="avatar-small" /> {u.username} - {u.score}
-                  </li>
-                ))}
-              </ul>
-            </div>
+                <div style={{ marginTop: '1rem' }}>
+                    <h6>Eliminatorias</h6>
+                    {roundOrder
+                      .slice(4)
+                      .filter(r => pMatches[r])
+                      .map(r => (
+                        <div key={r} style={{ marginBottom: '1rem' }}>
+                          <h6>{r}</h6>
+                          {pMatches[r].map(m => {
+                            const pr = getPrediction(penca._id, m._id) || {};
+                            const editable = canPredict(m);
+                            return (
+                              <Card key={m._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
+                                <CardContent>
+                                  <div className="match-header">
+                                    <div className="team">
+                                      <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
+                                      <span className="team-name">{m.team1}</span>
+                                    </div>
+                                    <span className="vs">vs</span>
+                                    <div className="team">
+                                      <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
+                                      <span className="team-name">{m.team2}</span>
+                                    </div>
+                                  </div>
+                                  <div className="match-details">
+                                    <form onSubmit={e => handlePrediction(e, penca._id, m._id)}>
+                                      <div className="input-field inline">
+                                        <TextField
+                                          name="result1"
+                                          type="number"
+                                          defaultValue={pr.result1 || ''}
+                                          required
+                                          size="small"
+                                          sx={{ width: 60 }}
+                                          inputProps={{ min: 0 }}
+                                          disabled={!editable}
+                                        />
+                                        <span>-</span>
+                                        <TextField
+                                          name="result2"
+                                          type="number"
+                                          defaultValue={pr.result2 || ''}
+                                          required
+                                          size="small"
+                                          sx={{ width: 60, ml: 1 }}
+                                          inputProps={{ min: 0 }}
+                                          disabled={!editable}
+                                        />
+                                      </div>
+                                      <Button variant="contained" type="submit" disabled={!editable}>Guardar</Button>
+                                    </form>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      ))}
+                  </div>
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion sx={{ mt: 1 }}>
+              <AccordionSummary expandIcon="▶">
+                <Typography>Partidos</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                {Object.keys(pMatches)
+                  .filter(g => g.startsWith('Grupo'))
+                  .sort((a, b) => {
+                    const ai = roundOrder.indexOf(a);
+                    const bi = roundOrder.indexOf(b);
+                    if (ai === -1 && bi === -1) return a.localeCompare(b);
+                    if (ai === -1) return 1;
+                    if (bi === -1) return -1;
+                    return ai - bi;
+                  })
+                  .map(g => (
+                    <div key={g} style={{ marginBottom: '1rem' }}>
+                      <h6>{g}</h6>
+                      {pMatches[g].map(m => (
+                        <Card key={m._id} className="match-card">
+                          <CardContent>
+                            <div className="match-header">
+                              <div className="team">
+                                <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
+                                <span className="team-name">{m.team1}</span>
+                              </div>
+                              <span className="vs">vs</span>
+                              <div className="team">
+                                <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
+                                <span className="team-name">{m.team2}</span>
+                              </div>
+                            </div>
+                            <div className="match-details">
+                              {m.result1 !== undefined && m.result2 !== undefined ? (
+                                <strong>{m.result1} - {m.result2}</strong>
+                              ) : (
+                                <span>{m.date} {m.time}</span>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ))}
+
+                {['Cuartos de final', 'Semifinales', 'Tercer puesto', 'Final']
+                  .filter(r => pMatches[r])
+                  .map(r => (
+                    <div key={r} style={{ marginBottom: '1rem' }}>
+                      <h6>{r}</h6>
+                      {pMatches[r].map(m => (
+                        <Card key={m._id} className="match-card">
+                          <CardContent>
+                            <div className="match-header">
+                              <div className="team">
+                                <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
+                                <span className="team-name">{m.team1}</span>
+                              </div>
+                              <span className="vs">vs</span>
+                              <div className="team">
+                                <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
+                                <span className="team-name">{m.team2}</span>
+                              </div>
+                            </div>
+                            <div className="match-details">
+                              {m.result1 !== undefined && m.result2 !== undefined ? (
+                                <strong>{m.result1} - {m.result2}</strong>
+                              ) : (
+                                <span>{m.date} {m.time}</span>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ))}
+              </AccordionDetails>
+            </Accordion>
+
+            <Accordion sx={{ mt: 1 }}>
+              <AccordionSummary expandIcon="▶">
+                <Typography>Ranking</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <TableContainer component={Paper}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Participante</TableCell>
+                        <TableCell>Puntaje</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {ranking.map((u, idx) => (
+                        <TableRow key={u.userId} className={`rank-${idx + 1}`.trim()}>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>
+                            <img
+                              src={u.avatar}
+                              alt={u.username}
+                              className="avatar-small"
+                              style={{ marginRight: '0.5rem' }}
+                            />
+                            {u.username}
+                          </TableCell>
+                          <TableCell>{u.score}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </AccordionDetails>
+            </Accordion>
           </CardContent>
         </Card>
       )}
