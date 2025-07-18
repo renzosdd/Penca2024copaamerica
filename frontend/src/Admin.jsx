@@ -296,7 +296,14 @@ export default function Admin() {
     );
     await Promise.all(matches.map(m => saveMatch(compId, m, true)));
     if (matches.length) {
-      loadCompetitionMatches({ _id: compId, name: matches[0].competition });
+      const compName = matches[0].competition;
+      const res = await fetch(
+        `/admin/recalculate-bracket/${encodeURIComponent(compName)}`,
+        { method: 'POST' }
+      );
+      if (res.ok) {
+        loadCompetitionMatches({ _id: compId, name: compName });
+      }
     }
   }
 
