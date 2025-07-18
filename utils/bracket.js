@@ -72,6 +72,65 @@ async function calculateGroupStandings(competition) {
     return ordered;
 }
 
+async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {
+    const standings = await calculateGroupStandings(competition);
+    const letters = Object.keys(standings).map(g => g.replace('Grupo ', '')).sort();
+
+    function t(group, pos) {
+        const team = standings[`Grupo ${group}`] && standings[`Grupo ${group}`][pos];
+        return team ? team.team : `${group}${pos + 1}`;
+    }
+
+    const pairs = [];
+    for (let i = 0; i < letters.length; i += 2) {
+        const a = letters[i];
+        const b = letters[i + 1];
+        if (!b) break;
+        if (qualifiersPerGroup >= 2) {
+            pairs.push([t(a, 0), t(b, 1)]);
+            pairs.push([t(b, 0), t(a, 1)]);
+            for (let j = 2; j < qualifiersPerGroup; j++) {
+                pairs.push([t(a, j), t(b, j)]);
+            }
+        } else {
+            pairs.push([t(a, 0), t(b, 0)]);
+        }
+    }
+
+    const totalTeams = pairs.length * 2;
+    const roundNames = { 32: 'Ronda de 32', 16: 'Octavos de final', 8: 'Cuartos de final', 4: 'Semifinales' };
+    const firstRound = roundNames[totalTeams] || `Ronda de ${totalTeams}`;
+
+    const matches = [];
+    pairs.forEach(([team1, team2], idx) => {
+        matches.push({ team1, team2, competition, group_name: firstRound, series: 'Eliminatorias', tournament: competition });
+    });
+
+    let prefix = firstRound === 'Cuartos de final' ? 'QF'
+        : firstRound === 'Ronda de 32' ? 'R32'
+        : firstRound === 'Octavos de final' ? 'R16'
+        : firstRound === 'Semifinales' ? 'SF'
+        : firstRound.replace(/\s+/g, '');
+
+    let current = matches.map((_, i) => `Ganador ${prefix}-${i + 1}`);
+    while (current.length > 1) {
+        const next = [];
+        const roundTotal = current.length;
+        const name = roundNames[roundTotal] || (roundTotal === 2 ? 'Final' : `Ronda de ${roundTotal}`);
+        for (let i = 0; i < current.length; i += 2) {
+            matches.push({ team1: current[i], team2: current[i + 1], competition, group_name: name, series: 'Eliminatorias', tournament: competition });
+            next.push(`Ganador ${name.replace(/\s+/g, '')}-${Math.floor(i / 2) + 1}`);
+        }
+        if (roundTotal === 4) {
+            matches.push({ team1: 'Perdedor SF1', team2: 'Perdedor SF2', competition, group_name: 'Tercer puesto', series: 'Eliminatorias', tournament: competition });
+        }
+        current = next;
+    }
+
+    if (matches.length) await Match.insertMany(matches);
+    return matches;
+}
+
 async function updateEliminationMatches(competition) {
     const standings = await calculateGroupStandings(competition);
 
@@ -232,4 +291,9 @@ function rankThirdPlacedTeams(standings) {
     return thirds;
 }
 
-module.exports = { calculateGroupStandings, updateEliminationMatches, rankThirdPlacedTeams };
+module.exports = {
+    calculateGroupStandings,
+    updateEliminationMatches,
+    rankThirdPlacedTeams,
+    generateEliminationBracket
+};

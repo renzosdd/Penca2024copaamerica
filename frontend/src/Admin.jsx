@@ -106,6 +106,7 @@ export default function Admin() {
           name: comp.name,
           groupsCount: comp.groupsCount === '' ? null : Number(comp.groupsCount),
           integrantsPerGroup: comp.integrantsPerGroup === '' ? null : Number(comp.integrantsPerGroup),
+          qualifiersPerGroup: comp.qualifiersPerGroup === '' ? null : Number(comp.qualifiersPerGroup),
         }),
       });
       if (res.ok) loadCompetitions();
@@ -120,6 +121,19 @@ export default function Admin() {
       if (res.ok) loadCompetitions();
     } catch (err) {
       console.error('delete competition error', err);
+    }
+  }
+
+  async function generateBracket(comp) {
+    try {
+      const res = await fetch(`/admin/generate-bracket/${encodeURIComponent(comp.name)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qualifiersPerGroup: Number(comp.qualifiersPerGroup || 2) })
+      });
+      if (res.ok) loadCompetitionMatches(comp);
+    } catch (err) {
+      console.error('generate bracket error', err);
     }
   }
 
@@ -296,6 +310,16 @@ export default function Admin() {
                   size="small"
                   sx={{ ml: 1, width: 100 }}
                 />
+                <TextField
+                  type="number"
+                  value={c.qualifiersPerGroup ?? ''}
+                  onChange={e => updateCompetitionField(c._id, 'qualifiersPerGroup', e.target.value)}
+                  size="small"
+                  sx={{ ml: 1, width: 100 }}
+                />
+                <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)}>
+                  Generar/Actualizar eliminatorias
+                </Button>
                 <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); saveCompetition(c); }}>💾</a>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteCompetition(c._id); }}>✖</a>
 
