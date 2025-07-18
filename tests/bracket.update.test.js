@@ -62,7 +62,8 @@ describe('competition creation knockout defaults', () => {
       .post('/admin/competitions')
       .field('name', 'Copa')
       .field('groupsCount', '4')
-      .field('integrantsPerGroup', '4');
+      .field('integrantsPerGroup', '4')
+      .field('autoGenerate', 'true');
 
     expect(res.status).toBe(201);
     expect(Match.insertMany).toHaveBeenCalledTimes(2);
@@ -80,7 +81,8 @@ describe('competition creation knockout defaults', () => {
       .post('/admin/competitions')
       .field('name', 'Mundial')
       .field('groupsCount', '6')
-      .field('integrantsPerGroup', '4');
+      .field('integrantsPerGroup', '4')
+      .field('autoGenerate', 'true');
 
     expect(res.status).toBe(201);
     expect(Match.insertMany).toHaveBeenCalledTimes(2);
