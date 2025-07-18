@@ -5,8 +5,8 @@ const predictionSchema = new mongoose.Schema({
     username: { type: String, required: true },
     matchId: { type: mongoose.Schema.Types.ObjectId, required: true },
     pencaId: { type: mongoose.Schema.Types.ObjectId, ref: 'Penca', required: true },
-    result1: { type: Number, required: true },
-    result2: { type: Number, required: true },
+    result1: { type: Number, required: true, min: 0 },
+    result2: { type: Number, required: true, min: 0 },
 });
 
 predictionSchema.index({ userId: 1, matchId: 1, pencaId: 1 }, { unique: true });

@@ -61,4 +61,21 @@ describe('Predictions Routes', () => {
 
     expect(res.status).toBe(400);
   });
+
+  it('rejects prediction with negative scores', async () => {
+    Prediction.findOne.mockResolvedValue(null);
+    const futureDate = new Date(Date.now() + 3600 * 1000).toISOString().split('T')[0];
+    Match.findById.mockResolvedValue({ date: futureDate, time: '23:59' });
+
+    const app = express();
+    app.use(express.json());
+    app.use((req, res, next) => { req.session = { user: { _id: 'u1', username: 'tester' } }; next(); });
+    app.use('/predictions', predictionsRouter);
+
+    const res = await request(app)
+      .post('/predictions')
+      .send({ matchId: 'm1', result1: -1, result2: 0 });
+
+    expect(res.status).toBe(400);
+  });
 });

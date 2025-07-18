@@ -446,6 +446,7 @@ export default function Admin() {
                               onChange={e => updateMatchField(c._id, m._id, 'result1', e.target.value)}
                               size="small"
                               sx={{ ml: 1, width: 60 }}
+                              inputProps={{ min: 0 }}
                             />
                             <TextField
                               type="number"
@@ -453,6 +454,7 @@ export default function Admin() {
                               onChange={e => updateMatchField(c._id, m._id, 'result2', e.target.value)}
                               size="small"
                               sx={{ ml: 1, width: 60 }}
+                              inputProps={{ min: 0 }}
                             />
                             <span className="secondary-content">
                               <IconButton size="small" onClick={() => saveMatch(c._id, m)} disabled={isSaving}>
