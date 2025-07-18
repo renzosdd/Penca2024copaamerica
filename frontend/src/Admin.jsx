@@ -246,7 +246,7 @@ export default function Admin() {
     }
   };
 
-  async function saveMatch(compId, match) {
+  async function saveMatch(compId, match, skipRefresh = false) {
     try {
       const { team1, team2, date, time } = match;
       const resInfo = await fetch(`/admin/competitions/${encodeURIComponent(match.competition)}/matches/${match._id}`, {
@@ -263,7 +263,9 @@ export default function Admin() {
         body: JSON.stringify({ result1: res1, result2: res2 }),
       });
 
-      if (resInfo.ok && resScore.ok) loadCompetitionMatches({ _id: compId, name: match.competition });
+      if (resInfo.ok && resScore.ok && !skipRefresh) {
+        loadCompetitionMatches({ _id: compId, name: match.competition });
+      }
     } catch (err) {
       console.error('update match error', err);
     }
@@ -300,6 +302,16 @@ export default function Admin() {
       });
     } catch (err) {
       console.error('save order error', err);
+    }
+  }
+
+  async function saveRound(compId, round) {
+    const matches = (matchesByCompetition[compId] || []).filter(
+      m => (m.group_name || 'Otros') === round
+    );
+    await Promise.all(matches.map(m => saveMatch(compId, m, true)));
+    if (matches.length) {
+      loadCompetitionMatches({ _id: compId, name: matches[0].competition });
     }
   }
 
@@ -431,6 +443,9 @@ export default function Admin() {
                       </ul>
                       <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, round)}>
                         Guardar orden
+                      </Button>
+                      <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, round)}>
+                        Guardar ronda
                       </Button>
                       {groups[c.name]?.filter(gr => gr.group === round).length ? (
                         <GroupTable groups={groups[c.name].filter(gr => gr.group === round)} />
