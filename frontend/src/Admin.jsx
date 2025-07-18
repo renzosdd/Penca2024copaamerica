@@ -30,6 +30,8 @@ export default function Admin() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
     loadAll();
@@ -103,6 +105,7 @@ export default function Admin() {
   };
 
   async function saveCompetition(comp) {
+    setIsSaving(true);
     try {
       const res = await fetch(`/admin/competitions/${comp._id}`, {
         method: 'PUT',
@@ -117,6 +120,8 @@ export default function Admin() {
       if (res.ok) loadCompetitions();
     } catch (err) {
       console.error('update competition error', err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -130,6 +135,7 @@ export default function Admin() {
   }
 
   async function generateBracket(comp) {
+    setIsGenerating(true);
     try {
       const res = await fetch(`/admin/generate-bracket/${encodeURIComponent(comp.name)}`, {
         method: 'POST',
@@ -139,11 +145,14 @@ export default function Admin() {
       if (res.ok) loadCompetitionMatches(comp);
     } catch (err) {
       console.error('generate bracket error', err);
+    } finally {
+      setIsGenerating(false);
     }
   }
 
   async function createOwner(e) {
     e.preventDefault();
+    setIsSaving(true);
     try {
       const res = await fetch('/admin/owners', {
         method: 'POST',
@@ -156,6 +165,8 @@ export default function Admin() {
       }
     } catch (err) {
       console.error('create owner error', err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -164,6 +175,7 @@ export default function Admin() {
   };
 
   async function saveOwner(owner) {
+    setIsSaving(true);
     try {
       const { username, email, name, surname } = owner;
       const res = await fetch(`/admin/owners/${owner._id}`, {
@@ -174,6 +186,8 @@ export default function Admin() {
       if (res.ok) loadOwners();
     } catch (err) {
       console.error('update owner error', err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -188,6 +202,7 @@ export default function Admin() {
 
   async function createPenca(e) {
     e.preventDefault();
+    setIsSaving(true);
     try {
       const res = await fetch('/admin/pencas', {
         method: 'POST',
@@ -202,6 +217,8 @@ export default function Admin() {
       }
     } catch (err) {
       console.error('create penca error', err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -210,6 +227,7 @@ export default function Admin() {
   };
 
   async function savePenca(penca) {
+    setIsSaving(true);
     try {
       const { name, owner, competition, participantLimit, isPublic } = penca;
       const res = await fetch(`/admin/pencas/${penca._id}`, {
@@ -220,6 +238,8 @@ export default function Admin() {
       if (res.ok) loadPencas();
     } catch (err) {
       console.error('update penca error', err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -249,6 +269,7 @@ export default function Admin() {
   };
 
   async function saveMatch(compId, match, skipRefresh = false) {
+    setIsSaving(true);
     try {
       const { team1, team2, date, time } = match;
       const resInfo = await fetch(`/admin/competitions/${encodeURIComponent(match.competition)}/matches/${match._id}`, {
@@ -270,6 +291,8 @@ export default function Admin() {
       }
     } catch (err) {
       console.error('update match error', err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -279,6 +302,7 @@ export default function Admin() {
       .filter(m => (m.group_name || 'Otros') === round)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .map(m => m._id);
+    setIsSaving(true);
     try {
       await fetch(`/admin/competitions/${encodeURIComponent(comp.name)}/knockout-order`, {
         method: 'PUT',
@@ -287,23 +311,24 @@ export default function Admin() {
       });
     } catch (err) {
       console.error('save order error', err);
+    } finally {
+      setIsSaving(false);
     }
   }
 
   async function saveRound(compId, round) {
+    setIsSaving(true);
     const matches = (matchesByCompetition[compId] || []).filter(
       m => (m.group_name || 'Otros') === round
     );
-    await Promise.all(matches.map(m => saveMatch(compId, m, true)));
-    if (matches.length) {
-      const compName = matches[0].competition;
-      const res = await fetch(
-        `/admin/recalculate-bracket/${encodeURIComponent(compName)}`,
-        { method: 'POST' }
-      );
-      if (res.ok) {
-        loadCompetitionMatches({ _id: compId, name: compName });
+    try {
+      await Promise.all(matches.map(m => saveMatch(compId, m, true)));
+      if (matches.length) {
+        loadCompetitionMatches({ _id: compId, name: matches[0].competition });
       }
+    } finally {
+      setIsSaving(false);
+
     }
   }
 
@@ -358,10 +383,10 @@ export default function Admin() {
                   size="small"
                   sx={{ ml: 1, width: 100 }}
                 />
-                <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)}>
+                <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)} disabled={isGenerating}>
                   Generar/Actualizar eliminatorias
                 </Button>
-                <IconButton size="small" className="secondary-content" onClick={() => saveCompetition(c)}>
+                <IconButton size="small" className="secondary-content" onClick={() => saveCompetition(c)} disabled={isSaving}>
                   <Save fontSize="small" />
                 </IconButton>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteCompetition(c._id); }}>✖</a>
@@ -428,17 +453,17 @@ export default function Admin() {
                               sx={{ ml: 1, width: 60 }}
                             />
                             <span className="secondary-content">
-                              <IconButton size="small" onClick={() => saveMatch(c._id, m)}>
+                              <IconButton size="small" onClick={() => saveMatch(c._id, m)} disabled={isSaving}>
                                 <Save fontSize="small" />
                               </IconButton>
                             </span>
                           </li>
                         ))}
                       </ul>
-                      <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, round)}>
+                      <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, round)} disabled={isSaving}>
                         Guardar orden
                       </Button>
-                      <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, round)}>
+                      <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, round)} disabled={isSaving}>
                         Guardar ronda
                       </Button>
                       {groups[c.name]?.filter(gr => gr.group === round).length ? (
@@ -484,7 +509,7 @@ export default function Admin() {
               size="small"
               sx={{ ml: 1 }}
             />
-            <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
+            <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>Crear</Button>
           </form>
           <ul className="collection">
             {owners.map(o => (
@@ -501,7 +526,7 @@ export default function Admin() {
                   size="small"
                   sx={{ ml: 1 }}
                 />
-                <IconButton size="small" className="secondary-content" onClick={() => saveOwner(o)}>
+                <IconButton size="small" className="secondary-content" onClick={() => saveOwner(o)} disabled={isSaving}>
                   <Save fontSize="small" />
                 </IconButton>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteOwner(o._id); }}>✖</a>
@@ -554,7 +579,7 @@ export default function Admin() {
               label="Pública"
               sx={{ ml: 1 }}
             />
-            <Button variant="contained" type="submit" sx={{ ml: 1 }}>Crear</Button>
+            <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>Crear</Button>
           </form>
           <ul className="collection">
             {pencas.map(p => (
@@ -595,7 +620,7 @@ export default function Admin() {
                   label="Pública"
                   sx={{ ml: 1 }}
                 />
-                <IconButton size="small" className="secondary-content" onClick={() => savePenca(p)}>
+                <IconButton size="small" className="secondary-content" onClick={() => savePenca(p)} disabled={isSaving}>
                   <Save fontSize="small" />
                 </IconButton>
                 <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deletePenca(p._id); }}>✖</a>
