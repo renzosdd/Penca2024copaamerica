@@ -219,10 +219,10 @@ async function updateEliminationMatches(competition) {
     });
 
     const semiPairs = [
-        ['Semifinal 1', qfWinners.QF1],
-        ['Semifinal 2', qfWinners.QF2],
-        ['Semifinal 3', qfWinners.QF3],
-        ['Semifinal 4', qfWinners.QF4]
+        ['Ganador QF-1', qfWinners.QF1],
+        ['Ganador QF-2', qfWinners.QF2],
+        ['Ganador QF-3', qfWinners.QF3],
+        ['Ganador QF-4', qfWinners.QF4]
     ];
 
     for (const [placeholder, realTeam] of semiPairs) {
@@ -250,21 +250,21 @@ async function updateEliminationMatches(competition) {
 
     if (sfResults.SF1) {
         await Match.updateOne(
-            { competition, group_name: 'Final', team1: 'Ganador Semifinal 1' },
+            { competition, group_name: 'Final', team1: 'Ganador Semifinales-1' },
             { $set: { team1: sfResults.SF1.winner } }
         );
         await Match.updateOne(
-            { competition, group_name: 'Tercer puesto', team1: 'Perdedor Semifinal 1' },
+            { competition, group_name: 'Tercer puesto', team1: 'Perdedor SF1' },
             { $set: { team1: sfResults.SF1.loser } }
         );
     }
     if (sfResults.SF2) {
         await Match.updateOne(
-            { competition, group_name: 'Final', team2: 'Ganador Semifinal 2' },
+            { competition, group_name: 'Final', team2: 'Ganador Semifinales-2' },
             { $set: { team2: sfResults.SF2.winner } }
         );
         await Match.updateOne(
-            { competition, group_name: 'Tercer puesto', team2: 'Perdedor Semifinal 2' },
+            { competition, group_name: 'Tercer puesto', team2: 'Perdedor SF2' },
             { $set: { team2: sfResults.SF2.loser } }
         );
     }
