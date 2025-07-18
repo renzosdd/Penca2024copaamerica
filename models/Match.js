@@ -10,7 +10,8 @@ const matchSchema = new mongoose.Schema({
     series: String,
     tournament: String,
     result1: Number,
-    result2: Number
+    result2: Number,
+    order: Number
 });
  
 module.exports = mongoose.models.Match || mongoose.model('Match', matchSchema);
