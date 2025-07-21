@@ -47,7 +47,7 @@ const strings = {
     create: 'Crear',
     newCompetition: 'Nueva Competencia',
     bracketPrototype: 'Prototipo de Llave',
-    vs: 'vs'
+    vs: 'vs',
     adminTitle: 'Administración',
     competitions: 'Competencias',
     owners: 'Owners',
@@ -116,7 +116,7 @@ const strings = {
     create: 'Create',
     newCompetition: 'New Competition',
     bracketPrototype: 'Bracket Prototype',
-    vs: 'vs'
+    vs: 'vs',
     adminTitle: 'Administration',
     competitions: 'Competitions',
     owners: 'Owners',
