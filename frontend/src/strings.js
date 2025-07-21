@@ -66,7 +66,10 @@ const strings = {
     d: 'D',
     l: 'L',
     gd: 'DG',
-    gf: 'GF'
+    gf: 'GF',
+    result: 'Resultado',
+    pointsEarned: 'Puntos',
+    difference: 'Diferencia'
   },
   en: {
     loginTitle: 'Login',
@@ -135,7 +138,10 @@ const strings = {
     d: 'D',
     l: 'L',
     gd: 'GD',
-    gf: 'GF'
+    gf: 'GF',
+    result: 'Result',
+    pointsEarned: 'Points',
+    difference: 'Difference'
   }
 };
 
