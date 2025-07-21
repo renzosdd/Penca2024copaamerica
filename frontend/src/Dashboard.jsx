@@ -149,6 +149,7 @@ export default function Dashboard() {
           getPrediction={getPrediction}
           handlePrediction={handlePrediction}
           ranking={rankings[p._id] || []}
+          currentUsername={user?.username}
         />
       ))}
       {pencas.length > 0 && (

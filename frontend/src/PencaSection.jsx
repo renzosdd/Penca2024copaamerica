@@ -28,7 +28,7 @@ import roundOrder from './roundOrder';
 import useLang from './useLang';
 import pointsForPrediction from './calcPoints';
 
-export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking }) {
+export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername }) {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const { t } = useLang();
@@ -327,7 +327,10 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     </TableHead>
                     <TableBody>
                       {ranking.map((u, idx) => (
-                        <TableRow key={u.userId} className={`rank-${idx + 1}`.trim()}>
+                        <TableRow
+                          key={u.userId}
+                          className={`rank-${idx + 1} ${u.username === currentUsername ? 'current-user-row' : ''}`.trim()}
+                        >
                           <TableCell>{idx + 1}</TableCell>
                           <TableCell>
                             <img
