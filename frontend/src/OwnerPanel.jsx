@@ -5,13 +5,18 @@ import {
   Checkbox,
   FormControlLabel,
   Button,
-  TextField
+  TextField,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography
 } from '@mui/material';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
   const [rankings, setRankings] = useState({});
   const [matches, setMatches] = useState([]);
+  const [expandedPenca, setExpandedPenca] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -148,15 +153,22 @@ export default function OwnerPanel() {
         const ranking = rankings[p._id] || [];
         const pMatches = filterMatches(p);
         return (
-          <Card key={p._id} style={{ marginBottom: '1rem', padding: '1rem' }}>
-            <CardContent>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <strong style={{ marginRight: '10px' }}>{p.name} - {p.code}</strong>
+          <Accordion
+            key={p._id}
+            expanded={expandedPenca === p._id}
+            onChange={(_, exp) => setExpandedPenca(exp ? p._id : null)}
+            sx={{ marginBottom: '1rem' }}
+          >
+            <AccordionSummary expandIcon="▶">
+              <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                <Typography component="span" fontWeight="bold" sx={{ mr: 1 }}>{p.name} - {p.code}</Typography>
                 <FormControlLabel
-                  control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
+                  control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} onClick={e => e.stopPropagation()} onFocus={e => e.stopPropagation()} />}
                   label="Pública"
                 />
               </div>
+            </AccordionSummary>
+            <AccordionDetails>
               {Object.keys(pMatches)
                 .filter(g => g.startsWith('Grupo'))
                 .sort()
@@ -298,8 +310,8 @@ export default function OwnerPanel() {
                   </li>
                 ))}
               </ul>
-            </CardContent>
-          </Card>
+            </AccordionDetails>
+          </Accordion>
         );
       })}
     </div>
