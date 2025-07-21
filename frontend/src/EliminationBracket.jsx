@@ -1,8 +1,10 @@
 import React from 'react';
 import { Card, CardContent, Typography } from '@mui/material';
 import roundOrder from './roundOrder';
+import useLang from './useLang';
  
 export default function EliminationBracket({ bracket }) {
+  const { t } = useLang();
   if (!bracket) return null;
   const order = roundOrder.slice(4);
   return (
@@ -21,7 +23,7 @@ export default function EliminationBracket({ bracket }) {
                       </Typography>
                     </div>
                     <Typography variant="body2" className="vs">
-                      vs
+                      {t('vs')}
                     </Typography>
                     <div className="team">
                       <Typography variant="body1" className="team-name">

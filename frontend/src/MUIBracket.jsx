@@ -2,8 +2,10 @@ import React, { useMemo } from 'react';
 import { Box, Paper, Typography } from '@mui/material';
 import { SingleEliminationBracket, Match } from '@g-loot/react-tournament-brackets';
 import roundOrder from './roundOrder';
+import useLang from './useLang';
 
 export default function MUIBracket({ bracket }) {
+  const { t } = useLang();
   const matches = useMemo(() => {
     if (!bracket) return [];
     const rounds = roundOrder.slice(4);
@@ -33,7 +35,7 @@ export default function MUIBracket({ bracket }) {
 
   return (
     <Box sx={{ mt: 3 }}>
-      <Typography variant="h6" gutterBottom>Bracket Prototype</Typography>
+      <Typography variant="h6" gutterBottom>{t('bracketPrototype')}</Typography>
       <Paper sx={{ p: 2, overflowX: 'auto' }}>
         <SingleEliminationBracket
           matchComponent={Match}
