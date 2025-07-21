@@ -45,7 +45,9 @@ const strings = {
     back: 'Atrás',
     next: 'Siguiente',
     create: 'Crear',
-    newCompetition: 'Nueva Competencia'
+    newCompetition: 'Nueva Competencia',
+    bracketPrototype: 'Prototipo de Llave',
+    vs: 'vs'
   },
   en: {
     loginTitle: 'Login',
@@ -93,7 +95,9 @@ const strings = {
     back: 'Back',
     next: 'Next',
     create: 'Create',
-    newCompetition: 'New Competition'
+    newCompetition: 'New Competition',
+    bracketPrototype: 'Bracket Prototype',
+    vs: 'vs'
   }
 };
 
