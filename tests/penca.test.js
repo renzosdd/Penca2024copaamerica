@@ -2,10 +2,12 @@ const request = require('supertest');
 const express = require('express');
 
 jest.mock('../models/Penca', () => {
-  return jest.fn(function (data) {
+  const PencaMock = jest.fn(function (data) {
     Object.assign(this, data);
     this.save = jest.fn().mockResolvedValue(this);
   });
+  PencaMock.rulesText = jest.fn(sc => `${sc.exact} puntos`);
+  return PencaMock;
 });
 
 jest.mock('../models/User', () => ({
@@ -37,6 +39,7 @@ describe('Penca Routes creation', () => {
 
     expect(res.status).toBe(201);
     expect(Penca.mock.calls[0][0].participants).toEqual([]);
+    expect(Penca.mock.calls[0][0].scoring).toEqual({ exact: 3, outcome: 1, goals: 1 });
   });
 });
 
@@ -157,6 +160,7 @@ describe('Penca rules and prizes update', () => {
     const penca = {
       _id: 'p1',
       owner: 'o1',
+      scoring: { exact: 3, outcome: 1, goals: 1 },
       save: jest.fn().mockResolvedValue(true)
     };
     Penca.findById = jest.fn().mockResolvedValue(penca);
@@ -173,6 +177,30 @@ describe('Penca rules and prizes update', () => {
     expect(res.status).toBe(200);
     expect(penca.rules).toBe('new');
     expect(penca.prizes).toBe('prize');
+    expect(penca.save).toHaveBeenCalled();
+  });
+
+  it('updates scoring and autogenerates rules when missing', async () => {
+    const penca = {
+      _id: 'p2',
+      owner: 'o1',
+      scoring: { exact: 3, outcome: 1, goals: 1 },
+      save: jest.fn().mockResolvedValue(true)
+    };
+    Penca.findById = jest.fn().mockResolvedValue(penca);
+
+    const app = express();
+    app.use(express.json());
+    app.use((req, res, next) => { req.session = { user: { _id: 'o1' } }; next(); });
+    app.use('/pencas', pencaRouter);
+
+    const res = await request(app)
+      .put('/pencas/p2')
+      .send({ scoring: { exact: 4 } });
+
+    expect(res.status).toBe(200);
+    expect(penca.scoring.exact).toBe(4);
+    expect(Penca.rulesText).toHaveBeenCalled();
     expect(penca.save).toHaveBeenCalled();
   });
 });

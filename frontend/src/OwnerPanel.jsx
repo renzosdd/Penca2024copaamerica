@@ -80,8 +80,18 @@ export default function OwnerPanel() {
     }
   }
 
+  const autoRules = s => `${s.exact} puntos por resultado exacto, ${s.outcome} por acertar ganador o empate y ${s.goals} por acertar goles de un equipo`;
+
   const updateField = (id, field, value) => {
     setPencas(ps => ps.map(p => p._id === id ? { ...p, [field]: value } : p));
+  };
+
+  const updateScoring = (id, key, val) => {
+    setPencas(ps => ps.map(p => {
+      if (p._id !== id) return p;
+      const scoring = { ...p.scoring, [key]: Number(val) };
+      return { ...p, scoring, rules: autoRules(scoring) };
+    }));
   };
 
   async function saveInfo(id) {
@@ -91,7 +101,7 @@ export default function OwnerPanel() {
       const res = await fetch(`/pencas/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rules: penca.rules, prizes: penca.prizes })
+        body: JSON.stringify({ rules: penca.rules, prizes: penca.prizes, scoring: penca.scoring })
       });
       if (res.ok) loadData();
     } catch (err) {
@@ -211,6 +221,30 @@ export default function OwnerPanel() {
                     ))}
                   </div>
                 ))}
+
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <TextField
+                  label="Exacto"
+                  type="number"
+                  size="small"
+                  value={p.scoring?.exact ?? 0}
+                  onChange={e => updateScoring(p._id, 'exact', e.target.value)}
+                />
+                <TextField
+                  label="Ganador"
+                  type="number"
+                  size="small"
+                  value={p.scoring?.outcome ?? 0}
+                  onChange={e => updateScoring(p._id, 'outcome', e.target.value)}
+                />
+                <TextField
+                  label="Goles"
+                  type="number"
+                  size="small"
+                  value={p.scoring?.goals ?? 0}
+                  onChange={e => updateScoring(p._id, 'goals', e.target.value)}
+                />
+              </div>
 
               <TextField
                 label="Reglamento"
