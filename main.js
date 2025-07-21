@@ -10,6 +10,7 @@ const MongoStore = require('connect-mongo');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
 const cacheControl = require('./middleware/cacheControl');
 const { DEFAULT_COMPETITION } = require('./config');
+const { getMessage } = require('./utils/messages');
 const Penca = require("./models/Penca");
 
 dotenv.config();
@@ -188,21 +189,21 @@ app.get('/owner', isAuthenticated, async (req, res) => {
 app.get('/api/dashboard', isAuthenticated, async (req, res) => {
     const { user } = req.session;
     if (user.role === 'admin') {
-        return res.status(403).json({ error: 'Admins must use /admin/edit' });
+        return res.status(403).json({ error: getMessage('ADMIN_ONLY') });
     }
     try {
         const pencas = await Penca.find({ participants: user._id }).select('name _id competition fixture rules prizes');
         res.json({ user: { username: user.username, role: user.role }, pencas });
     } catch (err) {
         console.error('dashboard api error', err);
-        res.status(500).json({ error: 'Error retrieving dashboard data' });
+        res.status(500).json({ error: getMessage('DASHBOARD_ERROR') });
     }
 });
 
 app.get('/api/owner', isAuthenticated, async (req, res) => {
     const { user } = req.session;
     if (user.role !== 'owner') {
-        return res.status(403).json({ error: 'Owners only' });
+        return res.status(403).json({ error: getMessage('OWNER_ONLY') });
     }
     try {
         const pencas = await Penca.find({ owner: user._id })
@@ -212,7 +213,7 @@ app.get('/api/owner', isAuthenticated, async (req, res) => {
         res.json({ user: { username: user.username, role: user.role }, pencas });
     } catch (err) {
         console.error('owner api error', err);
-        res.status(500).json({ error: 'Error retrieving owner data' });
+        res.status(500).json({ error: getMessage('OWNER_DATA_ERROR') });
     }
 });
 
@@ -227,13 +228,13 @@ app.post('/login', async (req, res) => {
             debugLog('Usuario no encontrado');
         }
         if (!user) {
-            return res.status(401).json({ error: 'Usuario no encontrado' });
+            return res.status(401).json({ error: getMessage('USER_NOT_FOUND') });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
         debugLog('Coincidencia de contraseña:', passwordMatch);
         if (!passwordMatch) {
             debugLog('Contraseña incorrecta');
-            return res.status(401).json({ error: 'Contraseña incorrecta' });
+            return res.status(401).json({ error: getMessage('INCORRECT_PASSWORD') });
         }
         req.session.user = user;
         debugLog('Sesión establecida para el usuario:', user.username);
@@ -246,7 +247,7 @@ app.post('/login', async (req, res) => {
         res.json({ success: true, redirectUrl });
     } catch (err) {
         console.error('Error en el inicio de sesión', err);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        res.status(500).json({ error: getMessage('INTERNAL_ERROR') });
     }
 });
 
@@ -271,7 +272,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
     try {
         const existingUser = await User.findOne({ $or: [{ username }, { email }] });
         if (existingUser) {
-            return res.status(400).json({ error: 'El nombre de usuario o email ya existe' });
+            return res.status(400).json({ error: getMessage('USER_EXISTS') });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({
@@ -297,7 +298,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         res.json({ success: true, redirectUrl: '/dashboard' });
     } catch (err) {
         console.error('Error en el registro', err);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        res.status(500).json({ error: getMessage('INTERNAL_ERROR') });
     }
 });
  
@@ -305,12 +306,12 @@ app.get('/avatar/:username', async (req, res) => {
     try {
         const user = await User.findOne({ username: req.params.username });
         if (!user || !user.avatar) {
-            return res.status(404).send('Avatar no encontrado');
+            return res.status(404).send(getMessage('AVATAR_NOT_FOUND'));
         }
         res.set('Content-Type', user.avatarContentType);
         res.send(user.avatar);
     } catch (err) {
-        res.status(500).send('Error al recuperar el avatar');
+        res.status(500).send(getMessage('AVATAR_ERROR'));
     }
 });
 
@@ -325,14 +326,14 @@ app.use('/competitions', competitionsRouter);
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {
         if (err) {
-            return res.status(500).json({ error: 'Error al cerrar sesión' });
+            return res.status(500).json({ error: getMessage('LOGOUT_ERROR') });
         }
         res.redirect('/');
     });
 });
 
 app.use((req, res) => {
-    res.status(404).send('404: Página no encontrada');
+    res.status(404).send(getMessage('PAGE_NOT_FOUND'));
 });
 
 // Evento para cerrar la conexión de Mongoose al cerrar el servidor
