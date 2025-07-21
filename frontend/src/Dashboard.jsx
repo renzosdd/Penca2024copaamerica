@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@mui/material';
+import { Button, CircularProgress, Alert } from '@mui/material';
 import PencaSection from './PencaSection';
 import JoinPenca from './JoinPenca';
 import useLang from './useLang';
@@ -12,6 +12,8 @@ export default function Dashboard() {
   const [predictions, setPredictions] = useState([]);
   const [rankings, setRankings] = useState({});
   const [groups, setGroups] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [showJoin, setShowJoin] = useState(false);
   const { t } = useLang();
 
@@ -25,6 +27,7 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('dashboard fetch error', err);
+      setError(t('networkError'));
     }
   };
 
@@ -35,6 +38,8 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadData() {
       if (!pencas.length) return;
+      setLoading(true);
+      setError('');
       try {
         const comps = Array.from(new Set(pencas.map(p => p.competition)));
 
@@ -71,6 +76,9 @@ export default function Dashboard() {
         pencas.forEach(p => loadRanking(p._id));
       } catch (err) {
         console.error('dashboard data error', err);
+        setError(t('networkError'));
+      } finally {
+        setLoading(false);
       }
     }
     loadData();
@@ -86,6 +94,7 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('ranking error', err);
+      setError(t('networkError'));
     }
   }
 
@@ -119,6 +128,12 @@ export default function Dashboard() {
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>{t('dashboardTitle')}</h5>
+      {loading && <CircularProgress sx={{ display: 'block', my: 2 }} />}
+      {error && (
+        <Alert severity="error" sx={{ my: 2 }}>
+          {error}
+        </Alert>
+      )}
       {pencas.length === 0 && (
         <>
           <p>{t('noPencas')}</p>
