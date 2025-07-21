@@ -25,10 +25,12 @@ import {
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
+import useLang from './useLang';
 
 export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking }) {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const { t } = useLang();
 
   function canPredict(match) {
     const start = new Date(`${match.date}T${match.time}:00`);
@@ -76,7 +78,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
           <CardContent>
             <Accordion>
               <AccordionSummary expandIcon="▶">
-                <Typography>Predicciones</Typography>
+                <Typography>{t('predictions')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 {Object.keys(pMatches)
@@ -134,7 +136,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                       disabled={!editable}
                                     />
                                   </div>
-                                  <Button variant="contained" type="submit" disabled={!editable}>Guardar</Button>
+                                  <Button variant="contained" type="submit" disabled={!editable}>{t('save')}</Button>
                                 </form>
                               </div>
                             </CardContent>
@@ -145,7 +147,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                   ))}
 
                 <div style={{ marginTop: '1rem' }}>
-                    <h6>Eliminatorias</h6>
+                    <h6>{t('knockout')}</h6>
                     {roundOrder
                       .slice(4)
                       .filter(r => pMatches[r])
@@ -194,7 +196,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                           disabled={!editable}
                                         />
                                       </div>
-                                      <Button variant="contained" type="submit" disabled={!editable}>Guardar</Button>
+                                      <Button variant="contained" type="submit" disabled={!editable}>{t('save')}</Button>
                                     </form>
                                   </div>
                                 </CardContent>
@@ -209,7 +211,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
             <Accordion sx={{ mt: 1 }}>
               <AccordionSummary expandIcon="▶">
-                <Typography>Partidos</Typography>
+                <Typography>{t('matches')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 {Object.keys(pMatches)
@@ -288,7 +290,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
             <Accordion sx={{ mt: 1 }}>
               <AccordionSummary expandIcon="▶">
-                <Typography>Ranking</Typography>
+                <Typography>{t('ranking')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <TableContainer component={Paper}>
@@ -296,8 +298,8 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     <TableHead>
                       <TableRow>
                         <TableCell>#</TableCell>
-                        <TableCell>Participante</TableCell>
-                        <TableCell>Puntaje</TableCell>
+                        <TableCell>{t('participant')}</TableCell>
+                        <TableCell>{t('score')}</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -329,20 +331,20 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
         <DialogTitle>{penca.name}</DialogTitle>
         <DialogContent dividers>
           <Typography variant="subtitle2" gutterBottom>
-            Reglas
+            {t('rules')}
           </Typography>
           <Typography variant="body2" paragraph>
-            {penca.rules || 'Sin reglas definidas'}
+            {penca.rules || t('noRules')}
           </Typography>
           <Typography variant="subtitle2" gutterBottom>
-            Premios
+            {t('prizes')}
           </Typography>
           <Typography variant="body2">
-            {penca.prizes || 'Sin premios definidos'}
+            {penca.prizes || t('noPrizes')}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setInfoOpen(false)}>Cerrar</Button>
+          <Button onClick={() => setInfoOpen(false)}>{t('close')}</Button>
         </DialogActions>
       </Dialog>
     </div>

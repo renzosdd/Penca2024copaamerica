@@ -7,11 +7,13 @@ import {
   Button,
   TextField
 } from '@mui/material';
+import useLang from './useLang';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
   const [rankings, setRankings] = useState({});
   const [matches, setMatches] = useState([]);
+  const { t } = useLang();
 
   useEffect(() => {
     loadData();
@@ -143,7 +145,7 @@ export default function OwnerPanel() {
 
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
-      <h5>Mis Pencas</h5>
+      <h5>{t('ownerMyPencas')}</h5>
       {pencas.map(p => {
         const ranking = rankings[p._id] || [];
         const pMatches = filterMatches(p);
@@ -154,7 +156,7 @@ export default function OwnerPanel() {
                 <strong style={{ marginRight: '10px' }}>{p.name} - {p.code}</strong>
                 <FormControlLabel
                   control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
-                  label="Pública"
+                  label={t('public')}
                 />
               </div>
               {Object.keys(pMatches)
@@ -224,21 +226,21 @@ export default function OwnerPanel() {
 
               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                 <TextField
-                  label="Exacto"
+                  label={t('exact')}
                   type="number"
                   size="small"
                   value={p.scoring?.exact ?? 0}
                   onChange={e => updateScoring(p._id, 'exact', e.target.value)}
                 />
                 <TextField
-                  label="Ganador"
+                  label={t('outcome')}
                   type="number"
                   size="small"
                   value={p.scoring?.outcome ?? 0}
                   onChange={e => updateScoring(p._id, 'outcome', e.target.value)}
                 />
                 <TextField
-                  label="Goles"
+                  label={t('goals')}
                   type="number"
                   size="small"
                   value={p.scoring?.goals ?? 0}
@@ -247,7 +249,7 @@ export default function OwnerPanel() {
               </div>
 
               <TextField
-                label="Reglamento"
+                label={t('regulation')}
                 value={p.rules || ''}
                 onChange={e => updateField(p._id, 'rules', e.target.value)}
                 multiline
@@ -256,7 +258,7 @@ export default function OwnerPanel() {
                 sx={{ mt: 1 }}
               />
               <TextField
-                label="Premios"
+                label={t('awards')}
                 value={p.prizes || ''}
                 onChange={e => updateField(p._id, 'prizes', e.target.value)}
                 multiline
@@ -270,9 +272,9 @@ export default function OwnerPanel() {
                 sx={{ mt: 1 }}
                 onClick={() => saveInfo(p._id)}
               >
-                Guardar
+                {t('save')}
               </Button>
-              <h6>Solicitudes</h6>
+              <h6>{t('requests')}</h6>
               <ul className="collection">
                 {p.pendingRequests.map(u => (
                   <li key={u._id || u} className="collection-item">
@@ -281,7 +283,7 @@ export default function OwnerPanel() {
                   </li>
                 ))}
               </ul>
-              <h6>Participantes</h6>
+              <h6>{t('participants')}</h6>
               <ul className="collection">
                 {p.participants.map(u => (
                   <li key={u._id || u} className="collection-item">
@@ -290,7 +292,7 @@ export default function OwnerPanel() {
                   </li>
                 ))}
               </ul>
-              <h6>Ranking</h6>
+              <h6>{t('ranking')}</h6>
               <ul className="collection">
                 {ranking.map((u, idx) => (
                   <li key={u.userId} className={`collection-item rank-${idx + 1}`.trim()}>

@@ -7,12 +7,14 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import useLang from './useLang';
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { t } = useLang();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,7 +38,7 @@ export default function Login() {
         setError(data.error || 'Error');
       }
     } catch (err) {
-      setError('Error de red');
+      setError(t('networkError'));
     }
   };
 
@@ -44,13 +46,13 @@ export default function Login() {
     <Card className="login-container">
       <CardContent>
         <Typography variant="h5" gutterBottom>
-          Iniciar Sesión
+          {t('loginTitle')}
         </Typography>
         <form onSubmit={handleSubmit}>
           <div className="input-field">
             <TextField
               id="login-username"
-              label="Nombre de usuario"
+              label={t('username')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               required
@@ -61,7 +63,7 @@ export default function Login() {
           <div className="input-field">
             <TextField
               id="login-password"
-              label="Contraseña"
+              label={t('password')}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -71,7 +73,7 @@ export default function Login() {
             />
           </div>
           <Button variant="contained" type="submit" fullWidth>
-            Ingresar
+            {t('login')}
           </Button>
         </form>
         <Button
@@ -81,7 +83,7 @@ export default function Login() {
           fullWidth
           style={{ marginTop: '1rem' }}
         >
-          Registrarse
+          {t('register')}
         </Button>
         {error && (
           <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>

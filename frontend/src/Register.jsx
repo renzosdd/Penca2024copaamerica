@@ -7,6 +7,7 @@ import {
   TextField,
   Typography
 } from '@mui/material';
+import useLang from './useLang';
 
 export default function Register() {
   const [form, setForm] = useState({
@@ -20,6 +21,7 @@ export default function Register() {
   const [avatar, setAvatar] = useState(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { t } = useLang();
 
   const handleChange = e => {
     const { name, value } = e.target;
@@ -44,7 +46,7 @@ export default function Register() {
         setError(result.error || 'Error');
       }
     } catch (err) {
-      setError('Error de red');
+      setError(t('networkError'));
     }
   };
 
@@ -52,13 +54,13 @@ export default function Register() {
     <Card className="login-container">
       <CardContent>
         <Typography variant="h5" gutterBottom>
-          Registrarse
+          {t('registerTitle')}
         </Typography>
         <form onSubmit={handleSubmit}>
           <div className="input-field">
             <TextField
               id="register-username"
-              label="Nombre de usuario"
+              label={t('username')}
               name="username"
               value={form.username}
               onChange={handleChange}
@@ -70,7 +72,7 @@ export default function Register() {
           <div className="input-field">
             <TextField
               id="register-password"
-              label="Contraseña"
+              label={t('password')}
               type="password"
               name="password"
               value={form.password}
@@ -83,7 +85,7 @@ export default function Register() {
           <div className="input-field">
             <TextField
               id="register-name"
-              label="Nombre"
+              label={t('name')}
               name="name"
               value={form.name}
               onChange={handleChange}
@@ -94,7 +96,7 @@ export default function Register() {
           <div className="input-field">
             <TextField
               id="register-surname"
-              label="Apellido"
+              label={t('surname')}
               name="surname"
               value={form.surname}
               onChange={handleChange}
@@ -105,7 +107,7 @@ export default function Register() {
           <div className="input-field">
             <TextField
               id="register-email"
-              label="Email"
+              label={t('email')}
               type="email"
               name="email"
               value={form.email}
@@ -118,7 +120,7 @@ export default function Register() {
           <div className="input-field">
             <TextField
               id="register-dob"
-              label="Fecha de nacimiento"
+              label={t('birthdate')}
               type="date"
               name="dob"
               value={form.dob}
@@ -130,7 +132,7 @@ export default function Register() {
           </div>
           <div className="input-field">
             <Button variant="contained" component="label" fullWidth style={{ marginTop: '1rem', marginBottom: '1rem' }}>
-              Subir Avatar
+              {t('uploadAvatar')}
               <input
                 type="file"
                 hidden
@@ -140,7 +142,7 @@ export default function Register() {
             </Button>
           </div>
           <Button variant="contained" type="submit" fullWidth>
-            Registrarse
+            {t('register')}
           </Button>
         </form>
         {error && (
