@@ -194,7 +194,7 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
         return res.status(403).json({ error: getMessage('ADMIN_ONLY', req.lang) });
     }
     try {
-        const pencas = await Penca.find({ participants: user._id }).select('name _id competition fixture rules prizes');
+        const pencas = await Penca.find({ participants: user._id }).select('name _id competition fixture rules prizes scoring');
         res.json({ user: { username: user.username, role: user.role }, pencas });
     } catch (err) {
         console.error('dashboard api error', err);
