@@ -48,6 +48,25 @@ const strings = {
     newCompetition: 'Nueva Competencia',
     bracketPrototype: 'Prototipo de Llave',
     vs: 'vs'
+    adminTitle: 'Administración',
+    competitions: 'Competencias',
+    owners: 'Owners',
+    pencas: 'Pencas',
+    owner: 'Owner',
+    generateBracket: 'Generar/Actualizar eliminatorias',
+    saveOrder: 'Guardar orden',
+    saveRound: 'Guardar ronda',
+    groups: 'Grupos',
+    integrants: 'Integrantes',
+    qualifiers: 'Clasificados',
+    group: 'Grupo',
+    team: 'Equipo',
+    pts: 'Pts',
+    w: 'W',
+    d: 'D',
+    l: 'L',
+    gd: 'DG',
+    gf: 'GF'
   },
   en: {
     loginTitle: 'Login',
@@ -98,6 +117,25 @@ const strings = {
     newCompetition: 'New Competition',
     bracketPrototype: 'Bracket Prototype',
     vs: 'vs'
+    adminTitle: 'Administration',
+    competitions: 'Competitions',
+    owners: 'Owners',
+    pencas: 'Pools',
+    owner: 'Owner',
+    generateBracket: 'Generate/Update knockout',
+    saveOrder: 'Save order',
+    saveRound: 'Save round',
+    groups: 'Groups',
+    integrants: 'Teams',
+    qualifiers: 'Qualifiers',
+    group: 'Group',
+    team: 'Team',
+    pts: 'Pts',
+    w: 'W',
+    d: 'D',
+    l: 'L',
+    gd: 'GD',
+    gf: 'GF'
   }
 };
 
