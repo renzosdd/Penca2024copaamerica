@@ -164,6 +164,16 @@ footer {
     margin-top: 10px;
     width: 100%;
 }
+.match-info {
+    margin-top: 5px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+.points-earned {
+    font-weight: bold;
+    color: #28a745;
+    margin-left: 5px;
+}
 
 @media (min-width: 600px) {
     .match-details {

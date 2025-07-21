@@ -26,6 +26,7 @@ import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import useLang from './useLang';
+import pointsForPrediction from './calcPoints';
 
 export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking }) {
   const [open, setOpen] = useState(false);
@@ -139,6 +140,17 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                   <Button variant="contained" type="submit" disabled={!editable}>{t('save')}</Button>
                                 </form>
                               </div>
+                              {m.result1 !== undefined && m.result2 !== undefined && (
+                                <div className="match-info">
+                                  <strong>{m.result1} - {m.result2}</strong>
+                                  {pr.result1 !== undefined && pr.result2 !== undefined && (
+                                    <>
+                                      {' '}({pr.result1 - m.result1}/{pr.result2 - m.result2})
+                                      <span className="points-earned">{pointsForPrediction(pr, m, penca.scoring)} {t('pts')}</span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
                             </CardContent>
                           </Card>
                         );
@@ -199,6 +211,17 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                       <Button variant="contained" type="submit" disabled={!editable}>{t('save')}</Button>
                                     </form>
                                   </div>
+                                  {m.result1 !== undefined && m.result2 !== undefined && (
+                                    <div className="match-info">
+                                      <strong>{m.result1} - {m.result2}</strong>
+                                      {pr.result1 !== undefined && pr.result2 !== undefined && (
+                                        <>
+                                          {' '}({pr.result1 - m.result1}/{pr.result2 - m.result2})
+                                          <span className="points-earned">{pointsForPrediction(pr, m, penca.scoring)} {t('pts')}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  )}
                                 </CardContent>
                               </Card>
                             );
