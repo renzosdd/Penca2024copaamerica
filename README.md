@@ -30,6 +30,8 @@ SESSION_SECRET=<tu_clave>
 PORT=3000
 # Límite de pencas que un usuario puede unir (3 por defecto)
 MAX_PENCAS_PER_USER=3
+# Idioma de los mensajes (es o en)
+APP_LANG=es
 # Credenciales para obtener fixtures desde API-Football
 FOOTBALL_API_KEY=<tu_api_key>
 # Identificador de liga y temporada
@@ -41,6 +43,8 @@ FOOTBALL_API_URL=https://v3.football.api-sports.io
 Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
 El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
 útil si planeas varias competiciones en paralelo.
+
+`APP_LANG` permite elegir el idioma de las respuestas del backend. Usa `es` para español o `en` para inglés.
 
 La variable `DEFAULT_COMPETITION` define el nombre de la competencia principal.
 Debes crearla desde el asistente de competencias en el panel de administración

@@ -6,10 +6,13 @@ const Match = require('../models/Match');
 const Score = require('../models/Score');
 const Penca = require('../models/Penca');
 const { DEFAULT_COMPETITION } = require('../config');
+const { getMessage } = require('../utils/messages');
 
 // Función para calcular los puntajes
 async function calculateScores(pencaId, competition) {
-    let userFilter = { valid: true };
+    // Solo filtramos por participantes de la penca cuando sea necesario
+    // No requerimos que los usuarios sean válidos aquí
+    let userFilter = {};
     let matchFilter = {};
     let predictionFilter = {};
     let penca;
@@ -98,7 +101,7 @@ router.get('/', async (req, res) => {
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
-        res.status(500).json({ error: 'Error al obtener el ranking' });
+        res.status(500).json({ error: getMessage('RANKING_ERROR') });
     }
 });
 
@@ -109,7 +112,7 @@ router.get('/competition/:competition', async (req, res) => {
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking por competencia:', err);
-        res.status(500).json({ error: 'Error al obtener el ranking' });
+        res.status(500).json({ error: getMessage('RANKING_ERROR') });
     }
 });
 
@@ -126,10 +129,10 @@ router.post('/recalculate', async (req, res) => {
                 { upsert: true }
             );
         }
-        res.json({ message: 'Puntajes recalculados correctamente' });
+        res.json({ message: getMessage('SCORES_RECALCULATED') });
     } catch (err) {
         console.error('Error al recalcular los puntajes:', err);
-        res.status(500).json({ error: 'Error al recalcular los puntajes' });
+        res.status(500).json({ error: getMessage('SCORES_RECALC_ERROR') });
     }
 });
 

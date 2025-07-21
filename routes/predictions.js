@@ -3,6 +3,7 @@ const router = express.Router();
 const Prediction = require('../models/Prediction');
 const Match = require('../models/Match'); // Importar el modelo de partidos
 const Penca = require('../models/Penca');
+const { getMessage } = require('../utils/messages');
 
 const DEBUG = process.env.DEBUG === 'true';
 function debugLog(...args) {
@@ -16,7 +17,7 @@ router.get('/', async (req, res) => {
         const predictions = await Prediction.find();
         res.json(predictions);
     } catch (err) {
-        res.status(500).json({ error: 'Error al recuperar las predicciones' });
+        res.status(500).json({ error: getMessage('PREDICTIONS_FETCH_ERROR') });
     }
 });
 
@@ -26,29 +27,29 @@ router.post('/', async (req, res) => {
         const r1 = Number(result1);
         const r2 = Number(result2);
         if (Number.isNaN(r1) || Number.isNaN(r2)) {
-            return res.status(400).json({ error: 'Resultados inválidos' });
+            return res.status(400).json({ error: getMessage('INVALID_RESULTS') });
         }
         if (r1 < 0 || r2 < 0) {
-            return res.status(400).json({ error: 'Los goles no pueden ser negativos' });
+            return res.status(400).json({ error: getMessage('NEGATIVE_GOALS') });
         }
         const user = req.session.user;
         if (!user) {
-            return res.status(401).json({ error: 'No autorizado' });
+            return res.status(401).json({ error: getMessage('UNAUTHORIZED') });
         }
 
         if (!pencaId) {
-            return res.status(400).json({ error: 'pencaId requerido' });
+            return res.status(400).json({ error: getMessage('PENCA_ID_REQUIRED') });
         }
 
         const penca = await Penca.findById(pencaId);
         if (!penca || !penca.participants.some(id => id.equals(user._id))) {
-            return res.status(403).json({ error: 'No pertenece a la penca' });
+            return res.status(403).json({ error: getMessage('NOT_IN_PENCA') });
         }
 
         // Obtener información del partido
         const match = await Match.findById(matchId);
         if (!match) {
-            return res.status(404).json({ error: 'Partido no encontrado' });
+            return res.status(404).json({ error: getMessage('MATCH_NOT_FOUND') });
         }
 
         // Verificar si falta menos de media hora para el partido
@@ -63,7 +64,7 @@ router.post('/', async (req, res) => {
         debugLog(`timeDifference: ${timeDifference} minutos`);
 
         if (timeDifference < 30) {
-            return res.status(400).json({ error: 'No se puede enviar la predicción dentro de los 30 minutos previos al inicio del partido' });
+            return res.status(400).json({ error: getMessage('PREDICTION_TIME') });
         }
 
         let prediction = await Prediction.findOne({ userId: user._id, matchId, pencaId });
@@ -81,10 +82,10 @@ router.post('/', async (req, res) => {
             });
         }
         await prediction.save();
-        res.json({ message: 'Predicción guardada' });
+        res.json({ message: getMessage('PREDICTION_SAVED') });
     } catch (err) {
         console.error('Error al guardar la predicción:', err);
-        res.status(500).json({ error: 'Error al guardar la predicción' });
+        res.status(500).json({ error: getMessage('PREDICTION_SAVE_ERROR') });
     }
 });
 
