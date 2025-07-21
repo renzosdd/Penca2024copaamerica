@@ -32,6 +32,7 @@ PORT=3000
 MAX_PENCAS_PER_USER=3
 # Idioma de los mensajes (es o en)
 APP_LANG=es
+Tambin puedes cambiar el idioma de las respuestas agregando `?lang=es` o `?lang=en` a cada solicitud, o enviando el encabezado `Accept-Language`.
 # Credenciales para obtener fixtures desde API-Football
 FOOTBALL_API_KEY=<tu_api_key>
 # Identificador de liga y temporada
@@ -45,6 +46,7 @@ El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usua
 útil si planeas varias competiciones en paralelo.
 
 `APP_LANG` permite elegir el idioma de las respuestas del backend. Usa `es` para español o `en` para inglés.
+Tambin puedes cambiar el idioma de las respuestas agregando `?lang=es` o `?lang=en` a cada solicitud, o enviando el encabezado `Accept-Language`.
 
 La variable `DEFAULT_COMPETITION` define el nombre de la competencia principal.
 Debes crearla desde el asistente de competencias en el panel de administración

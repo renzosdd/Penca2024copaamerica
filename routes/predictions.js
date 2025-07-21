@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
         const predictions = await Prediction.find();
         res.json(predictions);
     } catch (err) {
-        res.status(500).json({ error: getMessage('PREDICTIONS_FETCH_ERROR') });
+        res.status(500).json({ error: getMessage('PREDICTIONS_FETCH_ERROR', req.lang) });
     }
 });
 
@@ -27,29 +27,29 @@ router.post('/', async (req, res) => {
         const r1 = Number(result1);
         const r2 = Number(result2);
         if (Number.isNaN(r1) || Number.isNaN(r2)) {
-            return res.status(400).json({ error: getMessage('INVALID_RESULTS') });
+            return res.status(400).json({ error: getMessage('INVALID_RESULTS', req.lang) });
         }
         if (r1 < 0 || r2 < 0) {
-            return res.status(400).json({ error: getMessage('NEGATIVE_GOALS') });
+            return res.status(400).json({ error: getMessage('NEGATIVE_GOALS', req.lang) });
         }
         const user = req.session.user;
         if (!user) {
-            return res.status(401).json({ error: getMessage('UNAUTHORIZED') });
+            return res.status(401).json({ error: getMessage('UNAUTHORIZED', req.lang) });
         }
 
         if (!pencaId) {
-            return res.status(400).json({ error: getMessage('PENCA_ID_REQUIRED') });
+            return res.status(400).json({ error: getMessage('PENCA_ID_REQUIRED', req.lang) });
         }
 
         const penca = await Penca.findById(pencaId);
         if (!penca || !penca.participants.some(id => id.equals(user._id))) {
-            return res.status(403).json({ error: getMessage('NOT_IN_PENCA') });
+            return res.status(403).json({ error: getMessage('NOT_IN_PENCA', req.lang) });
         }
 
         // Obtener información del partido
         const match = await Match.findById(matchId);
         if (!match) {
-            return res.status(404).json({ error: getMessage('MATCH_NOT_FOUND') });
+            return res.status(404).json({ error: getMessage('MATCH_NOT_FOUND', req.lang) });
         }
 
         // Verificar si falta menos de media hora para el partido
@@ -64,7 +64,7 @@ router.post('/', async (req, res) => {
         debugLog(`timeDifference: ${timeDifference} minutos`);
 
         if (timeDifference < 30) {
-            return res.status(400).json({ error: getMessage('PREDICTION_TIME') });
+            return res.status(400).json({ error: getMessage('PREDICTION_TIME', req.lang) });
         }
 
         let prediction = await Prediction.findOne({ userId: user._id, matchId, pencaId });
@@ -82,10 +82,10 @@ router.post('/', async (req, res) => {
             });
         }
         await prediction.save();
-        res.json({ message: getMessage('PREDICTION_SAVED') });
+        res.json({ message: getMessage('PREDICTION_SAVED', req.lang) });
     } catch (err) {
         console.error('Error al guardar la predicción:', err);
-        res.status(500).json({ error: getMessage('PREDICTION_SAVE_ERROR') });
+        res.status(500).json({ error: getMessage('PREDICTION_SAVE_ERROR', req.lang) });
     }
 });
 

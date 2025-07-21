@@ -19,7 +19,7 @@ router.get('/', isAuthenticated, async (req, res) => {
     res.json(pencas); 
   } catch (err) {
     console.error('list pencas error', err);
-    res.status(500).json({ error: getMessage('ERROR_LISTING_PENCAS') });
+    res.status(500).json({ error: getMessage('ERROR_LISTING_PENCAS', req.lang) });
   }
 });
  
@@ -39,7 +39,7 @@ router.get('/mine', isAuthenticated, async (req, res) => {
     res.json(pencas);
   } catch (err) {
     console.error('mine pencas error', err);
-    res.status(500).json({ error: getMessage('ERROR_GETTING_PENCAS') });
+    res.status(500).json({ error: getMessage('ERROR_GETTING_PENCAS', req.lang) });
   }
 });
 
@@ -74,7 +74,7 @@ router.post('/', isAuthenticated, async (req, res) => {
     res.status(201).json({ pencaId: penca._id, code: penca.code });
   } catch (err) {
     console.error('create penca error', err);
-    res.status(500).json({ error: getMessage('ERROR_CREATING_PENCA') });
+    res.status(500).json({ error: getMessage('ERROR_CREATING_PENCA', req.lang) });
   }
 });
 
@@ -85,14 +85,14 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
     const penca = await Penca.findById(pencaId)
       .populate('participants', 'username')
       .populate('pendingRequests', 'username');
-    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND') });
+    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
     if (penca.owner.toString() !== req.session.user._id.toString() && req.session.user.role !== 'admin') {
-      return res.status(403).json({ error: getMessage('FORBIDDEN') });
+      return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     res.json(penca);
   } catch (err) {
     console.error('get penca error', err);
-    res.status(500).json({ error: getMessage('ERROR_GETTING_PENCA') });
+    res.status(500).json({ error: getMessage('ERROR_GETTING_PENCA', req.lang) });
   }
 });
 
@@ -102,9 +102,9 @@ router.put('/:pencaId', isAuthenticated, async (req, res) => {
   const { isPublic, rules, prizes, scoring } = req.body;
   try {
     const penca = await Penca.findById(pencaId);
-    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND') });
+    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
     if (penca.owner.toString() !== req.session.user._id.toString() && req.session.user.role !== 'admin') {
-      return res.status(403).json({ error: getMessage('FORBIDDEN') });
+      return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     if (isPublic !== undefined) penca.isPublic = isPublic === true || isPublic === 'true';
     if (scoring !== undefined) {
@@ -120,10 +120,10 @@ router.put('/:pencaId', isAuthenticated, async (req, res) => {
     if (rules !== undefined) penca.rules = rules;
     if (prizes !== undefined) penca.prizes = prizes;
     await penca.save();
-    res.json({ message: getMessage('PENCA_UPDATED') });
+    res.json({ message: getMessage('PENCA_UPDATED', req.lang) });
   } catch (err) {
     console.error('update penca error', err);
-    res.status(500).json({ error: getMessage('ERROR_UPDATING_PENCA') });
+    res.status(500).json({ error: getMessage('ERROR_UPDATING_PENCA', req.lang) });
   }
 });
 
@@ -134,10 +134,10 @@ router.post('/join', isAuthenticated, async (req, res) => {
   const joined = req.session.user.pencas || [];
   try {
     if (req.session.user.role !== 'user') {
-      return res.status(403).json({ error: getMessage('FORBIDDEN') });
+      return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     if (joined.length >= MAX_PENCAS_PER_USER) {
-      return res.status(400).json({ error: `${getMessage('MAX_PENCAS_REACHED')} (${MAX_PENCAS_PER_USER})` });
+      return res.status(400).json({ error: `${getMessage('MAX_PENCAS_REACHED', req.lang)} (${MAX_PENCAS_PER_USER})` });
     }
 
     const query = { code };
@@ -145,23 +145,23 @@ router.post('/join', isAuthenticated, async (req, res) => {
 
     const penca = await Penca.findOne(query);
 
-    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND') });
+    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
 
     if (
       penca.participants.some(id => id.equals(userId)) ||
       penca.pendingRequests.some(id => id.equals(userId))
     ) {
-      return res.status(400).json({ error: getMessage('ALREADY_REQUESTED_OR_MEMBER') });
+      return res.status(400).json({ error: getMessage('ALREADY_REQUESTED_OR_MEMBER', req.lang) });
     }
     if (penca.participantLimit && penca.participants.length >= penca.participantLimit) {
-      return res.status(400).json({ error: getMessage('PENCA_IS_FULL') });
+      return res.status(400).json({ error: getMessage('PENCA_IS_FULL', req.lang) });
     }
     penca.pendingRequests.push(userId);
     await penca.save();
-    res.json({ message: getMessage('REQUEST_SENT') });
+    res.json({ message: getMessage('REQUEST_SENT', req.lang) });
   } catch (err) {
     console.error('join penca error', err);
-    res.status(500).json({ error: getMessage('ERROR_JOINING_PENCA') });
+    res.status(500).json({ error: getMessage('ERROR_JOINING_PENCA', req.lang) });
   }
 });
 
@@ -171,9 +171,9 @@ router.post('/approve/:pencaId/:userId', isAuthenticated, async (req, res) => {
   const sessionUser = req.session.user;
   try {
     const penca = await Penca.findById(pencaId);
-    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND') });
+    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
     if (penca.owner.toString() !== sessionUser._id.toString()) {
-      return res.status(403).json({ error: getMessage('FORBIDDEN') });
+      return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     penca.pendingRequests = penca.pendingRequests.filter(id => id.toString() !== userId);
     if (!penca.participants.some(id => id.equals(userId))) {
@@ -181,10 +181,10 @@ router.post('/approve/:pencaId/:userId', isAuthenticated, async (req, res) => {
       await User.updateOne({ _id: userId }, { $addToSet: { pencas: penca._id } });
     }
     await penca.save();
-    res.json({ message: getMessage('PARTICIPANT_APPROVED') });
+    res.json({ message: getMessage('PARTICIPANT_APPROVED', req.lang) });
   } catch (err) {
     console.error('approve participant error', err);
-    res.status(500).json({ error: getMessage('ERROR_APPROVING_PARTICIPANT') });
+    res.status(500).json({ error: getMessage('ERROR_APPROVING_PARTICIPANT', req.lang) });
   }
 });
 
@@ -194,18 +194,18 @@ router.delete('/participant/:pencaId/:userId', isAuthenticated, async (req, res)
   const sessionUser = req.session.user;
   try {
     const penca = await Penca.findById(pencaId);
-    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND') });
+    if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
     if (penca.owner.toString() !== sessionUser._id.toString()) {
-      return res.status(403).json({ error: getMessage('FORBIDDEN') });
+      return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     penca.participants = penca.participants.filter(id => id.toString() !== userId);
     penca.pendingRequests = penca.pendingRequests.filter(id => id.toString() !== userId);
     await penca.save();
     await User.updateOne({ _id: userId }, { $pull: { pencas: penca._id } });
-    res.json({ message: getMessage('PARTICIPANT_REMOVED') });
+    res.json({ message: getMessage('PARTICIPANT_REMOVED', req.lang) });
   } catch (err) {
     console.error('remove participant error', err);
-    res.status(500).json({ error: getMessage('ERROR_REMOVING_PARTICIPANT') });
+    res.status(500).json({ error: getMessage('ERROR_REMOVING_PARTICIPANT', req.lang) });
   }
 });
 

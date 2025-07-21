@@ -101,7 +101,7 @@ router.get('/', async (req, res) => {
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
-        res.status(500).json({ error: getMessage('RANKING_ERROR') });
+        res.status(500).json({ error: getMessage('RANKING_ERROR', req.lang) });
     }
 });
 
@@ -112,7 +112,7 @@ router.get('/competition/:competition', async (req, res) => {
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking por competencia:', err);
-        res.status(500).json({ error: getMessage('RANKING_ERROR') });
+        res.status(500).json({ error: getMessage('RANKING_ERROR', req.lang) });
     }
 });
 
@@ -129,10 +129,10 @@ router.post('/recalculate', async (req, res) => {
                 { upsert: true }
             );
         }
-        res.json({ message: getMessage('SCORES_RECALCULATED') });
+        res.json({ message: getMessage('SCORES_RECALCULATED', req.lang) });
     } catch (err) {
         console.error('Error al recalcular los puntajes:', err);
-        res.status(500).json({ error: getMessage('SCORES_RECALC_ERROR') });
+        res.status(500).json({ error: getMessage('SCORES_RECALC_ERROR', req.lang) });
     }
 });
 
