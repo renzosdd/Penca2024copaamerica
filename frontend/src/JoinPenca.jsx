@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Button, TextField, Alert } from '@mui/material';
+import useLang from './useLang';
 
 export default function JoinPenca({ onJoined }) {
   const [code, setCode] = useState('');
   const [competition, setCompetition] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const { t } = useLang();
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -19,7 +21,7 @@ export default function JoinPenca({ onJoined }) {
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage(data.message || 'Solicitud enviada');
+        setMessage(data.message || t('requestSent'));
         setCode('');
         setCompetition('');
         if (onJoined) onJoined();
@@ -27,14 +29,14 @@ export default function JoinPenca({ onJoined }) {
         setError(data.error || 'Error');
       }
     } catch (err) {
-      setError('Error de red');
+      setError(t('networkError'));
     }
   };
 
   return (
     <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
       <TextField
-        label="Código"
+        label={t('code')}
         value={code}
         onChange={e => setCode(e.target.value)}
         required
@@ -42,14 +44,14 @@ export default function JoinPenca({ onJoined }) {
         sx={{ mr: 1 }}
       />
       <TextField
-        label="Competencia"
+        label={t('competition')}
         value={competition}
         onChange={e => setCompetition(e.target.value)}
         size="small"
         sx={{ mr: 1 }}
       />
       <Button variant="contained" type="submit">
-        Unirse
+        {t('join')}
       </Button>
       {message && (
         <Alert severity="success" sx={{ mt: 1 }}>

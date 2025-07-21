@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@mui/material';
 import PencaSection from './PencaSection';
 import JoinPenca from './JoinPenca';
+import useLang from './useLang';
 
 
 export default function Dashboard() {
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const [rankings, setRankings] = useState({});
   const [groups, setGroups] = useState({});
   const [showJoin, setShowJoin] = useState(false);
+  const { t } = useLang();
 
   const loadDashboard = async () => {
     try {
@@ -105,10 +107,10 @@ export default function Dashboard() {
 
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
-      <h5>Mis Pencas</h5>
+      <h5>{t('dashboardTitle')}</h5>
       {pencas.length === 0 && (
         <>
-          <p>No estás en ninguna penca.</p>
+          <p>{t('noPencas')}</p>
           <JoinPenca onJoined={loadDashboard} />
         </>
       )}
@@ -126,7 +128,7 @@ export default function Dashboard() {
       {pencas.length > 0 && (
         <div style={{ marginTop: '1rem' }}>
           <Button size="small" onClick={() => setShowJoin(!showJoin)}>
-            {showJoin ? 'Ocultar' : 'Unirse a otra penca'}
+            {showJoin ? t('hide') : t('joinAnother')}
           </Button>
           {showJoin && <JoinPenca onJoined={loadDashboard} />}
         </div>
