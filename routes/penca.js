@@ -5,6 +5,9 @@ const User = require('../models/User');
 const { isAuthenticated } = require('../middleware/auth');
 const { DEFAULT_COMPETITION, MAX_PENCAS_PER_USER } = require('../config');
 
+const defaultScoring = { exact: 3, outcome: 1, goals: 1 };
+const rulesFrom = scoring => Penca.rulesText(scoring || defaultScoring);
+
 // Listar todas las pencas (nombre y código)
 router.get('/', isAuthenticated, async (req, res) => {
   try {
@@ -28,7 +31,7 @@ router.get('/mine', isAuthenticated, async (req, res) => {
     }
 
     const pencas = await Penca.find(filter)
-      .select('name code competition participants pendingRequests rules prizes isPublic fixture')
+      .select('name code competition participants pendingRequests rules prizes isPublic fixture scoring')
       .populate('pendingRequests', 'username')
       .populate('participants', 'username');
 
@@ -42,10 +45,15 @@ router.get('/mine', isAuthenticated, async (req, res) => {
 
 // Crear una penca
 router.post('/', isAuthenticated, async (req, res) => {
-  const { name, participantLimit, competition, isPublic } = req.body;
+  const { name, participantLimit, competition, isPublic, scoring } = req.body;
   const ownerId = req.session.user._id;
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
   try {
+    const sc = {
+      exact: Number(scoring?.exact ?? defaultScoring.exact),
+      outcome: Number(scoring?.outcome ?? defaultScoring.outcome),
+      goals: Number(scoring?.goals ?? defaultScoring.goals)
+    };
     const penca = new Penca({
       name,
       code,
@@ -53,6 +61,8 @@ router.post('/', isAuthenticated, async (req, res) => {
       participantLimit,
       competition: competition || DEFAULT_COMPETITION,
       isPublic: isPublic === true || isPublic === 'true',
+      scoring: sc,
+      rules: req.body.rules || rulesFrom(sc),
       participants: []
     });
     await penca.save();
@@ -88,7 +98,7 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
 // Actualizar una penca (owner)
 router.put('/:pencaId', isAuthenticated, async (req, res) => {
   const { pencaId } = req.params;
-  const { isPublic, rules, prizes } = req.body;
+  const { isPublic, rules, prizes, scoring } = req.body;
   try {
     const penca = await Penca.findById(pencaId);
     if (!penca) return res.status(404).json({ error: 'Penca not found' });
@@ -96,6 +106,16 @@ router.put('/:pencaId', isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
     if (isPublic !== undefined) penca.isPublic = isPublic === true || isPublic === 'true';
+    if (scoring !== undefined) {
+      penca.scoring = {
+        exact: scoring.exact !== undefined ? Number(scoring.exact) : penca.scoring.exact,
+        outcome: scoring.outcome !== undefined ? Number(scoring.outcome) : penca.scoring.outcome,
+        goals: scoring.goals !== undefined ? Number(scoring.goals) : penca.scoring.goals
+      };
+      if (rules === undefined) {
+        penca.rules = rulesFrom(penca.scoring);
+      }
+    }
     if (rules !== undefined) penca.rules = rules;
     if (prizes !== undefined) penca.prizes = prizes;
     await penca.save();

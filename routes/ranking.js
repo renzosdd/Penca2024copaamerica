@@ -13,11 +13,15 @@ async function calculateScores(pencaId, competition) {
     let matchFilter = {};
     let predictionFilter = {};
     let penca;
+    let scoring = { exact: 3, outcome: 1, goals: 1 };
 
     if (pencaId) {
-        penca = await Penca.findById(pencaId).select('participants fixture competition');
+        penca = await Penca.findById(pencaId).select('participants fixture competition scoring');
         if (!penca) {
             return [];
+        }
+        if (penca.scoring) {
+            scoring = { ...scoring, ...penca.scoring };
         }
         userFilter._id = { $in: penca.participants };
         predictionFilter.pencaId = pencaId;
@@ -56,16 +60,16 @@ async function calculateScores(pencaId, competition) {
             const match = matches.find(m => m._id.toString() === prediction.matchId.toString());
             if (match && match.result1 !== undefined && match.result2 !== undefined) {
                 if (prediction.result1 === match.result1 && prediction.result2 === match.result2) {
-                    userScore += 3; // Resultado exacto
+                    userScore += scoring.exact; // Resultado exacto
                 } else if (
                     (prediction.result1 > prediction.result2 && match.result1 > match.result2) ||
                     (prediction.result1 < prediction.result2 && match.result1 < match.result2) ||
                     (prediction.result1 === prediction.result2 && match.result1 === match.result2)
                 ) {
-                    userScore += 1; // Indicó resultado
+                    userScore += scoring.outcome; // Indicó resultado
                 }
                 if (prediction.result1 === match.result1 || prediction.result2 === match.result2) {
-                    userScore += 1; // Adivinó goles de un equipo
+                    userScore += scoring.goals; // Adivinó goles de un equipo
                 }
             }
         }
