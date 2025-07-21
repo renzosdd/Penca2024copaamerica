@@ -73,7 +73,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
           </div>
         </CardContent>
       </Card>
-      {open && (
+      {open && ( 
         <Card style={{ marginTop: '0', borderTop: 'none', padding: '1rem' }}>
           <CardContent>
             <Accordion>

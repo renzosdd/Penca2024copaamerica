@@ -514,7 +514,7 @@ export default function Admin() {
               sx={{ ml: 1 }}
             />
             <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>Crear</Button>
-          </form>
+          </form> 
           <ul className="collection">
             {owners.map(o => (
               <li key={o._id} className="collection-item">

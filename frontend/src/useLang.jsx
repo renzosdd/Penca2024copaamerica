@@ -16,7 +16,7 @@ export function LangProvider({ children }) {
       setLang(stored);
     }
   }, []);
-
+ 
   const toggleLang = () => {
     const next = lang === 'es' ? 'en' : 'es';
     setLang(next);

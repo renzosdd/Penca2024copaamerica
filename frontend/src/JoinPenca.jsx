@@ -8,7 +8,7 @@ export default function JoinPenca({ onJoined }) {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const { t } = useLang();
-
+ 
   const handleSubmit = async e => {
     e.preventDefault();
     setMessage('');

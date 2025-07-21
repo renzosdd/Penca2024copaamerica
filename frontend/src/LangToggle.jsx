@@ -8,4 +8,4 @@ export default function LangToggle() {
       {lang === 'es' ? 'EN' : 'ES'}
     </Button>
   );
-}
+} 

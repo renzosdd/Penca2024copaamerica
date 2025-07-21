@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, Typography } from '@mui/material';
 import roundOrder from './roundOrder';
-
+ 
 export default function EliminationBracket({ bracket }) {
   if (!bracket) return null;
   const order = roundOrder.slice(4);

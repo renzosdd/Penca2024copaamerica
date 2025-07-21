@@ -8,7 +8,7 @@ import {
   TableRow,
   Paper
 } from '@mui/material';
-
+ 
 export default function GroupTable({ groups }) {
   if (!groups || !groups.length) return null;
   return (

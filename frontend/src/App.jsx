@@ -8,7 +8,7 @@ import Admin from './Admin';
 import OwnerPanel from './OwnerPanel';
 import Header from './Header';
 import Footer from './Footer';
-
+ 
 export default function App() {
   return (
     <ThemeProvider theme={theme}>

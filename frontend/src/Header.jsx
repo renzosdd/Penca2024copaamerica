@@ -7,7 +7,7 @@ export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useLang();
-
+ 
   const handleLogout = async () => {
     try {
       await fetch('/logout', { method: 'POST' });

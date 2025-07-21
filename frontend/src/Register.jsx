@@ -8,7 +8,7 @@ import {
   Typography
 } from '@mui/material';
 import useLang from './useLang';
-
+ 
 export default function Register() {
   const [form, setForm] = useState({
     username: '',

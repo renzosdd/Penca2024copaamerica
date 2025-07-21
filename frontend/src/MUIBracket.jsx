@@ -14,7 +14,7 @@ export default function MUIBracket({ bracket }) {
       for (const m of arr) {
         list.push({
           id: id++,
-          name: round,
+          name: round, 
           nextMatchId: null,
           tournamentRoundText: round,
           startTime: `${m.date}T${m.time}`,

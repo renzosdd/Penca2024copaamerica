@@ -17,7 +17,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [teamsPerGroup, setTeamsPerGroup] = useState(2);
   const [qualifiersPerGroup, setQualifiersPerGroup] = useState(2);
   const [teams, setTeams] = useState([]);
-
+ 
   useEffect(() => {
     if (open) {
       setStep(0);
