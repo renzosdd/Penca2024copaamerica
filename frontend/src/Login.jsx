@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -74,6 +74,15 @@ export default function Login() {
             Ingresar
           </Button>
         </form>
+        <Button
+          component={Link}
+          to="/register"
+          variant="outlined"
+          fullWidth
+          style={{ marginTop: '1rem' }}
+        >
+          Registrarse
+        </Button>
         {error && (
           <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>
         )}
