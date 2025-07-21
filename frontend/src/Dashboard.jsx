@@ -37,21 +37,32 @@ export default function Dashboard() {
       if (!pencas.length) return;
       try {
         const comps = Array.from(new Set(pencas.map(p => p.competition)));
-        const matchesData = [];
-        for (const c of comps) {
-          const r = await fetch(`/competitions/${encodeURIComponent(c)}/matches`);
-          if (r.ok) {
-            const list = await r.json();
-            matchesData.push(...list);
-          }
-        }
+
+        const matchResponses = await Promise.all(
+          comps.map(c => fetch(`/competitions/${encodeURIComponent(c)}/matches`))
+        );
+        const matchesData = (
+          await Promise.all(
+            matchResponses.map(r => (r.ok ? r.json() : Promise.resolve([])))
+          )
+        ).flat();
         setMatches(matchesData);
 
+        const groupResponses = await Promise.all(
+          comps.map(c => fetch(`/groups/${encodeURIComponent(c)}`))
+        );
         const groupsData = {};
-        for (const c of comps) {
-          const r = await fetch(`/groups/${encodeURIComponent(c)}`);
-          if (r.ok) groupsData[c] = await r.json();
-        }
+        await Promise.all(
+          groupResponses.map((r, idx) =>
+            r.ok
+              ? r
+                  .json()
+                  .then(data => {
+                    groupsData[comps[idx]] = data;
+                  })
+              : Promise.resolve()
+          )
+        );
         setGroups(groupsData);
 
         const pRes = await fetch('/predictions');
