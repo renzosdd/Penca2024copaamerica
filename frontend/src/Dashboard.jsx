@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import PencaSection from './PencaSection';
-import EliminationBracket from './EliminationBracket';
 
 
 export default function Dashboard() {
@@ -10,7 +9,6 @@ export default function Dashboard() {
   const [predictions, setPredictions] = useState([]);
   const [rankings, setRankings] = useState({});
   const [groups, setGroups] = useState({});
-  const [bracket, setBracket] = useState(null);
 
   useEffect(() => {
     async function load() {
@@ -54,11 +52,6 @@ export default function Dashboard() {
         if (pRes.ok) setPredictions(await pRes.json());
 
         pencas.forEach(p => loadRanking(p._id));
-
-        if (comps.length) {
-          const bRes = await fetch(`/bracket/${encodeURIComponent(comps[0])}`);
-          if (bRes.ok) setBracket(await bRes.json());
-        }
       } catch (err) {
         console.error('dashboard data error', err);
       }
@@ -119,17 +112,10 @@ export default function Dashboard() {
           getPrediction={getPrediction}
           handlePrediction={handlePrediction}
           ranking={rankings[p._id] || []}
-          bracket={bracket}
         />
       ))}
 
 
-      {bracket && (
-        <div style={{ marginTop: '2rem' }}>
-          <h5>Eliminatorias</h5>
-          <EliminationBracket bracket={bracket} />
-        </div>
-      )}
 
 
 

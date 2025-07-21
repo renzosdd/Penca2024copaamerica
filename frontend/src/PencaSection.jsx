@@ -12,13 +12,21 @@ import {
   Typography,
   Accordion,
   AccordionSummary,
-  AccordionDetails
+  AccordionDetails,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
+
 } from '@mui/material';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 
-export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, bracket }) {
+export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking }) {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
 
@@ -136,8 +144,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     </div>
                   ))}
 
-                {!bracket && (
-                  <div style={{ marginTop: '1rem' }}>
+                <div style={{ marginTop: '1rem' }}>
                     <h6>Eliminatorias</h6>
                     {roundOrder
                       .slice(4)
@@ -197,7 +204,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                         </div>
                       ))}
                   </div>
-                )}
               </AccordionDetails>
             </Accordion>
 
@@ -285,13 +291,34 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 <Typography>Ranking</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <ul className="collection">
-                  {ranking.map((u, idx) => (
-                    <li key={u.userId} className={`collection-item rank-${idx + 1}`.trim()}>
-                      <img src={u.avatar} alt={u.username} className="avatar-small" /> {u.username} - {u.score}
-                    </li>
-                  ))}
-                </ul>
+                <TableContainer component={Paper}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>#</TableCell>
+                        <TableCell>Participante</TableCell>
+                        <TableCell>Puntaje</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {ranking.map((u, idx) => (
+                        <TableRow key={u.userId} className={`rank-${idx + 1}`.trim()}>
+                          <TableCell>{idx + 1}</TableCell>
+                          <TableCell>
+                            <img
+                              src={u.avatar}
+                              alt={u.username}
+                              className="avatar-small"
+                              style={{ marginRight: '0.5rem' }}
+                            />
+                            {u.username}
+                          </TableCell>
+                          <TableCell>{u.score}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
               </AccordionDetails>
             </Accordion>
           </CardContent>
