@@ -20,7 +20,7 @@ const strings = {
     competition: 'Competencia',
     requestSent: 'Solicitud enviada',
     networkError: 'Error de red',
-    logout: 'Logout',
+    logout: 'Cerrar Sesión',
     predictions: 'Predicciones',
     knockout: 'Eliminatorias',
     save: 'Guardar',
