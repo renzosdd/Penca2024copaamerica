@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
+const { getMessage } = require('../utils/messages');
 
 jest.mock('../models/User', () => {
   const UserMock = jest.fn(function (data) {
@@ -36,16 +37,16 @@ describe('Auth Routes', () => {
       try {
         const user = await User.findOne({ username });
         if (!user) {
-          return res.status(401).json({ error: 'Usuario no encontrado' });
+          return res.status(401).json({ error: getMessage('USER_NOT_FOUND') });
         }
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
-          return res.status(401).json({ error: 'Contraseña incorrecta' });
+          return res.status(401).json({ error: getMessage('INCORRECT_PASSWORD') });
         }
         req.session.user = user;
         res.json({ success: true, redirectUrl: '/dashboard' });
       } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
+        res.status(500).json({ error: getMessage('INTERNAL_ERROR') });
       }
     });
 
@@ -54,7 +55,7 @@ describe('Auth Routes', () => {
       try {
         const existingUser = await User.findOne({ $or: [{ username }, { email }] });
         if (existingUser) {
-          return res.status(400).json({ error: 'El nombre de usuario o email ya existe' });
+          return res.status(400).json({ error: getMessage('USER_EXISTS') });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ username, password: hashedPassword, email });
@@ -64,7 +65,7 @@ describe('Auth Routes', () => {
         req.session.user = user;
         res.json({ success: true, redirectUrl: '/dashboard' });
       } catch (err) {
-        res.status(500).json({ error: 'Error interno del servidor' });
+        res.status(500).json({ error: getMessage('INTERNAL_ERROR') });
       }
     });
   });

@@ -18,6 +18,7 @@ jest.mock('../models/Match', () => ({
 const Prediction = require('../models/Prediction');
 const Match = require('../models/Match');
 const predictionsRouter = require('../routes/predictions');
+const { getMessage } = require('../utils/messages');
 
 describe('Predictions Routes', () => {
   afterEach(() => {
@@ -39,7 +40,7 @@ describe('Predictions Routes', () => {
       .send({ matchId: 'm1', result1: 1, result2: 0 });
 
     expect(res.status).toBe(200);
-    expect(res.body.message).toBe('Predicción guardada');
+    expect(res.body.message).toBe(getMessage('PREDICTION_SAVED'));
     expect(Prediction).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1', matchId: 'm1' }));
   });
 
