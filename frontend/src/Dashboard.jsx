@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Button } from '@mui/material';
 import PencaSection from './PencaSection';
+import JoinPenca from './JoinPenca';
 
 
 export default function Dashboard() {
@@ -9,21 +11,23 @@ export default function Dashboard() {
   const [predictions, setPredictions] = useState([]);
   const [rankings, setRankings] = useState({});
   const [groups, setGroups] = useState({});
+  const [showJoin, setShowJoin] = useState(false);
+
+  const loadDashboard = async () => {
+    try {
+      const res = await fetch('/api/dashboard');
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data.user);
+        setPencas(data.pencas || []);
+      }
+    } catch (err) {
+      console.error('dashboard fetch error', err);
+    }
+  };
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/dashboard');
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          setPencas(data.pencas || []);
-        }
-      } catch (err) {
-        console.error('dashboard fetch error', err);
-      }
-    }
-    load();
+    loadDashboard();
   }, []);
 
   useEffect(() => {
@@ -102,7 +106,12 @@ export default function Dashboard() {
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>Mis Pencas</h5>
-      {pencas.length === 0 && <p>No est\u00e1s en ninguna penca.</p>}
+      {pencas.length === 0 && (
+        <>
+          <p>No estás en ninguna penca.</p>
+          <JoinPenca onJoined={loadDashboard} />
+        </>
+      )}
       {pencas.map(p => (
         <PencaSection
           key={p._id}
@@ -114,6 +123,14 @@ export default function Dashboard() {
           ranking={rankings[p._id] || []}
         />
       ))}
+      {pencas.length > 0 && (
+        <div style={{ marginTop: '1rem' }}>
+          <Button size="small" onClick={() => setShowJoin(!showJoin)}>
+            {showJoin ? 'Ocultar' : 'Unirse a otra penca'}
+          </Button>
+          {showJoin && <JoinPenca onJoined={loadDashboard} />}
+        </div>
+      )}
 
 
 
