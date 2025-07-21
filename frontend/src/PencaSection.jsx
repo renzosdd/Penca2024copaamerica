@@ -106,7 +106,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                   <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
                                   <span className="team-name">{m.team1}</span>
                                 </div>
-                                <span className="vs">vs</span>
+                                <span className="vs">{t('vs')}</span>
                                 <div className="team">
                                   <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
                                   <span className="team-name">{m.team2}</span>
@@ -142,11 +142,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                               </div>
                               {m.result1 !== undefined && m.result2 !== undefined && (
                                 <div className="match-info">
-                                  <strong>{m.result1} - {m.result2}</strong>
+                                  <strong>{t('result')}: {m.result1} - {m.result2}</strong>
                                   {pr.result1 !== undefined && pr.result2 !== undefined && (
                                     <>
-                                      {' '}({pr.result1 - m.result1}/{pr.result2 - m.result2})
-                                      <span className="points-earned">{pointsForPrediction(pr, m, penca.scoring)} {t('pts')}</span>
+                                      {' '}{t('difference')}: ({pr.result1 - m.result1}/{pr.result2 - m.result2})
+                                      <span className="points-earned">{t('pointsEarned')}: {pointsForPrediction(pr, m, penca.scoring)} {t('pts')}</span>
                                     </>
                                   )}
                                 </div>
@@ -177,7 +177,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                       <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
                                       <span className="team-name">{m.team1}</span>
                                     </div>
-                                    <span className="vs">vs</span>
+                                    <span className="vs">{t('vs')}</span>
                                     <div className="team">
                                       <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
                                       <span className="team-name">{m.team2}</span>
@@ -213,11 +213,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                   </div>
                                   {m.result1 !== undefined && m.result2 !== undefined && (
                                     <div className="match-info">
-                                      <strong>{m.result1} - {m.result2}</strong>
+                                      <strong>{t('result')}: {m.result1} - {m.result2}</strong>
                                       {pr.result1 !== undefined && pr.result2 !== undefined && (
                                         <>
-                                          {' '}({pr.result1 - m.result1}/{pr.result2 - m.result2})
-                                          <span className="points-earned">{pointsForPrediction(pr, m, penca.scoring)} {t('pts')}</span>
+                                          {' '}{t('difference')}: ({pr.result1 - m.result1}/{pr.result2 - m.result2})
+                                          <span className="points-earned">{t('pointsEarned')}: {pointsForPrediction(pr, m, penca.scoring)} {t('pts')}</span>
                                         </>
                                       )}
                                     </div>
@@ -258,7 +258,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                 <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
                                 <span className="team-name">{m.team1}</span>
                               </div>
-                              <span className="vs">vs</span>
+                              <span className="vs">{t('vs')}</span>
                               <div className="team">
                                 <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
                                 <span className="team-name">{m.team2}</span>
@@ -290,7 +290,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                 <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
                                 <span className="team-name">{m.team1}</span>
                               </div>
-                              <span className="vs">vs</span>
+                              <span className="vs">{t('vs')}</span>
                               <div className="team">
                                 <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
                                 <span className="team-name">{m.team2}</span>
