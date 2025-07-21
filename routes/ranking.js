@@ -9,7 +9,9 @@ const { DEFAULT_COMPETITION } = require('../config');
 
 // Función para calcular los puntajes
 async function calculateScores(pencaId, competition) {
-    let userFilter = { valid: true };
+    // Solo filtramos por participantes de la penca cuando sea necesario
+    // No requerimos que los usuarios sean válidos aquí
+    let userFilter = {};
     let matchFilter = {};
     let predictionFilter = {};
     let penca;
