@@ -19,6 +19,7 @@ export default function OwnerPanel() {
   const [matches, setMatches] = useState([]);
   const { t } = useLang();
   const [expandedPenca, setExpandedPenca] = useState(null);
+  const [filter, setFilter] = useState('all');
 
 
   useEffect(() => {
@@ -140,6 +141,11 @@ export default function OwnerPanel() {
     list.sort(
       (a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`)
     );
+    if (filter === 'upcoming') {
+      list = list.filter(m => m.result1 == null && m.result2 == null);
+    } else if (filter === 'played') {
+      list = list.filter(m => m.result1 != null && m.result2 != null);
+    }
     const grouped = {};
     list.forEach(m => {
       const g = m.group_name || 'Otros';
@@ -152,6 +158,17 @@ export default function OwnerPanel() {
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>{t('ownerMyPencas')}</h5>
+      <div style={{ marginBottom: '0.5rem' }}>
+        <Button size="small" variant={filter === 'all' ? 'contained' : 'outlined'} onClick={() => setFilter('all')} sx={{ mr: 1 }}>
+          {t('allMatches')}
+        </Button>
+        <Button size="small" variant={filter === 'upcoming' ? 'contained' : 'outlined'} onClick={() => setFilter('upcoming')} sx={{ mr: 1 }}>
+          {t('upcoming')}
+        </Button>
+        <Button size="small" variant={filter === 'played' ? 'contained' : 'outlined'} onClick={() => setFilter('played')}>
+          {t('played')}
+        </Button>
+      </div>
       {pencas.map(p => {
         const ranking = rankings[p._id] || [];
         const pMatches = filterMatches(p);
