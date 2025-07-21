@@ -114,13 +114,19 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...data, pencaId, matchId })
       });
+      const result = await res.json();
       if (res.ok) {
-        const updated = predictions.filter(p => !(p.pencaId === pencaId && p.matchId === matchId && p.username === user.username));
+        const updated = predictions.filter(
+          p => !(p.pencaId === pencaId && p.matchId === matchId && p.username === user.username)
+        );
         updated.push({ pencaId, matchId, result1: Number(data.result1), result2: Number(data.result2), username: user.username });
         setPredictions(updated);
+        return { success: true, message: result.message || 'OK' };
       }
+      return { success: false, error: result.error || 'Error' };
     } catch (err) {
       console.error('save prediction error', err);
+      return { success: false, error: t('networkError') };
     }
   };
 
