@@ -333,6 +333,11 @@ footer {
     background: linear-gradient(to right, #ffe0b2, #fff3e0);
 }
 
+.current-user-row {
+    background-color: #e0f7fa;
+    font-weight: bold;
+}
+
 /* === Utils === */
 .center-align {
     text-align: center;
