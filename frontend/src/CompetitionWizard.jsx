@@ -7,6 +7,7 @@ import {
   Button,
   TextField
 } from '@mui/material';
+import useLang from './useLang';
 
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -17,6 +18,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [teamsPerGroup, setTeamsPerGroup] = useState(2);
   const [qualifiersPerGroup, setQualifiersPerGroup] = useState(2);
   const [teams, setTeams] = useState([]);
+  const { t } = useLang();
  
   useEffect(() => {
     if (open) {
@@ -100,12 +102,12 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Nueva Competencia</DialogTitle>
+      <DialogTitle>{t('newCompetition')}</DialogTitle>
       <DialogContent>
         {step === 0 && (
           <div>
             <TextField
-              label="Nombre"
+              label={t('name')}
               value={name}
               onChange={e => setName(e.target.value)}
               required
@@ -113,7 +115,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
             />
             <TextField
               type="number"
-              label="Grupos"
+              label={t('groups')}
               value={groupsCount}
               onChange={e => setGroupsCount(Number(e.target.value))}
               size="small"
@@ -122,7 +124,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
             />
             <TextField
               type="number"
-              label="Integrantes"
+              label={t('integrants')}
               value={teamsPerGroup}
               onChange={e => setTeamsPerGroup(Number(e.target.value))}
               size="small"
@@ -131,7 +133,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
             />
             <TextField
               type="number"
-              label="Clasificados"
+              label={t('qualifiers')}
               value={qualifiersPerGroup}
               onChange={e => setQualifiersPerGroup(Number(e.target.value))}
               size="small"
@@ -145,11 +147,11 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
           <div>
             {teams.map((group, gi) => (
               <div key={gi} style={{ marginBottom: '1rem' }}>
-                <h6>{`Grupo ${letters[gi]}`}</h6>
+                <h6>{`${t('group')} ${letters[gi]}`}</h6>
                 {group.map((team, ti) => (
                   <TextField
                     key={ti}
-                    label={`Equipo ${ti + 1}`}
+                    label={`${t('team')} ${ti + 1}`}
                     value={team}
                     onChange={e => updateTeam(gi, ti, e.target.value)}
                     size="small"
@@ -164,10 +166,10 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       </DialogContent>
       <DialogActions>
         {step === 1 && (
-          <Button onClick={() => setStep(0)}>Atrás</Button>
+          <Button onClick={() => setStep(0)}>{t('back')}</Button>
         )}
         <Button onClick={next} variant="contained">
-          {step === 0 ? 'Siguiente' : 'Crear'}
+          {step === 0 ? t('next') : t('create')}
         </Button>
       </DialogActions>
     </Dialog>

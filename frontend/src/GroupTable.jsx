@@ -8,8 +8,10 @@ import {
   TableRow,
   Paper
 } from '@mui/material';
+import useLang from './useLang';
  
 export default function GroupTable({ groups }) {
+  const { t } = useLang();
   if (!groups || !groups.length) return null;
   return (
     <div>
@@ -20,13 +22,13 @@ export default function GroupTable({ groups }) {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell>Equipo</TableCell>
-                  <TableCell>Pts</TableCell>
-                  <TableCell>W</TableCell>
-                  <TableCell>D</TableCell>
-                  <TableCell>L</TableCell>
-                  <TableCell>DG</TableCell>
-                  <TableCell>GF</TableCell>
+                  <TableCell>{t('team')}</TableCell>
+                  <TableCell>{t('pts')}</TableCell>
+                  <TableCell>{t('w')}</TableCell>
+                  <TableCell>{t('d')}</TableCell>
+                  <TableCell>{t('l')}</TableCell>
+                  <TableCell>{t('gd')}</TableCell>
+                  <TableCell>{t('gf')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>

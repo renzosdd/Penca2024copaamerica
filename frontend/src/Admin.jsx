@@ -20,6 +20,7 @@ import Save from '@mui/icons-material/Save';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import CompetitionWizard from './CompetitionWizard';
+import useLang from './useLang';
 
 export default function Admin() {
   const [competitions, setCompetitions] = useState([]);
@@ -28,6 +29,8 @@ export default function Admin() {
   const [matchesByCompetition, setMatchesByCompetition] = useState({});
   const [groups, setGroups] = useState({});
   const [expandedComp, setExpandedComp] = useState(null);
+
+  const { t } = useLang();
 
   const [wizardOpen, setWizardOpen] = useState(false);
   const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
@@ -336,14 +339,14 @@ export default function Admin() {
 
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
-      <h5>Administración</h5>
+      <h5>{t('adminTitle')}</h5>
 
       {/* Competencias */}
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
-          <h6>Competencias</h6>
+          <h6>{t('competitions')}</h6>
           <Button variant="contained" onClick={() => setWizardOpen(true)} sx={{ mb: 2 }}>
-            Nueva competencia
+            {t('newCompetition')}
           </Button>
 
           {competitions.map(c => (
@@ -386,7 +389,7 @@ export default function Admin() {
                   sx={{ ml: 1, width: 100 }}
                 />
                 <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)} disabled={isGenerating}>
-                  Generar/Actualizar eliminatorias
+                  {t('generateBracket')}
                 </Button>
                 <IconButton size="small" className="secondary-content" onClick={() => saveCompetition(c)} disabled={isSaving}>
                   <Save fontSize="small" />
@@ -465,10 +468,10 @@ export default function Admin() {
                         ))}
                       </ul>
                       <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, round)} disabled={isSaving}>
-                        Guardar orden
+                        {t('saveOrder')}
                       </Button>
                       <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, round)} disabled={isSaving}>
-                        Guardar ronda
+                        {t('saveRound')}
                       </Button>
                       {groups[c.name]?.filter(gr => gr.group === round).length ? (
                         <GroupTable groups={groups[c.name].filter(gr => gr.group === round)} />
@@ -486,12 +489,12 @@ export default function Admin() {
       {/* Owners */}
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
-          <h6>Owners</h6>
+          <h6>{t('owners')}</h6>
           <form onSubmit={createOwner} style={{ marginBottom: '1rem' }}>
             <TextField
               value={ownerForm.username}
               onChange={e => setOwnerForm({ ...ownerForm, username: e.target.value })}
-              label="Username"
+              label={t('username')}
               required
               size="small"
             />
@@ -499,7 +502,7 @@ export default function Admin() {
               type="password"
               value={ownerForm.password}
               onChange={e => setOwnerForm({ ...ownerForm, password: e.target.value })}
-              label="Password"
+              label={t('password')}
               required
               size="small"
               sx={{ ml: 1 }}
@@ -508,12 +511,12 @@ export default function Admin() {
               type="email"
               value={ownerForm.email}
               onChange={e => setOwnerForm({ ...ownerForm, email: e.target.value })}
-              label="Email"
+              label={t('email')}
               required
               size="small"
               sx={{ ml: 1 }}
             />
-            <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>Crear</Button>
+            <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>{t('create')}</Button>
           </form> 
           <ul className="collection">
             {owners.map(o => (
@@ -543,12 +546,12 @@ export default function Admin() {
       {/* Pencas */}
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
-          <h6>Pencas</h6>
+          <h6>{t('pencas')}</h6>
           <form onSubmit={createPenca} style={{ marginBottom: '1rem' }}>
             <TextField
               value={pencaForm.name}
               onChange={e => setPencaForm({ ...pencaForm, name: e.target.value })}
-              label="Nombre"
+              label={t('name')}
               required
               size="small"
             />
@@ -560,7 +563,7 @@ export default function Admin() {
               size="small"
               sx={{ ml: 1, minWidth: 120 }}
             >
-              <MenuItem value="" disabled>Owner</MenuItem>
+              <MenuItem value="" disabled>{t('owner')}</MenuItem>
               {owners.map(o => (
                 <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
               ))}
@@ -573,17 +576,17 @@ export default function Admin() {
               size="small"
               sx={{ ml: 1, minWidth: 120 }}
             >
-              <MenuItem value="" disabled>Competencia</MenuItem>
+              <MenuItem value="" disabled>{t('competition')}</MenuItem>
               {competitions.map(c => (
                 <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
               ))}
             </Select>
             <FormControlLabel
               control={<Checkbox checked={pencaForm.isPublic} onChange={e => setPencaForm({ ...pencaForm, isPublic: e.target.checked })} />}
-              label="Pública"
+              label={t('public')}
               sx={{ ml: 1 }}
             />
-            <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>Crear</Button>
+            <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>{t('create')}</Button>
           </form>
           <ul className="collection">
             {pencas.map(p => (
@@ -621,7 +624,7 @@ export default function Admin() {
                 </Select>
                 <FormControlLabel
                   control={<Checkbox checked={p.isPublic || false} onChange={e => updatePencaField(p._id, 'isPublic', e.target.checked)} />}
-                  label="Pública"
+                  label={t('public')}
                   sx={{ ml: 1 }}
                 />
                 <IconButton size="small" className="secondary-content" onClick={() => savePenca(p)} disabled={isSaving}>
