@@ -61,6 +61,52 @@ describe('Penca join role check', () => {
   });
 });
 
+describe('Penca join flow', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('joins penca with valid code', async () => {
+    const penca = {
+      _id: 'p1',
+      participants: [],
+      pendingRequests: [],
+      participantLimit: 10,
+      save: jest.fn().mockResolvedValue(true)
+    };
+    Penca.findOne = jest.fn().mockResolvedValue(penca);
+
+    const app = express();
+    app.use(express.json());
+    app.use((req, res, next) => { req.session = { user: { _id: 'u1', role: 'user', pencas: [] } }; next(); });
+    app.use('/pencas', pencaRouter);
+
+    const res = await request(app)
+      .post('/pencas/join')
+      .send({ code: 'CODE' });
+
+    expect(res.status).toBe(200);
+    expect(penca.pendingRequests).toContain('u1');
+    expect(penca.save).toHaveBeenCalled();
+  });
+
+  it('returns 404 when code is invalid', async () => {
+    Penca.findOne = jest.fn().mockResolvedValue(null);
+
+    const app = express();
+    app.use(express.json());
+    app.use((req, res, next) => { req.session = { user: { _id: 'u1', role: 'user', pencas: [] } }; next(); });
+    app.use('/pencas', pencaRouter);
+
+    const res = await request(app)
+      .post('/pencas/join')
+      .send({ code: 'BAD', competition: 'C1' });
+
+    expect(res.status).toBe(404);
+    expect(Penca.findOne).toHaveBeenCalledWith({ code: 'BAD', competition: 'C1' });
+  });
+});
+
 describe('Penca participant approval and removal', () => {
   afterEach(() => {
     jest.clearAllMocks();
