@@ -19,7 +19,9 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper
+  Paper,
+  Snackbar,
+  Alert
 
 } from '@mui/material';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
@@ -32,12 +34,22 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { t } = useLang();
 
   function canPredict(match) {
     const start = new Date(`${match.date}T${match.time}:00`);
     const diff = (start - new Date()) / 60000;
     return diff >= 30;
+  }
+
+  async function submitPrediction(e, pencaId, matchId) {
+    const result = await handlePrediction(e, pencaId, matchId);
+    if (result?.success) {
+      setSnackbar({ open: true, message: result.message, severity: 'success' });
+    } else {
+      setSnackbar({ open: true, message: result?.error || t('networkError'), severity: 'error' });
+    }
   }
 
   const pMatches = (() => {
@@ -130,7 +142,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                 </div>
                               </div>
                               <div className="match-details">
-                                <form onSubmit={e => handlePrediction(e, penca._id, m._id)}>
+                                <form onSubmit={e => submitPrediction(e, penca._id, m._id)}>
                                   <div className="input-field inline">
                                     <TextField
                                       name="result1"
@@ -201,7 +213,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                     </div>
                                   </div>
                                   <div className="match-details">
-                                    <form onSubmit={e => handlePrediction(e, penca._id, m._id)}>
+                                    <form onSubmit={e => submitPrediction(e, penca._id, m._id)}>
                                       <div className="input-field inline">
                                         <TextField
                                           name="result1"
@@ -390,6 +402,23 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
           <Button onClick={() => setInfoOpen(false)}>{t('close')}</Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={(_, reason) => {
+          if (reason === 'clickaway') return;
+          setSnackbar(s => ({ ...s, open: false }));
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
