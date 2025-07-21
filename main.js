@@ -101,6 +101,7 @@ const Prediction = require('./models/Prediction');
 const adminRouter = require('./routes/admin');
 const pencaRouter = require('./routes/penca');
 const competitionsRouter = require('./routes/competitions');
+const profileRouter = require('./routes/profile');
 
 async function initializeDatabase() {
     try {
@@ -324,6 +325,7 @@ app.use('/bracket', isAuthenticated, require('./routes/bracket'));
 app.use('/pencas', isAuthenticated, pencaRouter);
 app.use('/admin', adminRouter);
 app.use('/competitions', competitionsRouter);
+app.use(profileRouter);
 
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {

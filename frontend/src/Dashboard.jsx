@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, CircularProgress, Alert } from '@mui/material';
 import PencaSection from './PencaSection';
 import JoinPenca from './JoinPenca';
+import ProfileForm from './ProfileForm';
 import useLang from './useLang';
 
 
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showJoin, setShowJoin] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const { t } = useLang();
 
   const loadDashboard = async () => {
@@ -128,6 +130,12 @@ export default function Dashboard() {
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>{t('dashboardTitle')}</h5>
+      {user && (
+        <Button size="small" onClick={() => setShowProfile(!showProfile)} sx={{ mb: 1 }}>
+          {showProfile ? t('hide') : t('editProfile')}
+        </Button>
+      )}
+      {showProfile && <ProfileForm user={user} onUpdated={loadDashboard} />}
       {loading && <CircularProgress sx={{ display: 'block', my: 2 }} />}
       {error && (
         <Alert severity="error" sx={{ my: 2 }}>
