@@ -117,7 +117,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                     <TextField
                                       name="result1"
                                       type="number"
-                                      defaultValue={pr.result1 || ''}
+                                      defaultValue={pr.result1 ?? ''}
                                       required
                                       size="small"
                                       sx={{ width: 60 }}
@@ -128,7 +128,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                     <TextField
                                       name="result2"
                                       type="number"
-                                      defaultValue={pr.result2 || ''}
+                                      defaultValue={pr.result2 ?? ''}
                                       required
                                       size="small"
                                       sx={{ width: 60, ml: 1 }}
@@ -177,7 +177,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                         <TextField
                                           name="result1"
                                           type="number"
-                                          defaultValue={pr.result1 || ''}
+                                          defaultValue={pr.result1 ?? ''}
                                           required
                                           size="small"
                                           sx={{ width: 60 }}
@@ -188,7 +188,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                                         <TextField
                                           name="result2"
                                           type="number"
-                                          defaultValue={pr.result2 || ''}
+                                          defaultValue={pr.result2 ?? ''}
                                           required
                                           size="small"
                                           sx={{ width: 60, ml: 1 }}
