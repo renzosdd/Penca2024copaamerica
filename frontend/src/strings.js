@@ -71,7 +71,10 @@ const strings = {
     gf: 'GF',
     result: 'Resultado',
     pointsEarned: 'Puntos',
-    difference: 'Diferencia'
+    difference: 'Diferencia',
+    allMatches: 'Todos',
+    upcoming: 'Próximos',
+    played: 'Jugados'
   },
   en: {
     loginTitle: 'Login',
@@ -145,7 +148,10 @@ const strings = {
     gf: 'GF',
     result: 'Result',
     pointsEarned: 'Points',
-    difference: 'Difference'
+    difference: 'Difference',
+    allMatches: 'All',
+    upcoming: 'Upcoming',
+    played: 'Played'
   }
 };
 

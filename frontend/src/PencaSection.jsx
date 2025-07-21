@@ -31,6 +31,7 @@ import pointsForPrediction from './calcPoints';
 export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername }) {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [filter, setFilter] = useState('all');
   const { t } = useLang();
 
   function canPredict(match) {
@@ -47,6 +48,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       list = matches.filter(m => m.competition === penca.competition);
     }
     list.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+    if (filter === 'upcoming') {
+      list = list.filter(m => m.result1 == null && m.result2 == null);
+    } else if (filter === 'played') {
+      list = list.filter(m => m.result1 != null && m.result2 != null);
+    }
     const grouped = {};
     list.forEach(m => {
       const g = m.group_name || 'Otros';
@@ -77,6 +83,17 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       {open && ( 
         <Card style={{ marginTop: '0', borderTop: 'none', padding: '1rem' }}>
           <CardContent>
+            <div style={{ marginBottom: '0.5rem' }}>
+              <Button size="small" variant={filter === 'all' ? 'contained' : 'outlined'} onClick={() => setFilter('all')} sx={{ mr: 1 }}>
+                {t('allMatches')}
+              </Button>
+              <Button size="small" variant={filter === 'upcoming' ? 'contained' : 'outlined'} onClick={() => setFilter('upcoming')} sx={{ mr: 1 }}>
+                {t('upcoming')}
+              </Button>
+              <Button size="small" variant={filter === 'played' ? 'contained' : 'outlined'} onClick={() => setFilter('played')}>
+                {t('played')}
+              </Button>
+            </div>
             <Accordion>
               <AccordionSummary expandIcon="▶">
                 <Typography>{t('predictions')}</Typography>
