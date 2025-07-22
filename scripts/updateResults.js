@@ -1,5 +1,6 @@
 const Match = require('../models/Match');
 const { fetchFixturesWithThrottle } = require('./apiFootball');
+const { updateEliminationMatches } = require('../utils/bracket');
 
 async function updateResults(competition) {
   const { fixtures, skipped } = await fetchFixturesWithThrottle('updateResults', competition);
@@ -12,6 +13,8 @@ async function updateResults(competition) {
     const result2 = f.goals?.away ?? null;
     await Match.updateOne({ series: id, competition }, { result1, result2 });
   }
+
+  await updateEliminationMatches(competition);
 
   return { updated: fixtures.length };
 }
