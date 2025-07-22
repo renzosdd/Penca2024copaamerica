@@ -40,6 +40,8 @@ FOOTBALL_LEAGUE_ID=<id_liga>
 FOOTBALL_SEASON=<temporada>
 # URL base opcional de la API
 FOOTBALL_API_URL=https://v3.football.api-sports.io
+# Intervalo mínimo entre actualizaciones de resultados (ms)
+FOOTBALL_UPDATE_INTERVAL=3600000
 ```
 Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
 El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
@@ -130,6 +132,7 @@ encuentros de forma agrupada. Al guardar un resultado la aplicación actualiza
 automáticamente la llave del knockout. El endpoint
 `/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel) queda como
 opción de respaldo para recalcular manualmente si fuera necesario.
+También puedes usar `/admin/update-results/<competencia>` para obtener marcadores directamente desde API‑Football. La frecuencia de actualización se controla con la variable `FOOTBALL_UPDATE_INTERVAL`.
 
 ### Ejemplo de uso
 
@@ -143,6 +146,7 @@ opción de respaldo para recalcular manualmente si fuera necesario.
 - `GET /bracket` – muestra la llave del knockout según la última recalculación.
 - `POST /admin/recalculate-bracket` – fuerza el nuevo cálculo del bracket con
   los resultados cargados.
+- `POST /admin/update-results/:competition` – obtiene los resultados desde la API-Football.
 - `GET /api/owner` – devuelve las pencas administradas por el owner autenticado.
 - `GET /competitions/:competition/matches` – lista los partidos de la competencia indicada.
 

@@ -10,6 +10,7 @@ const Competition = require('../models/Competition');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
+const updateResults = require('../scripts/updateResults');
 
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -524,6 +525,17 @@ router.post('/recalculate-bracket/:competition', isAuthenticated, isAdmin, async
         res.json({ message: 'Bracket recalculated' });
     } catch (error) {
         console.error('Error recalculating bracket:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Actualizar resultados desde API-Football
+router.post('/update-results/:competition', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        await updateResults(req.params.competition);
+        res.json({ message: 'Results updated' });
+    } catch (error) {
+        console.error('Error updating results:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
