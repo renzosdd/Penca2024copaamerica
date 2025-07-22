@@ -48,6 +48,8 @@ El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usua
 útil si planeas varias competiciones en paralelo.
 
 `APP_LANG` permite elegir el idioma de las respuestas del backend. Usa `es` para español o `en` para inglés.
+
+Cada competencia puede definir `apiLeagueId` y `apiSeason` para usar valores diferentes a los de las variables globales al obtener fixtures o actualizar resultados.
 Tambin puedes cambiar el idioma de las respuestas agregando `?lang=es` o `?lang=en` a cada solicitud, o enviando el encabezado `Accept-Language`.
 
 La variable `DEFAULT_COMPETITION` define el nombre de la competencia principal.
@@ -133,6 +135,7 @@ automáticamente la llave del knockout. El endpoint
 `/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel) queda como
 opción de respaldo para recalcular manualmente si fuera necesario.
 También puedes usar `/admin/update-results/<competencia>` para obtener marcadores directamente desde API‑Football. La frecuencia de actualización se controla con la variable `FOOTBALL_UPDATE_INTERVAL`.
+El comando utilizará los valores `apiLeagueId` y `apiSeason` definidos en la competencia.
 
 ### Ejemplo de uso
 

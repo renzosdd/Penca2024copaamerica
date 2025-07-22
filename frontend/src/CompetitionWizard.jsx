@@ -21,6 +21,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [qualifiersPerGroup, setQualifiersPerGroup] = useState(2);
   const [teams, setTeams] = useState([]);
   const [useApi, setUseApi] = useState(false);
+  const [apiLeagueId, setApiLeagueId] = useState('');
+  const [apiSeason, setApiSeason] = useState('');
   const { t } = useLang();
  
   useEffect(() => {
@@ -32,6 +34,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       setQualifiersPerGroup(2);
       setTeams([]);
       setUseApi(false);
+      setApiLeagueId('');
+      setApiSeason('');
     }
   }, [open]);
 
@@ -93,7 +97,9 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
           integrantsPerGroup: teamsPerGroup,
           qualifiersPerGroup,
           fixture: matches,
-          ...(useApi ? { useApi: true } : {})
+          ...(useApi
+            ? { useApi: true, apiLeagueId, apiSeason }
+            : {})
         })
       });
       if (res.ok) {
@@ -150,6 +156,26 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               label={t('useApi')}
               sx={{ ml: 1 }}
             />
+            {useApi && (
+              <>
+                <TextField
+                  type="number"
+                  label={t('leagueId')}
+                  value={apiLeagueId}
+                  onChange={e => setApiLeagueId(e.target.value)}
+                  size="small"
+                  sx={{ ml: 1, width: 100 }}
+                />
+                <TextField
+                  type="number"
+                  label={t('season')}
+                  value={apiSeason}
+                  onChange={e => setApiSeason(e.target.value)}
+                  size="small"
+                  sx={{ ml: 1, width: 100 }}
+                />
+              </>
+            )}
 
           </div>
         )}
