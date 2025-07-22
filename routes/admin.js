@@ -11,6 +11,7 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
 const updateResults = require('../scripts/updateResults');
+const { fetchFixturesWithThrottle } = require('../scripts/apiFootball');
 
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -278,43 +279,25 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
             }));
             await Match.insertMany(data);
         } else if (String(useApi) === 'true') {
-            const {
-                FOOTBALL_API_KEY,
-                FOOTBALL_LEAGUE_ID,
-                FOOTBALL_SEASON,
-                FOOTBALL_API_URL
-            } = process.env;
+            const { fixtures, skipped } = await fetchFixturesWithThrottle('createCompetition', name);
 
-            if (!FOOTBALL_API_KEY || !FOOTBALL_LEAGUE_ID || !FOOTBALL_SEASON) {
-                throw new Error('Football API env vars missing');
-            }
+            if (!skipped) {
+                const matchesData = fixtures.map(f => ({
+                    date: f.fixture?.date?.slice(0, 10) || '',
+                    time: f.fixture?.date?.slice(11, 16) || '',
+                    team1: f.teams?.home?.name || '',
+                    team2: f.teams?.away?.name || '',
+                    competition: name,
+                    group_name: f.league?.round || '',
+                    series: String(f.fixture?.id || ''),
+                    tournament: f.league?.name || '',
+                    result1: f.goals?.home ?? null,
+                    result2: f.goals?.away ?? null
+                }));
 
-            const base = FOOTBALL_API_URL || 'https://v3.football.api-sports.io';
-            const response = await fetch(
-                `${base}/fixtures?league=${FOOTBALL_LEAGUE_ID}&season=${FOOTBALL_SEASON}`,
-                { headers: { 'x-apisports-key': FOOTBALL_API_KEY } }
-            );
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch fixtures');
-            }
-
-            const apiData = await response.json();
-            const matchesData = (apiData.response || []).map(f => ({
-                date: f.fixture?.date?.slice(0, 10) || '',
-                time: f.fixture?.date?.slice(11, 16) || '',
-                team1: f.teams?.home?.name || '',
-                team2: f.teams?.away?.name || '',
-                competition: name,
-                group_name: f.league?.round || '',
-                series: String(f.fixture?.id || ''),
-                tournament: f.league?.name || '',
-                result1: f.goals?.home ?? null,
-                result2: f.goals?.away ?? null
-            }));
-
-            if (matchesData.length) {
-                await Match.insertMany(matchesData);
+                if (matchesData.length) {
+                    await Match.insertMany(matchesData);
+                }
             }
         } else if (String(autoGenerate) === 'true' && competition.groupsCount && competition.integrantsPerGroup) {
             const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';

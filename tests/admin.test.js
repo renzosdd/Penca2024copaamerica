@@ -39,6 +39,10 @@ jest.mock('../models/User', () => {
   return UserMock;
 });
 
+jest.mock('../scripts/apiFootball', () => ({
+  fetchFixturesWithThrottle: jest.fn()
+}));
+
 jest.mock('../middleware/auth', () => ({
   isAuthenticated: jest.fn((req, res, next) => next()),
   isAdmin: jest.fn((req, res, next) => next())
@@ -49,6 +53,7 @@ const Match = require('../models/Match');
 const User = require('../models/User');
 const Competition = require('../models/Competition');
 const adminRouter = require('../routes/admin');
+const { fetchFixturesWithThrottle } = require('../scripts/apiFootball');
 
 // -----------------------------
 // TESTS
@@ -142,6 +147,32 @@ describe('Admin competition creation', () => {
         expect.objectContaining({ team1: 'A', team2: 'B', competition: 'Copa' })
       ])
     );
+  });
+
+  it('creates a competition using API', async () => {
+    fetchFixturesWithThrottle.mockResolvedValue({
+      fixtures: [
+        {
+          fixture: { id: 1, date: '2024-06-01T10:00' },
+          teams: { home: { name: 'A' }, away: { name: 'B' } },
+          league: { round: 'R', name: 'L' },
+          goals: { home: 1, away: 0 }
+        }
+      ],
+      skipped: false
+    });
+
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .post('/admin/competitions')
+      .send({ name: 'Copa', useApi: true });
+
+    expect(res.status).toBe(201);
+    expect(fetchFixturesWithThrottle).toHaveBeenCalledWith('createCompetition', 'Copa');
+    expect(Match.insertMany).toHaveBeenCalled();
   });
 
   it('lists competitions', async () => {
