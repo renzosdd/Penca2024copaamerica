@@ -5,7 +5,9 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  TextField
+  TextField,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
 import useLang from './useLang';
 
@@ -18,6 +20,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [teamsPerGroup, setTeamsPerGroup] = useState(2);
   const [qualifiersPerGroup, setQualifiersPerGroup] = useState(2);
   const [teams, setTeams] = useState([]);
+  const [useApi, setUseApi] = useState(false);
   const { t } = useLang();
  
   useEffect(() => {
@@ -28,6 +31,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       setTeamsPerGroup(2);
       setQualifiersPerGroup(2);
       setTeams([]);
+      setUseApi(false);
     }
   }, [open]);
 
@@ -88,7 +92,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
           groupsCount,
           integrantsPerGroup: teamsPerGroup,
           qualifiersPerGroup,
-          fixture: matches
+          fixture: matches,
+          ...(useApi ? { useApi: true } : {})
         })
       });
       if (res.ok) {
@@ -139,6 +144,11 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               size="small"
               sx={{ ml: 1, width: 100 }}
               inputProps={{ min: 1 }}
+            />
+            <FormControlLabel
+              control={<Checkbox checked={useApi} onChange={e => setUseApi(e.target.checked)} />}
+              label={t('useApi')}
+              sx={{ ml: 1 }}
             />
 
           </div>
