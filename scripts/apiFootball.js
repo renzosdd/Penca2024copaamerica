@@ -43,4 +43,38 @@ async function fetchFixturesWithThrottle(name, competition, leagueId, season) {
   return { fixtures, skipped: false };
 }
 
-module.exports = { fetchFixturesWithThrottle };
+async function fetchCompetitionData(leagueId, season) {
+  const { FOOTBALL_API_KEY, FOOTBALL_API_URL } = process.env;
+  if (!FOOTBALL_API_KEY || !leagueId || !season) {
+    throw new Error('Football API env vars missing');
+  }
+
+  const base = FOOTBALL_API_URL || 'https://v3.football.api-sports.io';
+  const leagueUrl = `${base}/leagues?id=${leagueId}&season=${season}`;
+  const leagueRes = await fetch(leagueUrl, {
+    headers: { 'x-apisports-key': FOOTBALL_API_KEY }
+  });
+
+  if (!leagueRes.ok) {
+    throw new Error(`Failed to fetch league info: ${leagueRes.status}`);
+  }
+
+  const leagueJson = await leagueRes.json();
+  const league = leagueJson.response?.[0] || null;
+
+  const fixturesUrl = `${base}/fixtures?league=${leagueId}&season=${season}`;
+  const fixturesRes = await fetch(fixturesUrl, {
+    headers: { 'x-apisports-key': FOOTBALL_API_KEY }
+  });
+
+  if (!fixturesRes.ok) {
+    throw new Error(`Failed to fetch fixtures: ${fixturesRes.status}`);
+  }
+
+  const fixturesJson = await fixturesRes.json();
+  const fixtures = fixturesJson.response || [];
+
+  return { league, fixtures };
+}
+
+module.exports = { fetchFixturesWithThrottle, fetchCompetitionData };

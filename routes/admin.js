@@ -11,7 +11,7 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
 const updateResults = require('../scripts/updateResults');
-const { fetchFixturesWithThrottle } = require('../scripts/apiFootball');
+const { fetchFixturesWithThrottle, fetchCompetitionData } = require('../scripts/apiFootball');
 
 const storage = multer.memoryStorage();
 const upload = multer({ 
@@ -258,6 +258,42 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
     }
 });
 
+// Vista previa de competencia desde API
+router.post('/competitions/preview', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { apiLeagueId, apiSeason } = req.body;
+        if (!apiLeagueId || !apiSeason) {
+            return res.status(400).json({ error: 'apiLeagueId and apiSeason required' });
+        }
+
+        const { league, fixtures } = await fetchCompetitionData(Number(apiLeagueId), Number(apiSeason));
+        const groupsMap = {};
+        const matches = fixtures.map(f => {
+            const group = f.league?.group || f.league?.round || '';
+            if (group) {
+                if (!groupsMap[group]) groupsMap[group] = new Set();
+                groupsMap[group].add(f.teams?.home?.name || '');
+                groupsMap[group].add(f.teams?.away?.name || '');
+            }
+            return {
+                date: f.fixture?.date?.slice(0, 10) || '',
+                time: f.fixture?.date?.slice(11, 16) || '',
+                team1: f.teams?.home?.name || '',
+                team2: f.teams?.away?.name || '',
+                group_name: group,
+                series: String(f.fixture?.id || ''),
+                tournament: league?.league?.name || league?.name || ''
+            };
+        });
+
+        const groups = Object.entries(groupsMap).map(([name, set]) => ({ name, teams: Array.from(set) }));
+        res.json({ groups, matches });
+    } catch (error) {
+        console.error('Error previewing competition:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Crear competencia
 router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
@@ -270,7 +306,8 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
             fixture,
             autoGenerate,
             apiLeagueId,
-            apiSeason
+            apiSeason,
+            imported
         } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
@@ -284,7 +321,13 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
         });
         await competition.save();
 
-        if (Array.isArray(fixture) && fixture.length) {
+        if (imported && Array.isArray(imported.matches) && imported.matches.length) {
+            const data = imported.matches.map(m => ({
+                ...m,
+                competition: m.competition || name
+            }));
+            await Match.insertMany(data);
+        } else if (Array.isArray(fixture) && fixture.length) {
             const data = fixture.map(m => ({
                 ...m,
                 competition: m.competition || name
