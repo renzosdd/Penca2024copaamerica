@@ -13,8 +13,13 @@ jest.mock('../models/ApiUsage', () => ({
   create: jest.fn()
 }));
 
+jest.mock('../models/Competition', () => ({
+  findOne: jest.fn()
+}));
+
 const Match = require('../models/Match');
 const ApiUsage = require('../models/ApiUsage');
+const Competition = require('../models/Competition');
 const { updateEliminationMatches } = require('../utils/bracket');
 
 describe('updateResults script', () => {
@@ -25,6 +30,7 @@ describe('updateResults script', () => {
     process.env.FOOTBALL_SEASON = '2024';
     process.env.FOOTBALL_API_URL = 'http://api';
     process.env.FOOTBALL_UPDATE_INTERVAL = '3600000';
+    Competition.findOne.mockResolvedValue({ apiLeagueId: 1, apiSeason: 2024 });
   });
 
   afterEach(() => {
@@ -47,6 +53,7 @@ describe('updateResults script', () => {
 
     const res = await updateResults('Copa');
 
+    expect(Competition.findOne).toHaveBeenCalledWith({ name: 'Copa' });
     expect(global.fetch).toHaveBeenCalledWith(
       'http://api/fixtures?league=1&season=2024',
       { headers: { 'x-apisports-key': 'k' } }
@@ -65,6 +72,7 @@ describe('updateResults script', () => {
 
     const res = await updateResults('Copa');
 
+    expect(Competition.findOne).toHaveBeenCalled();
     expect(global.fetch).not.toHaveBeenCalled();
     expect(Match.updateOne).not.toHaveBeenCalled();
     expect(updateEliminationMatches).not.toHaveBeenCalled();

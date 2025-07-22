@@ -168,10 +168,10 @@ describe('Admin competition creation', () => {
 
     const res = await request(app)
       .post('/admin/competitions')
-      .send({ name: 'Copa', useApi: true });
+      .send({ name: 'Copa', useApi: true, apiLeagueId: 1, apiSeason: 2024 });
 
     expect(res.status).toBe(201);
-    expect(fetchFixturesWithThrottle).toHaveBeenCalledWith('createCompetition', 'Copa');
+    expect(fetchFixturesWithThrottle).toHaveBeenCalledWith('createCompetition', 'Copa', 1, 2024);
     expect(Match.insertMany).toHaveBeenCalled();
   });
 

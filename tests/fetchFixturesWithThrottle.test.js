@@ -26,7 +26,7 @@ test('fetches fixtures and records usage', async () => {
     json: async () => ({ response: [{ fixture: { id: 1 } }] })
   });
 
-  const { fixtures, skipped } = await fetchFixturesWithThrottle('createCompetition', 'Copa');
+  const { fixtures, skipped } = await fetchFixturesWithThrottle('createCompetition', 'Copa', 1, 2024);
 
   expect(skipped).toBe(false);
   expect(global.fetch).toHaveBeenCalledWith(
@@ -40,7 +40,7 @@ test('fetches fixtures and records usage', async () => {
 test('skips when interval not elapsed', async () => {
   ApiUsage.findOne.mockResolvedValue({ lastUsed: new Date() });
 
-  const { skipped } = await fetchFixturesWithThrottle('createCompetition', 'Copa');
+  const { skipped } = await fetchFixturesWithThrottle('createCompetition', 'Copa', 1, 2024);
 
   expect(skipped).toBe(true);
   expect(global.fetch).not.toHaveBeenCalled();

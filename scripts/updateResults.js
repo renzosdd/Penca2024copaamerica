@@ -1,9 +1,16 @@
 const Match = require('../models/Match');
 const { fetchFixturesWithThrottle } = require('./apiFootball');
 const { updateEliminationMatches } = require('../utils/bracket');
+const Competition = require('../models/Competition');
 
 async function updateResults(competition) {
-  const { fixtures, skipped } = await fetchFixturesWithThrottle('updateResults', competition);
+  const comp = await Competition.findOne({ name: competition });
+  const { fixtures, skipped } = await fetchFixturesWithThrottle(
+    'updateResults',
+    competition,
+    comp?.apiLeagueId,
+    comp?.apiSeason
+  );
   if (skipped) {
     return { skipped: true };
   }

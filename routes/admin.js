@@ -261,14 +261,26 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
 // Crear competencia
 router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, useApi, groupsCount, integrantsPerGroup, qualifiersPerGroup, fixture, autoGenerate } = req.body;
+        const {
+            name,
+            useApi,
+            groupsCount,
+            integrantsPerGroup,
+            qualifiersPerGroup,
+            fixture,
+            autoGenerate,
+            apiLeagueId,
+            apiSeason
+        } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
         const competition = new Competition({
             name,
             groupsCount: groupsCount ? Number(groupsCount) : undefined,
             integrantsPerGroup: integrantsPerGroup ? Number(integrantsPerGroup) : undefined,
-            qualifiersPerGroup: qualifiersPerGroup ? Number(qualifiersPerGroup) : undefined
+            qualifiersPerGroup: qualifiersPerGroup ? Number(qualifiersPerGroup) : undefined,
+            apiLeagueId: apiLeagueId ? Number(apiLeagueId) : undefined,
+            apiSeason: apiSeason ? Number(apiSeason) : undefined
         });
         await competition.save();
 
@@ -279,7 +291,12 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
             }));
             await Match.insertMany(data);
         } else if (String(useApi) === 'true') {
-            const { fixtures, skipped } = await fetchFixturesWithThrottle('createCompetition', name);
+            const { fixtures, skipped } = await fetchFixturesWithThrottle(
+                'createCompetition',
+                name,
+                competition.apiLeagueId,
+                competition.apiSeason
+            );
 
             if (!skipped) {
                 const matchesData = fixtures.map(f => ({
@@ -395,6 +412,12 @@ router.put('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
         }
         if (req.body.qualifiersPerGroup !== undefined) {
             competition.qualifiersPerGroup = Number(req.body.qualifiersPerGroup);
+        }
+        if (req.body.apiLeagueId !== undefined) {
+            competition.apiLeagueId = Number(req.body.apiLeagueId);
+        }
+        if (req.body.apiSeason !== undefined) {
+            competition.apiSeason = Number(req.body.apiSeason);
         }
         await competition.save();
 

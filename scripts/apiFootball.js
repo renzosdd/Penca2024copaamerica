@@ -1,6 +1,6 @@
 const ApiUsage = require('../models/ApiUsage');
 
-async function fetchFixturesWithThrottle(name, competition) {
+async function fetchFixturesWithThrottle(name, competition, leagueId, season) {
   const {
     FOOTBALL_API_KEY,
     FOOTBALL_LEAGUE_ID,
@@ -9,7 +9,10 @@ async function fetchFixturesWithThrottle(name, competition) {
     FOOTBALL_UPDATE_INTERVAL
   } = process.env;
 
-  if (!FOOTBALL_API_KEY || !FOOTBALL_LEAGUE_ID || !FOOTBALL_SEASON) {
+  const finalLeague = leagueId || FOOTBALL_LEAGUE_ID;
+  const finalSeason = season || FOOTBALL_SEASON;
+
+  if (!FOOTBALL_API_KEY || !finalLeague || !finalSeason) {
     throw new Error('Football API env vars missing');
   }
 
@@ -20,7 +23,7 @@ async function fetchFixturesWithThrottle(name, competition) {
   }
 
   const base = FOOTBALL_API_URL || 'https://v3.football.api-sports.io';
-  const url = `${base}/fixtures?league=${FOOTBALL_LEAGUE_ID}&season=${FOOTBALL_SEASON}`;
+  const url = `${base}/fixtures?league=${finalLeague}&season=${finalSeason}`;
   const response = await fetch(url, { headers: { 'x-apisports-key': FOOTBALL_API_KEY } });
 
   if (!response.ok) {
