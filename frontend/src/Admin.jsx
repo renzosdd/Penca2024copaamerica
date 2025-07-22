@@ -37,6 +37,8 @@ export default function Admin() {
   const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   useEffect(() => {
     loadAll();
@@ -152,6 +154,24 @@ export default function Admin() {
       console.error('generate bracket error', err);
     } finally {
       setIsGenerating(false);
+    }
+  }
+
+  async function updateResults(comp) {
+    setIsUpdating(true);
+    try {
+      const res = await fetch(`/admin/update-results/${encodeURIComponent(comp.name)}`, { method: 'POST' });
+      if (res.ok) {
+        loadCompetitionMatches(comp);
+        setSnackbar({ open: true, message: 'Resultados actualizados', severity: 'success' });
+      } else {
+        setSnackbar({ open: true, message: t('networkError'), severity: 'error' });
+      }
+    } catch (err) {
+      console.error('update results error', err);
+      setSnackbar({ open: true, message: t('networkError'), severity: 'error' });
+    } finally {
+      setIsUpdating(false);
     }
   }
 
@@ -390,6 +410,9 @@ export default function Admin() {
                 />
                 <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)} disabled={isGenerating}>
                   {t('generateBracket')}
+                </Button>
+                <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => updateResults(c)} disabled={isUpdating}>
+                  {t('updateResults')}
                 </Button>
                 <IconButton size="small" className="secondary-content" onClick={() => saveCompetition(c)} disabled={isSaving}>
                   <Save fontSize="small" />
@@ -642,6 +665,23 @@ export default function Admin() {
         onClose={() => setWizardOpen(false)}
         onCreated={loadCompetitions}
       />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={(_, reason) => {
+          if (reason === 'clickaway') return;
+          setSnackbar(s => ({ ...s, open: false }));
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
