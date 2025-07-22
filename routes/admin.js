@@ -307,12 +307,20 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
             autoGenerate,
             apiLeagueId,
             apiSeason,
-            imported
+            imported,
+            tournament,
+            country,
+            seasonStart,
+            seasonEnd
         } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
         const competition = new Competition({
             name,
+            tournament,
+            country,
+            seasonStart: seasonStart ? new Date(seasonStart) : undefined,
+            seasonEnd: seasonEnd ? new Date(seasonEnd) : undefined,
             groupsCount: groupsCount ? Number(groupsCount) : undefined,
             integrantsPerGroup: integrantsPerGroup ? Number(integrantsPerGroup) : undefined,
             qualifiersPerGroup: qualifiersPerGroup ? Number(qualifiersPerGroup) : undefined,
@@ -340,6 +348,26 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
                 competition.apiLeagueId,
                 competition.apiSeason
             );
+            try {
+                const { league } = await fetchCompetitionData(
+                    competition.apiLeagueId,
+                    competition.apiSeason
+                );
+                if (league) {
+                    competition.tournament = league.league?.name || competition.tournament;
+                    competition.country = league.country?.name || competition.country;
+                    const seasonInfo = Array.isArray(league.seasons)
+                        ? league.seasons.find(s => s.year === competition.apiSeason)
+                        : null;
+                    if (seasonInfo) {
+                        competition.seasonStart = seasonInfo.start ? new Date(seasonInfo.start) : competition.seasonStart;
+                        competition.seasonEnd = seasonInfo.end ? new Date(seasonInfo.end) : competition.seasonEnd;
+                    }
+                    await competition.save();
+                }
+            } catch (err) {
+                console.error('Error fetching competition metadata:', err);
+            }
 
             if (!skipped) {
                 const matchesData = fixtures.map(f => ({
@@ -461,6 +489,18 @@ router.put('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
         }
         if (req.body.apiSeason !== undefined) {
             competition.apiSeason = Number(req.body.apiSeason);
+        }
+        if (req.body.tournament !== undefined) {
+            competition.tournament = req.body.tournament;
+        }
+        if (req.body.country !== undefined) {
+            competition.country = req.body.country;
+        }
+        if (req.body.seasonStart !== undefined) {
+            competition.seasonStart = new Date(req.body.seasonStart);
+        }
+        if (req.body.seasonEnd !== undefined) {
+            competition.seasonEnd = new Date(req.body.seasonEnd);
         }
         await competition.save();
 

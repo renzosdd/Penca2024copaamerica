@@ -40,7 +40,8 @@ jest.mock('../models/User', () => {
 });
 
 jest.mock('../scripts/apiFootball', () => ({
-  fetchFixturesWithThrottle: jest.fn()
+  fetchFixturesWithThrottle: jest.fn(),
+  fetchCompetitionData: jest.fn()
 }));
 
 jest.mock('../middleware/auth', () => ({
@@ -53,7 +54,7 @@ const Match = require('../models/Match');
 const User = require('../models/User');
 const Competition = require('../models/Competition');
 const adminRouter = require('../routes/admin');
-const { fetchFixturesWithThrottle } = require('../scripts/apiFootball');
+const { fetchFixturesWithThrottle, fetchCompetitionData } = require('../scripts/apiFootball');
 
 // -----------------------------
 // TESTS
@@ -118,10 +119,22 @@ describe('Admin competition creation', () => {
 
     const res = await request(app)
       .post('/admin/competitions')
-      .field('name', 'Copa Test');
+      .send({
+        name: 'Copa Test',
+        tournament: 'Tourn',
+        country: 'AR',
+        seasonStart: '2024-01-01',
+        seasonEnd: '2024-12-31'
+      });
 
     expect(res.status).toBe(201);
-    expect(Competition).toHaveBeenCalledWith(expect.objectContaining({ name: 'Copa Test' }));
+    expect(Competition).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Copa Test',
+        tournament: 'Tourn',
+        country: 'AR'
+      })
+    );
     expect(Match.insertMany).not.toHaveBeenCalled();
 
   });
@@ -161,6 +174,14 @@ describe('Admin competition creation', () => {
       ],
       skipped: false
     });
+    fetchCompetitionData.mockResolvedValue({
+      league: {
+        league: { name: 'L' },
+        country: { name: 'C' },
+        seasons: [{ year: 2024, start: '2024-01-01', end: '2024-12-31' }]
+      },
+      fixtures: []
+    });
 
     const app = express();
     app.use(express.json());
@@ -172,6 +193,7 @@ describe('Admin competition creation', () => {
 
     expect(res.status).toBe(201);
     expect(fetchFixturesWithThrottle).toHaveBeenCalledWith('createCompetition', 'Copa', 1, 2024);
+    expect(fetchCompetitionData).toHaveBeenCalledWith(1, 2024);
     expect(Match.insertMany).toHaveBeenCalled();
   });
 
@@ -273,10 +295,11 @@ describe('Admin competition modification', () => {
 
     const res = await request(app)
       .put('/admin/competitions/c1')
-      .send({ name: 'New' });
+      .send({ name: 'New', tournament: 'TNew' });
 
     expect(res.status).toBe(200);
     expect(comp.name).toBe('New');
+    expect(comp.tournament).toBe('TNew');
     expect(comp.save).toHaveBeenCalled();
   });
 

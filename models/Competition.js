@@ -5,6 +5,10 @@ const competitionSchema = new mongoose.Schema({
     groupsCount: Number,
     integrantsPerGroup: Number,
     qualifiersPerGroup: Number,
+    tournament: String,
+    country: String,
+    seasonStart: Date,
+    seasonEnd: Date,
     apiLeagueId: Number,
     apiSeason: Number
 });
