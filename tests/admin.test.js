@@ -162,6 +162,30 @@ describe('Admin competition creation', () => {
     );
   });
 
+  it('creates a competition from file', async () => {
+    Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
+
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const fixture = [
+      { team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
+    ];
+
+    const res = await request(app)
+      .post('/admin/competitions')
+      .field('name', 'Copa')
+      .attach('fixtureFile', Buffer.from(JSON.stringify(fixture)), 'fixture.json');
+
+    expect(res.status).toBe(201);
+    expect(Match.insertMany).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ team1: 'A', team2: 'B', competition: 'Copa' })
+      ])
+    );
+  });
+
   it('creates a competition using API', async () => {
     fetchFixturesWithThrottle.mockResolvedValue({
       fixtures: [

@@ -22,6 +22,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [teams, setTeams] = useState([]);
   const [previewGroups, setPreviewGroups] = useState([]);
   const [previewMatches, setPreviewMatches] = useState([]);
+  const [importedMatches, setImportedMatches] = useState([]);
+  const [fixtureFile, setFixtureFile] = useState(null);
   const [useApi, setUseApi] = useState(false);
   const [apiLeagueId, setApiLeagueId] = useState('');
   const [apiSeason, setApiSeason] = useState('');
@@ -37,6 +39,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       setTeams([]);
       setPreviewGroups([]);
       setPreviewMatches([]);
+      setImportedMatches([]);
+      setFixtureFile(null);
       setUseApi(false);
       setApiLeagueId('');
       setApiSeason('');
@@ -49,6 +53,41 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       arr[g][t] = value;
       return arr;
     });
+  };
+
+  const handleFileChange = e => {
+    const file = e.target.files[0];
+    setFixtureFile(file || null);
+    setImportedMatches([]);
+    setPreviewGroups([]);
+    setPreviewMatches([]);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const text = ev.target.result;
+          const json = JSON.parse(text);
+          const matches = Array.isArray(json) ? json : json.matches;
+          if (Array.isArray(matches)) {
+            setImportedMatches(matches);
+            const map = {};
+            matches.forEach(m => {
+              const g = m.group_name || '';
+              if (!g) return;
+              if (!map[g]) map[g] = new Set();
+              map[g].add(m.team1);
+              map[g].add(m.team2);
+            });
+            const groups = Object.entries(map).map(([name, set]) => ({ name, teams: Array.from(set) }));
+            setPreviewGroups(groups);
+            setPreviewMatches(matches);
+          }
+        } catch (err) {
+          console.error('file read error', err);
+        }
+      };
+      reader.readAsText(file);
+    }
   };
 
   const next = async () => {
@@ -69,6 +108,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
         } catch (err) {
           console.error('preview error', err);
         }
+      } else if (fixtureFile) {
+        setStep(1);
       } else {
         if (teams.length === 0) {
           const initial = Array.from({ length: groupsCount }, () =>
@@ -90,6 +131,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
     } else {
       if (useApi) {
         submitApi();
+      } else if (fixtureFile) {
+        submitFile();
       } else {
         submit();
       }
@@ -127,6 +170,32 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
             ? { useApi: true, apiLeagueId, apiSeason }
             : {})
         })
+      });
+      if (res.ok) {
+        if (onCreated) onCreated();
+        onClose();
+      }
+    } catch (err) {
+      console.error('wizard submit error', err);
+    }
+  };
+
+  const submitFile = async () => {
+    try {
+      const data = new FormData();
+      data.append('name', name);
+      data.append('qualifiersPerGroup', qualifiersPerGroup);
+      data.append('fixtureFile', fixtureFile);
+      if (previewGroups.length) {
+        data.append('groupsCount', previewGroups.length);
+        data.append('integrantsPerGroup', previewGroups[0]?.teams?.length || 0);
+      } else {
+        data.append('groupsCount', groupsCount);
+        data.append('integrantsPerGroup', teamsPerGroup);
+      }
+      const res = await fetch('/admin/competitions', {
+        method: 'POST',
+        body: data
       });
       if (res.ok) {
         if (onCreated) onCreated();
@@ -206,6 +275,12 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               label={t('useApi')}
               sx={{ ml: 1 }}
             />
+            {!useApi && (
+              <Button variant="contained" component="label" sx={{ ml: 1 }}>
+                {t('fixtureFile')}
+                <input type="file" hidden accept="application/json" onChange={handleFileChange} />
+              </Button>
+            )}
             {useApi && (
               <>
                 <TextField
@@ -229,7 +304,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
 
           </div>
         )}
-        {step === 1 && !useApi && (
+        {step === 1 && !useApi && importedMatches.length === 0 && (
           <div>
             {teams.map((group, gi) => (
               <div key={gi} style={{ marginBottom: '1rem' }}>
@@ -249,7 +324,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
             ))}
           </div>
         )}
-        {step === 1 && useApi && (
+        {step === 1 && (useApi || importedMatches.length > 0) && (
           <div>
             {previewGroups.map((g, gi) => (
               <div key={gi} style={{ marginBottom: '1rem' }}>
