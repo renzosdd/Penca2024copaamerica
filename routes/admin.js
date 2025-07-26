@@ -621,7 +621,10 @@ router.post('/recalculate-bracket/:competition', isAuthenticated, isAdmin, async
 // Actualizar resultados desde API-Football
 router.post('/update-results/:competition', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        await updateResults(req.params.competition);
+        const result = await updateResults(req.params.competition);
+        if (result && result.skipped) {
+            return res.json({ skipped: true });
+        }
         res.json({ message: 'Results updated' });
     } catch (error) {
         console.error('Error updating results:', error);
