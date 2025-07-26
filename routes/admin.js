@@ -14,8 +14,8 @@ const updateResults = require('../scripts/updateResults');
 const { fetchFixturesWithThrottle, fetchCompetitionData } = require('../scripts/apiFootball');
 
 const storage = multer.memoryStorage();
-const upload = multer({ 
-    storage: storage, 
+const upload = multer({
+    storage: storage,
     fileFilter: (req, file, cb) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         if (allowedTypes.includes(file.mimetype)) {
@@ -25,6 +25,8 @@ const upload = multer({
         }
     }
 });
+
+const uploadJson = multer({ storage: multer.memoryStorage() });
  
 
 // Página de administración
@@ -298,7 +300,7 @@ router.post('/competitions/preview', isAuthenticated, isAdmin, async (req, res) 
 });
 
 // Crear competencia
-router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
+router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtureFile'), async (req, res) => {
     try {
         const {
             name,
@@ -332,9 +334,27 @@ router.post('/competitions', isAuthenticated, isAdmin, async (req, res) => {
         });
         await competition.save();
 
-        if (imported && Array.isArray(imported.matches) && imported.matches.length) {
-            const data = imported.matches.map(m => ({
-                ...m,
+        let importedMatches = null;
+        if (req.file) {
+            try {
+                const parsed = JSON.parse(req.file.buffer.toString('utf8'));
+                importedMatches = Array.isArray(parsed) ? parsed : parsed.matches;
+            } catch (err) {
+                return res.status(400).json({ error: 'Invalid fixtureFile' });
+            }
+        } else if (imported && Array.isArray(imported.matches)) {
+            importedMatches = imported.matches;
+        }
+
+        if (Array.isArray(importedMatches) && importedMatches.length) {
+            const data = importedMatches.map(m => ({
+                date: m.date || '',
+                time: m.time || '',
+                team1: m.team1 || '',
+                team2: m.team2 || '',
+                group_name: m.group_name || '',
+                series: m.series || '',
+                tournament: m.tournament || '',
                 competition: m.competition || name
             }));
             await Match.insertMany(data);
