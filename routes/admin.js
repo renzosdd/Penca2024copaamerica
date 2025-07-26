@@ -262,11 +262,14 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
 router.post('/competitions/preview', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const { apiLeagueId, apiSeason } = req.body;
-        if (!apiLeagueId || !apiSeason) {
-            return res.status(400).json({ error: 'apiLeagueId and apiSeason required' });
+        const leagueId = Number(apiLeagueId);
+        const season = Number(apiSeason);
+        if (!Number.isInteger(leagueId) || leagueId <= 0 ||
+            !Number.isInteger(season) || season <= 0) {
+            return res.status(400).json({ error: 'Invalid apiLeagueId or apiSeason' });
         }
 
-        const { league, fixtures } = await fetchCompetitionData(Number(apiLeagueId), Number(apiSeason));
+        const { league, fixtures } = await fetchCompetitionData(leagueId, season);
         const groupsMap = {};
         const matches = fixtures.map(f => {
             const group = f.league?.group || f.league?.round || '';
