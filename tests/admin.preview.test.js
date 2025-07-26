@@ -41,4 +41,17 @@ describe('Admin competition preview', () => {
     expect(res.body.matches.length).toBe(1);
     expect(res.body.groups[0]).toEqual({ name: 'Grupo A', teams: ['A', 'B'] });
   });
+
+  it('returns 400 for invalid input', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const res = await request(app)
+      .post('/admin/competitions/preview')
+      .send({ apiLeagueId: 'x', apiSeason: 2024 });
+
+    expect(res.status).toBe(400);
+    expect(fetchCompetitionData).not.toHaveBeenCalled();
+  });
 });
