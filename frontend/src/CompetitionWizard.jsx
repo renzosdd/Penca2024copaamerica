@@ -8,7 +8,9 @@ import {
   TextField,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import GroupTable from './GroupTable';
 import useLang from './useLang';
@@ -25,6 +27,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [previewGroups, setPreviewGroups] = useState([]);
   const [previewMatches, setPreviewMatches] = useState([]);
   const [fixtureFile, setFixtureFile] = useState(null);
+  const [error, setError] = useState('');
   const { t } = useLang();
  
   useEffect(() => {
@@ -38,6 +41,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       setPreviewGroups([]);
       setPreviewMatches([]);
       setFixtureFile(null);
+      setError('');
     }
   }, [open]);
 
@@ -54,11 +58,17 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
     setFixtureFile(file || null);
     setPreviewGroups([]);
     setPreviewMatches([]);
+    setError('');
     if (file) {
       try {
         const text = await file.text();
         const json = JSON.parse(text);
         const matches = Array.isArray(json) ? json : json.matches;
+        const err = validateMatches(matches);
+        if (err) {
+          setError(err);
+          return;
+        }
         if (Array.isArray(matches)) {
           const map = {};
           matches.forEach(m => {
@@ -74,6 +84,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
         }
       } catch (err) {
         console.error('file read error', err);
+        setError('Invalid file');
       }
     }
   };
@@ -126,6 +137,11 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
         }
       }
     }
+    const err = validateMatches(matches);
+    if (err) {
+      setError(err);
+      return;
+    }
     try {
       const res = await fetch('/admin/competitions', {
         method: 'POST',
@@ -144,10 +160,16 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       }
     } catch (err) {
       console.error('wizard submit error', err);
+      setError('Submit failed');
     }
   };
 
   const submitImported = async () => {
+    const err = validateMatches(previewMatches);
+    if (err) {
+      setError(err);
+      return;
+    }
     try {
       const res = await fetch('/admin/competitions', {
         method: 'POST',
@@ -166,8 +188,25 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       }
     } catch (err) {
       console.error('wizard submit error', err);
+      setError('Submit failed');
     }
   };
+
+  function validateMatches(matches) {
+    if (!Array.isArray(matches)) return 'Invalid matches data';
+    const required = ['date', 'time', 'team1', 'team2', 'group_name', 'series', 'tournament'];
+    const seen = new Set();
+    for (let i = 0; i < matches.length; i++) {
+      const m = matches[i];
+      for (const f of required) {
+        if (!m[f]) return `${t('missingField') || 'Missing field'}: ${f}`;
+      }
+      const key = `${m.date}|${m.time}|${m.team1}|${m.team2}`;
+      if (seen.has(key)) return 'Duplicate match detected';
+      seen.add(key);
+    }
+    return '';
+  }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -269,6 +308,12 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
           {step === 0 ? t('next') : t('create')}
         </Button>
       </DialogActions>
+      <Snackbar open={!!error} autoHideDuration={6000} onClose={() => setError('')}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity="error" onClose={() => setError('')} sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Dialog>
   );
 }

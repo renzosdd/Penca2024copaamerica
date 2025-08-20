@@ -274,7 +274,8 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
             tournament,
             country,
             seasonStart,
-            seasonEnd
+            seasonEnd,
+            expectedMatches
         } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
@@ -292,6 +293,29 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
         });
         await competition.save();
 
+        const requiredFields = ['date', 'time', 'team1', 'team2', 'group_name', 'series', 'tournament'];
+
+        const validateMatches = (matches, expected) => {
+            if (expected !== undefined && matches.length !== Number(expected)) {
+                return `Expected ${expected} matches, received ${matches.length}`;
+            }
+            const seen = new Set();
+            for (let i = 0; i < matches.length; i++) {
+                const m = matches[i];
+                for (const f of requiredFields) {
+                    if (!m[f]) {
+                        return `Match ${i + 1} missing field ${f}`;
+                    }
+                }
+                const key = `${m.date}|${m.time}|${m.team1}|${m.team2}`;
+                if (seen.has(key)) {
+                    return `Duplicate match: ${m.team1} vs ${m.team2} on ${m.date} ${m.time}`;
+                }
+                seen.add(key);
+            }
+            return null;
+        };
+
         let importedMatches = null;
         if (req.file) {
             try {
@@ -308,18 +332,24 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
         }
 
         if (Array.isArray(importedMatches) && importedMatches.length) {
+            const err = validateMatches(importedMatches, expectedMatches);
+            if (err) return res.status(400).json({ error: err });
             const data = importedMatches.map(m => ({
-                date: m.date || '',
-                time: m.time || '',
-                team1: m.team1 || '',
-                team2: m.team2 || '',
-                group_name: m.group_name || '',
-                series: m.series || '',
-                tournament: m.tournament || '',
+                date: m.date,
+                time: m.time,
+                team1: m.team1,
+                team2: m.team2,
+                group_name: m.group_name,
+                series: m.series,
+                tournament: m.tournament,
+                flag1: m.flag1,
+                flag2: m.flag2,
                 competition: m.competition || name
             }));
             await Match.insertMany(data);
         } else if (Array.isArray(fixture) && fixture.length) {
+            const err = validateMatches(fixture, expectedMatches);
+            if (err) return res.status(400).json({ error: err });
             const data = fixture.map(m => ({
                 ...m,
                 competition: m.competition || name
