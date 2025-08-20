@@ -142,7 +142,7 @@ describe('Admin competition creation', () => {
     app.use('/admin', adminRouter);
 
     const fixture = [
-      { team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
+      { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
     ];
 
     const res = await request(app)
@@ -165,7 +165,7 @@ describe('Admin competition creation', () => {
     app.use('/admin', adminRouter);
 
     const fixture = [
-      { team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
+      { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
     ];
 
     const res = await request(app)
@@ -179,6 +179,56 @@ describe('Admin competition creation', () => {
         expect.objectContaining({ team1: 'A', team2: 'B', competition: 'Copa' })
       ])
     );
+  });
+
+  it('rejects fixture missing required fields', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const fixture = [
+      { date: '2024-06-01', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
+    ];
+
+    const res = await request(app)
+      .post('/admin/competitions')
+      .send({ name: 'Copa', fixture });
+
+    expect(res.status).toBe(400);
+    expect(Match.insertMany).not.toHaveBeenCalled();
+  });
+
+  it('rejects fixture with mismatched match count', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const fixture = [
+      { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
+    ];
+
+    const res = await request(app)
+      .post('/admin/competitions')
+      .send({ name: 'Copa', fixture, expectedMatches: 2 });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects duplicate matches', async () => {
+    const app = express();
+    app.use(express.json());
+    app.use('/admin', adminRouter);
+
+    const fixture = [
+      { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' },
+      { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
+    ];
+
+    const res = await request(app)
+      .post('/admin/competitions')
+      .send({ name: 'Copa', fixture, expectedMatches: 2 });
+
+    expect(res.status).toBe(400);
   });
 
   it('lists competitions', async () => {
