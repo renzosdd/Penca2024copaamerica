@@ -84,7 +84,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
         }
       } catch (err) {
         console.error('file read error', err);
-        setError('Invalid file');
+        setError(t('invalidJsonFile'));
       }
     }
   };
@@ -248,7 +248,10 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               sx={{ ml: 1, width: 100 }}
               inputProps={{ min: 1 }}
             />
-            <input type="file" accept="application/json" onChange={handleFileChange} style={{ marginLeft: '1rem' }} />
+            <Button component="label" sx={{ ml: 1 }}>
+              {t('loadFixture')}
+              <input type="file" accept="application/json" hidden onChange={handleFileChange} />
+            </Button>
           </div>
         )}
         {step === 1 && previewMatches.length === 0 && (
