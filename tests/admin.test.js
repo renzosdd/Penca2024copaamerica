@@ -157,7 +157,7 @@ describe('Admin competition creation', () => {
     );
   });
 
-  it('creates a competition from file', async () => {
+  it('creates a competition with fixture JSON', async () => {
     Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
 
     const app = express();
