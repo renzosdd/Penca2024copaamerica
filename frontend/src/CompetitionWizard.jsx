@@ -6,9 +6,11 @@ import {
   DialogActions,
   Button,
   TextField,
-  Checkbox,
-  FormControlLabel
+  List,
+  ListItem,
+  ListItemText
 } from '@mui/material';
+import GroupTable from './GroupTable';
 import useLang from './useLang';
 
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -22,11 +24,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
   const [teams, setTeams] = useState([]);
   const [previewGroups, setPreviewGroups] = useState([]);
   const [previewMatches, setPreviewMatches] = useState([]);
-  const [importedMatches, setImportedMatches] = useState([]);
   const [fixtureFile, setFixtureFile] = useState(null);
-  const [useApi, setUseApi] = useState(false);
-  const [apiLeagueId, setApiLeagueId] = useState('');
-  const [apiSeason, setApiSeason] = useState('');
   const { t } = useLang();
  
   useEffect(() => {
@@ -39,11 +37,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
       setTeams([]);
       setPreviewGroups([]);
       setPreviewMatches([]);
-      setImportedMatches([]);
       setFixtureFile(null);
-      setUseApi(false);
-      setApiLeagueId('');
-      setApiSeason('');
     }
   }, [open]);
 
@@ -55,60 +49,38 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
     });
   };
 
-  const handleFileChange = e => {
+  const handleFileChange = async e => {
     const file = e.target.files[0];
     setFixtureFile(file || null);
-    setImportedMatches([]);
     setPreviewGroups([]);
     setPreviewMatches([]);
     if (file) {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        try {
-          const text = ev.target.result;
-          const json = JSON.parse(text);
-          const matches = Array.isArray(json) ? json : json.matches;
-          if (Array.isArray(matches)) {
-            setImportedMatches(matches);
-            const map = {};
-            matches.forEach(m => {
-              const g = m.group_name || '';
-              if (!g) return;
-              if (!map[g]) map[g] = new Set();
-              map[g].add(m.team1);
-              map[g].add(m.team2);
-            });
-            const groups = Object.entries(map).map(([name, set]) => ({ name, teams: Array.from(set) }));
-            setPreviewGroups(groups);
-            setPreviewMatches(matches);
-          }
-        } catch (err) {
-          console.error('file read error', err);
+      try {
+        const text = await file.text();
+        const json = JSON.parse(text);
+        const matches = Array.isArray(json) ? json : json.matches;
+        if (Array.isArray(matches)) {
+          const map = {};
+          matches.forEach(m => {
+            const g = m.group_name || '';
+            if (!g) return;
+            if (!map[g]) map[g] = new Set();
+            map[g].add(m.team1);
+            map[g].add(m.team2);
+          });
+          const groups = Object.entries(map).map(([name, set]) => ({ name, teams: Array.from(set) }));
+          setPreviewGroups(groups);
+          setPreviewMatches(matches);
         }
-      };
-      reader.readAsText(file);
+      } catch (err) {
+        console.error('file read error', err);
+      }
     }
   };
 
   const next = async () => {
     if (step === 0) {
-      if (useApi) {
-        try {
-          const res = await fetch('/admin/competitions/preview', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ apiLeagueId, apiSeason })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setPreviewGroups(data.groups || []);
-            setPreviewMatches(data.matches || []);
-            setStep(1);
-          }
-        } catch (err) {
-          console.error('preview error', err);
-        }
-      } else if (fixtureFile) {
+      if (fixtureFile) {
         setStep(1);
       } else {
         if (teams.length === 0) {
@@ -129,10 +101,8 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
         setStep(1);
       }
     } else {
-      if (useApi) {
-        submitApi();
-      } else if (fixtureFile) {
-        submitFile();
+      if (fixtureFile) {
+        submitImported();
       } else {
         submit();
       }
@@ -165,10 +135,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
           groupsCount,
           integrantsPerGroup: teamsPerGroup,
           qualifiersPerGroup,
-          fixture: matches,
-          ...(useApi
-            ? { useApi: true, apiLeagueId, apiSeason }
-            : {})
+          fixture: matches
         })
       });
       if (res.ok) {
@@ -180,33 +147,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
     }
   };
 
-  const submitFile = async () => {
-    try {
-      const data = new FormData();
-      data.append('name', name);
-      data.append('qualifiersPerGroup', qualifiersPerGroup);
-      data.append('fixtureFile', fixtureFile);
-      if (previewGroups.length) {
-        data.append('groupsCount', previewGroups.length);
-        data.append('integrantsPerGroup', previewGroups[0]?.teams?.length || 0);
-      } else {
-        data.append('groupsCount', groupsCount);
-        data.append('integrantsPerGroup', teamsPerGroup);
-      }
-      const res = await fetch('/admin/competitions', {
-        method: 'POST',
-        body: data
-      });
-      if (res.ok) {
-        if (onCreated) onCreated();
-        onClose();
-      }
-    } catch (err) {
-      console.error('wizard submit error', err);
-    }
-  };
-
-  const submitApi = async () => {
+  const submitImported = async () => {
     try {
       const res = await fetch('/admin/competitions', {
         method: 'POST',
@@ -216,9 +157,7 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
           groupsCount: previewGroups.length,
           integrantsPerGroup: previewGroups[0]?.teams?.length || 0,
           qualifiersPerGroup,
-          apiLeagueId,
-          apiSeason,
-          imported: { matches: previewMatches }
+          fixture: previewMatches
         })
       });
       if (res.ok) {
@@ -270,41 +209,10 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
               sx={{ ml: 1, width: 100 }}
               inputProps={{ min: 1 }}
             />
-            <FormControlLabel
-              control={<Checkbox checked={useApi} onChange={e => setUseApi(e.target.checked)} />}
-              label={t('useApi')}
-              sx={{ ml: 1 }}
-            />
-            {!useApi && (
-              <Button variant="contained" component="label" sx={{ ml: 1 }}>
-                {t('fixtureFile')}
-                <input type="file" hidden accept="application/json" onChange={handleFileChange} />
-              </Button>
-            )}
-            {useApi && (
-              <>
-                <TextField
-                  type="number"
-                  label={t('leagueId')}
-                  value={apiLeagueId}
-                  onChange={e => setApiLeagueId(e.target.value)}
-                  size="small"
-                  sx={{ ml: 1, width: 100 }}
-                />
-                <TextField
-                  type="number"
-                  label={t('season')}
-                  value={apiSeason}
-                  onChange={e => setApiSeason(e.target.value)}
-                  size="small"
-                  sx={{ ml: 1, width: 100 }}
-                />
-              </>
-            )}
-
+            <input type="file" accept="application/json" onChange={handleFileChange} style={{ marginLeft: '1rem' }} />
           </div>
         )}
-        {step === 1 && !useApi && importedMatches.length === 0 && (
+        {step === 1 && previewMatches.length === 0 && (
           <div>
             {teams.map((group, gi) => (
               <div key={gi} style={{ marginBottom: '1rem' }}>
@@ -324,25 +232,31 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
             ))}
           </div>
         )}
-        {step === 1 && (useApi || importedMatches.length > 0) && (
+        {step === 1 && previewMatches.length > 0 && (
           <div>
-            {previewGroups.map((g, gi) => (
-              <div key={gi} style={{ marginBottom: '1rem' }}>
-                <h6>{g.name}</h6>
-                <ul>
-                  {g.teams.map(tn => (
-                    <li key={tn}>{tn}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+            <GroupTable
+              groups={previewGroups.map(g => ({
+                group: g.name,
+                teams: g.teams.map(team => ({
+                  team,
+                  points: 0,
+                  wins: 0,
+                  draws: 0,
+                  losses: 0,
+                  gd: 0,
+                  gf: 0
+                }))
+              }))}
+            />
             <div>
               <h6>{t('matches')}</h6>
-              <ul>
+              <List>
                 {previewMatches.map((m, idx) => (
-                  <li key={idx}>{`${m.team1} vs ${m.team2} - ${m.date}`}</li>
+                  <ListItem key={idx}>
+                    <ListItemText primary={`${m.team1} vs ${m.team2} - ${m.date}`} />
+                  </ListItem>
                 ))}
-              </ul>
+              </List>
             </div>
           </div>
         )}
