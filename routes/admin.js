@@ -495,7 +495,11 @@ router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) =>
 // Obtener partidos de una competencia
 router.get('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const matches = await Match.find({ competition: req.params.id });
+        const comp = await Competition.findById(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+        const matches = await Match.find({ competition: comp.name });
         res.json(matches);
     } catch (error) {
         console.error('Error listing matches:', error);
