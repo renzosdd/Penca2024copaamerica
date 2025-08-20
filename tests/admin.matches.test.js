@@ -7,6 +7,10 @@ jest.mock('../models/Match', () => ({
   updateOne: jest.fn()
 }));
 
+jest.mock('../models/Competition', () => ({
+  findById: jest.fn()
+}));
+
 jest.mock('../utils/bracket', () => ({
   updateEliminationMatches: jest.fn()
 }));
@@ -17,6 +21,7 @@ jest.mock('../middleware/auth', () => ({
 }));
 
 const Match = require('../models/Match');
+const Competition = require('../models/Competition');
 const { updateEliminationMatches } = require('../utils/bracket');
 const adminRouter = require('../routes/admin');
 
@@ -24,6 +29,7 @@ describe('Admin match management', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('lists matches for a competition', async () => {
+    Competition.findById.mockResolvedValue({ name: 'Copa' });
     Match.find.mockResolvedValue([{ _id: 'm1' }]);
 
     const app = express();
@@ -32,8 +38,21 @@ describe('Admin match management', () => {
     const res = await request(app).get('/admin/competitions/c1/matches');
 
     expect(res.status).toBe(200);
-    expect(Match.find).toHaveBeenCalledWith({ competition: 'c1' });
+    expect(Competition.findById).toHaveBeenCalledWith('c1');
+    expect(Match.find).toHaveBeenCalledWith({ competition: 'Copa' });
     expect(res.body[0]._id).toBe('m1');
+  });
+
+  it('returns 404 if competition not found', async () => {
+    Competition.findById.mockResolvedValue(null);
+
+    const app = express();
+    app.use('/admin', adminRouter);
+
+    const res = await request(app).get('/admin/competitions/c1/matches');
+
+    expect(res.status).toBe(404);
+    expect(Match.find).not.toHaveBeenCalled();
   });
 
   it('updates match info', async () => {
