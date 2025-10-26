@@ -13,6 +13,7 @@ const language = require('./middleware/language');
 const { DEFAULT_COMPETITION } = require('./config');
 const { getMessage } = require('./utils/messages');
 const Penca = require("./models/Penca");
+const { ensureWorldCup2026 } = require('./utils/worldcupSeed');
 
 dotenv.config();
 
@@ -131,7 +132,11 @@ async function initializeDatabase() {
             await Score.create({ userId: admin._id, competition: DEFAULT_COMPETITION });
             debugLog('Usuario administrador creado.');
         }
-        // Los partidos deben cargarse manualmente desde las herramientas de administración
+
+        const seedResult = await ensureWorldCup2026();
+        if (seedResult.created || seedResult.matchesInserted) {
+            debugLog('World Cup 2026 seed result:', seedResult);
+        }
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
     }
