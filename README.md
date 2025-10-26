@@ -162,6 +162,8 @@ Si generas los encuentros de la fase de grupos desde aquí sin usar un fixture e
 
 Para replicar el Mundial 2026 utiliza el archivo `worldcup2026.json` incluido en la raíz del repositorio al momento de cargar el fixture. Las banderas de los equipos usan `/images/default.png` a menos que exista una imagen específica. Configura además `DEFAULT_COMPETITION=Mundial 2026` en tu archivo `.env` para que la aplicación asigne ese torneo por defecto.
 
+> Desde esta versión, la aplicación carga automáticamente la competencia **Mundial 2026** y su fixture completo durante la inicialización si la base de datos aún no los contiene. Esto garantiza que puedas crear pencas, registrar resultados y realizar predicciones del Mundial sin pasos manuales adicionales.
+
 ## Administración de resultados
 
 Los administradores registran los marcadores finales desde `/admin/edit` dentro

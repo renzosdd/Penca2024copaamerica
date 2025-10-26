@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  Box,
   Button,
   Card,
   CardContent,
@@ -29,7 +30,6 @@ export default function Admin() {
   const [matchesByCompetition, setMatchesByCompetition] = useState({});
   const [groups, setGroups] = useState({});
   const [expandedComp, setExpandedComp] = useState(null);
-  const [newMatchByCompetition, setNewMatchByCompetition] = useState({});
 
   const { t } = useLang();
 
@@ -42,12 +42,65 @@ export default function Admin() {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const matchTimeValue = match => {
-    if (!match || !match.date || !match.time) {
-      return Number.POSITIVE_INFINITY;
+    if (match?.kickoff) {
+      const value = Date.parse(match.kickoff);
+      if (!Number.isNaN(value)) {
+        return value;
+      }
     }
-    const value = Date.parse(`${match.date}T${match.time}`);
-    return Number.isNaN(value) ? Number.POSITIVE_INFINITY : value;
+    if (match?.date && match?.time) {
+      const value = Date.parse(`${match.date}T${match.time}`);
+      if (!Number.isNaN(value)) {
+        return value;
+      }
+    }
+    return Number.POSITIVE_INFINITY;
   };
+
+  const formatLocalKickoff = match => {
+    if (match?.kickoff) {
+      const date = new Date(match.kickoff);
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+      }
+    }
+    if (match?.date && match?.time) {
+      return `${match.date} ${match.time}`;
+    }
+    return t('scheduleTbd');
+  };
+
+  const kickoffInputValue = match => {
+    if (!match?.kickoff) {
+      return '';
+    }
+    const date = new Date(match.kickoff);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    const offsetMinutes = date.getTimezoneOffset();
+    const local = new Date(date.getTime() - offsetMinutes * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  const normalizeKickoffValue = value => {
+    if (!value) {
+      return '';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return '';
+    }
+    const offsetMinutes = date.getTimezoneOffset();
+    const utc = new Date(date.getTime() - offsetMinutes * 60000);
+    return utc.toISOString();
+  };
+
+  const ensureVenueObject = venue => ({
+    country: venue?.country || '',
+    city: venue?.city || '',
+    stadium: venue?.stadium || ''
+  });
 
   const isGroupKey = key => /^Grupo\s+/i.test(key);
   const compareGroupKey = (a, b) => {
@@ -97,22 +150,18 @@ export default function Admin() {
       const res = await fetch(`/admin/competitions/${encodeURIComponent(comp.name)}/matches`);
       if (!res.ok) return;
       const data = await res.json();
-      data.forEach((m, i) => {
-        if (m.order === undefined || m.order === null) m.order = i;
-      });
-      setMatchesByCompetition(ms => ({ ...ms, [comp._id]: data }));
-      setNewMatchByCompetition(state => ({
-        ...state,
-        [comp._id]: {
-          team1: '',
-          team2: '',
-          date: '',
-          time: '',
-          group_name: '',
-          series: 'Fase de grupos',
-          tournament: comp.name
-        }
+      const normalized = data.map((m, i) => ({
+        ...m,
+        order: m.order ?? i,
+        kickoff: m.kickoff || '',
+        date: m.date || '',
+        time: m.time || '',
+        originalDate: m.originalDate || m.date || '',
+        originalTime: m.originalTime || m.time || '',
+        originalTimezone: m.originalTimezone || '',
+        venue: ensureVenueObject(m.venue)
       }));
+      setMatchesByCompetition(ms => ({ ...ms, [comp._id]: normalized }));
       if (data.length) {
         await loadGroups([comp.name]);
       }
@@ -307,104 +356,58 @@ export default function Admin() {
   }
 
   const updateMatchField = (compId, id, field, value) => {
-    if (field === 'result1' || field === 'result2') {
-      if (value === '' || /^\d*$/.test(value)) {
-        setMatchesByCompetition(ms => ({
-          ...ms,
-          [compId]: ms[compId].map(m => m._id === id ? { ...m, [field]: value } : m),
-        }));
-      }
-    } else {
-      setMatchesByCompetition(ms => ({
-        ...ms,
-        [compId]: ms[compId].map(m => m._id === id ? { ...m, [field]: value } : m),
-      }));
-    }
-  };
-
-  const updateNewMatchField = (compId, field, value) => {
-    setNewMatchByCompetition(state => {
-      const base = state[compId] || {
-        team1: '',
-        team2: '',
-        date: '',
-        time: '',
-        group_name: '',
-        series: 'Fase de grupos',
-        tournament: competitions.find(c => c._id === compId)?.name || ''
-      };
-      return {
-        ...state,
-        [compId]: { ...base, [field]: value }
-      };
-    });
-  };
-
-  async function createMatch(comp) {
-    const draft = newMatchByCompetition[comp._id] || {};
-    const team1 = draft.team1 ? draft.team1.trim() : '';
-    const team2 = draft.team2 ? draft.team2.trim() : '';
-    if (!team1 || !team2) {
-      setSnackbar({ open: true, message: t('teamNamesRequired'), severity: 'error' });
-      return;
-    }
-
-    const payload = {
-      team1,
-      team2,
-      date: draft.date || undefined,
-      time: draft.time || undefined,
-      group_name: draft.group_name ? draft.group_name.trim() : undefined,
-      series: draft.series ? draft.series.trim() : undefined,
-      tournament: draft.tournament ? draft.tournament.trim() : comp.name
-    };
-
-    setIsSaving(true);
-    try {
-      const res = await fetch(`/admin/competitions/${encodeURIComponent(comp.name)}/matches`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        setSnackbar({ open: true, message: t('matchCreated'), severity: 'success' });
-        setNewMatchByCompetition(state => ({
-          ...state,
-          [comp._id]: {
-            team1: '',
-            team2: '',
-            date: '',
-            time: '',
-            group_name: draft.group_name || '',
-            series: draft.series || 'Fase de grupos',
-            tournament: comp.name
+    setMatchesByCompetition(ms => ({
+      ...ms,
+      [compId]: (ms[compId] || []).map(match => {
+        if (match._id !== id) return match;
+        const next = { ...match };
+        if (field === 'result1' || field === 'result2') {
+          if (value === '' || /^\d*$/.test(value)) {
+            next[field] = value;
           }
-        }));
-        loadCompetitionMatches(comp);
-      } else {
-        const error = await res.json().catch(() => ({}));
-        setSnackbar({ open: true, message: error.error || t('networkError'), severity: 'error' });
-      }
-    } catch (err) {
-      console.error('create match error', err);
-      setSnackbar({ open: true, message: t('networkError'), severity: 'error' });
-    } finally {
-      setIsSaving(false);
-    }
-  }
+          return next;
+        }
+        if (field === 'kickoff') {
+          next.kickoff = normalizeKickoffValue(value);
+          return next;
+        }
+        if (field.startsWith('venue.')) {
+          const key = field.split('.')[1];
+          next.venue = ensureVenueObject(next.venue);
+          next.venue[key] = value;
+          return next;
+        }
+        next[field] = value;
+        return next;
+      })
+    }));
+  };
 
   async function saveMatch(compId, match, skipRefresh = false) {
     setIsSaving(true);
     try {
-      const { team1, team2, date, time } = match;
+      const venuePayload = ensureVenueObject(match.venue);
+      const infoPayload = {
+        team1: match.team1,
+        team2: match.team2,
+        date: match.date || null,
+        time: match.time || null,
+        group_name: match.group_name || null,
+        series: match.series || null,
+        kickoff: match.kickoff || null,
+        originalDate: match.originalDate || null,
+        originalTime: match.originalTime || null,
+        originalTimezone: match.originalTimezone || null,
+        venue: venuePayload
+      };
       const resInfo = await fetch(`/admin/competitions/${encodeURIComponent(match.competition)}/matches/${match._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team1, team2, date, time }),
+        body: JSON.stringify(infoPayload),
       });
 
-      const res1 = match.result1 === '' ? null : Number(match.result1);
-      const res2 = match.result2 === '' ? null : Number(match.result2);
+      const res1 = match.result1 === '' || match.result1 === null || match.result1 === undefined ? null : Number(match.result1);
+      const res2 = match.result2 === '' || match.result2 === null || match.result2 === undefined ? null : Number(match.result2);
       const resScore = await fetch(`/admin/competitions/${encodeURIComponent(match.competition)}/matches/${match._id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -457,6 +460,120 @@ export default function Admin() {
     }
   }
 
+  const renderMatchEditor = (comp, match) => {
+    const venue = ensureVenueObject(match.venue);
+    return (
+      <li key={match._id} className="collection-item">
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          <TextField
+            label={t('team1Label')}
+            value={match.team1 || ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'team1', e.target.value)}
+            size="small"
+            sx={{ minWidth: 150 }}
+          />
+          <TextField
+            label={t('team2Label')}
+            value={match.team2 || ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'team2', e.target.value)}
+            size="small"
+            sx={{ minWidth: 150 }}
+          />
+          <TextField
+            label={t('group')}
+            value={match.group_name || ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'group_name', e.target.value)}
+            size="small"
+            sx={{ minWidth: 140 }}
+          />
+          <TextField
+            label={t('seriesLabel')}
+            value={match.series || ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'series', e.target.value)}
+            size="small"
+            sx={{ minWidth: 180 }}
+          />
+          <TextField
+            label={t('kickoffLabel')}
+            type="datetime-local"
+            value={kickoffInputValue(match)}
+            onChange={e => updateMatchField(comp._id, match._id, 'kickoff', e.target.value)}
+            size="small"
+            sx={{ minWidth: 220 }}
+          />
+          <Typography variant="caption" sx={{ width: '100%' }}>
+            {t('localKickoffLabel')}: {formatLocalKickoff(match)}
+          </Typography>
+          <TextField
+            label={t('originalDateLabel')}
+            type="date"
+            value={match.originalDate || ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'originalDate', e.target.value)}
+            size="small"
+            sx={{ minWidth: 160 }}
+          />
+          <TextField
+            label={t('originalTimeLabel')}
+            type="time"
+            value={match.originalTime || ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'originalTime', e.target.value)}
+            size="small"
+            sx={{ minWidth: 150 }}
+          />
+          <TextField
+            label={t('originalTimezoneLabel')}
+            value={match.originalTimezone || ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'originalTimezone', e.target.value)}
+            size="small"
+            sx={{ minWidth: 200 }}
+          />
+          <TextField
+            label={t('venueCountryLabel')}
+            value={venue.country}
+            onChange={e => updateMatchField(comp._id, match._id, 'venue.country', e.target.value)}
+            size="small"
+            sx={{ minWidth: 160 }}
+          />
+          <TextField
+            label={t('venueCityLabel')}
+            value={venue.city}
+            onChange={e => updateMatchField(comp._id, match._id, 'venue.city', e.target.value)}
+            size="small"
+            sx={{ minWidth: 160 }}
+          />
+          <TextField
+            label={t('venueStadiumLabel')}
+            value={venue.stadium}
+            onChange={e => updateMatchField(comp._id, match._id, 'venue.stadium', e.target.value)}
+            size="small"
+            sx={{ minWidth: 200 }}
+          />
+          <TextField
+            label={t('scoreTeam1Label')}
+            type="number"
+            value={match.result1 ?? ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'result1', e.target.value)}
+            size="small"
+            sx={{ width: 100 }}
+            inputProps={{ min: 0 }}
+          />
+          <TextField
+            label={t('scoreTeam2Label')}
+            type="number"
+            value={match.result2 ?? ''}
+            onChange={e => updateMatchField(comp._id, match._id, 'result2', e.target.value)}
+            size="small"
+            sx={{ width: 100 }}
+            inputProps={{ min: 0 }}
+          />
+          <IconButton size="small" onClick={() => saveMatch(comp._id, match)} disabled={isSaving}>
+            <Save fontSize="small" />
+          </IconButton>
+        </Box>
+      </li>
+    );
+  };
+
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>{t('adminTitle')}</h5>
@@ -465,9 +582,35 @@ export default function Admin() {
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
         <CardContent>
           <h6>{t('competitions')}</h6>
-          <Button variant="contained" onClick={() => setWizardOpen(true)} sx={{ mb: 2 }}>
-            {t('newCompetition')}
-          </Button>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+            <Button variant="contained" onClick={() => setWizardOpen(true)}>
+              {t('importCompetition')}
+            </Button>
+            <Button
+              variant="outlined"
+              component="a"
+              href="/admin/competitions/template/example"
+              download
+            >
+              {t('downloadExampleJson')}
+            </Button>
+            <Button
+              variant="outlined"
+              component="a"
+              href="/admin/competitions/template/worldcup"
+              download
+            >
+              {t('downloadWorldCupJson')}
+            </Button>
+            <Button
+              variant="outlined"
+              component="a"
+              href="/admin/competitions/template/guide"
+              download
+            >
+              {t('downloadGuideDoc')}
+            </Button>
+          </Box>
 
           {competitions.map(c => (
             <Accordion
@@ -494,77 +637,8 @@ export default function Admin() {
                   const otherKeys = Object.keys(grouped)
                     .filter(key => !isGroupKey(key) && !knockoutSet.has(key))
                     .sort((a, b) => matchTimeValue(grouped[a]?.[0]) - matchTimeValue(grouped[b]?.[0]));
-                  const newMatch = newMatchByCompetition[c._id] || {
-                    team1: '',
-                    team2: '',
-                    date: '',
-                    time: '',
-                    group_name: '',
-                    series: 'Fase de grupos',
-                    tournament: c.name
-                  };
-
                   return (
                     <>
-                      <Card variant="outlined" sx={{ mt: 2 }}>
-                        <CardContent sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          <Typography variant="subtitle2" sx={{ width: '100%' }}>
-                            {t('addMatch')}
-                          </Typography>
-                          <TextField
-                            label={t('team1Label')}
-                            value={newMatch.team1 || ''}
-                            onChange={e => updateNewMatchField(c._id, 'team1', e.target.value)}
-                            size="small"
-                            sx={{ minWidth: 140 }}
-                          />
-                          <TextField
-                            label={t('team2Label')}
-                            value={newMatch.team2 || ''}
-                            onChange={e => updateNewMatchField(c._id, 'team2', e.target.value)}
-                            size="small"
-                            sx={{ minWidth: 140 }}
-                          />
-                          <TextField
-                            label={t('dateLabel')}
-                            type="date"
-                            value={newMatch.date || ''}
-                            onChange={e => updateNewMatchField(c._id, 'date', e.target.value)}
-                            size="small"
-                          />
-                          <TextField
-                            label={t('timeLabel')}
-                            type="time"
-                            value={newMatch.time || ''}
-                            onChange={e => updateNewMatchField(c._id, 'time', e.target.value)}
-                            size="small"
-                          />
-                          <TextField
-                            label={t('group')}
-                            value={newMatch.group_name || ''}
-                            onChange={e => updateNewMatchField(c._id, 'group_name', e.target.value)}
-                            size="small"
-                            sx={{ minWidth: 120 }}
-                          />
-                          <TextField
-                            label={t('seriesLabel')}
-                            value={newMatch.series || ''}
-                            onChange={e => updateNewMatchField(c._id, 'series', e.target.value)}
-                            size="small"
-                            sx={{ minWidth: 140 }}
-                          />
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={() => createMatch(c)}
-                            disabled={isSaving}
-                            sx={{ mt: { xs: 1, sm: 0 } }}
-                          >
-                            {t('addMatch')}
-                          </Button>
-                        </CardContent>
-                      </Card>
-
                       {groupKeys.map(key => (
                         <Accordion key={key} sx={{ mt: 1 }}>
                           <AccordionSummary expandIcon="▼">
@@ -572,58 +646,7 @@ export default function Admin() {
                           </AccordionSummary>
                           <AccordionDetails>
                             <ul className="collection">
-                              {grouped[key].map(match => (
-                                <li key={match._id} className="collection-item">
-                                  <TextField
-                                    value={match.team1 || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'team1', e.target.value)}
-                                    size="small"
-                                  />
-                                  <TextField
-                                    value={match.team2 || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'team2', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="date"
-                                    label={t('dateLabel')}
-                                    value={match.date || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'date', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="time"
-                                    label={t('timeLabel')}
-                                    value={match.time || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'time', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="number"
-                                    value={match.result1 ?? ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'result1', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1, width: 60 }}
-                                    inputProps={{ min: 0 }}
-                                  />
-                                  <TextField
-                                    type="number"
-                                    value={match.result2 ?? ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'result2', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1, width: 60 }}
-                                    inputProps={{ min: 0 }}
-                                  />
-                                  <span className="secondary-content">
-                                    <IconButton size="small" onClick={() => saveMatch(c._id, match)} disabled={isSaving}>
-                                      <Save fontSize="small" />
-                                    </IconButton>
-                                  </span>
-                                </li>
-                              ))}
+                              {grouped[key].map(match => renderMatchEditor(c, match))}
                             </ul>
                             <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, key)} disabled={isSaving}>
                               {t('saveOrder')}
@@ -645,58 +668,7 @@ export default function Admin() {
                           </AccordionSummary>
                           <AccordionDetails>
                             <ul className="collection">
-                              {grouped[key].map(match => (
-                                <li key={match._id} className="collection-item">
-                                  <TextField
-                                    value={match.team1 || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'team1', e.target.value)}
-                                    size="small"
-                                  />
-                                  <TextField
-                                    value={match.team2 || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'team2', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="date"
-                                    label={t('dateLabel')}
-                                    value={match.date || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'date', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="time"
-                                    label={t('timeLabel')}
-                                    value={match.time || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'time', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="number"
-                                    value={match.result1 ?? ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'result1', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1, width: 60 }}
-                                    inputProps={{ min: 0 }}
-                                  />
-                                  <TextField
-                                    type="number"
-                                    value={match.result2 ?? ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'result2', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1, width: 60 }}
-                                    inputProps={{ min: 0 }}
-                                  />
-                                  <span className="secondary-content">
-                                    <IconButton size="small" onClick={() => saveMatch(c._id, match)} disabled={isSaving}>
-                                      <Save fontSize="small" />
-                                    </IconButton>
-                                  </span>
-                                </li>
-                              ))}
+                              {grouped[key].map(match => renderMatchEditor(c, match))}
                             </ul>
                             <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, key)} disabled={isSaving}>
                               {t('saveOrder')}
@@ -715,58 +687,7 @@ export default function Admin() {
                           </AccordionSummary>
                           <AccordionDetails>
                             <ul className="collection">
-                              {grouped[key].map(match => (
-                                <li key={match._id} className="collection-item">
-                                  <TextField
-                                    value={match.team1 || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'team1', e.target.value)}
-                                    size="small"
-                                  />
-                                  <TextField
-                                    value={match.team2 || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'team2', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="date"
-                                    label={t('dateLabel')}
-                                    value={match.date || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'date', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="time"
-                                    label={t('timeLabel')}
-                                    value={match.time || ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'time', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1 }}
-                                  />
-                                  <TextField
-                                    type="number"
-                                    value={match.result1 ?? ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'result1', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1, width: 60 }}
-                                    inputProps={{ min: 0 }}
-                                  />
-                                  <TextField
-                                    type="number"
-                                    value={match.result2 ?? ''}
-                                    onChange={e => updateMatchField(c._id, match._id, 'result2', e.target.value)}
-                                    size="small"
-                                    sx={{ ml: 1, width: 60 }}
-                                    inputProps={{ min: 0 }}
-                                  />
-                                  <span className="secondary-content">
-                                    <IconButton size="small" onClick={() => saveMatch(c._id, match)} disabled={isSaving}>
-                                      <Save fontSize="small" />
-                                    </IconButton>
-                                  </span>
-                                </li>
-                              ))}
+                              {grouped[key].map(match => renderMatchEditor(c, match))}
                             </ul>
                             <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveRound(c._id, key)} disabled={isSaving}>
                               {t('saveRound')}
