@@ -72,9 +72,11 @@ EMAIL_FROM="Penca 2026 <no-reply@tudominio.com>"
 ```
 
 Si las credenciales no están presentes, la aplicación registrará el intento de
-envío en consola sin fallar. Cada alta, edición o eliminación relevante genera un
-registro en la colección `auditlogs`, lo que permite reconstruir el historial de
-cambios en caso de controversias.
+envío en consola sin fallar. Para evitar alcanzar el límite de concurrencia en la
+base de datos, la auditoría se mantiene desactivada por defecto. Podés habilitarla
+desde el panel de administración y elegir qué tipos de cambios (owners,
+pencas, predicciones) se registran en la colección `auditlogs` cuando esté activa,
+lo que permite reconstruir el historial de cambios en caso de controversias.
 
 ### Formatos de torneo y reglas de puntuación
 
@@ -161,6 +163,8 @@ Dentro del panel de administración (`/admin/edit`) encontrarás la sección **C
 Si generas los encuentros de la fase de grupos desde aquí sin usar un fixture externo, la aplicación añadirá automáticamente las llaves de eliminación. Para torneos con 4 grupos se crean los cruces de cuartos, semifinales, tercer puesto y final. En competencias con más de cuatro grupos también se generan los enfrentamientos de “Ronda de 32”.
 
 Para replicar el Mundial 2026 utiliza el archivo `worldcup2026.json` incluido en la raíz del repositorio al momento de cargar el fixture. Las banderas de los equipos usan `/images/default.png` a menos que exista una imagen específica. Configura además `DEFAULT_COMPETITION=Mundial 2026` en tu archivo `.env` para que la aplicación asigne ese torneo por defecto.
+
+> Desde esta versión, la aplicación carga automáticamente la competencia **Mundial 2026** y su fixture completo durante la inicialización si la base de datos aún no los contiene. Esto garantiza que puedas crear pencas, registrar resultados y realizar predicciones del Mundial sin pasos manuales adicionales.
 
 ## Administración de resultados
 
