@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, CircularProgress, Alert } from '@mui/material';
+import { Button, CircularProgress, Alert, Container, Stack, Typography, Box } from '@mui/material';
 import PencaSection from './PencaSection';
 import JoinPenca from './JoinPenca';
 import ProfileForm from './ProfileForm';
@@ -134,51 +134,61 @@ export default function Dashboard() {
 
 
   return (
-    <div className="container" style={{ marginTop: '2rem' }}>
-      <h5>{t('dashboardTitle')}</h5>
-      {user && (
-        <Button size="small" onClick={() => setShowProfile(!showProfile)} sx={{ mb: 1 }}>
-          {showProfile ? t('hide') : t('editProfile')}
-        </Button>
-      )}
-      {showProfile && <ProfileForm user={user} onUpdated={loadDashboard} />}
-      {loading && <CircularProgress sx={{ display: 'block', my: 2 }} />}
-      {error && (
-        <Alert severity="error" sx={{ my: 2 }}>
-          {error}
-        </Alert>
-      )}
-      {pencas.length === 0 && (
-        <>
-          <p>{t('noPencas')}</p>
-          <JoinPenca onJoined={loadDashboard} />
-        </>
-      )}
-      {pencas.map(p => (
-        <PencaSection
-          key={p._id}
-          penca={p}
-          matches={matches}
-          groups={groups}
-          getPrediction={getPrediction}
-          handlePrediction={handlePrediction}
-          ranking={rankings[p._id] || []}
-          currentUsername={user?.username}
-        />
-      ))}
-      {pencas.length > 0 && (
-        <div style={{ marginTop: '1rem' }}>
-          <Button size="small" onClick={() => setShowJoin(!showJoin)}>
-            {showJoin ? t('hide') : t('joinAnother')}
-          </Button>
-          {showJoin && <JoinPenca onJoined={loadDashboard} />}
-        </div>
-      )}
+    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+      <Stack spacing={3}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+          <Typography variant="h5">{t('dashboardTitle')}</Typography>
+          {user && (
+            <Button size="small" onClick={() => setShowProfile(!showProfile)}>
+              {showProfile ? t('hide') : t('editProfile')}
+            </Button>
+          )}
+        </Box>
 
- 
+        {showProfile && <ProfileForm user={user} onUpdated={loadDashboard} />}
 
+        {loading && <CircularProgress sx={{ alignSelf: 'center' }} />}
 
+        {error && (
+          <Alert severity="error" sx={{ maxWidth: 480 }}>
+            {error}
+          </Alert>
+        )}
 
-    </div>
+        {pencas.length === 0 && (
+          <Stack spacing={2} alignItems="flex-start">
+            <Typography variant="body1">{t('noPencas')}</Typography>
+            <JoinPenca onJoined={loadDashboard} />
+          </Stack>
+        )}
+
+        {pencas.length > 0 && (
+          <Stack spacing={3}>
+            {pencas.map(p => (
+              <PencaSection
+                key={p._id}
+                penca={p}
+                matches={matches}
+                groups={groups}
+                getPrediction={getPrediction}
+                handlePrediction={handlePrediction}
+                ranking={rankings[p._id] || []}
+                currentUsername={user?.username}
+              />
+            ))}
+            <Box>
+              <Button size="small" onClick={() => setShowJoin(!showJoin)}>
+                {showJoin ? t('hide') : t('joinAnother')}
+              </Button>
+              {showJoin && (
+                <Box sx={{ mt: 2 }}>
+                  <JoinPenca onJoined={loadDashboard} />
+                </Box>
+              )}
+            </Box>
+          </Stack>
+        )}
+      </Stack>
+    </Container>
   );
 }

@@ -1,30 +1,36 @@
 import { useState } from 'react';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
+  Box,
+  Button,
   Card,
   CardContent,
-  IconButton,
-  Button,
-  TextField,
+  Chip,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
-  Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Paper,
+  Snackbar,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Snackbar,
-  Alert
-
+  TextField,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  useTheme
 } from '@mui/material';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import useLang from './useLang';
@@ -36,6 +42,8 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [filter, setFilter] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { t } = useLang();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   function canPredict(match) {
     const start = new Date(`${match.date}T${match.time}:00`);
@@ -51,6 +59,13 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       setSnackbar({ open: true, message: result?.error || t('networkError'), severity: 'error' });
     }
   }
+
+  const scoringText = penca.rules?.trim() ? penca.rules : t('noRules');
+  const participantsCount = Array.isArray(penca.participants) ? penca.participants.length : 0;
+  const modeKey = penca.tournamentMode ? `mode_${penca.tournamentMode}` : 'mode_group_stage_knockout';
+  const translatedMode = t(modeKey);
+  const tournamentLabel = translatedMode === modeKey ? penca.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
+  const participantsLabel = `${participantsCount} ${t('participantsShort')}`;
 
   const pMatches = (() => {
     let list = [];
@@ -75,11 +90,28 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   })();
 
   return (
-    <div style={{ marginBottom: '1rem' }}>
-      <Card style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => setOpen(!open)}>
-        <CardContent>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <strong>{penca.name}</strong>
+    <Box component="section" sx={{ mb: 3 }}>
+      <Card
+        onClick={() => setOpen(!open)}
+        sx={{
+          p: 2,
+          cursor: 'pointer',
+          borderRadius: 3,
+          boxShadow: open ? 8 : 2,
+          transition: 'box-shadow .2s ease-in-out'
+        }}
+      >
+        <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography variant="h6" component="h3">
+              {penca.name}
+            </Typography>
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
+              <Chip size="small" color="primary" label={tournamentLabel} />
+              <Chip size="small" label={participantsLabel} />
+            </Stack>
+          </Box>
+          <Tooltip title={t('viewRules')}>
             <IconButton
               size="small"
               onClick={e => {
@@ -89,25 +121,44 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             >
               <InfoOutlined fontSize="small" />
             </IconButton>
-          </div>
+          </Tooltip>
         </CardContent>
       </Card>
-      {open && ( 
-        <Card style={{ marginTop: '0', borderTop: 'none', padding: '1rem' }}>
+      {open && (
+        <Card sx={{ mt: 1.5, borderRadius: 3, boxShadow: 4 }}>
           <CardContent>
-            <div style={{ marginBottom: '0.5rem' }}>
-              <Button size="small" variant={filter === 'all' ? 'contained' : 'outlined'} onClick={() => setFilter('all')} sx={{ mr: 1 }}>
+            <Stack
+              direction={isMobile ? 'column' : 'row'}
+              spacing={1}
+              sx={{ mb: 2, alignItems: 'center', justifyContent: 'flex-start' }}
+            >
+              <Button
+                size="small"
+                variant={filter === 'all' ? 'contained' : 'outlined'}
+                onClick={() => setFilter('all')}
+                fullWidth={isMobile}
+              >
                 {t('allMatches')}
               </Button>
-              <Button size="small" variant={filter === 'upcoming' ? 'contained' : 'outlined'} onClick={() => setFilter('upcoming')} sx={{ mr: 1 }}>
+              <Button
+                size="small"
+                variant={filter === 'upcoming' ? 'contained' : 'outlined'}
+                onClick={() => setFilter('upcoming')}
+                fullWidth={isMobile}
+              >
                 {t('upcoming')}
               </Button>
-              <Button size="small" variant={filter === 'played' ? 'contained' : 'outlined'} onClick={() => setFilter('played')}>
+              <Button
+                size="small"
+                variant={filter === 'played' ? 'contained' : 'outlined'}
+                onClick={() => setFilter('played')}
+                fullWidth={isMobile}
+              >
                 {t('played')}
               </Button>
-            </div>
+            </Stack>
             <Accordion>
-              <AccordionSummary expandIcon="▶">
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>{t('predictions')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -262,7 +313,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             </Accordion>
 
             <Accordion sx={{ mt: 1 }}>
-              <AccordionSummary expandIcon="▶">
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>{t('matches')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -341,7 +392,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             </Accordion>
 
             <Accordion sx={{ mt: 1 }}>
-              <AccordionSummary expandIcon="▶">
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>{t('ranking')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -382,21 +433,33 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
         </Card>
       )}
 
-      <Dialog open={infoOpen} onClose={() => setInfoOpen(false)}>
+      <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>{penca.name}</DialogTitle>
         <DialogContent dividers>
-          <Typography variant="subtitle2" gutterBottom>
-            {t('rules')}
-          </Typography>
-          <Typography variant="body2" paragraph>
-            {penca.rules || t('noRules')}
-          </Typography>
-          <Typography variant="subtitle2" gutterBottom>
-            {t('prizes')}
-          </Typography>
-          <Typography variant="body2">
-            {penca.prizes || t('noPrizes')}
-          </Typography>
+          <Stack spacing={2}>
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                {t('format')}
+              </Typography>
+              <Chip size="small" color="primary" label={tournamentLabel} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                {t('rules')}
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+                {scoringText}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                {t('prizes')}
+              </Typography>
+              <Typography variant="body2">
+                {penca.prizes || t('noPrizes')}
+              </Typography>
+            </Box>
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setInfoOpen(false)}>{t('close')}</Button>

@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import theme from './theme';
 import Login from './Login';
 import Register from './Register';
@@ -14,15 +14,19 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
-        <Header />
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/owner" element={<OwnerPanel />} />
-          <Route path="/admin/edit" element={<Admin />} />
-        </Routes>
-        <Footer />
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <Header />
+          <Box component="main" sx={{ flex: 1 }}>
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/owner" element={<OwnerPanel />} />
+              <Route path="/admin/edit" element={<Admin />} />
+            </Routes>
+          </Box>
+          <Footer />
+        </Box>
       </BrowserRouter>
     </ThemeProvider>
   );

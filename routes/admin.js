@@ -12,6 +12,8 @@ const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
 const updateResults = require('../scripts/updateResults');
 const uploadJson = require('../middleware/jsonUpload');
+const { sanitizeScoring } = require('../utils/scoring');
+const { recordAudit } = require('../utils/audit');
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -114,6 +116,13 @@ router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
         });
 
         await owner.save();
+        await recordAudit({
+            action: 'owner:create',
+            entityType: 'user',
+            entityId: owner._id,
+            actor: req.session.user._id,
+            metadata: { username: owner.username }
+        });
         res.status(201).json({ ownerId: owner._id });
     } catch (error) {
         console.error('Error creating owner:', error);
@@ -145,6 +154,13 @@ router.put('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (surname !== undefined) owner.surname = surname;
 
         await owner.save();
+        await recordAudit({
+            action: 'owner:update',
+            entityType: 'user',
+            entityId: owner._id,
+            actor: req.session.user._id,
+            metadata: { username: owner.username }
+        });
         res.status(200).json({ message: 'Owner updated' });
     } catch (error) {
         console.error('Error updating owner:', error);
@@ -162,6 +178,14 @@ router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
         await User.deleteOne({ _id: owner._id });
         await User.updateMany({}, { $pull: { pencas: { $in: owner.ownedPencas } } });
 
+        await recordAudit({
+            action: 'owner:delete',
+            entityType: 'user',
+            entityId: owner._id,
+            actor: req.session.user._id,
+            metadata: { username: owner.username }
+        });
+
         res.json({ message: 'Owner deleted' });
     } catch (error) {
         console.error('Error deleting owner:', error);
@@ -172,13 +196,16 @@ router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
 // Crear penca
 router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, owner, participantLimit, competition, isPublic } = req.body;
+        const { name, owner, participantLimit, competition, isPublic, scoring, rules, tournamentMode, modeSettings } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
         const ownerUser = owner ? await User.findById(owner) : req.session.user;
         if (!ownerUser) return res.status(404).json({ error: 'Owner not found' });
 
         let fixtureIds = [];
+
+        const sanitizedScoring = sanitizeScoring(scoring);
+        const allowedModes = Penca.schema.path('tournamentMode').enumValues;
 
         const penca = new Penca({
             name,
@@ -188,7 +215,13 @@ router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
             participantLimit: participantLimit ? Number(participantLimit) : undefined,
             isPublic: isPublic === true || isPublic === 'true',
             fixture: fixtureIds,
-            participants: []
+            participants: [],
+            scoring: sanitizedScoring,
+            rules: rules || Penca.rulesText(sanitizedScoring),
+            tournamentMode: tournamentMode && allowedModes.includes(tournamentMode)
+                ? tournamentMode
+                : 'group_stage_knockout',
+            modeSettings: modeSettings || {}
         });
 
         await penca.save();
@@ -196,6 +229,14 @@ router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
         ownerUser.ownedPencas = ownerUser.ownedPencas || [];
         ownerUser.ownedPencas.push(penca._id);
         await ownerUser.save();
+
+        await recordAudit({
+            action: 'penca:create-admin',
+            entityType: 'penca',
+            entityId: penca._id,
+            actor: req.session.user._id,
+            metadata: { scoring: penca.scoring, tournamentMode: penca.tournamentMode }
+        });
 
         res.status(201).json({ pencaId: penca._id, code: penca.code });
     } catch (error) {
@@ -218,7 +259,7 @@ router.get('/pencas', isAuthenticated, isAdmin, async (req, res) => {
 // Actualizar penca
 router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, participantLimit, owner, competition, isPublic } = req.body;
+        const { name, participantLimit, owner, competition, isPublic, scoring, rules, tournamentMode, modeSettings } = req.body;
         const penca = await Penca.findById(req.params.id);
         if (!penca) return res.status(404).json({ error: 'Penca not found' });
 
@@ -235,8 +276,27 @@ router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (participantLimit !== undefined) penca.participantLimit = Number(participantLimit);
         if (competition) penca.competition = competition;
         if (isPublic !== undefined) penca.isPublic = isPublic === true || isPublic === 'true';
+        if (scoring) {
+            penca.scoring = sanitizeScoring({ ...penca.scoring, ...scoring });
+        }
+        if (rules !== undefined) {
+            penca.rules = rules || Penca.rulesText(penca.scoring);
+        }
+        if (tournamentMode && Penca.schema.path('tournamentMode').enumValues.includes(tournamentMode)) {
+            penca.tournamentMode = tournamentMode;
+        }
+        if (modeSettings) {
+            penca.modeSettings = modeSettings;
+        }
 
         await penca.save();
+        await recordAudit({
+            action: 'penca:update-admin',
+            entityType: 'penca',
+            entityId: penca._id,
+            actor: req.session.user._id,
+            metadata: { isPublic: penca.isPublic, scoring: penca.scoring, tournamentMode: penca.tournamentMode }
+        });
         res.json({ message: 'Penca updated' });
     } catch (error) {
         console.error('Error updating penca:', error);
@@ -251,6 +311,13 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (!penca) return res.status(404).json({ error: 'Penca not found' });
 
         await User.updateOne({ _id: penca.owner }, { $pull: { ownedPencas: penca._id } });
+        await recordAudit({
+            action: 'penca:delete-admin',
+            entityType: 'penca',
+            entityId: req.params.id,
+            actor: req.session.user._id,
+            metadata: { name: penca.name }
+        });
         res.json({ message: 'Penca deleted' });
     } catch (error) {
         console.error('Error deleting penca:', error);
