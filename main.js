@@ -195,7 +195,9 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
         return res.status(403).json({ error: getMessage('ADMIN_ONLY', req.lang) });
     }
     try {
-        const pencas = await Penca.find({ participants: user._id }).select('name _id competition fixture rules prizes scoring');
+        const pencas = await Penca.find({ participants: user._id }).select(
+            'name _id competition fixture rules prizes scoring tournamentMode modeSettings'
+        );
         res.json({ user: { username: user.username, role: user.role }, pencas });
     } catch (err) {
         console.error('dashboard api error', err);
@@ -210,7 +212,9 @@ app.get('/api/owner', isAuthenticated, async (req, res) => {
     }
     try {
         const pencas = await Penca.find({ owner: user._id })
-            .select('name code competition participants pendingRequests rules prizes isPublic fixture scoring')
+            .select(
+                'name code competition participants pendingRequests rules prizes isPublic fixture scoring tournamentMode modeSettings'
+            )
             .populate('participants', 'username')
             .populate('pendingRequests', 'username');
         res.json({ user: { username: user.username, role: user.role }, pencas });

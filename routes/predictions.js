@@ -4,6 +4,7 @@ const Prediction = require('../models/Prediction');
 const Match = require('../models/Match'); // Importar el modelo de partidos
 const Penca = require('../models/Penca');
 const { getMessage } = require('../utils/messages');
+const { recordAudit } = require('../utils/audit');
 
 const DEBUG = process.env.DEBUG === 'true';
 function debugLog(...args) {
@@ -82,6 +83,14 @@ router.post('/', async (req, res) => {
             });
         }
         await prediction.save();
+
+        await recordAudit({
+            action: 'prediction:upsert',
+            entityType: 'prediction',
+            entityId: prediction._id,
+            actor: user._id,
+            metadata: { pencaId, matchId }
+        });
         res.json({ message: getMessage('PREDICTION_SAVED', req.lang) });
     } catch (err) {
         console.error('Error al guardar la predicción:', err);

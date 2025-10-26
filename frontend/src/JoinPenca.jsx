@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, TextField, Alert } from '@mui/material';
+import { Button, TextField, Alert, Stack } from '@mui/material';
 import useLang from './useLang';
 
 export default function JoinPenca({ onJoined }) {
@@ -34,35 +34,37 @@ export default function JoinPenca({ onJoined }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
-      <TextField
-        label={t('code')}
-        value={code}
-        onChange={e => setCode(e.target.value)}
-        required
-        size="small"
-        sx={{ mr: 1 }}
-      />
-      <TextField
-        label={t('competition')}
-        value={competition}
-        onChange={e => setCompetition(e.target.value)}
-        size="small"
-        sx={{ mr: 1 }}
-      />
-      <Button variant="contained" type="submit">
+    <Stack component="form" onSubmit={handleSubmit} spacing={1.5} sx={{ mt: 2, maxWidth: 420 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+        <TextField
+          label={t('code')}
+          value={code}
+          onChange={e => setCode(e.target.value)}
+          required
+          size="small"
+          fullWidth
+        />
+        <TextField
+          label={t('competition')}
+          value={competition}
+          onChange={e => setCompetition(e.target.value)}
+          size="small"
+          fullWidth
+        />
+      </Stack>
+      <Button variant="contained" type="submit" size="small" sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}>
         {t('join')}
       </Button>
       {message && (
-        <Alert severity="success" sx={{ mt: 1 }}>
+        <Alert severity="success">
           {message}
         </Alert>
       )}
       {error && (
-        <Alert severity="error" sx={{ mt: 1 }}>
+        <Alert severity="error">
           {error}
         </Alert>
       )}
-    </form>
+    </Stack>
   );
 }

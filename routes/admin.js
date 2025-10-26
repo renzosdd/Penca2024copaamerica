@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
@@ -12,6 +13,8 @@ const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
 const updateResults = require('../scripts/updateResults');
 const uploadJson = require('../middleware/jsonUpload');
+const { sanitizeScoring } = require('../utils/scoring');
+const { recordAudit } = require('../utils/audit');
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -25,6 +28,21 @@ const upload = multer({
         }
     }
 });
+
+async function findCompetitionByIdOrName(identifier) {
+    if (!identifier) {
+        return null;
+    }
+
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+        const byId = await Competition.findById(identifier);
+        if (byId) {
+            return byId;
+        }
+    }
+
+    return Competition.findOne({ name: identifier });
+}
  
 
 // Página de administración
@@ -114,6 +132,13 @@ router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
         });
 
         await owner.save();
+        await recordAudit({
+            action: 'owner:create',
+            entityType: 'user',
+            entityId: owner._id,
+            actor: req.session.user._id,
+            metadata: { username: owner.username }
+        });
         res.status(201).json({ ownerId: owner._id });
     } catch (error) {
         console.error('Error creating owner:', error);
@@ -145,6 +170,13 @@ router.put('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (surname !== undefined) owner.surname = surname;
 
         await owner.save();
+        await recordAudit({
+            action: 'owner:update',
+            entityType: 'user',
+            entityId: owner._id,
+            actor: req.session.user._id,
+            metadata: { username: owner.username }
+        });
         res.status(200).json({ message: 'Owner updated' });
     } catch (error) {
         console.error('Error updating owner:', error);
@@ -162,6 +194,14 @@ router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
         await User.deleteOne({ _id: owner._id });
         await User.updateMany({}, { $pull: { pencas: { $in: owner.ownedPencas } } });
 
+        await recordAudit({
+            action: 'owner:delete',
+            entityType: 'user',
+            entityId: owner._id,
+            actor: req.session.user._id,
+            metadata: { username: owner.username }
+        });
+
         res.json({ message: 'Owner deleted' });
     } catch (error) {
         console.error('Error deleting owner:', error);
@@ -172,13 +212,16 @@ router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
 // Crear penca
 router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, owner, participantLimit, competition, isPublic } = req.body;
+        const { name, owner, participantLimit, competition, isPublic, scoring, rules, tournamentMode, modeSettings } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
         const ownerUser = owner ? await User.findById(owner) : req.session.user;
         if (!ownerUser) return res.status(404).json({ error: 'Owner not found' });
 
         let fixtureIds = [];
+
+        const sanitizedScoring = sanitizeScoring(scoring);
+        const allowedModes = Penca.schema.path('tournamentMode').enumValues;
 
         const penca = new Penca({
             name,
@@ -188,7 +231,13 @@ router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
             participantLimit: participantLimit ? Number(participantLimit) : undefined,
             isPublic: isPublic === true || isPublic === 'true',
             fixture: fixtureIds,
-            participants: []
+            participants: [],
+            scoring: sanitizedScoring,
+            rules: rules || Penca.rulesText(sanitizedScoring),
+            tournamentMode: tournamentMode && allowedModes.includes(tournamentMode)
+                ? tournamentMode
+                : 'group_stage_knockout',
+            modeSettings: modeSettings || {}
         });
 
         await penca.save();
@@ -196,6 +245,14 @@ router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
         ownerUser.ownedPencas = ownerUser.ownedPencas || [];
         ownerUser.ownedPencas.push(penca._id);
         await ownerUser.save();
+
+        await recordAudit({
+            action: 'penca:create-admin',
+            entityType: 'penca',
+            entityId: penca._id,
+            actor: req.session.user._id,
+            metadata: { scoring: penca.scoring, tournamentMode: penca.tournamentMode }
+        });
 
         res.status(201).json({ pencaId: penca._id, code: penca.code });
     } catch (error) {
@@ -218,7 +275,7 @@ router.get('/pencas', isAuthenticated, isAdmin, async (req, res) => {
 // Actualizar penca
 router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, participantLimit, owner, competition, isPublic } = req.body;
+        const { name, participantLimit, owner, competition, isPublic, scoring, rules, tournamentMode, modeSettings } = req.body;
         const penca = await Penca.findById(req.params.id);
         if (!penca) return res.status(404).json({ error: 'Penca not found' });
 
@@ -235,8 +292,27 @@ router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (participantLimit !== undefined) penca.participantLimit = Number(participantLimit);
         if (competition) penca.competition = competition;
         if (isPublic !== undefined) penca.isPublic = isPublic === true || isPublic === 'true';
+        if (scoring) {
+            penca.scoring = sanitizeScoring({ ...penca.scoring, ...scoring });
+        }
+        if (rules !== undefined) {
+            penca.rules = rules || Penca.rulesText(penca.scoring);
+        }
+        if (tournamentMode && Penca.schema.path('tournamentMode').enumValues.includes(tournamentMode)) {
+            penca.tournamentMode = tournamentMode;
+        }
+        if (modeSettings) {
+            penca.modeSettings = modeSettings;
+        }
 
         await penca.save();
+        await recordAudit({
+            action: 'penca:update-admin',
+            entityType: 'penca',
+            entityId: penca._id,
+            actor: req.session.user._id,
+            metadata: { isPublic: penca.isPublic, scoring: penca.scoring, tournamentMode: penca.tournamentMode }
+        });
         res.json({ message: 'Penca updated' });
     } catch (error) {
         console.error('Error updating penca:', error);
@@ -251,6 +327,13 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
         if (!penca) return res.status(404).json({ error: 'Penca not found' });
 
         await User.updateOne({ _id: penca.owner }, { $pull: { ownedPencas: penca._id } });
+        await recordAudit({
+            action: 'penca:delete-admin',
+            entityType: 'penca',
+            entityId: req.params.id,
+            actor: req.session.user._id,
+            metadata: { name: penca.name }
+        });
         res.json({ message: 'Penca deleted' });
     } catch (error) {
         console.error('Error deleting penca:', error);
@@ -293,7 +376,7 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
         });
         await competition.save();
 
-        const requiredFields = ['date', 'time', 'team1', 'team2', 'group_name', 'series', 'tournament'];
+        const requiredFields = ['team1', 'team2'];
 
         const validateMatches = (matches, expected) => {
             if (expected !== undefined && matches.length !== Number(expected)) {
@@ -307,7 +390,10 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
                         return `Match ${i + 1} missing field ${f}`;
                     }
                 }
-                const key = `${m.date}|${m.time}|${m.team1}|${m.team2}`;
+                const dateKey = m.date || '';
+                const timeKey = m.time || '';
+                const groupKey = m.group_name || '';
+                const key = `${dateKey}|${timeKey}|${groupKey}|${m.team1}|${m.team2}`;
                 if (seen.has(key)) {
                     return `Duplicate match: ${m.team1} vs ${m.team2} on ${m.date} ${m.time}`;
                 }
@@ -335,13 +421,13 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
             const err = validateMatches(importedMatches, expectedMatches);
             if (err) return res.status(400).json({ error: err });
             const data = importedMatches.map(m => ({
-                date: m.date,
-                time: m.time,
+                date: m.date || null,
+                time: m.time || null,
                 team1: m.team1,
                 team2: m.team2,
-                group_name: m.group_name,
-                series: m.series,
-                tournament: m.tournament,
+                group_name: m.group_name || 'Otros',
+                series: m.series || 'Fase de grupos',
+                tournament: m.tournament || name,
                 flag1: m.flag1,
                 flag2: m.flag2,
                 competition: m.competition || name
@@ -352,6 +438,11 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
             if (err) return res.status(400).json({ error: err });
             const data = fixture.map(m => ({
                 ...m,
+                date: m.date || null,
+                time: m.time || null,
+                group_name: m.group_name || 'Otros',
+                series: m.series || 'Fase de grupos',
+                tournament: m.tournament || name,
                 competition: m.competition || name
             }));
             await Match.insertMany(data);
@@ -495,7 +586,7 @@ router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) =>
 // Obtener partidos de una competencia
 router.get('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const comp = await Competition.findById(req.params.id);
+        const comp = await findCompetitionByIdOrName(req.params.id);
         if (!comp) {
             return res.status(404).json({ error: 'Competition not found' });
         }
@@ -514,8 +605,12 @@ router.put('/competitions/:id/knockout-order', isAuthenticated, isAdmin, async (
         if (!Array.isArray(order)) {
             return res.status(400).json({ error: 'order array required' });
         }
+        const comp = await findCompetitionByIdOrName(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
         await Promise.all(order.map((id, idx) =>
-            Match.updateOne({ _id: id, competition: req.params.id }, { order: idx })
+            Match.updateOne({ _id: id, competition: comp.name }, { order: idx })
         ));
         res.json({ message: 'Order updated' });
     } catch (error) {
@@ -527,16 +622,23 @@ router.put('/competitions/:id/knockout-order', isAuthenticated, isAdmin, async (
 // Actualizar datos de un partido
 router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
     try {
+        const comp = await findCompetitionByIdOrName(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+
         const match = await Match.findById(req.params.matchId);
-        if (!match || match.competition !== req.params.id) {
+        if (!match || match.competition !== comp.name) {
             return res.status(404).json({ error: 'Match not found' });
         }
 
-        const { team1, team2, date, time } = req.body;
+        const { team1, team2, date, time, group_name, series } = req.body;
         if (team1 !== undefined) match.team1 = team1;
         if (team2 !== undefined) match.team2 = team2;
-        if (date !== undefined) match.date = date;
-        if (time !== undefined) match.time = time;
+        if (date !== undefined) match.date = date || null;
+        if (time !== undefined) match.time = time || null;
+        if (group_name !== undefined) match.group_name = group_name || 'Otros';
+        if (series !== undefined) match.series = series || match.series;
 
         await match.save();
         res.json({ message: 'Match updated' });
@@ -546,17 +648,61 @@ router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async
     }
 });
 
+router.post('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const comp = await findCompetitionByIdOrName(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+
+        const { team1, team2 } = req.body;
+        if (!team1 || !team2) {
+            return res.status(400).json({ error: 'team1 and team2 are required' });
+        }
+
+        const match = new Match({
+            team1: team1.trim(),
+            team2: team2.trim(),
+            date: req.body.date || null,
+            time: req.body.time || null,
+            group_name: req.body.group_name || 'Otros',
+            series: req.body.series || 'Fase de grupos',
+            tournament: req.body.tournament || comp.name,
+            competition: comp.name,
+            order: typeof req.body.order === 'number' ? req.body.order : undefined,
+            result1: req.body.result1 === undefined || req.body.result1 === '' ? null : Number(req.body.result1),
+            result2: req.body.result2 === undefined || req.body.result2 === '' ? null : Number(req.body.result2)
+        });
+
+        if (match.order === undefined) {
+            const count = await Match.countDocuments({ competition: comp.name });
+            match.order = count;
+        }
+
+        await match.save();
+        res.status(201).json(match);
+    } catch (error) {
+        console.error('Error creating match:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Actualizar resultado de un partido y recalcular eliminatorias
 router.post('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
     try {
+        const comp = await findCompetitionByIdOrName(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+
         const match = await Match.findById(req.params.matchId);
-        if (!match || match.competition !== req.params.id) {
+        if (!match || match.competition !== comp.name) {
             return res.status(404).json({ error: 'Match not found' });
         }
 
         const { result1, result2 } = req.body;
-        match.result1 = result1;
-        match.result2 = result2;
+        match.result1 = result1 === null || result1 === '' || result1 === undefined ? null : Number(result1);
+        match.result2 = result2 === null || result2 === '' || result2 === undefined ? null : Number(result2);
         await match.save();
         await updateEliminationMatches(match.competition);
         res.json({ message: 'Match result updated' });

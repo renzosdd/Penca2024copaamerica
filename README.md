@@ -56,6 +56,42 @@ La variable `DEFAULT_COMPETITION` define el nombre de la competencia principal.
 Debes crearla desde el asistente de competencias en el panel de administración
 para que pueda asignarse por defecto a nuevos usuarios y puntajes.
 
+### Notificaciones por correo y auditoría
+
+La aplicación puede enviar avisos automáticos cuando un jugador solicita unirse
+a una penca o cuando su acceso es aprobado. Configura las siguientes variables
+de entorno para habilitar el envío vía SMTP:
+
+```bash
+SMTP_HOST=<servidor_smtp>
+SMTP_PORT=587
+SMTP_SECURE=false # true si usas TLS en el puerto 465
+SMTP_USER=<usuario>
+SMTP_PASS=<password>
+EMAIL_FROM="Penca 2026 <no-reply@tudominio.com>"
+```
+
+Si las credenciales no están presentes, la aplicación registrará el intento de
+envío en consola sin fallar. Cada alta, edición o eliminación relevante genera un
+registro en la colección `auditlogs`, lo que permite reconstruir el historial de
+cambios en caso de controversias.
+
+### Formatos de torneo y reglas de puntuación
+
+Las pencas ahora admiten distintos formatos (`Grupos + Eliminación`, `Liga`,
+`Eliminación directa` o `Personalizado`) y guardan la configuración asociada en
+los campos `tournamentMode` y `modeSettings`. El cálculo de puntos utiliza un
+esquema equilibrado pensado para el Mundial 2026:
+
+- 5 puntos por acertar el marcador exacto.
+- 3 puntos por acertar el resultado (victoria/empate).
+- 2 puntos por acertar la diferencia de goles.
+- 1 punto por cada equipo con cantidad de goles correcta.
+- 1 punto extra por cada arco en cero pronosticado correctamente.
+
+El detalle de la puntuación aparece en el botón de información dentro de cada
+penca para que todos los participantes tengan las reglas a un clic.
+
 3. Inicia el servidor en modo desarrollo con **nodemon**:
 
 ```bash
@@ -152,6 +188,14 @@ El comando utilizará los valores `apiLeagueId` y `apiSeason` definidos en la co
 - `POST /admin/update-results/:competition` – obtiene los resultados desde la API-Football.
 - `GET /api/owner` – devuelve las pencas administradas por el owner autenticado.
 - `GET /competitions/:competition/matches` – lista los partidos de la competencia indicada.
+
+## Ideas para próximas iteraciones
+
+- Crear dashboards en tiempo real con WebSockets para reflejar cambios en los marcadores al instante.
+- Permitir configuraciones de scoring avanzadas por penca (bonos por ronda, resultados parciales) mediante presets.
+- Integrar notificaciones push y recordatorios antes de cada partido para mejorar el engagement móvil.
+- Añadir un historial visual de auditoría en el panel de owners para rastrear aprobaciones, cambios de fixture y edición de resultados.
+- Incorporar un modo “simulador” que genere estadísticas hipotéticas de clasificación al ingresar predicciones.
 
 ## Pruebas
 

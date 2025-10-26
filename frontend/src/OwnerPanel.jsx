@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Button,
   Card,
   CardContent,
   Checkbox,
+  Chip,
+  Container,
   FormControlLabel,
-  Button,
+  Stack,
   TextField,
-  Accordion, 
-  AccordionSummary,
-  AccordionDetails,
   Typography
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useLang from './useLang';
+import roundOrder from './roundOrder';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
@@ -20,6 +26,22 @@ export default function OwnerPanel() {
   const { t } = useLang();
   const [expandedPenca, setExpandedPenca] = useState(null);
   const [filter, setFilter] = useState('all');
+
+  const matchTimeValue = match => {
+    if (!match || !match.date || !match.time) {
+      return Number.POSITIVE_INFINITY;
+    }
+    const value = Date.parse(`${match.date}T${match.time}`);
+    return Number.isNaN(value) ? Number.POSITIVE_INFINITY : value;
+  };
+
+  const isGroupKey = key => /^Grupo\s+/i.test(key);
+  const compareGroupKey = (a, b) => {
+    const normalize = value => value.replace(/^Grupo\s+/i, '').trim();
+    return normalize(a).localeCompare(normalize(b), undefined, { sensitivity: 'base', numeric: true });
+  };
+
+  const knockoutOrder = roundOrder.filter(label => !/^Grupo\s+/i.test(label));
 
 
   useEffect(() => {
@@ -89,7 +111,24 @@ export default function OwnerPanel() {
     }
   }
 
-  const autoRules = s => `${s.exact} puntos por resultado exacto, ${s.outcome} por acertar ganador o empate y ${s.goals} por acertar goles de un equipo`;
+  const sanitizeScoring = scoring => ({
+    exact: Number(scoring?.exact) || 0,
+    outcome: Number(scoring?.outcome) || 0,
+    goalDifference: Number(scoring?.goalDifference) || 0,
+    teamGoals: Number(scoring?.teamGoals) || 0,
+    cleanSheet: Number(scoring?.cleanSheet) || 0
+  });
+
+  const autoRules = scoring => {
+    const s = sanitizeScoring(scoring);
+    return [
+      `• ${s.exact} ${t('ruleExact')}`,
+      `• ${s.outcome} ${t('ruleOutcome')}`,
+      `• ${s.goalDifference} ${t('ruleGoalDifference')}`,
+      `• ${s.teamGoals} ${t('ruleTeamGoals')}`,
+      `• ${s.cleanSheet} ${t('ruleCleanSheet')}`
+    ].join('\n');
+  };
 
   const updateField = (id, field, value) => {
     setPencas(ps => ps.map(p => p._id === id ? { ...p, [field]: value } : p));
@@ -98,7 +137,7 @@ export default function OwnerPanel() {
   const updateScoring = (id, key, val) => {
     setPencas(ps => ps.map(p => {
       if (p._id !== id) return p;
-      const scoring = { ...p.scoring, [key]: Number(val) };
+      const scoring = sanitizeScoring({ ...p.scoring, [key]: val });
       return { ...p, scoring, rules: autoRules(scoring) };
     }));
   };
@@ -138,9 +177,7 @@ export default function OwnerPanel() {
     } else {
       list = matches.filter(m => m.competition === p.competition);
     }
-    list.sort(
-      (a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`)
-    );
+    list.sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
     if (filter === 'upcoming') {
       list = list.filter(m => m.result1 == null && m.result2 == null);
     } else if (filter === 'played') {
@@ -148,7 +185,7 @@ export default function OwnerPanel() {
     }
     const grouped = {};
     list.forEach(m => {
-      const g = m.group_name || 'Otros';
+      const g = m.group_name?.trim() || 'Otros';
       if (!grouped[g]) grouped[g] = [];
       grouped[g].push(m);
     });
@@ -156,127 +193,137 @@ export default function OwnerPanel() {
   };
 
   return (
-    <div className="container" style={{ marginTop: '2rem' }}>
-      <h5>{t('ownerMyPencas')}</h5>
-      <div style={{ marginBottom: '0.5rem' }}>
-        <Button size="small" variant={filter === 'all' ? 'contained' : 'outlined'} onClick={() => setFilter('all')} sx={{ mr: 1 }}>
-          {t('allMatches')}
-        </Button>
-        <Button size="small" variant={filter === 'upcoming' ? 'contained' : 'outlined'} onClick={() => setFilter('upcoming')} sx={{ mr: 1 }}>
-          {t('upcoming')}
-        </Button>
-        <Button size="small" variant={filter === 'played' ? 'contained' : 'outlined'} onClick={() => setFilter('played')}>
-          {t('played')}
-        </Button>
-      </div>
+    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+      <Stack spacing={3}>
+        <Typography variant="h5">{t('ownerMyPencas')}</Typography>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+          <Button size="small" variant={filter === 'all' ? 'contained' : 'outlined'} onClick={() => setFilter('all')} fullWidth={false}>
+            {t('allMatches')}
+          </Button>
+          <Button size="small" variant={filter === 'upcoming' ? 'contained' : 'outlined'} onClick={() => setFilter('upcoming')} fullWidth={false}>
+            {t('upcoming')}
+          </Button>
+          <Button size="small" variant={filter === 'played' ? 'contained' : 'outlined'} onClick={() => setFilter('played')} fullWidth={false}>
+            {t('played')}
+          </Button>
+        </Stack>
       {pencas.map(p => {
         const ranking = rankings[p._id] || [];
         const pMatches = filterMatches(p);
+        const pending = Array.isArray(p.pendingRequests) ? p.pendingRequests : [];
+        const participants = Array.isArray(p.participants) ? p.participants : [];
+        const scoring = sanitizeScoring(p.scoring);
+        const modeKey = p.tournamentMode ? `mode_${p.tournamentMode}` : 'mode_group_stage_knockout';
+        const translatedMode = t(modeKey);
+        const tournamentLabel = translatedMode === modeKey ? p.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
+        const groupKeys = Object.keys(pMatches)
+          .filter(isGroupKey)
+          .sort(compareGroupKey);
+        const knockoutKeys = knockoutOrder.filter(label => Array.isArray(pMatches[label]));
+        const knockoutSet = new Set(knockoutKeys);
+        const otherKeys = Object.keys(pMatches)
+          .filter(key => !isGroupKey(key) && !knockoutSet.has(key))
+          .sort((a, b) => matchTimeValue(pMatches[a]?.[0]) - matchTimeValue(pMatches[b]?.[0]));
+
+        const renderMatchCard = match => (
+          <Card key={match._id} className="match-card">
+            <CardContent>
+              <div className="match-header">
+                <div className="team">
+                  <img src={`/images/${match.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team1} className="circle responsive-img" />
+                  <span className="team-name">{match.team1}</span>
+                </div>
+                <span className="vs">vs</span>
+                <div className="team">
+                  <img src={`/images/${match.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team2} className="circle responsive-img" />
+                  <span className="team-name">{match.team2}</span>
+                </div>
+              </div>
+              <div className="match-details">
+                {match.result1 !== undefined && match.result2 !== undefined ? (
+                  <strong>{match.result1} - {match.result2}</strong>
+                ) : match.date && match.time ? (
+                  <span>{match.date} {match.time}</span>
+                ) : (
+                  <span>{t('scheduleTbd')}</span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+        const renderMatchesSection = key => (
+          <div key={key} style={{ marginBottom: '1rem' }}>
+            <h6>{key}</h6>
+            {pMatches[key].map(renderMatchCard)}
+          </div>
+        );
+
         return (
           <Accordion
             key={p._id}
             expanded={expandedPenca === p._id}
             onChange={(_, exp) => setExpandedPenca(exp ? p._id : null)}
-            sx={{ marginBottom: '1rem' }}
+            sx={{ borderRadius: 2, boxShadow: 3 }}
           >
-            <AccordionSummary expandIcon="▶">
-              <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                <Typography component="span" fontWeight="bold" sx={{ mr: 1 }}>{p.name} - {p.code}</Typography>
-                <FormControlLabel
-                  control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
-                  label={t('public')}
-                />
-              </div>
-            </AccordionSummary>
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: 1 }}>
+                <Typography component="span" fontWeight="bold">
+                  {p.name} · {p.code}
+                </Typography>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Chip size="small" label={tournamentLabel} color="primary" />
+                    <FormControlLabel
+                      control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
+                      label={t('public')}
+                    />
+                  </Stack>
+                </Box>
+              </AccordionSummary>
             <AccordionDetails>
-              {Object.keys(pMatches)
-                .filter(g => g.startsWith('Grupo'))
-                .sort()
-                .map(g => (
-                  <div key={g} style={{ marginBottom: '1rem' }}>
-                    <h6>{g}</h6>
-                    {pMatches[g].map(m => (
-                      <Card key={m._id} className="match-card">
-                        <CardContent>
-                          <div className="match-header">
-                            <div className="team">
-                              <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
-                              <span className="team-name">{m.team1}</span>
-                            </div>
-                            <span className="vs">vs</span>
-                            <div className="team">
-                              <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
-                              <span className="team-name">{m.team2}</span>
-                            </div>
-                          </div>
-                          <div className="match-details">
-                            {m.result1 !== undefined && m.result2 !== undefined ? (
-                              <strong>{m.result1} - {m.result2}</strong>
-                            ) : (
-                              <span>{m.date} {m.time}</span>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ))}
+              {groupKeys.map(renderMatchesSection)}
+              {knockoutKeys.map(renderMatchesSection)}
+              {otherKeys.map(renderMatchesSection)}
 
-              {['Cuartos de final', 'Semifinales', 'Tercer puesto', 'Final']
-                .filter(r => pMatches[r])
-                .map(r => (
-                  <div key={r} style={{ marginBottom: '1rem' }}>
-                    <h6>{r}</h6>
-                    {pMatches[r].map(m => (
-                      <Card key={m._id} className="match-card">
-                        <CardContent>
-                          <div className="match-header">
-                            <div className="team">
-                              <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
-                              <span className="team-name">{m.team1}</span>
-                            </div>
-                            <span className="vs">vs</span>
-                            <div className="team">
-                              <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
-                              <span className="team-name">{m.team2}</span>
-                            </div>
-                          </div>
-                          <div className="match-details">
-                            {m.result1 !== undefined && m.result2 !== undefined ? (
-                              <strong>{m.result1} - {m.result2}</strong>
-                            ) : (
-                              <span>{m.date} {m.time}</span>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ))}
-
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 2 }}>
                 <TextField
                   label={t('exact')}
                   type="number"
                   size="small"
-                  value={p.scoring?.exact ?? 0}
+                  value={scoring.exact}
                   onChange={e => updateScoring(p._id, 'exact', e.target.value)}
                 />
                 <TextField
                   label={t('outcome')}
                   type="number"
                   size="small"
-                  value={p.scoring?.outcome ?? 0}
+                  value={scoring.outcome}
                   onChange={e => updateScoring(p._id, 'outcome', e.target.value)}
                 />
                 <TextField
-                  label={t('goals')}
+                  label={t('goalDifferenceLabel')}
                   type="number"
                   size="small"
-                  value={p.scoring?.goals ?? 0}
-                  onChange={e => updateScoring(p._id, 'goals', e.target.value)}
+                  value={scoring.goalDifference}
+                  onChange={e => updateScoring(p._id, 'goalDifference', e.target.value)}
                 />
-              </div>
+              </Stack>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 1 }}>
+                <TextField
+                  label={t('teamGoalsLabel')}
+                  type="number"
+                  size="small"
+                  value={scoring.teamGoals}
+                  onChange={e => updateScoring(p._id, 'teamGoals', e.target.value)}
+                />
+                <TextField
+                  label={t('cleanSheetLabel')}
+                  type="number"
+                  size="small"
+                  value={scoring.cleanSheet}
+                  onChange={e => updateScoring(p._id, 'cleanSheet', e.target.value)}
+                />
+              </Stack>
 
               <TextField
                 label={t('regulation')}
@@ -285,7 +332,7 @@ export default function OwnerPanel() {
                 multiline
                 fullWidth
                 size="small"
-                sx={{ mt: 1 }}
+                sx={{ mt: 2 }}
               />
               <TextField
                 label={t('awards')}
@@ -299,41 +346,92 @@ export default function OwnerPanel() {
               <Button
                 size="small"
                 variant="contained"
-                sx={{ mt: 1 }}
+                sx={{ mt: 2 }}
                 onClick={() => saveInfo(p._id)}
               >
                 {t('save')}
               </Button>
-              <h6>{t('requests')}</h6>
-              <ul className="collection">
-                {p.pendingRequests.map(u => (
-                  <li key={u._id || u} className="collection-item">
-                    {u.username || u}
-                    <a href="#" className="secondary-content" onClick={e => { e.preventDefault(); approve(p._id, u._id || u); }}>✔</a>
-                  </li>
+              <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                {t('requests')}
+              </Typography>
+              <Stack spacing={1} sx={{ mt: 1 }}>
+                {pending.map(u => (
+                  <Stack
+                    key={u._id || u}
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
+                  >
+                    <Typography variant="body2">{u.username || u}</Typography>
+                    <Button size="small" onClick={() => approve(p._id, u._id || u)}>
+                      {t('approve')}
+                    </Button>
+                  </Stack>
                 ))}
-              </ul>
-              <h6>{t('participants')}</h6>
-              <ul className="collection">
-                {p.participants.map(u => (
-                  <li key={u._id || u} className="collection-item">
-                    {u.username || u}
-                    <a href="#" className="secondary-content red-text" onClick={e => { e.preventDefault(); removeParticipant(p._id, u._id || u); }}>✖</a>
-                  </li>
+                {pending.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    {t('noRequests')}
+                  </Typography>
+                )}
+              </Stack>
+
+              <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                {t('participants')}
+              </Typography>
+              <Stack spacing={1} sx={{ mt: 1 }}>
+                {participants.map(u => (
+                  <Stack
+                    key={u._id || u}
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
+                  >
+                    <Typography variant="body2">{u.username || u}</Typography>
+                    <Button size="small" color="error" onClick={() => removeParticipant(p._id, u._id || u)}>
+                      {t('remove')}
+                    </Button>
+                  </Stack>
                 ))}
-              </ul>
-              <h6>{t('ranking')}</h6>
-              <ul className="collection">
+                {participants.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    {t('noParticipants')}
+                  </Typography>
+                )}
+              </Stack>
+
+              <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                {t('ranking')}
+              </Typography>
+              <Stack spacing={1} sx={{ mt: 1 }}>
                 {ranking.map((u, idx) => (
-                  <li key={u.userId} className={`collection-item rank-${idx + 1}`.trim()}>
-                    <img src={u.avatar} alt={u.username} className="avatar-small" /> {u.username} - {u.score}
-                  </li>
+                  <Stack
+                    key={u.userId}
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
+                  >
+                    <Typography variant="body2">
+                      {idx + 1}. {u.username}
+                    </Typography>
+                    <Typography variant="body2" fontWeight="bold">
+                      {u.score}
+                    </Typography>
+                  </Stack>
                 ))}
-              </ul>
+                {ranking.length === 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    {t('noRanking')}
+                  </Typography>
+                )}
+              </Stack>
             </AccordionDetails>
           </Accordion>
         );
       })}
-    </div>
+      </Stack>
+    </Container>
   );
 }
