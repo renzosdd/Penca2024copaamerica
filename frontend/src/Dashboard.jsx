@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Button, CircularProgress, Alert, Container, Stack, Typography, Box } from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
+import { Button, CircularProgress, Alert, Container, Stack, Typography, Box, Chip } from '@mui/material';
 import PencaSection from './PencaSection';
 import JoinPenca from './JoinPenca';
 import ProfileForm from './ProfileForm';
@@ -9,85 +9,36 @@ import useLang from './useLang';
 export default function Dashboard() {
   const [user, setUser] = useState(null);
   const [pencas, setPencas] = useState([]);
-  const [matches, setMatches] = useState([]);
+  const [matchesByCompetition, setMatchesByCompetition] = useState({});
   const [predictions, setPredictions] = useState([]);
   const [rankings, setRankings] = useState({});
-  const [groups, setGroups] = useState({});
+  const [groupsByCompetition, setGroupsByCompetition] = useState({});
   const [loading, setLoading] = useState(false);
+  const [competitionLoading, setCompetitionLoading] = useState({});
   const [error, setError] = useState('');
   const [showJoin, setShowJoin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const { t } = useLang();
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       const res = await fetch('/api/dashboard');
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
         setPencas(data.pencas || []);
+        setMatchesByCompetition({});
+        setGroupsByCompetition({});
+      } else {
+        setError(t('networkError'));
       }
     } catch (err) {
       console.error('dashboard fetch error', err);
       setError(t('networkError'));
     }
-  };
+  }, [t]);
 
-  useEffect(() => {
-    loadDashboard();
-  }, []);
-
-  useEffect(() => {
-    async function loadData() {
-      if (!pencas.length) return;
-      setLoading(true);
-      setError('');
-      try {
-        const comps = Array.from(new Set(pencas.map(p => p.competition)));
-
-        const matchResponses = await Promise.all(
-          comps.map(c => fetch(`/competitions/${encodeURIComponent(c)}/matches`))
-        );
-        const matchesData = (
-          await Promise.all(
-            matchResponses.map(r => (r.ok ? r.json() : Promise.resolve([])))
-          )
-        ).flat();
-        setMatches(matchesData);
-
-        const groupResponses = await Promise.all(
-          comps.map(c => fetch(`/groups/${encodeURIComponent(c)}`))
-        );
-        const groupsData = {};
-        await Promise.all(
-          groupResponses.map((r, idx) =>
-            r.ok
-              ? r
-                  .json()
-                  .then(data => {
-                    groupsData[comps[idx]] = data;
-                  })
-              : Promise.resolve()
-          )
-        );
-        setGroups(groupsData);
-
-        const pRes = await fetch('/predictions');
-        if (pRes.ok) setPredictions(await pRes.json());
-
-        pencas.forEach(p => loadRanking(p._id));
-      } catch (err) {
-        console.error('dashboard data error', err);
-        setError(t('networkError'));
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, [pencas]);
-
-
-  async function loadRanking(id) {
+  const loadRanking = useCallback(async id => {
     try {
       const res = await fetch(`/ranking?pencaId=${id}`);
       if (res.ok) {
@@ -98,12 +49,75 @@ export default function Dashboard() {
       console.error('ranking error', err);
       setError(t('networkError'));
     }
-  }
+  }, [t]);
 
+  useEffect(() => {
+    loadDashboard();
+  }, [loadDashboard]);
 
+  useEffect(() => {
+    async function loadBaseData() {
+      if (!pencas.length) {
+        setMatchesByCompetition({});
+        setGroupsByCompetition({});
+        setPredictions([]);
+        setRankings({});
+        return;
+      }
+      setLoading(true);
+      setError('');
+      try {
+        const pRes = await fetch('/predictions');
+        if (pRes.ok) {
+          setPredictions(await pRes.json());
+        }
+        await Promise.all(pencas.map(p => loadRanking(p._id)));
+      } catch (err) {
+        console.error('dashboard data error', err);
+        setError(t('networkError'));
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadBaseData();
+  }, [loadRanking, pencas, t]);
 
-  const getPrediction = (pencaId, matchId) =>
-    predictions.find(p => p.pencaId === pencaId && p.matchId === matchId && p.username === user.username);
+  const ensureCompetitionData = useCallback(async competitionName => {
+    if (!competitionName) return;
+    const hasMatches = Array.isArray(matchesByCompetition[competitionName]);
+    const hasGroups = Array.isArray(groupsByCompetition[competitionName]);
+    if (hasMatches && hasGroups) return;
+
+    setCompetitionLoading(state => ({ ...state, [competitionName]: true }));
+    try {
+      if (!hasMatches) {
+        const res = await fetch(`/competitions/${encodeURIComponent(competitionName)}/matches`);
+        if (res.ok) {
+          const data = await res.json();
+          setMatchesByCompetition(prev => ({ ...prev, [competitionName]: data }));
+        }
+      }
+      if (!hasGroups) {
+        const resGroups = await fetch(`/groups/${encodeURIComponent(competitionName)}`);
+        if (resGroups.ok) {
+          const groups = await resGroups.json();
+          setGroupsByCompetition(prev => ({ ...prev, [competitionName]: groups }));
+        }
+      }
+    } catch (err) {
+      console.error('competition data error', err);
+      setError(t('networkError'));
+    } finally {
+      setCompetitionLoading(state => ({ ...state, [competitionName]: false }));
+    }
+  }, [groupsByCompetition, matchesByCompetition, t]);
+
+  const getPrediction = useCallback((pencaId, matchId) => {
+    if (!user) return undefined;
+    return predictions.find(
+      p => p.pencaId === pencaId && p.matchId === matchId && p.username === user.username
+    );
+  }, [predictions, user]);
 
   const handlePrediction = async (e, pencaId, matchId) => {
     e.preventDefault();
@@ -117,9 +131,11 @@ export default function Dashboard() {
       const result = await res.json();
       if (res.ok) {
         const updated = predictions.filter(
-          p => !(p.pencaId === pencaId && p.matchId === matchId && p.username === user.username)
+          p => !(p.pencaId === pencaId && p.matchId === matchId && p.username === user?.username)
         );
-        updated.push({ pencaId, matchId, result1: Number(data.result1), result2: Number(data.result2), username: user.username });
+        if (user) {
+          updated.push({ pencaId, matchId, result1: Number(data.result1), result2: Number(data.result2), username: user.username });
+        }
         setPredictions(updated);
         return { success: true, message: result.message || 'OK' };
       }
@@ -155,6 +171,15 @@ export default function Dashboard() {
           </Alert>
         )}
 
+        {pencas.length > 0 && (
+          <Chip
+            size="small"
+            color="default"
+            label={`${pencas.length} ${t('pencas')}`}
+            sx={{ alignSelf: 'flex-start' }}
+          />
+        )}
+
         {pencas.length === 0 && (
           <Stack spacing={2} alignItems="flex-start">
             <Typography variant="body1">{t('noPencas')}</Typography>
@@ -168,12 +193,14 @@ export default function Dashboard() {
               <PencaSection
                 key={p._id}
                 penca={p}
-                matches={matches}
-                groups={groups}
+                matches={matchesByCompetition[p.competition] || []}
+                groups={groupsByCompetition[p.competition] || []}
                 getPrediction={getPrediction}
                 handlePrediction={handlePrediction}
                 ranking={rankings[p._id] || []}
                 currentUsername={user?.username}
+                onOpen={() => ensureCompetitionData(p.competition)}
+                isLoading={Boolean(competitionLoading[p.competition])}
               />
             ))}
             <Box>

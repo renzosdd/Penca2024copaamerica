@@ -8,6 +8,10 @@ const User = require('../models/User');
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
 const Competition = require('../models/Competition');
+const Prediction = require('../models/Prediction');
+const Score = require('../models/Score');
+const AuditLog = require('../models/AuditLog');
+const ApiUsage = require('../models/ApiUsage');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
@@ -32,6 +36,49 @@ const upload = multer({
 const SAMPLE_FIXTURE_PATH = path.join(__dirname, '..', 'public', 'samples', 'competition-fixture-example.json');
 const WORLDCUP_FIXTURE_PATH = path.join(__dirname, '..', 'public', 'samples', 'worldcup2026-fixture.json');
 const JSON_GUIDE_PATH = path.join(__dirname, '..', 'public', 'docs', 'competition-json-guide-es.md');
+
+const CLEANUP_COLLECTIONS = Object.freeze({
+    competitions: {
+        model: Competition,
+        label: 'Competiciones',
+        description: 'Fixtures, metadatos y estructura de torneos'
+    },
+    matches: {
+        model: Match,
+        label: 'Partidos',
+        description: 'Calendario de partidos asociados a las competencias'
+    },
+    pencas: {
+        model: Penca,
+        label: 'Pencas',
+        description: 'Pencas creadas por owners y relaciones con usuarios'
+    },
+    predictions: {
+        model: Prediction,
+        label: 'Predicciones',
+        description: 'Pronósticos enviados por los jugadores'
+    },
+    scores: {
+        model: Score,
+        label: 'Puntajes acumulados',
+        description: 'Resultados de puntajes calculados por competencia'
+    },
+    auditLogs: {
+        model: AuditLog,
+        label: 'Registros de auditoría',
+        description: 'Historial de acciones registradas por el sistema'
+    },
+    apiUsage: {
+        model: ApiUsage,
+        label: 'Uso de API',
+        description: 'Historial de llamadas externas almacenadas'
+    },
+    users: {
+        model: User,
+        label: 'Usuarios (no administradores)',
+        description: 'Jugadores y owners registrados, se preservan los administradores'
+    }
+});
 
 async function findCompetitionByIdOrName(identifier) {
     if (!identifier) {
@@ -106,6 +153,21 @@ function parseKickoff(value) {
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
+async function buildCleanupSnapshot() {
+    const entries = await Promise.all(
+        Object.entries(CLEANUP_COLLECTIONS).map(async ([key, cfg]) => {
+            const count = await cfg.model.estimatedDocumentCount();
+            return {
+                key,
+                label: cfg.label,
+                description: cfg.description,
+                count
+            };
+        })
+    );
+    return entries.sort((a, b) => a.label.localeCompare(b.label));
+}
+
 router.get('/audit-config', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const config = await getAuditConfig();
@@ -125,6 +187,72 @@ router.put('/audit-config', isAuthenticated, isAdmin, async (req, res) => {
         res.json({ ...updated, availableTypes: AUDIT_TYPES });
     } catch (error) {
         console.error('Error updating audit config:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.get('/cleanup', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const collections = await buildCleanupSnapshot();
+        res.json({ collections });
+    } catch (error) {
+        console.error('Error fetching cleanup snapshot:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.post('/cleanup', isAuthenticated, isAdmin, async (req, res) => {
+    const requested = Array.isArray(req.body?.collections) ? req.body.collections : [];
+    const selections = Array.from(new Set(requested.filter(key => CLEANUP_COLLECTIONS[key])));
+
+    if (selections.length === 0) {
+        return res.status(400).json({ error: 'collections array required' });
+    }
+
+    const operations = [];
+
+    try {
+        for (const key of selections) {
+            const cfg = CLEANUP_COLLECTIONS[key];
+            let deletedCount = 0;
+            if (key === 'users') {
+                const result = await cfg.model.deleteMany({ role: { $ne: 'admin' } });
+                deletedCount = result.deletedCount || 0;
+                await Penca.updateMany({}, { $set: { participants: [], pendingRequests: [] } });
+                await User.updateMany({ role: 'admin' }, { $set: { ownedPencas: [], pencas: [] } });
+            } else if (key === 'pencas') {
+                const result = await cfg.model.deleteMany({});
+                deletedCount = result.deletedCount || 0;
+                await User.updateMany({}, { $set: { pencas: [], ownedPencas: [] } });
+            } else {
+                const result = await cfg.model.deleteMany({});
+                deletedCount = result.deletedCount || 0;
+                if (key === 'matches') {
+                    await Penca.updateMany({}, { $set: { fixture: [] } });
+                }
+                if (key === 'competitions') {
+                    await Penca.updateMany({}, { $set: { competition: DEFAULT_COMPETITION } });
+                }
+            }
+
+            operations.push({ key, deletedCount });
+        }
+
+        if (selections.includes('pencas') && !selections.includes('users')) {
+            await User.updateMany({ role: { $ne: 'admin' } }, { $set: { pencas: [], ownedPencas: [] } });
+        }
+
+        await recordAudit({
+            action: 'admin:cleanup',
+            entityType: 'system',
+            actor: req.session.user._id,
+            metadata: { selections: operations }
+        });
+
+        const collections = await buildCleanupSnapshot();
+        res.json({ operations, collections });
+    } catch (error) {
+        console.error('Cleanup error:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
