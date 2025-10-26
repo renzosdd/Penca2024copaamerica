@@ -482,6 +482,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </div>
+    </Box>
   );
 }
