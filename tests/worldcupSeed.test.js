@@ -21,28 +21,35 @@ const Match = require('../models/Match');
 const { ensureWorldCup2026 } = require('../utils/worldcupSeed');
 
 describe('ensureWorldCup2026', () => {
-  const fixture = [
-    {
-      date: '2026-06-11',
-      time: '18:00',
-      team1: 'Equipo A',
-      team2: 'Equipo B',
-      competition: 'Mundial 2026',
-      group_name: 'Grupo A',
-      series: 'Fase de grupos',
+  const fixture = {
+    competition: {
+      name: 'Mundial 2026',
+      groupsCount: 12,
+      integrantsPerGroup: 4,
+      qualifiersPerGroup: 2,
       tournament: 'Copa Mundial de la FIFA 2026'
     },
-    {
-      date: '2026-06-12',
-      time: '21:00',
-      team1: 'Equipo C',
-      team2: 'Equipo D',
-      competition: 'Mundial 2026',
-      group_name: 'Grupo B',
-      series: 'Fase de grupos',
-      tournament: 'Copa Mundial de la FIFA 2026'
-    }
-  ];
+    matches: [
+      {
+        kickoff: '2026-06-11T18:00:00-05:00',
+        originalKickoff: { date: '2026-06-11', time: '18:00', timezone: 'America/Mexico_City' },
+        team1: 'Equipo A',
+        team2: 'Equipo B',
+        group: 'Grupo A',
+        stage: 'Fase de grupos',
+        venue: { country: 'México', city: 'Ciudad de México', stadium: 'Estadio Azteca' }
+      },
+      {
+        kickoff: '2026-06-12T21:00:00-05:00',
+        originalKickoff: { date: '2026-06-12', time: '21:00', timezone: 'America/Chicago' },
+        team1: 'Equipo C',
+        team2: 'Equipo D',
+        group: 'Grupo B',
+        stage: 'Fase de grupos',
+        venue: { country: 'Estados Unidos', city: 'Dallas', stadium: 'AT&T Stadium' }
+      }
+    ]
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();

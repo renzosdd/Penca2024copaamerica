@@ -18,6 +18,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useLang from './useLang';
 import roundOrder from './roundOrder';
+import { formatLocalKickoff, matchKickoffValue } from './kickoffUtils';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
@@ -27,13 +28,7 @@ export default function OwnerPanel() {
   const [expandedPenca, setExpandedPenca] = useState(null);
   const [filter, setFilter] = useState('all');
 
-  const matchTimeValue = match => {
-    if (!match || !match.date || !match.time) {
-      return Number.POSITIVE_INFINITY;
-    }
-    const value = Date.parse(`${match.date}T${match.time}`);
-    return Number.isNaN(value) ? Number.POSITIVE_INFINITY : value;
-  };
+  const matchTimeValue = match => matchKickoffValue(match);
 
   const isGroupKey = key => /^Grupo\s+/i.test(key);
   const compareGroupKey = (a, b) => {
@@ -242,6 +237,8 @@ export default function OwnerPanel() {
               <div className="match-details">
                 {match.result1 !== undefined && match.result2 !== undefined ? (
                   <strong>{match.result1} - {match.result2}</strong>
+                ) : formatLocalKickoff(match) ? (
+                  <span>{formatLocalKickoff(match)}</span>
                 ) : match.date && match.time ? (
                   <span>{match.date} {match.time}</span>
                 ) : (

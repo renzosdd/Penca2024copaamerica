@@ -1,0 +1,171 @@
+{
+  "competition": {
+    "name": "Copa Demo 2024",
+    "tournament": "Copa Demo Internacional",
+    "country": "Virtual",
+    "groupsCount": 2,
+    "integrantsPerGroup": 3,
+    "qualifiersPerGroup": 2,
+    "apiSeason": 2024,
+    "modes": ["fase_de_grupos", "eliminatorias"]
+  },
+  "metadata": {
+    "expectedMatches": 8,
+    "description": "Ejemplo mínimo de importación con fase de grupos y definición a partido único.",
+    "timeFormat": "La hora de kickoff está en ISO 8601 con huso horario y se ajustará al horario local del usuario."
+  },
+  "matches": [
+    {
+      "id": "group-a-1",
+      "stage": "Fase de grupos",
+      "group": "Grupo A",
+      "team1": "Equipo A1",
+      "team2": "Equipo A2",
+      "kickoff": "2024-07-01T14:00:00-03:00",
+      "originalKickoff": {
+        "date": "2024-07-01",
+        "time": "14:00",
+        "timezone": "America/Argentina/Buenos_Aires"
+      },
+      "venue": {
+        "country": "Argentina",
+        "city": "Buenos Aires",
+        "stadium": "Estadio Monumental"
+      },
+      "order": 0
+    },
+    {
+      "id": "group-a-2",
+      "stage": "Fase de grupos",
+      "group": "Grupo A",
+      "team1": "Equipo A3",
+      "team2": "Equipo A1",
+      "kickoff": "2024-07-04T18:30:00-03:00",
+      "originalKickoff": {
+        "date": "2024-07-04",
+        "time": "18:30",
+        "timezone": "America/Sao_Paulo"
+      },
+      "venue": {
+        "country": "Brasil",
+        "city": "São Paulo",
+        "stadium": "Arena Corinthians"
+      },
+      "order": 1
+    },
+    {
+      "id": "group-b-1",
+      "stage": "Fase de grupos",
+      "group": "Grupo B",
+      "team1": "Equipo B1",
+      "team2": "Equipo B2",
+      "kickoff": "2024-07-02T20:00:00+01:00",
+      "originalKickoff": {
+        "date": "2024-07-02",
+        "time": "20:00",
+        "timezone": "Europe/Madrid"
+      },
+      "venue": {
+        "country": "España",
+        "city": "Madrid",
+        "stadium": "Santiago Bernabéu"
+      },
+      "order": 2
+    },
+    {
+      "id": "group-b-2",
+      "stage": "Fase de grupos",
+      "group": "Grupo B",
+      "team1": "Equipo B3",
+      "team2": "Equipo B1",
+      "kickoff": "2024-07-05T16:45:00+00:00",
+      "originalKickoff": {
+        "date": "2024-07-05",
+        "time": "16:45",
+        "timezone": "UTC"
+      },
+      "venue": {
+        "country": "Reino Unido",
+        "city": "Londres",
+        "stadium": "Wembley Stadium"
+      },
+      "order": 3
+    },
+    {
+      "id": "semi-1",
+      "stage": "Semifinal",
+      "group": "Semifinal",
+      "team1": "Ganador Grupo A",
+      "team2": "Ganador Grupo B",
+      "kickoff": "2024-07-08T19:00:00-04:00",
+      "originalKickoff": {
+        "date": "2024-07-08",
+        "time": "19:00",
+        "timezone": "America/New_York"
+      },
+      "venue": {
+        "country": "Estados Unidos",
+        "city": "Nueva York",
+        "stadium": "MetLife Stadium"
+      },
+      "order": 4
+    },
+    {
+      "id": "semi-2",
+      "stage": "Semifinal",
+      "group": "Semifinal",
+      "team1": "Segundo Grupo A",
+      "team2": "Segundo Grupo B",
+      "kickoff": "2024-07-08T21:00:00+02:00",
+      "originalKickoff": {
+        "date": "2024-07-08",
+        "time": "21:00",
+        "timezone": "Europe/Berlin"
+      },
+      "venue": {
+        "country": "Alemania",
+        "city": "Múnich",
+        "stadium": "Allianz Arena"
+      },
+      "order": 5
+    },
+    {
+      "id": "third-place",
+      "stage": "Tercer puesto",
+      "group": "Tercer puesto",
+      "team1": "Perdedor Semifinal 1",
+      "team2": "Perdedor Semifinal 2",
+      "kickoff": "2024-07-11T18:00:00+00:00",
+      "originalKickoff": {
+        "date": "2024-07-11",
+        "time": "18:00",
+        "timezone": "UTC"
+      },
+      "venue": {
+        "country": "Reino Unido",
+        "city": "Londres",
+        "stadium": "Wembley Stadium"
+      },
+      "order": 6
+    },
+    {
+      "id": "final",
+      "stage": "Final",
+      "group": "Final",
+      "team1": "Ganador Semifinal 1",
+      "team2": "Ganador Semifinal 2",
+      "kickoff": "2024-07-12T20:30:00-03:00",
+      "originalKickoff": {
+        "date": "2024-07-12",
+        "time": "20:30",
+        "timezone": "America/Sao_Paulo"
+      },
+      "venue": {
+        "country": "Brasil",
+        "city": "Río de Janeiro",
+        "stadium": "Maracaná"
+      },
+      "order": 7
+    }
+  ]
+}

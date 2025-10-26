@@ -35,6 +35,7 @@ import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import useLang from './useLang';
 import pointsForPrediction from './calcPoints';
+import { formatLocalKickoff, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
 
 export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername }) {
   const [open, setOpen] = useState(false);
@@ -45,24 +46,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const matchTimeValue = match => {
-    if (!match || !match.date || !match.time) {
-      return Number.POSITIVE_INFINITY;
-    }
-    const value = Date.parse(`${match.date}T${match.time}`);
-    return Number.isNaN(value) ? Number.POSITIVE_INFINITY : value;
-  };
+  const matchTimeValue = match => matchKickoffValue(match);
 
   function canPredict(match) {
-    if (!match?.date || !match?.time) {
-      return true;
-    }
-    const start = new Date(`${match.date}T${match.time}:00`);
-    if (Number.isNaN(start.getTime())) {
-      return true;
-    }
-    const diff = (start - new Date()) / 60000;
-    return diff >= 30;
+    const minutes = minutesUntilKickoff(match);
+    return minutes >= 30;
   }
 
   async function submitPrediction(e, pencaId, matchId) {
@@ -137,6 +125,15 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             </div>
           </div>
           <div className="match-details">
+            <div className="match-time">
+              {formatLocalKickoff(match) ? (
+                <span>{formatLocalKickoff(match)}</span>
+              ) : match.date && match.time ? (
+                <span>{match.date} {match.time}</span>
+              ) : (
+                <span>{t('scheduleTbd')}</span>
+              )}
+            </div>
             <form onSubmit={e => submitPrediction(e, penca._id, match._id)}>
               <div className="input-field inline">
                 <TextField
@@ -197,6 +194,8 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
         <div className="match-details">
           {match.result1 !== undefined && match.result2 !== undefined ? (
             <strong>{match.result1} - {match.result2}</strong>
+          ) : formatLocalKickoff(match) ? (
+            <span>{formatLocalKickoff(match)}</span>
           ) : match.date && match.time ? (
             <span>{match.date} {match.time}</span>
           ) : (

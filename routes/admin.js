@@ -29,6 +29,10 @@ const upload = multer({
     }
 });
 
+const SAMPLE_FIXTURE_PATH = path.join(__dirname, '..', 'public', 'samples', 'competition-fixture-example.json');
+const WORLDCUP_FIXTURE_PATH = path.join(__dirname, '..', 'public', 'samples', 'worldcup2026-fixture.json');
+const JSON_GUIDE_PATH = path.join(__dirname, '..', 'public', 'docs', 'competition-json-guide-es.md');
+
 async function findCompetitionByIdOrName(identifier) {
     if (!identifier) {
         return null;
@@ -43,7 +47,227 @@ async function findCompetitionByIdOrName(identifier) {
 
     return Competition.findOne({ name: identifier });
 }
- 
+
+function parseJsonValue(value) {
+    if (value == null) {
+        return null;
+    }
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) {
+            return null;
+        }
+        try {
+            return JSON.parse(trimmed);
+        } catch (error) {
+            return null;
+        }
+    }
+    if (typeof value === 'object') {
+        return value;
+    }
+    return null;
+}
+
+function extractImportPayload(req) {
+    if (req.file) {
+        try {
+            return JSON.parse(req.file.buffer.toString('utf8'));
+        } catch (error) {
+            const err = new Error('Invalid fixture file');
+            err.status = 400;
+            throw err;
+        }
+    }
+
+    const candidates = [req.body?.import, req.body?.payload, req.body?.data, req.body];
+    for (const candidate of candidates) {
+        const parsed = parseJsonValue(candidate);
+        if (parsed) {
+            return parsed;
+        }
+    }
+    return null;
+}
+
+function parseDateInput(value) {
+    if (!value) {
+        return undefined;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+function parseKickoff(value) {
+    if (!value) {
+        return null;
+    }
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function normalizeImportPayload(data, fallbackName) {
+    if (!data) {
+        return { competition: {}, matches: [], metadata: {} };
+    }
+    if (Array.isArray(data)) {
+        return { competition: {}, matches: data, metadata: {} };
+    }
+
+    if (data.import) {
+        return normalizeImportPayload(data.import, fallbackName);
+    }
+
+    const competitionSource = (data.competition && typeof data.competition === 'object') ? data.competition : data;
+    const competition = {
+        name: competitionSource.name ?? fallbackName,
+        tournament: competitionSource.tournament,
+        country: competitionSource.country || competitionSource.hosts,
+        groupsCount: competitionSource.groupsCount != null ? Number(competitionSource.groupsCount) : undefined,
+        integrantsPerGroup: competitionSource.integrantsPerGroup != null ? Number(competitionSource.integrantsPerGroup) : undefined,
+        qualifiersPerGroup: competitionSource.qualifiersPerGroup != null ? Number(competitionSource.qualifiersPerGroup) : undefined,
+        apiLeagueId: competitionSource.apiLeagueId != null ? Number(competitionSource.apiLeagueId) : undefined,
+        apiSeason: competitionSource.apiSeason != null ? Number(competitionSource.apiSeason) : undefined,
+        seasonStart: competitionSource.seasonStart,
+        seasonEnd: competitionSource.seasonEnd
+    };
+
+    const matches = Array.isArray(data.matches)
+        ? data.matches
+        : Array.isArray(data.fixture)
+            ? data.fixture
+            : Array.isArray(data.imported?.matches)
+                ? data.imported.matches
+                : [];
+
+    const metadata = (data.metadata && typeof data.metadata === 'object') ? { ...data.metadata } : {};
+    if (data.expectedMatches != null && metadata.expectedMatches == null) {
+        metadata.expectedMatches = Number(data.expectedMatches);
+    }
+
+    return { competition, matches, metadata };
+}
+
+function validateImportedMatches(matches, expectedMatches) {
+    if (!Array.isArray(matches) || matches.length === 0) {
+        return 'Matches array is required in the JSON payload';
+    }
+    if (expectedMatches != null && matches.length !== Number(expectedMatches)) {
+        return `Expected ${expectedMatches} matches but received ${matches.length}`;
+    }
+
+    const seen = new Set();
+    for (let i = 0; i < matches.length; i++) {
+        const match = matches[i];
+        const team1 = (match.team1 || '').trim();
+        const team2 = (match.team2 || '').trim();
+        if (!team1 || !team2) {
+            return `Match ${i + 1} must include team1 and team2`;
+        }
+        if (team1 === team2) {
+            return `Match ${i + 1} has duplicated teams (${team1})`;
+        }
+        const kickoffKey = match.kickoff || match.kickoffUtc || match.kickoffISO || '';
+        const dateKey = match.originalKickoff?.date || match.date || '';
+        const timeKey = match.originalKickoff?.time || match.time || '';
+        const groupKey = match.group || match.group_name || '';
+        const key = `${kickoffKey}|${dateKey}|${timeKey}|${groupKey}|${team1}|${team2}`;
+        if (seen.has(key)) {
+            return `Duplicate match detected for ${team1} vs ${team2}`;
+        }
+        seen.add(key);
+    }
+    return null;
+}
+
+function deriveGroupStats(matches) {
+    const groupMap = new Map();
+    matches.forEach(match => {
+        const group = match.group || match.group_name;
+        if (!group) {
+            return;
+        }
+        const entry = groupMap.get(group) || new Set();
+        if (match.team1) entry.add(match.team1);
+        if (match.team2) entry.add(match.team2);
+        groupMap.set(group, entry);
+    });
+
+    if (!groupMap.size) {
+        return {};
+    }
+
+    const integrants = Array.from(groupMap.values()).map(set => set.size);
+    const uniform = integrants.every(count => count === integrants[0]);
+    return {
+        groupsCount: groupMap.size,
+        integrantsPerGroup: uniform ? integrants[0] : undefined
+    };
+}
+
+function extractSeasonBounds(matches) {
+    const values = matches
+        .map(match => {
+            if (match.kickoff instanceof Date) {
+                return match.kickoff;
+            }
+            if (match.date) {
+                const parsed = new Date(match.date);
+                return Number.isNaN(parsed.getTime()) ? null : parsed;
+            }
+            return null;
+        })
+        .filter(date => date && !Number.isNaN(date.getTime()));
+
+    if (!values.length) {
+        return { seasonStart: undefined, seasonEnd: undefined };
+    }
+
+    const timestamps = values.map(date => date.getTime());
+    return {
+        seasonStart: new Date(Math.min(...timestamps)),
+        seasonEnd: new Date(Math.max(...timestamps))
+    };
+}
+
+function normalizeVenue(match) {
+    const venue = match.venue || {};
+    const normalized = {
+        country: venue.country || match.venueCountry || null,
+        city: venue.city || match.venueCity || null,
+        stadium: venue.stadium || match.venueStadium || null
+    };
+    return Object.values(normalized).some(Boolean) ? normalized : undefined;
+}
+
+function normalizeMatchForInsert(match, index, competitionName, tournamentName) {
+    const original = match.originalKickoff || {};
+    const originalDate = match.originalDate || original.date || match.date || null;
+    const originalTime = match.originalTime || original.time || match.time || null;
+    const originalTimezone = match.originalTimezone || original.timezone || original.tz || null;
+    const kickoffCandidate = match.kickoff || match.kickoffUtc || match.kickoffISO || null;
+    const kickoff = parseKickoff(kickoffCandidate) || (originalDate && originalTime ? parseKickoff(`${originalDate}T${originalTime}Z`) : null);
+
+    return {
+        date: match.date || originalDate || null,
+        time: match.time || originalTime || null,
+        kickoff: kickoff || undefined,
+        originalDate: originalDate || null,
+        originalTime: originalTime || null,
+        originalTimezone: originalTimezone || null,
+        team1: (match.team1 || '').trim(),
+        team2: (match.team2 || '').trim(),
+        competition: competitionName,
+        group_name: match.group || match.group_name || 'Otros',
+        series: match.stage || match.series || 'Fase de grupos',
+        tournament: match.tournament || tournamentName,
+        venue: normalizeVenue(match),
+        order: typeof match.order === 'number' ? match.order : index,
+        result1: match.result1 ?? null,
+        result2: match.result2 ?? null
+    };
+}
+
 
 // Página de administración
 router.get('/edit', isAuthenticated, isAdmin, async (req, res) => {
@@ -344,174 +568,71 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
 // Crear competencia
 router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtureFile'), async (req, res) => {
     try {
-        const {
-            name,
-            groupsCount,
-            integrantsPerGroup,
-            qualifiersPerGroup,
-            fixture,
-            autoGenerate,
-            apiLeagueId,
-            apiSeason,
-            imported,
-            tournament,
-            country,
-            seasonStart,
-            seasonEnd,
-            expectedMatches
-        } = req.body;
-        if (!name) return res.status(400).json({ error: 'Name required' });
+        const payload = extractImportPayload(req);
+        if (!payload) {
+            return res.status(400).json({ error: 'JSON payload with competition and matches is required' });
+        }
+
+        const fallbackName = typeof req.body?.name === 'string' ? req.body.name : undefined;
+        const { competition: competitionSpec, matches, metadata } = normalizeImportPayload(payload, fallbackName);
+
+        if (!competitionSpec.name) {
+            return res.status(400).json({ error: 'Competition name is required inside the JSON' });
+        }
+
+        const expectedMatches = metadata.expectedMatches != null ? Number(metadata.expectedMatches) : undefined;
+        const validationError = validateImportedMatches(matches, expectedMatches);
+        if (validationError) {
+            return res.status(400).json({ error: validationError });
+        }
+
+        const existing = await Competition.findOne({ name: competitionSpec.name });
+        if (existing) {
+            return res.status(409).json({ error: 'Competition already exists' });
+        }
+
+        const tournamentName = competitionSpec.tournament || competitionSpec.name;
+        const sanitizedMatches = matches.map((match, index) =>
+            normalizeMatchForInsert(match, index, competitionSpec.name, tournamentName)
+        );
+
+        const { seasonStart, seasonEnd } = extractSeasonBounds(sanitizedMatches);
+        const groups = deriveGroupStats(matches);
 
         const competition = new Competition({
-            name,
-            tournament,
-            country,
-            seasonStart: seasonStart ? new Date(seasonStart) : undefined,
-            seasonEnd: seasonEnd ? new Date(seasonEnd) : undefined,
-            groupsCount: groupsCount ? Number(groupsCount) : undefined,
-            integrantsPerGroup: integrantsPerGroup ? Number(integrantsPerGroup) : undefined,
-            qualifiersPerGroup: qualifiersPerGroup ? Number(qualifiersPerGroup) : undefined,
-            apiLeagueId: apiLeagueId ? Number(apiLeagueId) : undefined,
-            apiSeason: apiSeason ? Number(apiSeason) : undefined
+            name: competitionSpec.name,
+            tournament: tournamentName,
+            country: competitionSpec.country || undefined,
+            groupsCount: competitionSpec.groupsCount ?? groups.groupsCount ?? undefined,
+            integrantsPerGroup: competitionSpec.integrantsPerGroup ?? groups.integrantsPerGroup ?? undefined,
+            qualifiersPerGroup: competitionSpec.qualifiersPerGroup ?? undefined,
+            apiLeagueId: competitionSpec.apiLeagueId ?? undefined,
+            apiSeason: competitionSpec.apiSeason ?? undefined,
+            seasonStart: parseDateInput(competitionSpec.seasonStart) || seasonStart,
+            seasonEnd: parseDateInput(competitionSpec.seasonEnd) || seasonEnd
         });
+
         await competition.save();
 
-        const requiredFields = ['team1', 'team2'];
+        const insertPayload = sanitizedMatches.map(match => ({
+            ...match,
+            kickoff: match.kickoff || undefined,
+            venue: match.venue || undefined
+        }));
 
-        const validateMatches = (matches, expected) => {
-            if (expected !== undefined && matches.length !== Number(expected)) {
-                return `Expected ${expected} matches, received ${matches.length}`;
-            }
-            const seen = new Set();
-            for (let i = 0; i < matches.length; i++) {
-                const m = matches[i];
-                for (const f of requiredFields) {
-                    if (!m[f]) {
-                        return `Match ${i + 1} missing field ${f}`;
-                    }
-                }
-                const dateKey = m.date || '';
-                const timeKey = m.time || '';
-                const groupKey = m.group_name || '';
-                const key = `${dateKey}|${timeKey}|${groupKey}|${m.team1}|${m.team2}`;
-                if (seen.has(key)) {
-                    return `Duplicate match: ${m.team1} vs ${m.team2} on ${m.date} ${m.time}`;
-                }
-                seen.add(key);
-            }
-            return null;
-        };
-
-        let importedMatches = null;
-        if (req.file) {
-            try {
-                const parsed = JSON.parse(req.file.buffer.toString('utf8'));
-                if (!Array.isArray(parsed)) {
-                    return res.status(400).json({ error: 'Invalid fixtureFile: expected an array of matches' });
-                }
-                importedMatches = parsed;
-            } catch (err) {
-                return res.status(400).json({ error: 'Invalid fixtureFile' });
-            }
-        } else if (imported && Array.isArray(imported.matches)) {
-            importedMatches = imported.matches;
+        if (insertPayload.length) {
+            await Match.insertMany(insertPayload);
         }
 
-        if (Array.isArray(importedMatches) && importedMatches.length) {
-            const err = validateMatches(importedMatches, expectedMatches);
-            if (err) return res.status(400).json({ error: err });
-            const data = importedMatches.map(m => ({
-                date: m.date || null,
-                time: m.time || null,
-                team1: m.team1,
-                team2: m.team2,
-                group_name: m.group_name || 'Otros',
-                series: m.series || 'Fase de grupos',
-                tournament: m.tournament || name,
-                flag1: m.flag1,
-                flag2: m.flag2,
-                competition: m.competition || name
-            }));
-            await Match.insertMany(data);
-        } else if (Array.isArray(fixture) && fixture.length) {
-            const err = validateMatches(fixture, expectedMatches);
-            if (err) return res.status(400).json({ error: err });
-            const data = fixture.map(m => ({
-                ...m,
-                date: m.date || null,
-                time: m.time || null,
-                group_name: m.group_name || 'Otros',
-                series: m.series || 'Fase de grupos',
-                tournament: m.tournament || name,
-                competition: m.competition || name
-            }));
-            await Match.insertMany(data);
-        } else if (String(autoGenerate) === 'true' && competition.groupsCount && competition.integrantsPerGroup) {
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            const matches = [];
-            for (let g = 0; g < competition.groupsCount; g++) {
-                const group = `Grupo ${letters[g]}`;
-                for (let i = 1; i <= competition.integrantsPerGroup; i++) {
-                    for (let j = i + 1; j <= competition.integrantsPerGroup; j++) {
-                        matches.push({
-                            team1: `${letters[g]}${i}`,
-                            team2: `${letters[g]}${j}`,
-                            competition: name,
-                            group_name: group,
-                            series: 'Fase de grupos',
-                            tournament: name
-                        });
-                    }
-                }
-            }
-            if (matches.length) {
-                await Match.insertMany(matches);
-
-                if (competition.groupsCount === 4) {
-                    const elim = [
-                        { team1: 'Ganador A', team2: 'Segundo B', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador B', team2: 'Segundo A', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador C', team2: 'Segundo D', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador D', team2: 'Segundo C', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Semifinal 1', team2: 'Semifinal 2', competition: name, group_name: 'Semifinales', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Semifinal 3', team2: 'Semifinal 4', competition: name, group_name: 'Semifinales', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Perdedor Semifinal 1', team2: 'Perdedor Semifinal 2', competition: name, group_name: 'Tercer puesto', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador Semifinal 1', team2: 'Ganador Semifinal 2', competition: name, group_name: 'Final', series: 'Eliminatorias', tournament: name }
-                    ];
-                    await Match.insertMany(elim);
-                } else if (competition.groupsCount > 4) {
-                    const r32Pairs = [
-                        ['A1','B2'], ['C1','D2'], ['E1','F2'], ['G1','H2'],
-                        ['I1','J2'], ['K1','L2'], ['B1','A2'], ['D1','C2'],
-                        ['F1','E2'], ['H1','G2'], ['J1','I2'], ['L1','K2'],
-                        ['A3','C3'], ['E3','G3'], ['I3','K3'], ['B3','D3']
-                    ];
-                    const elim = r32Pairs.map(([t1,t2]) => ({
-                        team1: t1,
-                        team2: t2,
-                        competition: name,
-                        group_name: 'Ronda de 32',
-                        series: 'Eliminatorias',
-                        tournament: name
-                    }));
-                    elim.push(
-                        { team1: 'Ganador R32-1', team2: 'Ganador R32-2', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador R32-3', team2: 'Ganador R32-4', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador R32-5', team2: 'Ganador R32-6', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador R32-7', team2: 'Ganador R32-8', competition: name, group_name: 'Cuartos de final', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador QF1', team2: 'Ganador QF2', competition: name, group_name: 'Semifinal', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador QF3', team2: 'Ganador QF4', competition: name, group_name: 'Semifinal', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Perdedor SF1', team2: 'Perdedor SF2', competition: name, group_name: 'Tercer puesto', series: 'Eliminatorias', tournament: name },
-                        { team1: 'Ganador SF1', team2: 'Ganador SF2', competition: name, group_name: 'Final', series: 'Eliminatorias', tournament: name }
-                    );
-                    await Match.insertMany(elim);
-                }
-            }
-        }
-
-        res.status(201).json({ competitionId: competition._id });
+        res.status(201).json({ competitionId: competition._id, matches: insertPayload.length });
     } catch (error) {
         console.error('Error creating competition:', error);
+        if (error.status) {
+            return res.status(error.status).json({ error: error.message });
+        }
+        if (error?.code === 11000) {
+            return res.status(409).json({ error: 'Competition already exists' });
+        }
         res.status(500).json({ error: 'Internal server error' });
     }
 });
@@ -525,6 +646,18 @@ router.get('/competitions', isAuthenticated, isAdmin, async (req, res) => {
         console.error('Error listing competitions:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+router.get('/competitions/template/example', isAuthenticated, isAdmin, (req, res) => {
+    res.download(SAMPLE_FIXTURE_PATH, 'competition-fixture-example.json');
+});
+
+router.get('/competitions/template/worldcup', isAuthenticated, isAdmin, (req, res) => {
+    res.download(WORLDCUP_FIXTURE_PATH, 'worldcup2026-fixture.json');
+});
+
+router.get('/competitions/template/guide', isAuthenticated, isAdmin, (req, res) => {
+    res.download(JSON_GUIDE_PATH, 'guia-json-competencias.md');
 });
 
 // Actualizar competencia
@@ -590,7 +723,7 @@ router.get('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, re
         if (!comp) {
             return res.status(404).json({ error: 'Competition not found' });
         }
-        const matches = await Match.find({ competition: comp.name });
+        const matches = await Match.find({ competition: comp.name }).sort({ order: 1, kickoff: 1, date: 1, time: 1 });
         res.json(matches);
     } catch (error) {
         console.error('Error listing matches:', error);
@@ -639,6 +772,32 @@ router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async
         if (time !== undefined) match.time = time || null;
         if (group_name !== undefined) match.group_name = group_name || 'Otros';
         if (series !== undefined) match.series = series || match.series;
+        if (req.body.kickoff !== undefined) {
+            const kickoffValue = parseKickoff(req.body.kickoff);
+            match.kickoff = kickoffValue || null;
+        }
+        if (req.body.originalDate !== undefined) {
+            match.originalDate = req.body.originalDate || null;
+        }
+        if (req.body.originalTime !== undefined) {
+            match.originalTime = req.body.originalTime || null;
+        }
+        if (req.body.originalTimezone !== undefined) {
+            match.originalTimezone = req.body.originalTimezone || null;
+        }
+        if (req.body.venue !== undefined) {
+            const venuePayload = req.body.venue || {};
+            const normalized = {
+                country: venuePayload.country || null,
+                city: venuePayload.city || null,
+                stadium: venuePayload.stadium || null
+            };
+            if (Object.values(normalized).some(Boolean)) {
+                match.venue = normalized;
+            } else {
+                match.venue = undefined;
+            }
+        }
 
         await match.save();
         res.json({ message: 'Match updated' });
@@ -648,43 +807,8 @@ router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async
     }
 });
 
-router.post('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const comp = await findCompetitionByIdOrName(req.params.id);
-        if (!comp) {
-            return res.status(404).json({ error: 'Competition not found' });
-        }
-
-        const { team1, team2 } = req.body;
-        if (!team1 || !team2) {
-            return res.status(400).json({ error: 'team1 and team2 are required' });
-        }
-
-        const match = new Match({
-            team1: team1.trim(),
-            team2: team2.trim(),
-            date: req.body.date || null,
-            time: req.body.time || null,
-            group_name: req.body.group_name || 'Otros',
-            series: req.body.series || 'Fase de grupos',
-            tournament: req.body.tournament || comp.name,
-            competition: comp.name,
-            order: typeof req.body.order === 'number' ? req.body.order : undefined,
-            result1: req.body.result1 === undefined || req.body.result1 === '' ? null : Number(req.body.result1),
-            result2: req.body.result2 === undefined || req.body.result2 === '' ? null : Number(req.body.result2)
-        });
-
-        if (match.order === undefined) {
-            const count = await Match.countDocuments({ competition: comp.name });
-            match.order = count;
-        }
-
-        await match.save();
-        res.status(201).json(match);
-    } catch (error) {
-        console.error('Error creating match:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+router.post('/competitions/:id/matches', isAuthenticated, isAdmin, (req, res) => {
+    res.status(405).json({ error: 'Matches must be imported from a JSON file' });
 });
 
 // Actualizar resultado de un partido y recalcular eliminatorias
