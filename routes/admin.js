@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const bcrypt = require('bcrypt');
 const path = require('path');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
@@ -27,6 +28,21 @@ const upload = multer({
         }
     }
 });
+
+async function findCompetitionByIdOrName(identifier) {
+    if (!identifier) {
+        return null;
+    }
+
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+        const byId = await Competition.findById(identifier);
+        if (byId) {
+            return byId;
+        }
+    }
+
+    return Competition.findOne({ name: identifier });
+}
  
 
 // Página de administración
@@ -360,7 +376,7 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
         });
         await competition.save();
 
-        const requiredFields = ['date', 'time', 'team1', 'team2', 'group_name', 'series', 'tournament'];
+        const requiredFields = ['team1', 'team2'];
 
         const validateMatches = (matches, expected) => {
             if (expected !== undefined && matches.length !== Number(expected)) {
@@ -374,7 +390,10 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
                         return `Match ${i + 1} missing field ${f}`;
                     }
                 }
-                const key = `${m.date}|${m.time}|${m.team1}|${m.team2}`;
+                const dateKey = m.date || '';
+                const timeKey = m.time || '';
+                const groupKey = m.group_name || '';
+                const key = `${dateKey}|${timeKey}|${groupKey}|${m.team1}|${m.team2}`;
                 if (seen.has(key)) {
                     return `Duplicate match: ${m.team1} vs ${m.team2} on ${m.date} ${m.time}`;
                 }
@@ -402,13 +421,13 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
             const err = validateMatches(importedMatches, expectedMatches);
             if (err) return res.status(400).json({ error: err });
             const data = importedMatches.map(m => ({
-                date: m.date,
-                time: m.time,
+                date: m.date || null,
+                time: m.time || null,
                 team1: m.team1,
                 team2: m.team2,
-                group_name: m.group_name,
-                series: m.series,
-                tournament: m.tournament,
+                group_name: m.group_name || 'Otros',
+                series: m.series || 'Fase de grupos',
+                tournament: m.tournament || name,
                 flag1: m.flag1,
                 flag2: m.flag2,
                 competition: m.competition || name
@@ -419,6 +438,11 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
             if (err) return res.status(400).json({ error: err });
             const data = fixture.map(m => ({
                 ...m,
+                date: m.date || null,
+                time: m.time || null,
+                group_name: m.group_name || 'Otros',
+                series: m.series || 'Fase de grupos',
+                tournament: m.tournament || name,
                 competition: m.competition || name
             }));
             await Match.insertMany(data);
@@ -562,7 +586,7 @@ router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) =>
 // Obtener partidos de una competencia
 router.get('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const comp = await Competition.findById(req.params.id);
+        const comp = await findCompetitionByIdOrName(req.params.id);
         if (!comp) {
             return res.status(404).json({ error: 'Competition not found' });
         }
@@ -581,8 +605,12 @@ router.put('/competitions/:id/knockout-order', isAuthenticated, isAdmin, async (
         if (!Array.isArray(order)) {
             return res.status(400).json({ error: 'order array required' });
         }
+        const comp = await findCompetitionByIdOrName(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
         await Promise.all(order.map((id, idx) =>
-            Match.updateOne({ _id: id, competition: req.params.id }, { order: idx })
+            Match.updateOne({ _id: id, competition: comp.name }, { order: idx })
         ));
         res.json({ message: 'Order updated' });
     } catch (error) {
@@ -594,16 +622,23 @@ router.put('/competitions/:id/knockout-order', isAuthenticated, isAdmin, async (
 // Actualizar datos de un partido
 router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
     try {
+        const comp = await findCompetitionByIdOrName(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+
         const match = await Match.findById(req.params.matchId);
-        if (!match || match.competition !== req.params.id) {
+        if (!match || match.competition !== comp.name) {
             return res.status(404).json({ error: 'Match not found' });
         }
 
-        const { team1, team2, date, time } = req.body;
+        const { team1, team2, date, time, group_name, series } = req.body;
         if (team1 !== undefined) match.team1 = team1;
         if (team2 !== undefined) match.team2 = team2;
-        if (date !== undefined) match.date = date;
-        if (time !== undefined) match.time = time;
+        if (date !== undefined) match.date = date || null;
+        if (time !== undefined) match.time = time || null;
+        if (group_name !== undefined) match.group_name = group_name || 'Otros';
+        if (series !== undefined) match.series = series || match.series;
 
         await match.save();
         res.json({ message: 'Match updated' });
@@ -613,17 +648,61 @@ router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async
     }
 });
 
+router.post('/competitions/:id/matches', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const comp = await findCompetitionByIdOrName(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+
+        const { team1, team2 } = req.body;
+        if (!team1 || !team2) {
+            return res.status(400).json({ error: 'team1 and team2 are required' });
+        }
+
+        const match = new Match({
+            team1: team1.trim(),
+            team2: team2.trim(),
+            date: req.body.date || null,
+            time: req.body.time || null,
+            group_name: req.body.group_name || 'Otros',
+            series: req.body.series || 'Fase de grupos',
+            tournament: req.body.tournament || comp.name,
+            competition: comp.name,
+            order: typeof req.body.order === 'number' ? req.body.order : undefined,
+            result1: req.body.result1 === undefined || req.body.result1 === '' ? null : Number(req.body.result1),
+            result2: req.body.result2 === undefined || req.body.result2 === '' ? null : Number(req.body.result2)
+        });
+
+        if (match.order === undefined) {
+            const count = await Match.countDocuments({ competition: comp.name });
+            match.order = count;
+        }
+
+        await match.save();
+        res.status(201).json(match);
+    } catch (error) {
+        console.error('Error creating match:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Actualizar resultado de un partido y recalcular eliminatorias
 router.post('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
     try {
+        const comp = await findCompetitionByIdOrName(req.params.id);
+        if (!comp) {
+            return res.status(404).json({ error: 'Competition not found' });
+        }
+
         const match = await Match.findById(req.params.matchId);
-        if (!match || match.competition !== req.params.id) {
+        if (!match || match.competition !== comp.name) {
             return res.status(404).json({ error: 'Match not found' });
         }
 
         const { result1, result2 } = req.body;
-        match.result1 = result1;
-        match.result2 = result2;
+        match.result1 = result1 === null || result1 === '' || result1 === undefined ? null : Number(result1);
+        match.result2 = result2 === null || result2 === '' || result2 === undefined ? null : Number(result2);
         await match.save();
         await updateEliminationMatches(match.competition);
         res.json({ message: 'Match result updated' });

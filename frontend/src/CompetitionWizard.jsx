@@ -194,14 +194,17 @@ export default function CompetitionWizard({ open, onClose, onCreated }) {
 
   function validateMatches(matches) {
     if (!Array.isArray(matches)) return 'Invalid matches data';
-    const required = ['date', 'time', 'team1', 'team2', 'group_name', 'series', 'tournament'];
+    const required = ['team1', 'team2'];
     const seen = new Set();
     for (let i = 0; i < matches.length; i++) {
       const m = matches[i];
       for (const f of required) {
         if (!m[f]) return `${t('missingField') || 'Missing field'}: ${f}`;
       }
-      const key = `${m.date}|${m.time}|${m.team1}|${m.team2}`;
+      const dateKey = m.date || '';
+      const timeKey = m.time || '';
+      const groupKey = m.group_name || '';
+      const key = `${dateKey}|${timeKey}|${groupKey}|${m.team1}|${m.team2}`;
       if (seen.has(key)) return 'Duplicate match detected';
       seen.add(key);
     }

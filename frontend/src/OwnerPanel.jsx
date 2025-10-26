@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useLang from './useLang';
+import roundOrder from './roundOrder';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
@@ -25,6 +26,22 @@ export default function OwnerPanel() {
   const { t } = useLang();
   const [expandedPenca, setExpandedPenca] = useState(null);
   const [filter, setFilter] = useState('all');
+
+  const matchTimeValue = match => {
+    if (!match || !match.date || !match.time) {
+      return Number.POSITIVE_INFINITY;
+    }
+    const value = Date.parse(`${match.date}T${match.time}`);
+    return Number.isNaN(value) ? Number.POSITIVE_INFINITY : value;
+  };
+
+  const isGroupKey = key => /^Grupo\s+/i.test(key);
+  const compareGroupKey = (a, b) => {
+    const normalize = value => value.replace(/^Grupo\s+/i, '').trim();
+    return normalize(a).localeCompare(normalize(b), undefined, { sensitivity: 'base', numeric: true });
+  };
+
+  const knockoutOrder = roundOrder.filter(label => !/^Grupo\s+/i.test(label));
 
 
   useEffect(() => {
@@ -160,9 +177,7 @@ export default function OwnerPanel() {
     } else {
       list = matches.filter(m => m.competition === p.competition);
     }
-    list.sort(
-      (a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`)
-    );
+    list.sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
     if (filter === 'upcoming') {
       list = list.filter(m => m.result1 == null && m.result2 == null);
     } else if (filter === 'played') {
@@ -170,7 +185,7 @@ export default function OwnerPanel() {
     }
     const grouped = {};
     list.forEach(m => {
-      const g = m.group_name || 'Otros';
+      const g = m.group_name?.trim() || 'Otros';
       if (!grouped[g]) grouped[g] = [];
       grouped[g].push(m);
     });
@@ -201,6 +216,48 @@ export default function OwnerPanel() {
         const modeKey = p.tournamentMode ? `mode_${p.tournamentMode}` : 'mode_group_stage_knockout';
         const translatedMode = t(modeKey);
         const tournamentLabel = translatedMode === modeKey ? p.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
+        const groupKeys = Object.keys(pMatches)
+          .filter(isGroupKey)
+          .sort(compareGroupKey);
+        const knockoutKeys = knockoutOrder.filter(label => Array.isArray(pMatches[label]));
+        const knockoutSet = new Set(knockoutKeys);
+        const otherKeys = Object.keys(pMatches)
+          .filter(key => !isGroupKey(key) && !knockoutSet.has(key))
+          .sort((a, b) => matchTimeValue(pMatches[a]?.[0]) - matchTimeValue(pMatches[b]?.[0]));
+
+        const renderMatchCard = match => (
+          <Card key={match._id} className="match-card">
+            <CardContent>
+              <div className="match-header">
+                <div className="team">
+                  <img src={`/images/${match.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team1} className="circle responsive-img" />
+                  <span className="team-name">{match.team1}</span>
+                </div>
+                <span className="vs">vs</span>
+                <div className="team">
+                  <img src={`/images/${match.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team2} className="circle responsive-img" />
+                  <span className="team-name">{match.team2}</span>
+                </div>
+              </div>
+              <div className="match-details">
+                {match.result1 !== undefined && match.result2 !== undefined ? (
+                  <strong>{match.result1} - {match.result2}</strong>
+                ) : match.date && match.time ? (
+                  <span>{match.date} {match.time}</span>
+                ) : (
+                  <span>{t('scheduleTbd')}</span>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+
+        const renderMatchesSection = key => (
+          <div key={key} style={{ marginBottom: '1rem' }}>
+            <h6>{key}</h6>
+            {pMatches[key].map(renderMatchCard)}
+          </div>
+        );
 
         return (
           <Accordion
@@ -224,70 +281,9 @@ export default function OwnerPanel() {
                 </Box>
               </AccordionSummary>
             <AccordionDetails>
-            {Object.keys(pMatches)
-                .filter(g => g.startsWith('Grupo'))
-                .sort()
-                .map(g => (
-                  <div key={g} style={{ marginBottom: '1rem' }}>
-                    <h6>{g}</h6>
-                    {pMatches[g].map(m => (
-                      <Card key={m._id} className="match-card">
-                        <CardContent>
-                          <div className="match-header">
-                            <div className="team">
-                              <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
-                              <span className="team-name">{m.team1}</span>
-                            </div>
-                            <span className="vs">vs</span>
-                            <div className="team">
-                              <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
-                              <span className="team-name">{m.team2}</span>
-                            </div>
-                          </div>
-                          <div className="match-details">
-                            {m.result1 !== undefined && m.result2 !== undefined ? (
-                              <strong>{m.result1} - {m.result2}</strong>
-                            ) : (
-                              <span>{m.date} {m.time}</span>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ))}
-
-              {['Cuartos de final', 'Semifinales', 'Tercer puesto', 'Final']
-                .filter(r => pMatches[r])
-                .map(r => (
-                  <div key={r} style={{ marginBottom: '1rem' }}>
-                    <h6>{r}</h6>
-                    {pMatches[r].map(m => (
-                      <Card key={m._id} className="match-card">
-                        <CardContent>
-                          <div className="match-header">
-                            <div className="team">
-                              <img src={`/images/${m.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team1} className="circle responsive-img" />
-                              <span className="team-name">{m.team1}</span>
-                            </div>
-                            <span className="vs">vs</span>
-                            <div className="team">
-                              <img src={`/images/${m.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={m.team2} className="circle responsive-img" />
-                              <span className="team-name">{m.team2}</span>
-                            </div>
-                          </div>
-                          <div className="match-details">
-                            {m.result1 !== undefined && m.result2 !== undefined ? (
-                              <strong>{m.result1} - {m.result2}</strong>
-                            ) : (
-                              <span>{m.date} {m.time}</span>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ))}
+              {groupKeys.map(renderMatchesSection)}
+              {knockoutKeys.map(renderMatchesSection)}
+              {otherKeys.map(renderMatchesSection)}
 
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 2 }}>
                 <TextField
