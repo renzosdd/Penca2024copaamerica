@@ -1,16 +1,28 @@
 const mongoose = require('mongoose');
+const { sanitizeScoring, buildRulesDescription, DEFAULT_SCORING } = require('../utils/scoring');
 
 const pencaSchema = new mongoose.Schema({
   name: { type: String, required: true },
   code: { type: String, required: true, unique: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   competition: { type: String, required: true },
+  tournamentMode: {
+    type: String,
+    enum: ['group_stage_knockout', 'league', 'knockout', 'custom'],
+    default: 'group_stage_knockout'
+  },
+  modeSettings: {
+    type: Object,
+    default: {}
+  },
   participantLimit: { type: Number, default: 20 },
   isPublic: { type: Boolean, default: false },
   scoring: {
-    exact: { type: Number, default: 3 },
-    outcome: { type: Number, default: 1 },
-    goals: { type: Number, default: 1 }
+    exact: { type: Number, default: DEFAULT_SCORING.exact },
+    outcome: { type: Number, default: DEFAULT_SCORING.outcome },
+    goalDifference: { type: Number, default: DEFAULT_SCORING.goalDifference },
+    teamGoals: { type: Number, default: DEFAULT_SCORING.teamGoals },
+    cleanSheet: { type: Number, default: DEFAULT_SCORING.cleanSheet }
   },
   rules: { type: String },
   prizes: { type: String },
@@ -20,8 +32,14 @@ const pencaSchema = new mongoose.Schema({
 });
 
 pencaSchema.statics.rulesText = function (scoring) {
-  const s = scoring || { exact: 3, outcome: 1, goals: 1 };
-  return `${s.exact} puntos por resultado exacto, ${s.outcome} por acertar ganador o empate y ${s.goals} por acertar goles de un equipo`;
+  return buildRulesDescription(scoring);
+};
+
+pencaSchema.methods.applyScoring = function applyScoring(scoring) {
+  this.scoring = sanitizeScoring(scoring);
+  if (!this.rules) {
+    this.rules = buildRulesDescription(this.scoring);
+  }
 };
 
 module.exports = mongoose.models.Penca || mongoose.model('Penca', pencaSchema);

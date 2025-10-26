@@ -6,6 +6,7 @@ const Match = require('../models/Match');
 const Score = require('../models/Score');
 const Penca = require('../models/Penca');
 const { DEFAULT_COMPETITION } = require('../config');
+const { DEFAULT_SCORING, sanitizeScoring, calculatePoints } = require('../utils/scoring');
 const { getMessage } = require('../utils/messages');
 
 // Función para calcular los puntajes
@@ -16,7 +17,7 @@ async function calculateScores(pencaId, competition) {
     let matchFilter = {};
     let predictionFilter = {};
     let penca;
-    let scoring = { exact: 3, outcome: 1, goals: 1 };
+    let scoring = { ...DEFAULT_SCORING };
 
     if (pencaId) {
         penca = await Penca.findById(pencaId).select('participants fixture competition scoring');
@@ -24,7 +25,7 @@ async function calculateScores(pencaId, competition) {
             return [];
         }
         if (penca.scoring) {
-            scoring = { ...scoring, ...penca.scoring };
+            scoring = sanitizeScoring(penca.scoring);
         }
         userFilter._id = { $in: penca.participants };
         predictionFilter.pencaId = pencaId;
@@ -61,19 +62,8 @@ async function calculateScores(pencaId, competition) {
 
         for (const prediction of userPredictions) {
             const match = matches.find(m => m._id.toString() === prediction.matchId.toString());
-            if (match && match.result1 !== undefined && match.result2 !== undefined) {
-                if (prediction.result1 === match.result1 && prediction.result2 === match.result2) {
-                    userScore += scoring.exact; // Resultado exacto
-                } else if (
-                    (prediction.result1 > prediction.result2 && match.result1 > match.result2) ||
-                    (prediction.result1 < prediction.result2 && match.result1 < match.result2) ||
-                    (prediction.result1 === prediction.result2 && match.result1 === match.result2)
-                ) {
-                    userScore += scoring.outcome; // Indicó resultado
-                }
-                if (prediction.result1 === match.result1 || prediction.result2 === match.result2) {
-                    userScore += scoring.goals; // Adivinó goles de un equipo
-                }
+            if (match) {
+                userScore += calculatePoints({ prediction, match, scoring });
             }
         }
 
