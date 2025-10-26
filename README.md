@@ -72,9 +72,11 @@ EMAIL_FROM="Penca 2026 <no-reply@tudominio.com>"
 ```
 
 Si las credenciales no están presentes, la aplicación registrará el intento de
-envío en consola sin fallar. Cada alta, edición o eliminación relevante genera un
-registro en la colección `auditlogs`, lo que permite reconstruir el historial de
-cambios en caso de controversias.
+envío en consola sin fallar. Para evitar alcanzar el límite de concurrencia en la
+base de datos, la auditoría se mantiene desactivada por defecto. Podés habilitarla
+desde el panel de administración y elegir qué tipos de cambios (owners,
+pencas, predicciones) se registran en la colección `auditlogs` cuando esté activa,
+lo que permite reconstruir el historial de cambios en caso de controversias.
 
 ### Formatos de torneo y reglas de puntuación
 

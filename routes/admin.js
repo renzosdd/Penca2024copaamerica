@@ -14,7 +14,7 @@ const { updateEliminationMatches, generateEliminationBracket } = require('../uti
 const updateResults = require('../scripts/updateResults');
 const uploadJson = require('../middleware/jsonUpload');
 const { sanitizeScoring } = require('../utils/scoring');
-const { recordAudit } = require('../utils/audit');
+const { recordAudit, getAuditConfig, updateAuditConfig, AUDIT_TYPES } = require('../utils/audit');
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -105,6 +105,29 @@ function parseKickoff(value) {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
 }
+
+router.get('/audit-config', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const config = await getAuditConfig();
+        res.json({ ...config, availableTypes: AUDIT_TYPES });
+    } catch (error) {
+        console.error('Error fetching audit config:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+router.put('/audit-config', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const updated = await updateAuditConfig({
+            enabled: req.body?.enabled,
+            types: req.body?.types
+        });
+        res.json({ ...updated, availableTypes: AUDIT_TYPES });
+    } catch (error) {
+        console.error('Error updating audit config:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 function normalizeImportPayload(data, fallbackName) {
     if (!data) {

@@ -30,6 +30,8 @@ export default function Admin() {
   const [matchesByCompetition, setMatchesByCompetition] = useState({});
   const [groups, setGroups] = useState({});
   const [expandedComp, setExpandedComp] = useState(null);
+  const [auditConfig, setAuditConfig] = useState({ enabled: false, types: {} });
+  const [availableAuditTypes, setAvailableAuditTypes] = useState([]);
 
   const { t } = useLang();
 
@@ -39,7 +41,14 @@ export default function Admin() {
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isAuditSaving, setIsAuditSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const auditTypeLabels = {
+    user: t('auditTypeUser'),
+    penca: t('auditTypePenca'),
+    prediction: t('auditTypePrediction')
+  };
 
   const matchTimeValue = match => {
     if (match?.kickoff) {
@@ -115,7 +124,7 @@ export default function Admin() {
   }, []);
 
   async function loadAll() {
-    await Promise.all([loadCompetitions(), loadOwners(), loadPencas()]);
+    await Promise.all([loadCompetitions(), loadOwners(), loadPencas(), loadAuditConfig()]);
   }
 
   async function loadCompetitions() {
@@ -142,6 +151,74 @@ export default function Admin() {
       if (res.ok) setPencas(await res.json());
     } catch (err) {
       console.error('load pencas error', err);
+    }
+  }
+
+  async function loadAuditConfig() {
+    try {
+      const res = await fetch('/admin/audit-config');
+      if (!res.ok) return;
+      const data = await res.json();
+      const available = Array.isArray(data.availableTypes) ? data.availableTypes : Object.keys(data.types || {});
+      const normalized = {};
+      available.forEach(type => {
+        normalized[type] = Boolean(data.types?.[type]);
+      });
+      setAvailableAuditTypes(available);
+      setAuditConfig({
+        enabled: Boolean(data.enabled),
+        types: normalized
+      });
+    } catch (err) {
+      console.error('load audit config error', err);
+    }
+  }
+
+  const toggleAuditEnabled = () => {
+    setAuditConfig(cfg => ({
+      ...cfg,
+      enabled: !cfg.enabled
+    }));
+  };
+
+  const updateAuditType = (type, value) => {
+    setAuditConfig(cfg => ({
+      ...cfg,
+      types: {
+        ...cfg.types,
+        [type]: value
+      }
+    }));
+  };
+
+  async function saveAuditSettings() {
+    setIsAuditSaving(true);
+    try {
+      const res = await fetch('/admin/audit-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: auditConfig.enabled, types: auditConfig.types })
+      });
+      if (!res.ok) {
+        throw new Error('Failed to save audit config');
+      }
+      const data = await res.json();
+      const available = Array.isArray(data.availableTypes) ? data.availableTypes : availableAuditTypes;
+      const normalized = {};
+      available.forEach(type => {
+        normalized[type] = Boolean(data.types?.[type]);
+      });
+      setAvailableAuditTypes(available);
+      setAuditConfig({
+        enabled: Boolean(data.enabled),
+        types: normalized
+      });
+      setSnackbar({ open: true, message: t('auditSaveSuccess'), severity: 'success' });
+    } catch (err) {
+      console.error('save audit config error', err);
+      setSnackbar({ open: true, message: t('auditSaveError'), severity: 'error' });
+    } finally {
+      setIsAuditSaving(false);
     }
   }
 
@@ -577,6 +654,44 @@ export default function Admin() {
   return (
     <div className="container" style={{ marginTop: '2rem' }}>
       <h5>{t('adminTitle')}</h5>
+
+      <Card style={{ marginTop: '1rem', padding: '1rem' }}>
+        <CardContent>
+          <Typography variant="h6">{t('auditSettingsTitle')}</Typography>
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            {auditConfig.enabled ? t('auditEnabled') : t('auditDisabled')}
+          </Typography>
+          <Button variant="outlined" sx={{ mt: 2 }} onClick={toggleAuditEnabled}>
+            {auditConfig.enabled ? t('auditDisable') : t('auditEnable')}
+          </Button>
+          {availableAuditTypes.length ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
+              <Typography variant="subtitle2">{t('auditTypesLabel')}</Typography>
+              {availableAuditTypes.map(type => (
+                <FormControlLabel
+                  key={type}
+                  control={(
+                    <Checkbox
+                      checked={Boolean(auditConfig.types?.[type])}
+                      onChange={e => updateAuditType(type, e.target.checked)}
+                      disabled={!auditConfig.enabled}
+                    />
+                  )}
+                  label={auditTypeLabels[type] || type}
+                />
+              ))}
+            </Box>
+          ) : null}
+          <Button
+            variant="contained"
+            sx={{ mt: 2 }}
+            onClick={saveAuditSettings}
+            disabled={isAuditSaving}
+          >
+            {t('save')}
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Competencias */}
       <Card style={{ marginTop: '2rem', padding: '1rem' }}>
