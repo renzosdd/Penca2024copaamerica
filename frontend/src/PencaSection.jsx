@@ -61,6 +61,12 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     }
   }, [onOpen, open]);
 
+  useEffect(() => {
+    if (open && onOpen) {
+      onOpen();
+    }
+  }, [onOpen, open]);
+
   const matchTimeValue = match => matchKickoffValue(match);
 
   function canPredict(match) {

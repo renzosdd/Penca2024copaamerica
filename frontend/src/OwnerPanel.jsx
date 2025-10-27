@@ -393,6 +393,27 @@ export default function OwnerPanel() {
           return t('scheduleTbd');
         };
 
+        const renderTeam = name => (
+          <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
+            <Box
+              component="img"
+              src={`/images/${name.replace(/\s+/g, '').toLowerCase()}.png`}
+              alt={name}
+              sx={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', backgroundColor: 'background.default' }}
+            />
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
+              {name}
+            </Typography>
+          </Stack>
+        );
+
+        const kickoffText = match => {
+          const localized = formatLocalKickoff(match);
+          if (localized) return localized;
+          if (match.date && match.time) return `${match.date} ${match.time}`;
+          return t('scheduleTbd');
+        };
+
         const renderMatchCard = match => (
           <Card key={match._id} sx={{ borderRadius: 2, boxShadow: 2 }}>
             <CardContent>
