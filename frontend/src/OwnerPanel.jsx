@@ -13,12 +13,14 @@ import {
   FormControlLabel,
   Stack,
   TextField,
-  Typography
+  Typography,
+  useMediaQuery
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useLang from './useLang';
 import roundOrder from './roundOrder';
 import { formatLocalKickoff, matchKickoffValue } from './kickoffUtils';
+import { useTheme } from '@mui/material/styles';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
@@ -27,6 +29,8 @@ export default function OwnerPanel() {
   const { t } = useLang();
   const [expandedPenca, setExpandedPenca] = useState(null);
   const [filter, setFilter] = useState('all');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const matchTimeValue = match => matchKickoffValue(match);
 
@@ -46,16 +50,26 @@ export default function OwnerPanel() {
   useEffect(() => {
     async function loadMatches() {
       try {
-        const comps = Array.from(new Set(pencas.map(p => p.competition)));
-        const data = [];
-        for (const c of comps) {
-          const r = await fetch(`/competitions/${encodeURIComponent(c)}/matches`);
-          if (r.ok) {
-            const list = await r.json();
-            data.push(...list);
-          }
+        const comps = Array.from(new Set(pencas.map(p => p.competition).filter(Boolean)));
+        if (!comps.length) {
+          setMatches([]);
+          return;
         }
-        setMatches(data);
+        const fetched = await Promise.all(
+          comps.map(async c => {
+            try {
+              const r = await fetch(`/competitions/${encodeURIComponent(c)}/matches`);
+              if (r.ok) {
+                const list = await r.json();
+                return list;
+              }
+            } catch (error) {
+              console.error('load matches error', error);
+            }
+            return [];
+          })
+        );
+        setMatches(fetched.flat());
       } catch (err) {
         console.error('load matches error', err);
       }
@@ -192,13 +206,13 @@ export default function OwnerPanel() {
       <Stack spacing={3}>
         <Typography variant="h5">{t('ownerMyPencas')}</Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-          <Button size="small" variant={filter === 'all' ? 'contained' : 'outlined'} onClick={() => setFilter('all')} fullWidth={false}>
+          <Button size="small" variant={filter === 'all' ? 'contained' : 'outlined'} onClick={() => setFilter('all')} fullWidth={isMobile}>
             {t('allMatches')}
           </Button>
-          <Button size="small" variant={filter === 'upcoming' ? 'contained' : 'outlined'} onClick={() => setFilter('upcoming')} fullWidth={false}>
+          <Button size="small" variant={filter === 'upcoming' ? 'contained' : 'outlined'} onClick={() => setFilter('upcoming')} fullWidth={isMobile}>
             {t('upcoming')}
           </Button>
-          <Button size="small" variant={filter === 'played' ? 'contained' : 'outlined'} onClick={() => setFilter('played')} fullWidth={false}>
+          <Button size="small" variant={filter === 'played' ? 'contained' : 'outlined'} onClick={() => setFilter('played')} fullWidth={isMobile}>
             {t('played')}
           </Button>
         </Stack>
@@ -220,40 +234,69 @@ export default function OwnerPanel() {
           .filter(key => !isGroupKey(key) && !knockoutSet.has(key))
           .sort((a, b) => matchTimeValue(pMatches[a]?.[0]) - matchTimeValue(pMatches[b]?.[0]));
 
+        const renderTeam = name => (
+          <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
+            <Box
+              component="img"
+              src={`/images/${name.replace(/\s+/g, '').toLowerCase()}.png`}
+              alt={name}
+              sx={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', backgroundColor: 'background.default' }}
+            />
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
+              {name}
+            </Typography>
+          </Stack>
+        );
+
+        const kickoffText = match => {
+          const localized = formatLocalKickoff(match);
+          if (localized) return localized;
+          if (match.date && match.time) return `${match.date} ${match.time}`;
+          return t('scheduleTbd');
+        };
+
         const renderMatchCard = match => (
-          <Card key={match._id} className="match-card">
+          <Card key={match._id} sx={{ borderRadius: 2, boxShadow: 2 }}>
             <CardContent>
-              <div className="match-header">
-                <div className="team">
-                  <img src={`/images/${match.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team1} className="circle responsive-img" />
-                  <span className="team-name">{match.team1}</span>
-                </div>
-                <span className="vs">vs</span>
-                <div className="team">
-                  <img src={`/images/${match.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team2} className="circle responsive-img" />
-                  <span className="team-name">{match.team2}</span>
-                </div>
-              </div>
-              <div className="match-details">
-                {match.result1 !== undefined && match.result2 !== undefined ? (
-                  <strong>{match.result1} - {match.result2}</strong>
-                ) : formatLocalKickoff(match) ? (
-                  <span>{formatLocalKickoff(match)}</span>
-                ) : match.date && match.time ? (
-                  <span>{match.date} {match.time}</span>
-                ) : (
-                  <span>{t('scheduleTbd')}</span>
+              <Stack spacing={1.5}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  justifyContent="space-between"
+                >
+                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                    {renderTeam(match.team1)}
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {t('vs')}
+                    </Typography>
+                    {renderTeam(match.team2)}
+                  </Stack>
+                  <Stack spacing={0.5} alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {kickoffText(match)}
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      {match.group_name && <Chip size="small" label={match.group_name} />}
+                      {match.series && <Chip size="small" color="secondary" label={match.series} />}
+                    </Stack>
+                  </Stack>
+                </Stack>
+                {match.result1 != null && match.result2 != null && (
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    {match.result1} - {match.result2}
+                  </Typography>
                 )}
-              </div>
+              </Stack>
             </CardContent>
           </Card>
         );
 
         const renderMatchesSection = key => (
-          <div key={key} style={{ marginBottom: '1rem' }}>
-            <h6>{key}</h6>
+          <Stack key={key} spacing={1.5} sx={{ mb: 2 }}>
+            <Typography variant="subtitle2">{key}</Typography>
             {pMatches[key].map(renderMatchCard)}
-          </div>
+          </Stack>
         );
 
         return (
@@ -263,20 +306,29 @@ export default function OwnerPanel() {
             onChange={(_, exp) => setExpandedPenca(exp ? p._id : null)}
             sx={{ borderRadius: 2, boxShadow: 3 }}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: 1 }}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              sx={{ '& .MuiAccordionSummary-content': { width: '100%', margin: 0 } }}
+            >
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1.5}
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+                justifyContent="space-between"
+                sx={{ width: '100%' }}
+              >
                 <Typography component="span" fontWeight="bold">
                   {p.name} · {p.code}
                 </Typography>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Chip size="small" label={tournamentLabel} color="primary" />
-                    <FormControlLabel
-                      control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
-                      label={t('public')}
-                    />
-                  </Stack>
-                </Box>
-              </AccordionSummary>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+                  <Chip size="small" label={tournamentLabel} color="primary" />
+                  <FormControlLabel
+                    control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
+                    label={t('public')}
+                  />
+                </Stack>
+              </Stack>
+            </AccordionSummary>
             <AccordionDetails>
               {groupKeys.map(renderMatchesSection)}
               {knockoutKeys.map(renderMatchesSection)}

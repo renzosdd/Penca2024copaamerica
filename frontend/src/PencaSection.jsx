@@ -71,11 +71,21 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   }
 
   const scoringText = penca.rules?.trim() ? penca.rules : t('noRules');
-  const participantsCount = typeof penca.participantsCount === 'number'
-    ? penca.participantsCount
-    : Array.isArray(penca.participants)
-      ? penca.participants.length
-      : 0;
+  const participantsCount = (() => {
+    if (typeof penca.participantsCount === 'number' && Number.isFinite(penca.participantsCount)) {
+      return penca.participantsCount;
+    }
+    if (typeof penca.participantsCount === 'string') {
+      const parsed = Number(penca.participantsCount);
+      if (!Number.isNaN(parsed)) {
+        return parsed;
+      }
+    }
+    if (typeof penca.metrics?.participants === 'number' && penca.metrics.participants >= 0) {
+      return penca.metrics.participants;
+    }
+    return Array.isArray(penca.participants) ? penca.participants.length : 0;
+  })();
   const participantLimit = penca.participantLimit ? `/${penca.participantLimit}` : '';
   const modeKey = penca.tournamentMode ? `mode_${penca.tournamentMode}` : 'mode_group_stage_knockout';
   const translatedMode = t(modeKey);
@@ -308,14 +318,22 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       <Card
         onClick={() => setOpen(!open)}
         sx={{
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           cursor: 'pointer',
           borderRadius: 3,
           boxShadow: open ? 8 : 2,
           transition: 'box-shadow .2s ease-in-out'
         }}
       >
-        <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+        <CardContent
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 2
+          }}
+        >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Typography variant="h6" component="h3">
               {penca.name}

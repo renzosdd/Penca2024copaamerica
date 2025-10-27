@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, CircularProgress, Alert, Container, Stack, Typography, Box, Chip } from '@mui/material';
 import PencaSection from './PencaSection';
 import JoinPenca from './JoinPenca';
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [showJoin, setShowJoin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const { t } = useLang();
+  const competitionRequests = useRef(new Map());
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -88,28 +89,51 @@ export default function Dashboard() {
     const hasGroups = Array.isArray(groupsByCompetition[competitionName]);
     if (hasMatches && hasGroups) return;
 
-    setCompetitionLoading(state => ({ ...state, [competitionName]: true }));
-    try {
-      if (!hasMatches) {
-        const res = await fetch(`/competitions/${encodeURIComponent(competitionName)}/matches`);
-        if (res.ok) {
-          const data = await res.json();
-          setMatchesByCompetition(prev => ({ ...prev, [competitionName]: data }));
-        }
-      }
-      if (!hasGroups) {
-        const resGroups = await fetch(`/groups/${encodeURIComponent(competitionName)}`);
-        if (resGroups.ok) {
-          const groups = await resGroups.json();
-          setGroupsByCompetition(prev => ({ ...prev, [competitionName]: groups }));
-        }
-      }
-    } catch (err) {
-      console.error('competition data error', err);
-      setError(t('networkError'));
-    } finally {
-      setCompetitionLoading(state => ({ ...state, [competitionName]: false }));
+    if (competitionRequests.current.has(competitionName)) {
+      return competitionRequests.current.get(competitionName);
     }
+
+    const request = (async () => {
+      setCompetitionLoading(state => ({ ...state, [competitionName]: true }));
+      try {
+        const [matchesData, groupsData] = await Promise.all([
+          hasMatches
+            ? null
+            : (async () => {
+                const res = await fetch(`/competitions/${encodeURIComponent(competitionName)}/matches`);
+                if (res.ok) {
+                  return res.json();
+                }
+                throw new Error('matches request failed');
+              })(),
+          hasGroups
+            ? null
+            : (async () => {
+                const resGroups = await fetch(`/groups/${encodeURIComponent(competitionName)}`);
+                if (resGroups.ok) {
+                  return resGroups.json();
+                }
+                throw new Error('groups request failed');
+              })()
+        ]);
+
+        if (matchesData) {
+          setMatchesByCompetition(prev => ({ ...prev, [competitionName]: matchesData }));
+        }
+        if (groupsData) {
+          setGroupsByCompetition(prev => ({ ...prev, [competitionName]: groupsData }));
+        }
+      } catch (err) {
+        console.error('competition data error', err);
+        setError(t('networkError'));
+      } finally {
+        setCompetitionLoading(state => ({ ...state, [competitionName]: false }));
+        competitionRequests.current.delete(competitionName);
+      }
+    })();
+
+    competitionRequests.current.set(competitionName, request);
+    return request;
   }, [groupsByCompetition, matchesByCompetition, t]);
 
   const getPrediction = useCallback((pencaId, matchId) => {

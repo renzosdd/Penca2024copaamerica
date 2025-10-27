@@ -30,6 +30,7 @@ import {
   ToggleButtonGroup
 } from '@mui/material';
 import Save from '@mui/icons-material/Save';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import CompetitionWizard from './CompetitionWizard';
@@ -277,17 +278,23 @@ export default function Admin() {
       const res = await fetch(`/admin/competitions/${encodeURIComponent(comp.name)}/matches`);
       if (!res.ok) return;
       const data = await res.json();
-      const normalized = data.map((m, i) => ({
-        ...m,
-        order: m.order ?? i,
-        kickoff: m.kickoff || '',
-        date: m.date || '',
-        time: m.time || '',
-        originalDate: m.originalDate || m.date || '',
-        originalTime: m.originalTime || m.time || '',
-        originalTimezone: m.originalTimezone || '',
-        venue: ensureVenueObject(m.venue)
-      }));
+      const normalized = data.map((m, i) => {
+        const kickoffDate = m.kickoff ? new Date(m.kickoff) : null;
+        const kickoffValue = kickoffDate && !Number.isNaN(kickoffDate.getTime())
+          ? kickoffDate.toISOString()
+          : '';
+        return {
+          ...m,
+          order: m.order ?? i,
+          kickoff: kickoffValue,
+          date: m.date || '',
+          time: m.time || '',
+          originalDate: m.originalDate || m.date || '',
+          originalTime: m.originalTime || m.time || '',
+          originalTimezone: m.originalTimezone || '',
+          venue: ensureVenueObject(m.venue)
+        };
+      });
       setMatchesByCompetition(ms => ({ ...ms, [comp._id]: normalized }));
       if (data.length) {
         await loadGroups([comp.name]);
