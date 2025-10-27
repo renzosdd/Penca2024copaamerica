@@ -1,9 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   TextField,
   Select,
   MenuItem,
@@ -15,9 +13,24 @@ import {
   FormControlLabel,
   IconButton,
   Snackbar,
-  Alert
+  Alert,
+  Container,
+  Stack,
+  Tabs,
+  Tab,
+  Paper,
+  Grid,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  ToggleButton,
+  ToggleButtonGroup
 } from '@mui/material';
 import Save from '@mui/icons-material/Save';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import CompetitionWizard from './CompetitionWizard';
@@ -43,6 +56,14 @@ export default function Admin() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isAuditSaving, setIsAuditSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
+  const [matchSearch, setMatchSearch] = useState('');
+  const [matchStatus, setMatchStatus] = useState('all');
+  const [cleanupOptions, setCleanupOptions] = useState([]);
+  const [selectedCleanup, setSelectedCleanup] = useState([]);
+  const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [cleanupConfirmOpen, setCleanupConfirmOpen] = useState(false);
 
   const auditTypeLabels = {
     user: t('auditTypeUser'),
@@ -123,8 +144,27 @@ export default function Admin() {
     loadAll();
   }, []);
 
+  useEffect(() => {
+    if (!selectedCompetitionId && competitions.length) {
+      setSelectedCompetitionId(competitions[0]._id);
+    }
+  }, [competitions, selectedCompetitionId]);
+
+  useEffect(() => {
+    const comp = competitions.find(c => c._id === selectedCompetitionId);
+    if (comp && !matchesByCompetition[comp._id]) {
+      loadCompetitionMatches(comp);
+    }
+  }, [competitions, matchesByCompetition, selectedCompetitionId]);
+
   async function loadAll() {
-    await Promise.all([loadCompetitions(), loadOwners(), loadPencas(), loadAuditConfig()]);
+    await Promise.all([
+      loadCompetitions(),
+      loadOwners(),
+      loadPencas(),
+      loadAuditConfig(),
+      loadCleanupCollections()
+    ]);
   }
 
   async function loadCompetitions() {
@@ -171,6 +211,17 @@ export default function Admin() {
       });
     } catch (err) {
       console.error('load audit config error', err);
+    }
+  }
+
+  async function loadCleanupCollections() {
+    try {
+      const res = await fetch('/admin/cleanup');
+      if (!res.ok) return;
+      const data = await res.json();
+      setCleanupOptions(Array.isArray(data.collections) ? data.collections : []);
+    } catch (err) {
+      console.error('load cleanup options error', err);
     }
   }
 
@@ -227,17 +278,23 @@ export default function Admin() {
       const res = await fetch(`/admin/competitions/${encodeURIComponent(comp.name)}/matches`);
       if (!res.ok) return;
       const data = await res.json();
-      const normalized = data.map((m, i) => ({
-        ...m,
-        order: m.order ?? i,
-        kickoff: m.kickoff || '',
-        date: m.date || '',
-        time: m.time || '',
-        originalDate: m.originalDate || m.date || '',
-        originalTime: m.originalTime || m.time || '',
-        originalTimezone: m.originalTimezone || '',
-        venue: ensureVenueObject(m.venue)
-      }));
+      const normalized = data.map((m, i) => {
+        const kickoffDate = m.kickoff ? new Date(m.kickoff) : null;
+        const kickoffValue = kickoffDate && !Number.isNaN(kickoffDate.getTime())
+          ? kickoffDate.toISOString()
+          : '';
+        return {
+          ...m,
+          order: m.order ?? i,
+          kickoff: kickoffValue,
+          date: m.date || '',
+          time: m.time || '',
+          originalDate: m.originalDate || m.date || '',
+          originalTime: m.originalTime || m.time || '',
+          originalTimezone: m.originalTimezone || '',
+          venue: ensureVenueObject(m.venue)
+        };
+      });
       setMatchesByCompetition(ms => ({ ...ms, [comp._id]: normalized }));
       if (data.length) {
         await loadGroups([comp.name]);
@@ -259,7 +316,7 @@ export default function Admin() {
         }
       })
     );
-    setGroups(result);
+    setGroups(prev => ({ ...prev, ...result }));
   }
 
   const updateCompetitionField = (id, field, value) => {
@@ -537,565 +594,952 @@ export default function Admin() {
     }
   }
 
-  const renderMatchEditor = (comp, match) => {
+  const selectedCompetition = competitions.find(c => c._id === selectedCompetitionId) || null;
+
+  const selectedMatches = useMemo(() => {
+    if (!selectedCompetition) return [];
+    const matches = matchesByCompetition[selectedCompetition._id] || [];
+    const query = matchSearch.trim().toLowerCase();
+    return matches
+      .filter(match => {
+        if (matchStatus === 'upcoming' && !(match.result1 == null && match.result2 == null)) {
+          return false;
+        }
+        if (matchStatus === 'played' && !(match.result1 != null && match.result2 != null)) {
+          return false;
+        }
+        if (!query) return true;
+        const haystack = [
+          match.team1,
+          match.team2,
+          match.group_name,
+          match.series,
+          match.venue?.country,
+          match.venue?.city,
+          match.venue?.stadium
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(query);
+      })
+      .sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
+  }, [matchSearch, matchStatus, matchesByCompetition, selectedCompetition]);
+
+  const groupedSelectedMatches = useMemo(() => {
+    return selectedMatches.reduce((acc, match) => {
+      const key = match.group_name?.trim() || 'Otros';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(match);
+      return acc;
+    }, {});
+  }, [selectedMatches]);
+
+  const matchGroupKeys = useMemo(
+    () => Object.keys(groupedSelectedMatches).filter(isGroupKey).sort(compareGroupKey),
+    [groupedSelectedMatches]
+  );
+
+  const matchKnockoutKeys = useMemo(
+    () => knockoutOrder.filter(label => Array.isArray(groupedSelectedMatches[label])),
+    [groupedSelectedMatches]
+  );
+
+  const matchOtherKeys = useMemo(
+    () =>
+      Object.keys(groupedSelectedMatches)
+        .filter(key => !isGroupKey(key) && !matchKnockoutKeys.includes(key))
+        .sort((a, b) => matchTimeValue(groupedSelectedMatches[a]?.[0]) - matchTimeValue(groupedSelectedMatches[b]?.[0])),
+    [groupedSelectedMatches, matchKnockoutKeys]
+  );
+
+  const matchHasData = matchGroupKeys.length + matchKnockoutKeys.length + matchOtherKeys.length > 0;
+
+  const renderMatchAccordion = match => {
     const venue = ensureVenueObject(match.venue);
     return (
-      <li key={match._id} className="collection-item">
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          <TextField
-            label={t('team1Label')}
-            value={match.team1 || ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'team1', e.target.value)}
-            size="small"
-            sx={{ minWidth: 150 }}
-          />
-          <TextField
-            label={t('team2Label')}
-            value={match.team2 || ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'team2', e.target.value)}
-            size="small"
-            sx={{ minWidth: 150 }}
-          />
-          <TextField
-            label={t('group')}
-            value={match.group_name || ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'group_name', e.target.value)}
-            size="small"
-            sx={{ minWidth: 140 }}
-          />
-          <TextField
-            label={t('seriesLabel')}
-            value={match.series || ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'series', e.target.value)}
-            size="small"
-            sx={{ minWidth: 180 }}
-          />
-          <TextField
-            label={t('kickoffLabel')}
-            type="datetime-local"
-            value={kickoffInputValue(match)}
-            onChange={e => updateMatchField(comp._id, match._id, 'kickoff', e.target.value)}
-            size="small"
-            sx={{ minWidth: 220 }}
-          />
-          <Typography variant="caption" sx={{ width: '100%' }}>
-            {t('localKickoffLabel')}: {formatLocalKickoff(match)}
-          </Typography>
-          <TextField
-            label={t('originalDateLabel')}
-            type="date"
-            value={match.originalDate || ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'originalDate', e.target.value)}
-            size="small"
-            sx={{ minWidth: 160 }}
-          />
-          <TextField
-            label={t('originalTimeLabel')}
-            type="time"
-            value={match.originalTime || ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'originalTime', e.target.value)}
-            size="small"
-            sx={{ minWidth: 150 }}
-          />
-          <TextField
-            label={t('originalTimezoneLabel')}
-            value={match.originalTimezone || ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'originalTimezone', e.target.value)}
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
-          <TextField
-            label={t('venueCountryLabel')}
-            value={venue.country}
-            onChange={e => updateMatchField(comp._id, match._id, 'venue.country', e.target.value)}
-            size="small"
-            sx={{ minWidth: 160 }}
-          />
-          <TextField
-            label={t('venueCityLabel')}
-            value={venue.city}
-            onChange={e => updateMatchField(comp._id, match._id, 'venue.city', e.target.value)}
-            size="small"
-            sx={{ minWidth: 160 }}
-          />
-          <TextField
-            label={t('venueStadiumLabel')}
-            value={venue.stadium}
-            onChange={e => updateMatchField(comp._id, match._id, 'venue.stadium', e.target.value)}
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
-          <TextField
-            label={t('scoreTeam1Label')}
-            type="number"
-            value={match.result1 ?? ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'result1', e.target.value)}
-            size="small"
-            sx={{ width: 100 }}
-            inputProps={{ min: 0 }}
-          />
-          <TextField
-            label={t('scoreTeam2Label')}
-            type="number"
-            value={match.result2 ?? ''}
-            onChange={e => updateMatchField(comp._id, match._id, 'result2', e.target.value)}
-            size="small"
-            sx={{ width: 100 }}
-            inputProps={{ min: 0 }}
-          />
-          <IconButton size="small" onClick={() => saveMatch(comp._id, match)} disabled={isSaving}>
-            <Save fontSize="small" />
-          </IconButton>
-        </Box>
-      </li>
+      <Accordion
+        key={match._id}
+        disableGutters
+        sx={{
+          borderRadius: 2,
+          border: theme => `1px solid ${theme.palette.divider}`,
+          '&:before': { display: 'none' }
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1.5}
+            alignItems={{ xs: 'flex-start', md: 'center' }}
+            justifyContent="space-between"
+            sx={{ width: '100%' }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              {match.team1} vs {match.team2}
+            </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {match.group_name && <Chip size="small" label={match.group_name} />}
+              {match.series && <Chip size="small" color="secondary" label={match.series} />}
+              {match.result1 != null && match.result2 != null && (
+                <Chip size="small" color="primary" label={`${match.result1} - ${match.result2}`} />
+              )}
+            </Stack>
+            <Typography variant="body2" color="text.secondary">
+              {formatLocalKickoff(match)}
+            </Typography>
+          </Stack>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack spacing={1.5}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                label={t('team1Label')}
+                value={match.team1 || ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'team1', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('team2Label')}
+                value={match.team2 || ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'team2', e.target.value)}
+                size="small"
+                fullWidth
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                label={t('group')}
+                value={match.group_name || ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'group_name', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('seriesLabel')}
+                value={match.series || ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'series', e.target.value)}
+                size="small"
+                fullWidth
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                label={t('kickoffLabel')}
+                type="datetime-local"
+                value={kickoffInputValue(match)}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'kickoff', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('originalDateLabel')}
+                type="date"
+                value={match.originalDate || ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'originalDate', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('originalTimeLabel')}
+                type="time"
+                value={match.originalTime || ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'originalTime', e.target.value)}
+                size="small"
+                fullWidth
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                label={t('originalTimezoneLabel')}
+                value={match.originalTimezone || ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'originalTimezone', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 40 }}>
+                <Typography variant="caption">{t('localKickoffLabel')}: {formatLocalKickoff(match)}</Typography>
+              </Box>
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                label={t('venueCountryLabel')}
+                value={venue.country}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'venue.country', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('venueCityLabel')}
+                value={venue.city}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'venue.city', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('venueStadiumLabel')}
+                value={venue.stadium}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'venue.stadium', e.target.value)}
+                size="small"
+                fullWidth
+              />
+            </Stack>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                label={t('scoreTeam1Label')}
+                type="number"
+                value={match.result1 ?? ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'result1', e.target.value)}
+                size="small"
+                sx={{ maxWidth: 160 }}
+                inputProps={{ min: 0 }}
+              />
+              <TextField
+                label={t('scoreTeam2Label')}
+                type="number"
+                value={match.result2 ?? ''}
+                onChange={e => updateMatchField(selectedCompetitionId, match._id, 'result2', e.target.value)}
+                size="small"
+                sx={{ maxWidth: 160 }}
+                inputProps={{ min: 0 }}
+              />
+            </Stack>
+            <Stack direction="row" justifyContent="flex-end">
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => saveMatch(selectedCompetitionId, match)}
+                disabled={isSaving}
+                startIcon={<Save fontSize="small" />}
+              >
+                {t('save')}
+              </Button>
+            </Stack>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
     );
   };
 
-  return (
-    <div className="container" style={{ marginTop: '2rem' }}>
-      <h5>{t('adminTitle')}</h5>
+  const toggleCleanupSelection = key => {
+    setSelectedCleanup(list =>
+      list.includes(key) ? list.filter(item => item !== key) : [...list, key]
+    );
+  };
 
-      <Card style={{ marginTop: '1rem', padding: '1rem' }}>
-        <CardContent>
-          <Typography variant="h6">{t('auditSettingsTitle')}</Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            {auditConfig.enabled ? t('auditEnabled') : t('auditDisabled')}
+  const toggleAllCleanup = () => {
+    if (selectedCleanup.length === cleanupOptions.length) {
+      setSelectedCleanup([]);
+    } else {
+      setSelectedCleanup(cleanupOptions.map(opt => opt.key));
+    }
+  };
+
+  const requestCleanup = () => {
+    if (!selectedCleanup.length) {
+      setSnackbar({ open: true, message: t('adminCleanupEmpty'), severity: 'warning' });
+      return;
+    }
+    setCleanupConfirmOpen(true);
+  };
+
+  const executeCleanup = async () => {
+    setCleanupLoading(true);
+    try {
+      const res = await fetch('/admin/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ collections: selectedCleanup })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCleanupOptions(Array.isArray(data.collections) ? data.collections : cleanupOptions);
+        setSelectedCleanup([]);
+        setSnackbar({ open: true, message: t('adminCleanupSuccess'), severity: 'success' });
+      } else {
+        setSnackbar({ open: true, message: data.error || t('networkError'), severity: 'error' });
+      }
+    } catch (err) {
+      console.error('cleanup request error', err);
+      setSnackbar({ open: true, message: t('networkError'), severity: 'error' });
+    } finally {
+      setCleanupLoading(false);
+      setCleanupConfirmOpen(false);
+    }
+  };
+
+  const totalMatches = useMemo(
+    () =>
+      Object.values(matchesByCompetition).reduce(
+        (sum, list) => sum + (Array.isArray(list) ? list.length : 0),
+        0
+      ),
+    [matchesByCompetition]
+  );
+
+  const totalPlayers = useMemo(
+    () =>
+      pencas.reduce(
+        (sum, p) => sum + (Array.isArray(p.participants) ? p.participants.length : 0),
+        0
+      ),
+    [pencas]
+  );
+
+  const lastUpdated = useMemo(() => new Date().toLocaleString(), []);
+
+  const renderOverviewTab = () => (
+    <Grid container spacing={2}>
+      {[{
+        label: t('adminStatsCompetitions'),
+        value: competitions.length
+      }, {
+        label: t('adminStatsMatches'),
+        value: totalMatches
+      }, {
+        label: t('adminStatsPencas'),
+        value: pencas.length
+      }, {
+        label: t('adminStatsOwners'),
+        value: owners.length
+      }].map(item => (
+        <Grid item xs={12} sm={6} md={3} key={item.label}>
+          <Paper sx={{ p: 2, borderRadius: 2 }}>
+            <Typography variant="overline" color="text.secondary">
+              {item.label}
+            </Typography>
+            <Typography variant="h5">{item.value}</Typography>
+          </Paper>
+        </Grid>
+      ))}
+      <Grid item xs={12} sm={6} md={3}>
+        <Paper sx={{ p: 2, borderRadius: 2 }}>
+          <Typography variant="overline" color="text.secondary">
+            {t('adminStatsPlayers')}
           </Typography>
-          <Button variant="outlined" sx={{ mt: 2 }} onClick={toggleAuditEnabled}>
-            {auditConfig.enabled ? t('auditDisable') : t('auditEnable')}
+          <Typography variant="h5">{totalPlayers}</Typography>
+        </Paper>
+      </Grid>
+      <Grid item xs={12}>
+        <Paper sx={{ p: 2, borderRadius: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            {t('adminStatsUpdated')}: {lastUpdated}
+          </Typography>
+        </Paper>
+      </Grid>
+    </Grid>
+  );
+
+  const renderCompetitionsTab = () => (
+    <Stack spacing={2}>
+      <Paper sx={{ p: 2, borderRadius: 2 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} flexWrap="wrap">
+          <Button variant="contained" onClick={() => setWizardOpen(true)}>
+            {t('importCompetition')}
           </Button>
-          {availableAuditTypes.length ? (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
-              <Typography variant="subtitle2">{t('auditTypesLabel')}</Typography>
-              {availableAuditTypes.map(type => (
-                <FormControlLabel
-                  key={type}
-                  control={(
-                    <Checkbox
-                      checked={Boolean(auditConfig.types?.[type])}
-                      onChange={e => updateAuditType(type, e.target.checked)}
-                      disabled={!auditConfig.enabled}
-                    />
-                  )}
-                  label={auditTypeLabels[type] || type}
-                />
-              ))}
-            </Box>
-          ) : null}
           <Button
-            variant="contained"
-            sx={{ mt: 2 }}
-            onClick={saveAuditSettings}
-            disabled={isAuditSaving}
+            variant="outlined"
+            component="a"
+            href="/admin/competitions/template/example"
+            download
           >
-            {t('save')}
+            {t('downloadExampleJson')}
           </Button>
-        </CardContent>
-      </Card>
+          <Button
+            variant="outlined"
+            component="a"
+            href="/admin/competitions/template/worldcup"
+            download
+          >
+            {t('downloadWorldCupJson')}
+          </Button>
+          <Button
+            variant="outlined"
+            component="a"
+            href="/admin/competitions/template/guide"
+            download
+          >
+            {t('downloadGuideDoc')}
+          </Button>
+        </Stack>
+      </Paper>
 
-      {/* Competencias */}
-      <Card style={{ marginTop: '2rem', padding: '1rem' }}>
-        <CardContent>
-          <h6>{t('competitions')}</h6>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            <Button variant="contained" onClick={() => setWizardOpen(true)}>
-              {t('importCompetition')}
-            </Button>
-            <Button
-              variant="outlined"
-              component="a"
-              href="/admin/competitions/template/example"
-              download
-            >
-              {t('downloadExampleJson')}
-            </Button>
-            <Button
-              variant="outlined"
-              component="a"
-              href="/admin/competitions/template/worldcup"
-              download
-            >
-              {t('downloadWorldCupJson')}
-            </Button>
-            <Button
-              variant="outlined"
-              component="a"
-              href="/admin/competitions/template/guide"
-              download
-            >
-              {t('downloadGuideDoc')}
-            </Button>
-          </Box>
+      {competitions.length === 0 && (
+        <Alert severity="info">{t('adminMatchesNoResults')}</Alert>
+      )}
 
-          {competitions.map(c => (
-            <Accordion
-              key={c._id}
-              expanded={expandedComp === c._id}
-              onChange={(_, exp) => {
-                setExpandedComp(exp ? c._id : null);
-                if (exp && !matchesByCompetition[c._id]) loadCompetitionMatches(c);
-              }}
-            >
-              <AccordionSummary expandIcon="▶">
-                <Typography>{c.name}</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                {(() => {
-                  const grouped = (matchesByCompetition[c._id] || []).reduce((acc, match) => {
-                    const key = match.group_name?.trim() || 'Otros';
-                    (acc[key] = acc[key] || []).push(match);
-                    return acc;
-                  }, {});
-                  const groupKeys = Object.keys(grouped).filter(isGroupKey).sort(compareGroupKey);
-                  const knockoutKeys = knockoutOrder.filter(label => Array.isArray(grouped[label]));
-                  const knockoutSet = new Set(knockoutKeys);
-                  const otherKeys = Object.keys(grouped)
-                    .filter(key => !isGroupKey(key) && !knockoutSet.has(key))
-                    .sort((a, b) => matchTimeValue(grouped[a]?.[0]) - matchTimeValue(grouped[b]?.[0]));
-                  return (
-                    <>
-                      {groupKeys.map(key => (
-                        <Accordion key={key} sx={{ mt: 1 }}>
-                          <AccordionSummary expandIcon="▼">
-                            <Typography variant="subtitle2">{key}</Typography>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            <ul className="collection">
-                              {grouped[key].map(match => renderMatchEditor(c, match))}
-                            </ul>
-                            <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, key)} disabled={isSaving}>
-                              {t('saveOrder')}
-                            </Button>
-                            <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, key)} disabled={isSaving}>
-                              {t('saveRound')}
-                            </Button>
-                            {groups[c.name]?.filter(gr => gr.group === key).length ? (
-                              <GroupTable groups={groups[c.name].filter(gr => gr.group === key)} />
-                            ) : null}
-                          </AccordionDetails>
-                        </Accordion>
-                      ))}
+      {competitions.map(comp => (
+        <Paper key={comp._id} sx={{ p: 2, borderRadius: 2 }}>
+          <Stack spacing={1.5}>
+            <TextField
+              label={t('competition')}
+              value={comp.name || ''}
+              onChange={e => updateCompetitionField(comp._id, 'name', e.target.value)}
+              size="small"
+              fullWidth
+            />
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                label={t('groups')}
+                type="number"
+                value={comp.groupsCount ?? ''}
+                onChange={e => updateCompetitionField(comp._id, 'groupsCount', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('integrants')}
+                type="number"
+                value={comp.integrantsPerGroup ?? ''}
+                onChange={e => updateCompetitionField(comp._id, 'integrantsPerGroup', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('qualifiers')}
+                type="number"
+                value={comp.qualifiersPerGroup ?? ''}
+                onChange={e => updateCompetitionField(comp._id, 'qualifiersPerGroup', e.target.value)}
+                size="small"
+                fullWidth
+              />
+            </Stack>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => saveCompetition(comp)}
+                disabled={isSaving}
+              >
+                {t('save')}
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => generateBracket(comp)}
+                disabled={isGenerating}
+              >
+                {t('generateBracket')}
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => updateResults(comp)}
+                disabled={isUpdating}
+              >
+                {t('updateResults')}
+              </Button>
+              <Button
+                color="error"
+                size="small"
+                onClick={() => deleteCompetition(comp._id)}
+              >
+                {t('delete')}
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+      ))}
+    </Stack>
+  );
 
-                      {knockoutKeys.map(key => (
-                        <Accordion key={key} sx={{ mt: 1 }}>
-                          <AccordionSummary expandIcon="▼">
-                            <Typography variant="subtitle2">{key}</Typography>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            <ul className="collection">
-                              {grouped[key].map(match => renderMatchEditor(c, match))}
-                            </ul>
-                            <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, key)} disabled={isSaving}>
-                              {t('saveOrder')}
-                            </Button>
-                            <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, key)} disabled={isSaving}>
-                              {t('saveRound')}
-                            </Button>
-                          </AccordionDetails>
-                        </Accordion>
-                      ))}
+  const renderMatchesTab = () => (
+    <Stack spacing={2}>
+      <Paper sx={{ p: 2, borderRadius: 2 }}>
+        <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} flexWrap="wrap">
+          <TextField
+            select
+            label={t('competition')}
+            value={selectedCompetitionId}
+            onChange={e => setSelectedCompetitionId(e.target.value)}
+            size="small"
+            fullWidth
+            SelectProps={{ displayEmpty: true }}
+          >
+            {competitions.map(comp => (
+              <MenuItem key={comp._id} value={comp._id}>
+                {comp.name}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label={t('adminMatchesSearch')}
+            value={matchSearch}
+            onChange={e => setMatchSearch(e.target.value)}
+            size="small"
+            fullWidth
+          />
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => selectedCompetition && loadCompetitionMatches(selectedCompetition)}
+            disabled={!selectedCompetition}
+          >
+            {t('adminMatchesRefresh')}
+          </Button>
+        </Stack>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 2 }} alignItems={{ xs: 'stretch', sm: 'center' }}>
+          <ToggleButtonGroup
+            value={matchStatus}
+            exclusive
+            size="small"
+            onChange={(_, value) => {
+              if (value) setMatchStatus(value);
+            }}
+          >
+            <ToggleButton value="all">{t('allMatches')}</ToggleButton>
+            <ToggleButton value="upcoming">{t('upcoming')}</ToggleButton>
+            <ToggleButton value="played">{t('played')}</ToggleButton>
+          </ToggleButtonGroup>
+          <Typography variant="body2" color="text.secondary" sx={{ ml: { sm: 'auto' } }}>
+            {t('adminMatchesGrouped')}: {Object.keys(groupedSelectedMatches).length}
+          </Typography>
+        </Stack>
+      </Paper>
 
-                      {otherKeys.map(key => (
-                        <Accordion key={key} sx={{ mt: 1 }}>
-                          <AccordionSummary expandIcon="▼">
-                            <Typography variant="subtitle2">{key}</Typography>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            <ul className="collection">
-                              {grouped[key].map(match => renderMatchEditor(c, match))}
-                            </ul>
-                            <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveRound(c._id, key)} disabled={isSaving}>
-                              {t('saveRound')}
-                            </Button>
-                          </AccordionDetails>
-                        </Accordion>
-                      ))}
-                    </>
-                  );
-                })()}
-                <TextField
-                  value={c.name}
-                  onChange={e => updateCompetitionField(c._id, 'name', e.target.value)}
-                  size="small"
-                />
-                <TextField
-                  type="number"
-                  value={c.groupsCount ?? ''}
-                  onChange={e => updateCompetitionField(c._id, 'groupsCount', e.target.value)}
-                  size="small"
-                  sx={{ ml: 1, width: 80 }}
-                />
-                <TextField
-                  type="number"
-                  value={c.integrantsPerGroup ?? ''}
-                  onChange={e => updateCompetitionField(c._id, 'integrantsPerGroup', e.target.value)}
-                  size="small"
-                  sx={{ ml: 1, width: 100 }}
-                />
-                <TextField
-                  type="number"
-                  value={c.qualifiersPerGroup ?? ''}
-                  onChange={e => updateCompetitionField(c._id, 'qualifiersPerGroup', e.target.value)}
-                  size="small"
-                  sx={{ ml: 1, width: 100 }}
-                />
-                <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => generateBracket(c)} disabled={isGenerating}>
-                  {t('generateBracket')}
-                </Button>
-                <Button variant="outlined" size="small" sx={{ ml: 1 }} onClick={() => updateResults(c)} disabled={isUpdating}>
-                  {t('updateResults')}
-                </Button>
-                <IconButton size="small" className="secondary-content" onClick={() => saveCompetition(c)} disabled={isSaving}>
-                  <Save fontSize="small" />
-                </IconButton>
-                <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteCompetition(c._id); }}>✖</a>
+      {!selectedCompetition && <Alert severity="info">{t('competitions')}</Alert>}
 
-                {matchesByCompetition[c._id] && Object.entries(
-                  matchesByCompetition[c._id].reduce((acc, m) => {
-                    const round = m.group_name || 'Otros';
-                    (acc[round] = acc[round] || []).push(m);
-                    return acc;
-                  }, {})
-                ).sort(([a], [b]) => {
-                  const ai = roundOrder.indexOf(a);
-                  const bi = roundOrder.indexOf(b);
-                  if (ai === -1 && bi === -1) return a.localeCompare(b);
-                  if (ai === -1) return 1;
-                  if (bi === -1) return -1;
-                  return ai - bi;
-                }).map(([round, ms]) => (
-                  <Accordion key={round} sx={{ mt: 1 }}>
-                    <AccordionSummary expandIcon="▼">
-                      <Typography variant="subtitle2">{round}</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <ul className="collection">
-                        {ms.map((m, idx) => (
-                          <li key={m._id} className="collection-item">
-                            <TextField
-                              value={m.team1 || ''}
-                              onChange={e => updateMatchField(c._id, m._id, 'team1', e.target.value)}
-                              size="small"
-                            />
-                            <TextField
-                              value={m.team2 || ''}
-                              onChange={e => updateMatchField(c._id, m._id, 'team2', e.target.value)}
-                              size="small"
-                              sx={{ ml: 1 }}
-                            />
-                            <TextField
-                              type="date"
-                              value={m.date || ''}
-                              onChange={e => updateMatchField(c._id, m._id, 'date', e.target.value)}
-                              size="small"
-                              sx={{ ml: 1 }}
-                            />
-                            <TextField
-                              type="time"
-                              value={m.time || ''}
-                              onChange={e => updateMatchField(c._id, m._id, 'time', e.target.value)}
-                              size="small"
-                              sx={{ ml: 1 }}
-                            />
-                            <TextField
-                              type="number"
-                              value={m.result1 ?? ''}
-                              onChange={e => updateMatchField(c._id, m._id, 'result1', e.target.value)}
-                              size="small"
-                              sx={{ ml: 1, width: 60 }}
-                              inputProps={{ min: 0 }}
-                            />
-                            <TextField
-                              type="number"
-                              value={m.result2 ?? ''}
-                              onChange={e => updateMatchField(c._id, m._id, 'result2', e.target.value)}
-                              size="small"
-                              sx={{ ml: 1, width: 60 }}
-                              inputProps={{ min: 0 }}
-                            />
-                            <span className="secondary-content">
-                              <IconButton size="small" onClick={() => saveMatch(c._id, m)} disabled={isSaving}>
-                                <Save fontSize="small" />
-                              </IconButton>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                      <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => saveOrder(c, round)} disabled={isSaving}>
-                        {t('saveOrder')}
-                      </Button>
-                      <Button size="small" variant="contained" sx={{ mt: 1, ml: 1 }} onClick={() => saveRound(c._id, round)} disabled={isSaving}>
-                        {t('saveRound')}
-                      </Button>
-                      {groups[c.name]?.filter(gr => gr.group === round).length ? (
-                        <GroupTable groups={groups[c.name].filter(gr => gr.group === round)} />
-                      ) : null}
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </AccordionDetails>
-            </Accordion>
+      {selectedCompetition && !matchHasData && (
+        <Alert severity="info">{t('adminMatchesNoResults')}</Alert>
+      )}
+
+      {selectedCompetition && matchHasData && (
+        <Stack spacing={2}>
+          {matchGroupKeys.map(round => (
+            <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+                <Typography variant="subtitle1">{round}</Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => saveOrder(selectedCompetition, round)}
+                    disabled={isSaving}
+                  >
+                    {t('saveOrder')}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => saveRound(selectedCompetition._id, round)}
+                    disabled={isSaving}
+                  >
+                    {t('saveRound')}
+                  </Button>
+                </Stack>
+              </Stack>
+              <Stack spacing={1.5} sx={{ mt: 1.5 }}>
+                {groupedSelectedMatches[round].map(renderMatchAccordion)}
+              </Stack>
+              {Array.isArray(groups[selectedCompetition.name]) && (
+                <GroupTable groups={groups[selectedCompetition.name].filter(gr => gr.group === round)} />
+              )}
+            </Paper>
           ))}
 
-        </CardContent>
-      </Card>
+          {matchKnockoutKeys.map(round => (
+            <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+                <Typography variant="subtitle1">{round}</Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => saveOrder(selectedCompetition, round)}
+                    disabled={isSaving}
+                  >
+                    {t('saveOrder')}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={() => saveRound(selectedCompetition._id, round)}
+                    disabled={isSaving}
+                  >
+                    {t('saveRound')}
+                  </Button>
+                </Stack>
+              </Stack>
+              <Stack spacing={1.5} sx={{ mt: 1.5 }}>
+                {groupedSelectedMatches[round].map(renderMatchAccordion)}
+              </Stack>
+            </Paper>
+          ))}
 
-      {/* Owners */}
-      <Card style={{ marginTop: '2rem', padding: '1rem' }}>
-        <CardContent>
-          <h6>{t('owners')}</h6>
-          <form onSubmit={createOwner} style={{ marginBottom: '1rem' }}>
-            <TextField
-              value={ownerForm.username}
-              onChange={e => setOwnerForm({ ...ownerForm, username: e.target.value })}
-              label={t('username')}
-              required
-              size="small"
-            />
-            <TextField
-              type="password"
-              value={ownerForm.password}
-              onChange={e => setOwnerForm({ ...ownerForm, password: e.target.value })}
-              label={t('password')}
-              required
-              size="small"
-              sx={{ ml: 1 }}
-            />
-            <TextField
-              type="email"
-              value={ownerForm.email}
-              onChange={e => setOwnerForm({ ...ownerForm, email: e.target.value })}
-              label={t('email')}
-              required
-              size="small"
-              sx={{ ml: 1 }}
-            />
-            <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>{t('create')}</Button>
-          </form> 
-          <ul className="collection">
+          {matchOtherKeys.map(round => (
+            <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
+                <Typography variant="subtitle1">{round}</Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => saveRound(selectedCompetition._id, round)}
+                  disabled={isSaving}
+                >
+                  {t('saveRound')}
+                </Button>
+              </Stack>
+              <Stack spacing={1.5} sx={{ mt: 1.5 }}>
+                {groupedSelectedMatches[round].map(renderMatchAccordion)}
+              </Stack>
+            </Paper>
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  );
+
+  const renderOwnersTab = () => (
+    <Stack spacing={2}>
+      <Paper sx={{ p: 2, borderRadius: 2 }}>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          {t('owners')}
+        </Typography>
+        <Stack
+          component="form"
+          onSubmit={createOwner}
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={1.5}
+          flexWrap="wrap"
+        >
+          <TextField
+            value={ownerForm.username}
+            onChange={e => setOwnerForm({ ...ownerForm, username: e.target.value })}
+            label={t('username')}
+            required
+            size="small"
+            fullWidth
+          />
+          <TextField
+            type="password"
+            value={ownerForm.password}
+            onChange={e => setOwnerForm({ ...ownerForm, password: e.target.value })}
+            label={t('password')}
+            required
+            size="small"
+            fullWidth
+          />
+          <TextField
+            type="email"
+            value={ownerForm.email}
+            onChange={e => setOwnerForm({ ...ownerForm, email: e.target.value })}
+            label={t('email')}
+            required
+            size="small"
+            fullWidth
+          />
+          <Button variant="contained" type="submit" size="small" disabled={isSaving}>
+            {t('create')}
+          </Button>
+        </Stack>
+      </Paper>
+
+      <Stack spacing={1.5}>
+        {owners.map(owner => (
+          <Paper key={owner._id} sx={{ p: 2, borderRadius: 2 }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} flexWrap="wrap" alignItems={{ xs: 'flex-start', md: 'center' }}>
+              <TextField
+                label={t('username')}
+                value={owner.username || ''}
+                onChange={e => updateOwnerField(owner._id, 'username', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('email')}
+                type="email"
+                value={owner.email || ''}
+                onChange={e => updateOwnerField(owner._id, 'email', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => saveOwner(owner)}
+                disabled={isSaving}
+              >
+                {t('save')}
+              </Button>
+              <Button color="error" size="small" onClick={() => deleteOwner(owner._id)}>
+                {t('delete')}
+              </Button>
+            </Stack>
+          </Paper>
+        ))}
+      </Stack>
+    </Stack>
+  );
+
+  const renderPencasTab = () => (
+    <Stack spacing={2}>
+      <Paper sx={{ p: 2, borderRadius: 2 }}>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          {t('pencas')}
+        </Typography>
+        <Stack
+          component="form"
+          onSubmit={createPenca}
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={1.5}
+          flexWrap="wrap"
+        >
+          <TextField
+            value={pencaForm.name}
+            onChange={e => setPencaForm({ ...pencaForm, name: e.target.value })}
+            label={t('name')}
+            required
+            size="small"
+            fullWidth
+          />
+          <Select
+            value={pencaForm.owner}
+            onChange={e => setPencaForm({ ...pencaForm, owner: e.target.value })}
+            displayEmpty
+            required
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="" disabled>
+              {t('owner')}
+            </MenuItem>
             {owners.map(o => (
-              <li key={o._id} className="collection-item">
-                <TextField
-                  value={o.username || ''}
-                  onChange={e => updateOwnerField(o._id, 'username', e.target.value)}
-                  size="small"
-                />
-                <TextField
-                  type="email"
-                  value={o.email || ''}
-                  onChange={e => updateOwnerField(o._id, 'email', e.target.value)}
-                  size="small"
-                  sx={{ ml: 1 }}
-                />
-                <IconButton size="small" className="secondary-content" onClick={() => saveOwner(o)} disabled={isSaving}>
-                  <Save fontSize="small" />
-                </IconButton>
-                <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deleteOwner(o._id); }}>✖</a>
-              </li>
+              <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
             ))}
-          </ul>
-        </CardContent>
-      </Card>
+          </Select>
+          <Select
+            value={pencaForm.competition}
+            onChange={e => setPencaForm({ ...pencaForm, competition: e.target.value })}
+            displayEmpty
+            required
+            size="small"
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="" disabled>
+              {t('competition')}
+            </MenuItem>
+            {competitions.map(c => (
+              <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
+            ))}
+          </Select>
+          <FormControlLabel
+            control={(
+              <Checkbox
+                checked={pencaForm.isPublic}
+                onChange={e => setPencaForm({ ...pencaForm, isPublic: e.target.checked })}
+              />
+            )}
+            label={t('public')}
+          />
+          <Button variant="contained" type="submit" size="small" disabled={isSaving}>
+            {t('create')}
+          </Button>
+        </Stack>
+      </Paper>
 
-      {/* Pencas */}
-      <Card style={{ marginTop: '2rem', padding: '1rem' }}>
-        <CardContent>
-          <h6>{t('pencas')}</h6>
-          <form onSubmit={createPenca} style={{ marginBottom: '1rem' }}>
-            <TextField
-              value={pencaForm.name}
-              onChange={e => setPencaForm({ ...pencaForm, name: e.target.value })}
-              label={t('name')}
-              required
-              size="small"
-            />
-            <Select
-              value={pencaForm.owner}
-              onChange={e => setPencaForm({ ...pencaForm, owner: e.target.value })}
-              displayEmpty
-              required
-              size="small"
-              sx={{ ml: 1, minWidth: 120 }}
-            >
-              <MenuItem value="" disabled>{t('owner')}</MenuItem>
-              {owners.map(o => (
-                <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
-              ))}
-            </Select>
-            <Select
-              value={pencaForm.competition}
-              onChange={e => setPencaForm({ ...pencaForm, competition: e.target.value })}
-              displayEmpty
-              required
-              size="small"
-              sx={{ ml: 1, minWidth: 120 }}
-            >
-              <MenuItem value="" disabled>{t('competition')}</MenuItem>
-              {competitions.map(c => (
-                <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
-              ))}
-            </Select>
-            <FormControlLabel
-              control={<Checkbox checked={pencaForm.isPublic} onChange={e => setPencaForm({ ...pencaForm, isPublic: e.target.checked })} />}
-              label={t('public')}
-              sx={{ ml: 1 }}
-            />
-            <Button variant="contained" type="submit" sx={{ ml: 1 }} disabled={isSaving}>{t('create')}</Button>
-          </form>
-          <ul className="collection">
-            {pencas.map(p => (
-              <li key={p._id} className="collection-item">
-                <TextField
-                  value={p.name || ''}
-                  onChange={e => updatePencaField(p._id, 'name', e.target.value)}
-                  size="small"
-                />
-                <TextField
-                  value={p.code || ''}
-                  InputProps={{ readOnly: true }}
-                  size="small"
-                  sx={{ ml: 1, width: 90 }}
-                />
-                <Select
-                  value={p.owner}
-                  onChange={e => updatePencaField(p._id, 'owner', e.target.value)}
-                  size="small"
-                  sx={{ ml: 1, minWidth: 120 }}
-                >
-                  {owners.map(o => (
-                    <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
-                  ))}
-                </Select>
-                <Select
-                  value={p.competition}
-                  onChange={e => updatePencaField(p._id, 'competition', e.target.value)}
-                  size="small"
-                  sx={{ ml: 1, minWidth: 120 }}
-                >
-                  {competitions.map(c => (
-                    <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
-                  ))}
-                </Select>
-                <FormControlLabel
-                  control={<Checkbox checked={p.isPublic || false} onChange={e => updatePencaField(p._id, 'isPublic', e.target.checked)} />}
-                  label={t('public')}
-                  sx={{ ml: 1 }}
-                />
-                <IconButton size="small" className="secondary-content" onClick={() => savePenca(p)} disabled={isSaving}>
-                  <Save fontSize="small" />
-                </IconButton>
-                <a href="#" className="secondary-content red-text" style={{ marginLeft: '1rem' }} onClick={e => { e.preventDefault(); deletePenca(p._id); }}>✖</a>
-              </li>
+      <Stack spacing={1.5}>
+        {pencas.map(penca => (
+          <Paper key={penca._id} sx={{ p: 2, borderRadius: 2 }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} flexWrap="wrap" alignItems={{ xs: 'flex-start', md: 'center' }}>
+              <TextField
+                label={t('name')}
+                value={penca.name || ''}
+                onChange={e => updatePencaField(penca._id, 'name', e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('code')}
+                value={penca.code || ''}
+                size="small"
+                InputProps={{ readOnly: true }}
+                sx={{ maxWidth: 140 }}
+              />
+              <Select
+                value={penca.owner}
+                onChange={e => updatePencaField(penca._id, 'owner', e.target.value)}
+                size="small"
+                sx={{ minWidth: 180 }}
+              >
+                {owners.map(o => (
+                  <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
+                ))}
+              </Select>
+              <Select
+                value={penca.competition}
+                onChange={e => updatePencaField(penca._id, 'competition', e.target.value)}
+                size="small"
+                sx={{ minWidth: 180 }}
+              >
+                {competitions.map(c => (
+                  <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
+                ))}
+              </Select>
+              <FormControlLabel
+                control={(
+                  <Checkbox
+                    checked={penca.isPublic || false}
+                    onChange={e => updatePencaField(penca._id, 'isPublic', e.target.checked)}
+                  />
+                )}
+                label={t('public')}
+              />
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => savePenca(penca)}
+                disabled={isSaving}
+              >
+                {t('save')}
+              </Button>
+              <Button color="error" size="small" onClick={() => deletePenca(penca._id)}>
+                {t('delete')}
+              </Button>
+            </Stack>
+          </Paper>
+        ))}
+      </Stack>
+    </Stack>
+  );
+
+  const renderSettingsTab = () => (
+    <Stack spacing={2}>
+      <Paper sx={{ p: 2, borderRadius: 2 }}>
+        <Typography variant="subtitle1">{t('auditSettingsTitle')}</Typography>
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          {auditConfig.enabled ? t('auditEnabled') : t('auditDisabled')}
+        </Typography>
+        <Button variant="outlined" sx={{ mt: 2 }} onClick={toggleAuditEnabled}>
+          {auditConfig.enabled ? t('auditDisable') : t('auditEnable')}
+        </Button>
+        {availableAuditTypes.length > 0 && (
+          <Stack spacing={1} sx={{ mt: 2 }}>
+            <Typography variant="subtitle2">{t('auditTypesLabel')}</Typography>
+            {availableAuditTypes.map(type => (
+              <FormControlLabel
+                key={type}
+                control={(
+                  <Checkbox
+                    checked={Boolean(auditConfig.types?.[type])}
+                    onChange={e => updateAuditType(type, e.target.checked)}
+                    disabled={!auditConfig.enabled}
+                  />
+                )}
+                label={auditTypeLabels[type] || type}
+              />
             ))}
-          </ul>
-        </CardContent>
-      </Card>
+          </Stack>
+        )}
+        <Button variant="contained" sx={{ mt: 2 }} onClick={saveAuditSettings} disabled={isAuditSaving}>
+          {t('save')}
+        </Button>
+      </Paper>
+
+      <Paper sx={{ p: 2, borderRadius: 2 }}>
+        <Stack spacing={1.5}>
+          <Typography variant="subtitle1">{t('adminCleanupTitle')}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t('adminCleanupDescription')}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            {t('adminCleanupWarning')}
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap">
+            <Button variant="text" size="small" onClick={toggleAllCleanup}>
+              {t('adminCleanupSelectAll')}
+            </Button>
+            <Typography variant="body2" color="text.secondary">
+              {t('adminSelected')}: {selectedCleanup.length}
+            </Typography>
+          </Stack>
+          <Stack spacing={1}>
+            {cleanupOptions.map(option => (
+              <FormControlLabel
+                key={option.key}
+                control={(
+                  <Checkbox
+                    checked={selectedCleanup.includes(option.key)}
+                    onChange={() => toggleCleanupSelection(option.key)}
+                  />
+                )}
+                label={`${option.label} (${option.count})`}
+              />
+            ))}
+          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            {t('adminCleanupUsersNote')}
+          </Typography>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={requestCleanup}
+            disabled={cleanupLoading}
+          >
+            {t('adminCleanupAction')}
+          </Button>
+        </Stack>
+      </Paper>
+    </Stack>
+  );
+
+  return (
+    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 4 } }}>
+      <Stack spacing={3}>
+        <Typography variant="h5">{t('adminTitle')}</Typography>
+        <Tabs
+          value={activeTab}
+          onChange={(_, value) => setActiveTab(value)}
+          variant="scrollable"
+          scrollButtons
+          allowScrollButtonsMobile
+        >
+          <Tab value="overview" label={t('adminTabOverview')} />
+          <Tab value="competitions" label={t('adminTabCompetitions')} />
+          <Tab value="matches" label={t('adminTabMatches')} />
+          <Tab value="pencas" label={t('adminTabPencas')} />
+          <Tab value="owners" label={t('adminTabOwners')} />
+          <Tab value="settings" label={t('adminTabSettings')} />
+        </Tabs>
+        {activeTab === 'overview' && renderOverviewTab()}
+        {activeTab === 'competitions' && renderCompetitionsTab()}
+        {activeTab === 'matches' && renderMatchesTab()}
+        {activeTab === 'pencas' && renderPencasTab()}
+        {activeTab === 'owners' && renderOwnersTab()}
+        {activeTab === 'settings' && renderSettingsTab()}
+      </Stack>
 
       <CompetitionWizard
         open={wizardOpen}
         onClose={() => setWizardOpen(false)}
         onCreated={loadCompetitions}
       />
+
+      <Dialog
+        open={cleanupConfirmOpen}
+        onClose={() => {
+          if (!cleanupLoading) setCleanupConfirmOpen(false);
+        }}
+      >
+        <DialogTitle>{t('adminCleanupConfirmTitle')}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">{t('adminCleanupConfirmMessage')}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCleanupConfirmOpen(false)} disabled={cleanupLoading}>
+            {t('close')}
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={executeCleanup}
+            disabled={cleanupLoading}
+          >
+            {cleanupLoading ? <CircularProgress size={18} /> : t('adminCleanupAction')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
@@ -1113,6 +1557,6 @@ export default function Admin() {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </div>
+    </Container>
   );
 }

@@ -22,5 +22,8 @@ const matchSchema = new mongoose.Schema({
     result2: Number,
     order: Number
 });
- 
+
+matchSchema.index({ competition: 1, kickoff: 1, order: 1 });
+matchSchema.index({ competition: 1, date: 1, time: 1 });
+
 module.exports = mongoose.models.Match || mongoose.model('Match', matchSchema);

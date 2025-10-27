@@ -200,10 +200,25 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
         return res.status(403).json({ error: getMessage('ADMIN_ONLY', req.lang) });
     }
     try {
-        const pencas = await Penca.find({ participants: user._id }).select(
-            'name _id competition fixture rules prizes scoring tournamentMode modeSettings'
-        );
-        res.json({ user: { username: user.username, role: user.role }, pencas });
+        const pencas = await Penca.find({ participants: user._id })
+            .select(
+                'name _id competition fixture rules prizes scoring tournamentMode modeSettings participants participantLimit owner'
+            )
+            .populate('owner', 'username name surname')
+            .lean();
+
+        const formatted = pencas.map(penca => {
+            const { participants = [], owner = {}, ...rest } = penca;
+            const ownerFullName = [owner.name, owner.surname].filter(Boolean).join(' ').trim();
+            return {
+                ...rest,
+                owner,
+                participantsCount: Array.isArray(participants) ? participants.length : 0,
+                ownerDisplayName: ownerFullName || owner.username || ''
+            };
+        });
+
+        res.json({ user: { username: user.username, role: user.role }, pencas: formatted });
     } catch (err) {
         console.error('dashboard api error', err);
         res.status(500).json({ error: getMessage('DASHBOARD_ERROR', req.lang) });
