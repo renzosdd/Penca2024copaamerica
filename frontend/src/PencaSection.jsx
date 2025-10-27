@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -15,6 +15,7 @@ import {
   DialogTitle,
   CircularProgress,
   IconButton,
+  MenuItem,
   Paper,
   Snackbar,
   Stack,
@@ -43,10 +44,22 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [expandedPredictionKeys, setExpandedPredictionKeys] = useState([]);
+  const [expandedStageKeys, setExpandedStageKeys] = useState([]);
+  const [selectedDateKey, setSelectedDateKey] = useState('');
+  const [selectedStageKey, setSelectedStageKey] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { t } = useLang();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const predictionSectionRefs = useRef({});
+  const stageSectionRefs = useRef({});
+
+  useEffect(() => {
+    if (open && onOpen) {
+      onOpen();
+    }
+  }, [onOpen, open]);
 
   useEffect(() => {
     if (open && onOpen) {
@@ -60,6 +73,32 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     const minutes = minutesUntilKickoff(match);
     return minutes >= 30;
   }
+
+  useEffect(() => {
+    if (!predictionSections.length) {
+      setExpandedPredictionKeys([]);
+      setSelectedDateKey('');
+      predictionSectionRefs.current = {};
+      return;
+    }
+    predictionSectionRefs.current = {};
+    const nextUpcoming = predictionSections.find(section => section.matches.some(canPredict));
+    const defaultKey = nextUpcoming ? nextUpcoming.key : predictionSections[0].key;
+    setExpandedPredictionKeys([defaultKey]);
+    setSelectedDateKey('');
+  }, [predictionSections]);
+
+  useEffect(() => {
+    if (!stageSections.length) {
+      setExpandedStageKeys([]);
+      setSelectedStageKey('');
+      stageSectionRefs.current = {};
+      return;
+    }
+    stageSectionRefs.current = {};
+    setExpandedStageKeys([stageSections[0].key]);
+    setSelectedStageKey('');
+  }, [stageSections]);
 
   async function submitPrediction(e, pencaId, matchId) {
     const result = await handlePrediction(e, pencaId, matchId);
@@ -93,7 +132,15 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const participantsLabel = `${participantsCount}${participantLimit} ${t('participantsShort')}`.trim();
   const ownerName = penca.ownerDisplayName || penca.owner?.name || penca.owner?.username || '';
 
-  const groupedMatches = useMemo(() => {
+  const isGroupKey = key => /^Grupo\s+/i.test(key);
+  const compareGroupKey = (a, b) => {
+    const normalize = value => value.replace(/^Grupo\s+/i, '').trim();
+    return normalize(a).localeCompare(normalize(b), undefined, { sensitivity: 'base', numeric: true });
+  };
+
+  const knockoutOrder = roundOrder.filter(label => !/^Grupo\s+/i.test(label));
+
+  const sortedMatches = useMemo(() => {
     let list = [];
     if (Array.isArray(penca.fixture) && penca.fixture.length) {
       const fixtureSet = new Set(penca.fixture.map(String));
@@ -102,7 +149,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       list = matches.filter(m => m.competition === penca.competition);
     }
     const sorted = [...list].sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
-    const filtered = sorted.filter(match => {
+    return sorted.filter(match => {
       if (filter === 'upcoming') {
         return match.result1 == null && match.result2 == null;
       }
@@ -111,30 +158,96 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       }
       return true;
     });
-    return filtered.reduce((acc, match) => {
-      const key = match.group_name?.trim() || 'Otros';
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(match);
-      return acc;
-    }, {});
   }, [filter, matches, penca.competition, penca.fixture]);
 
-  const isGroupKey = key => /^Grupo\s+/i.test(key);
-  const compareGroupKey = (a, b) => {
-    const normalize = value => value.replace(/^Grupo\s+/i, '').trim();
-    return normalize(a).localeCompare(normalize(b), undefined, { sensitivity: 'base', numeric: true });
+  const hasAnyMatches = sortedMatches.length > 0;
+
+  const formatDateLabel = date => {
+    if (!date) return t('scheduleTbd');
+    try {
+      const formatter = new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+      });
+      return formatter.format(new Date(`${date}T12:00:00Z`));
+    } catch (error) {
+      console.error('date format error', error);
+      return date;
+    }
   };
 
-  const knockoutOrder = roundOrder.filter(label => !/^Grupo\s+/i.test(label));
-  const groupKeys = Object.keys(groupedMatches)
-    .filter(isGroupKey)
-    .sort(compareGroupKey);
-  const knockoutKeys = knockoutOrder.filter(label => Array.isArray(groupedMatches[label]));
-  const knockoutSet = new Set(knockoutKeys);
-  const otherKeys = Object.keys(groupedMatches)
-    .filter(key => !isGroupKey(key) && !knockoutSet.has(key))
-    .sort((a, b) => matchTimeValue(groupedMatches[a]?.[0]) - matchTimeValue(groupedMatches[b]?.[0]));
-  const hasAnyMatches = groupKeys.length + knockoutKeys.length + otherKeys.length > 0;
+  const predictionSections = useMemo(() => {
+    const map = new Map();
+    sortedMatches.forEach(match => {
+      const key = match.date || `unknown-${match._id}`;
+      const entry = map.get(key) || {
+        key,
+        label: match.date ? formatDateLabel(match.date) : t('dateToBeDefined'),
+        order: matchTimeValue(match),
+        matches: []
+      };
+      entry.order = Math.min(entry.order, matchTimeValue(match));
+      entry.matches.push(match);
+      map.set(key, entry);
+    });
+    return Array.from(map.values())
+      .sort((a, b) => a.order - b.order)
+      .map(entry => ({
+        ...entry,
+        label: entry.label || formatDateLabel(entry.key)
+      }));
+  }, [sortedMatches, t]);
+
+  const stageSections = useMemo(() => {
+    const stageMap = new Map();
+    sortedMatches.forEach(match => {
+      const stageKey = match.group_name?.trim() || match.series || '__other__';
+      const stageLabel = match.group_name?.trim() || match.series || t('otherMatches');
+      const stageEntry = stageMap.get(stageKey) || {
+        key: stageKey,
+        label: stageLabel,
+        order: Number.POSITIVE_INFINITY,
+        dates: new Map()
+      };
+      const dateKey = match.date || `unknown-${match._id}`;
+      const dateEntry = stageEntry.dates.get(dateKey) || {
+        key: dateKey,
+        label: match.date ? formatDateLabel(match.date) : t('dateToBeDefined'),
+        order: matchTimeValue(match),
+        matches: []
+      };
+      dateEntry.order = Math.min(dateEntry.order, matchTimeValue(match));
+      dateEntry.matches.push(match);
+      stageEntry.dates.set(dateKey, dateEntry);
+      stageEntry.order = Math.min(stageEntry.order, matchTimeValue(match));
+      stageEntry.label = stageLabel;
+      stageMap.set(stageKey, stageEntry);
+    });
+
+    const comparator = (a, b) => {
+      const aIsGroup = isGroupKey(a.key);
+      const bIsGroup = isGroupKey(b.key);
+      if (aIsGroup && bIsGroup) return compareGroupKey(a.key, b.key);
+      if (aIsGroup) return -1;
+      if (bIsGroup) return 1;
+      const aKnock = knockoutOrder.indexOf(a.key);
+      const bKnock = knockoutOrder.indexOf(b.key);
+      if (aKnock !== -1 || bKnock !== -1) {
+        if (aKnock === -1) return 1;
+        if (bKnock === -1) return -1;
+        return aKnock - bKnock;
+      }
+      return a.order - b.order;
+    };
+
+    return Array.from(stageMap.values())
+      .map(stage => ({
+        ...stage,
+        dates: Array.from(stage.dates.values()).sort((a, b) => a.order - b.order)
+      }))
+      .sort(comparator);
+  }, [sortedMatches, t]);
 
   const renderTeam = name => (
     <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
@@ -296,21 +409,139 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     </Paper>
   );
 
-  const renderPredictionSection = key => (
-    <Stack key={key} spacing={1.5} sx={{ mb: 2 }}>
-      <Typography variant="subtitle2">{key}</Typography>
-      {groupedMatches[key].map(renderPredictionCard)}
-    </Stack>
+  const togglePredictionSection = key => {
+    setExpandedPredictionKeys(prev =>
+      prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key]
+    );
+  };
+
+  const toggleStageSection = key => {
+    setExpandedStageKeys(prev =>
+      prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key]
+    );
+  };
+
+  const scrollToSection = (mapRef, key) => {
+    const node = mapRef.current?.[key];
+    if (node && typeof node.scrollIntoView === 'function') {
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleJumpToDate = value => {
+    setSelectedDateKey(value);
+    if (!value) {
+      setExpandedPredictionKeys([]);
+      return;
+    }
+    setExpandedPredictionKeys([value]);
+    setTimeout(() => scrollToSection(predictionSectionRefs, value), 150);
+  };
+
+  const handleJumpToStage = value => {
+    setSelectedStageKey(value);
+    if (!value) {
+      setExpandedStageKeys([]);
+      return;
+    }
+    setExpandedStageKeys([value]);
+    setTimeout(() => scrollToSection(stageSectionRefs, value), 150);
+  };
+
+  const renderPredictionSection = section => (
+    <Accordion
+      key={section.key}
+      expanded={expandedPredictionKeys.includes(section.key)}
+      onChange={(_, expanded) => {
+        if (expanded) {
+          setExpandedPredictionKeys(prev => [...prev.filter(item => item !== section.key), section.key]);
+        } else {
+          togglePredictionSection(section.key);
+        }
+      }}
+      disableGutters
+      square
+      ref={el => {
+        if (el) {
+          predictionSectionRefs.current[section.key] = el;
+        } else {
+          delete predictionSectionRefs.current[section.key];
+        }
+      }}
+      sx={{
+        borderRadius: 2,
+        boxShadow: 0,
+        backgroundColor: 'transparent',
+        '&:before': { display: 'none' },
+        '& .MuiAccordionSummary-root': { px: 1 },
+        '& .MuiAccordionDetails-root': { px: 1 }
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+          <Typography variant="subtitle2">{section.label}</Typography>
+          <Chip size="small" label={t('matchesCountLabel', { count: section.matches.length })} />
+        </Stack>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Stack spacing={1.5} sx={{ pb: 1 }}>
+          {section.matches.map(renderPredictionCard)}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   );
 
-  const renderMatchesSection = key => (
-    <Stack key={key} spacing={1.5} sx={{ mb: 2 }}>
-      <Typography variant="subtitle2">{key}</Typography>
-      {groupedMatches[key].map(renderMatchCard)}
-      {isGroupKey(key) && Array.isArray(groups) && groups.some(gr => gr.group === key) && (
-        <GroupTable groups={groups.filter(gr => gr.group === key)} />
-      )}
-    </Stack>
+  const renderMatchesSection = stage => (
+    <Accordion
+      key={stage.key}
+      expanded={expandedStageKeys.includes(stage.key)}
+      onChange={(_, expanded) => {
+        if (expanded) {
+          setExpandedStageKeys(prev => [...prev.filter(item => item !== stage.key), stage.key]);
+        } else {
+          toggleStageSection(stage.key);
+        }
+      }}
+      disableGutters
+      square
+      ref={el => {
+        if (el) {
+          stageSectionRefs.current[stage.key] = el;
+        } else {
+          delete stageSectionRefs.current[stage.key];
+        }
+      }}
+      sx={{
+        borderRadius: 2,
+        boxShadow: 0,
+        backgroundColor: 'transparent',
+        '&:before': { display: 'none' },
+        '& .MuiAccordionSummary-root': { px: 1 },
+        '& .MuiAccordionDetails-root': { px: 1 }
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+          <Typography variant="subtitle2">{stage.label}</Typography>
+          <Chip size="small" label={t('matchesCountLabel', { count: stage.dates.reduce((acc, date) => acc + date.matches.length, 0) })} />
+        </Stack>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Stack spacing={2} sx={{ pb: 1 }}>
+          {stage.dates.map(date => (
+            <Stack key={date.key} spacing={1.5}>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                {date.label}
+              </Typography>
+              {date.matches.map(renderMatchCard)}
+            </Stack>
+          ))}
+          {isGroupKey(stage.key) && Array.isArray(groups) && groups.some(gr => gr.group === stage.key) && (
+            <GroupTable groups={groups.filter(gr => gr.group === stage.key)} />
+          )}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   );
 
   return (
@@ -365,7 +596,14 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             <Stack
               direction={isMobile ? 'column' : 'row'}
               spacing={1}
-              sx={{ mb: 2, alignItems: 'center', justifyContent: 'flex-start' }}
+              sx={{
+                mb: 2,
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                flexWrap: 'wrap',
+                rowGap: 1,
+                columnGap: 1
+              }}
             >
               <Button
                 size="small"
@@ -391,6 +629,42 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               >
                 {t('played')}
               </Button>
+              {!!predictionSections.length && (
+                <TextField
+                  select
+                  size="small"
+                  label={t('jumpToDate')}
+                  value={selectedDateKey}
+                  onChange={e => handleJumpToDate(e.target.value)}
+                  sx={{ minWidth: { xs: '100%', sm: 180 } }}
+                  fullWidth={isMobile}
+                >
+                  <MenuItem value="">{t('jumpToDatePlaceholder')}</MenuItem>
+                  {predictionSections.map(section => (
+                    <MenuItem key={section.key} value={section.key}>
+                      {section.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+              {!!stageSections.length && (
+                <TextField
+                  select
+                  size="small"
+                  label={t('jumpToStage')}
+                  value={selectedStageKey}
+                  onChange={e => handleJumpToStage(e.target.value)}
+                  sx={{ minWidth: { xs: '100%', sm: 200 } }}
+                  fullWidth={isMobile}
+                >
+                  <MenuItem value="">{t('jumpToStagePlaceholder')}</MenuItem>
+                  {stageSections.map(stage => (
+                    <MenuItem key={stage.key} value={stage.key}>
+                      {stage.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
             </Stack>
             {isLoading && (
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
@@ -410,9 +684,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 <Typography>{t('predictions')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {groupKeys.map(renderPredictionSection)}
-                {knockoutKeys.map(renderPredictionSection)}
-                {otherKeys.map(renderPredictionSection)}
+                {predictionSections.map(renderPredictionSection)}
               </AccordionDetails>
             </Accordion>
 
@@ -421,9 +693,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 <Typography>{t('matches')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {groupKeys.map(renderMatchesSection)}
-                {knockoutKeys.map(renderMatchesSection)}
-                {otherKeys.map(renderMatchesSection)}
+                {stageSections.map(renderMatchesSection)}
               </AccordionDetails>
             </Accordion>
 
