@@ -338,64 +338,6 @@ export default function OwnerPanel() {
     }
   }
 
-  const renderTeam = name => (
-    <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
-      <Box
-        component="img"
-        src={`/images/${name.replace(/\s+/g, '').toLowerCase()}.png`}
-        alt={name}
-        sx={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', backgroundColor: 'background.default' }}
-      />
-      <Typography variant="subtitle2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
-        {name}
-      </Typography>
-    </Stack>
-  );
-
-  const kickoffText = match => {
-    const localized = formatLocalKickoff(match);
-    if (localized) return localized;
-    if (match.date && match.time) return `${match.date} ${match.time}`;
-    return t('scheduleTbd');
-  };
-
-  const renderMatchCard = match => (
-    <Card key={match._id} sx={{ borderRadius: 2, boxShadow: 2 }}>
-      <CardContent>
-        <Stack spacing={1.5}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={1.5}
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            justifyContent="space-between"
-          >
-            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-              {renderTeam(match.team1)}
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {t('vs')}
-              </Typography>
-              {renderTeam(match.team2)}
-            </Stack>
-            <Stack spacing={0.5} alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
-              <Typography variant="body2" color="text.secondary">
-                {kickoffText(match)}
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {match.group_name && <Chip size="small" label={match.group_name} />}
-                {match.series && <Chip size="small" color="secondary" label={match.series} />}
-              </Stack>
-            </Stack>
-          </Stack>
-          {match.result1 != null && match.result2 != null && (
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-              {match.result1} - {match.result2}
-            </Typography>
-          )}
-        </Stack>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
       <Stack spacing={3}>
@@ -429,7 +371,86 @@ export default function OwnerPanel() {
         const translatedMode = t(modeKey);
         const tournamentLabel = translatedMode === modeKey ? p.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
         const hasStageMatches = stageSections.length > 0;
- 
+
+        const renderTeam = name => (
+          <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
+            <Box
+              component="img"
+              src={`/images/${name.replace(/\s+/g, '').toLowerCase()}.png`}
+              alt={name}
+              sx={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', backgroundColor: 'background.default' }}
+            />
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
+              {name}
+            </Typography>
+          </Stack>
+        );
+
+        const kickoffText = match => {
+          const localized = formatLocalKickoff(match);
+          if (localized) return localized;
+          if (match.date && match.time) return `${match.date} ${match.time}`;
+          return t('scheduleTbd');
+        };
+
+        const renderTeam = name => (
+          <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
+            <Box
+              component="img"
+              src={`/images/${name.replace(/\s+/g, '').toLowerCase()}.png`}
+              alt={name}
+              sx={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'contain', backgroundColor: 'background.default' }}
+            />
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
+              {name}
+            </Typography>
+          </Stack>
+        );
+
+        const kickoffText = match => {
+          const localized = formatLocalKickoff(match);
+          if (localized) return localized;
+          if (match.date && match.time) return `${match.date} ${match.time}`;
+          return t('scheduleTbd');
+        };
+
+        const renderMatchCard = match => (
+          <Card key={match._id} sx={{ borderRadius: 2, boxShadow: 2 }}>
+            <CardContent>
+              <Stack spacing={1.5}>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  justifyContent="space-between"
+                >
+                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                    {renderTeam(match.team1)}
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {t('vs')}
+                    </Typography>
+                    {renderTeam(match.team2)}
+                  </Stack>
+                  <Stack spacing={0.5} alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {kickoffText(match)}
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      {match.group_name && <Chip size="small" label={match.group_name} />}
+                      {match.series && <Chip size="small" color="secondary" label={match.series} />}
+                    </Stack>
+                  </Stack>
+                </Stack>
+                {match.result1 != null && match.result2 != null && (
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                    {match.result1} - {match.result2}
+                  </Typography>
+                )}
+              </Stack>
+            </CardContent>
+          </Card>
+        );
+
         return (
           <Accordion
             key={p._id}
