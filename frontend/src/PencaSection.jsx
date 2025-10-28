@@ -38,7 +38,7 @@ import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import useLang from './useLang';
 import pointsForPrediction from './calcPoints';
-import { formatLocalKickoff, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
+import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
 
 export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername, onOpen, isLoading }) {
   const [open, setOpen] = useState(false);
@@ -62,6 +62,16 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   }, [onOpen, open]);
 
   const matchTimeValue = match => matchKickoffValue(match);
+
+  const getDateKey = match => {
+    if (match?.date) return match.date;
+    if (match?.originalDate) return match.originalDate;
+    const kickoffDate = getMatchKickoffDate(match);
+    if (kickoffDate) {
+      return kickoffDate.toISOString().slice(0, 10);
+    }
+    return null;
+  };
 
   function canPredict(match) {
     const minutes = minutesUntilKickoff(match);
@@ -174,16 +184,19 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const predictionSections = useMemo(() => {
     const map = new Map();
     sortedMatches.forEach(match => {
-      const key = match.date || `unknown-${match._id}`;
-      const entry = map.get(key) || {
-        key,
-        label: match.date ? formatDateLabel(match.date) : t('dateToBeDefined'),
+      const dateKey = getDateKey(match);
+      const normalizedKey = dateKey || `unknown-${match._id}`;
+      const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
+      const entry = map.get(normalizedKey) || {
+        key: normalizedKey,
+        label,
         order: matchTimeValue(match),
         matches: []
       };
       entry.order = Math.min(entry.order, matchTimeValue(match));
+      entry.label = label;
       entry.matches.push(match);
-      map.set(key, entry);
+      map.set(normalizedKey, entry);
     });
     return Array.from(map.values())
       .sort((a, b) => a.order - b.order)
@@ -204,16 +217,19 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
         order: Number.POSITIVE_INFINITY,
         dates: new Map()
       };
-      const dateKey = match.date || `unknown-${match._id}`;
-      const dateEntry = stageEntry.dates.get(dateKey) || {
-        key: dateKey,
-        label: match.date ? formatDateLabel(match.date) : t('dateToBeDefined'),
+      const dateKey = getDateKey(match);
+      const normalizedDateKey = dateKey || `unknown-${match._id}`;
+      const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
+      const dateEntry = stageEntry.dates.get(normalizedDateKey) || {
+        key: normalizedDateKey,
+        label,
         order: matchTimeValue(match),
         matches: []
       };
       dateEntry.order = Math.min(dateEntry.order, matchTimeValue(match));
+      dateEntry.label = label;
       dateEntry.matches.push(match);
-      stageEntry.dates.set(dateKey, dateEntry);
+      stageEntry.dates.set(normalizedDateKey, dateEntry);
       stageEntry.order = Math.min(stageEntry.order, matchTimeValue(match));
       stageEntry.label = stageLabel;
       stageMap.set(stageKey, stageEntry);
@@ -258,12 +274,20 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   );
 
   const kickoffText = match => {
-    if (formatLocalKickoff(match)) {
-      return formatLocalKickoff(match);
+    const localized = formatLocalKickoff(match);
+    if (localized) {
+      return localized;
     }
     if (match.date && match.time) {
       return `${match.date} ${match.time}`;
     }
+    if (match.originalDate && match.originalTime) {
+      return match.originalTimezone
+        ? `${match.originalDate} ${match.originalTime} (${match.originalTimezone})`
+        : `${match.originalDate} ${match.originalTime}`;
+    }
+    if (match.date) return match.date;
+    if (match.originalDate) return match.originalDate;
     return t('scheduleTbd');
   };
 

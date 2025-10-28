@@ -20,7 +20,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useLang from './useLang';
 import roundOrder from './roundOrder';
-import { formatLocalKickoff, matchKickoffValue } from './kickoffUtils';
+import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue } from './kickoffUtils';
 import { useTheme } from '@mui/material/styles';
 
 export default function OwnerPanel() {
@@ -37,6 +37,16 @@ export default function OwnerPanel() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const matchTimeValue = match => matchKickoffValue(match);
+
+  const getDateKey = match => {
+    if (match?.date) return match.date;
+    if (match?.originalDate) return match.originalDate;
+    const kickoffDate = getMatchKickoffDate(match);
+    if (kickoffDate) {
+      return kickoffDate.toISOString().slice(0, 10);
+    }
+    return null;
+  };
 
   const isGroupKey = key => /^Grupo\s+/i.test(key);
   const compareGroupKey = (a, b) => {
@@ -72,16 +82,19 @@ export default function OwnerPanel() {
         order: Number.POSITIVE_INFINITY,
         dates: new Map()
       };
-      const dateKey = match.date || `unknown-${match._id}`;
-      const dateEntry = stageEntry.dates.get(dateKey) || {
-        key: dateKey,
-        label: match.date ? formatDateLabel(match.date) : t('dateToBeDefined'),
+      const dateKey = getDateKey(match);
+      const normalizedDateKey = dateKey || `unknown-${match._id}`;
+      const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
+      const dateEntry = stageEntry.dates.get(normalizedDateKey) || {
+        key: normalizedDateKey,
+        label,
         order: matchTimeValue(match),
         matches: []
       };
       dateEntry.order = Math.min(dateEntry.order, matchTimeValue(match));
+      dateEntry.label = label;
       dateEntry.matches.push(match);
-      stageEntry.dates.set(dateKey, dateEntry);
+      stageEntry.dates.set(normalizedDateKey, dateEntry);
       stageEntry.order = Math.min(stageEntry.order, matchTimeValue(match));
       stageEntry.label = stageLabel;
       stageMap.set(stageKey, stageEntry);
@@ -356,6 +369,13 @@ export default function OwnerPanel() {
     const localized = formatLocalKickoff(match);
     if (localized) return localized;
     if (match.date && match.time) return `${match.date} ${match.time}`;
+    if (match.originalDate && match.originalTime) {
+      return match.originalTimezone
+        ? `${match.originalDate} ${match.originalTime} (${match.originalTimezone})`
+        : `${match.originalDate} ${match.originalTime}`;
+    }
+    if (match.date) return match.date;
+    if (match.originalDate) return match.originalDate;
     return t('scheduleTbd');
   };
 

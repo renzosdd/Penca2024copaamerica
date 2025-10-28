@@ -35,6 +35,7 @@ import GroupTable from './GroupTable';
 import roundOrder from './roundOrder';
 import CompetitionWizard from './CompetitionWizard';
 import useLang from './useLang';
+import { formatLocalKickoff as formatKickoff, matchKickoffValue } from './kickoffUtils';
 
 export default function Admin() {
   const [competitions, setCompetitions] = useState([]);
@@ -71,32 +72,21 @@ export default function Admin() {
     prediction: t('auditTypePrediction')
   };
 
-  const matchTimeValue = match => {
-    if (match?.kickoff) {
-      const value = Date.parse(match.kickoff);
-      if (!Number.isNaN(value)) {
-        return value;
-      }
-    }
-    if (match?.date && match?.time) {
-      const value = Date.parse(`${match.date}T${match.time}`);
-      if (!Number.isNaN(value)) {
-        return value;
-      }
-    }
-    return Number.POSITIVE_INFINITY;
-  };
+  const matchTimeValue = match => matchKickoffValue(match);
 
-  const formatLocalKickoff = match => {
-    if (match?.kickoff) {
-      const date = new Date(match.kickoff);
-      if (!Number.isNaN(date.getTime())) {
-        return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-      }
-    }
+  const describeKickoff = match => {
+    const localized = formatKickoff(match);
+    if (localized) return localized;
     if (match?.date && match?.time) {
       return `${match.date} ${match.time}`;
     }
+    if (match?.originalDate && match?.originalTime) {
+      return match.originalTimezone
+        ? `${match.originalDate} ${match.originalTime} (${match.originalTimezone})`
+        : `${match.originalDate} ${match.originalTime}`;
+    }
+    if (match?.date) return match.date;
+    if (match?.originalDate) return match.originalDate;
     return t('scheduleTbd');
   };
 
@@ -686,7 +676,7 @@ export default function Admin() {
               )}
             </Stack>
             <Typography variant="body2" color="text.secondary">
-              {formatLocalKickoff(match)}
+              {describeKickoff(match)}
             </Typography>
           </Stack>
         </AccordionSummary>
@@ -759,7 +749,7 @@ export default function Admin() {
                 fullWidth
               />
               <Box sx={{ display: 'flex', alignItems: 'center', minHeight: 40 }}>
-                <Typography variant="caption">{t('localKickoffLabel')}: {formatLocalKickoff(match)}</Typography>
+                <Typography variant="caption">{t('localKickoffLabel')}: {describeKickoff(match)}</Typography>
               </Box>
             </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
