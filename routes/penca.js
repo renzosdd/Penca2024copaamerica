@@ -19,13 +19,50 @@ router.get('/', isAuthenticated, async (req, res) => {
     if (req.query.competition) filter.competition = req.query.competition;
     if (req.query.public === 'true') filter.isPublic = true;
     const pencas = await Penca.find(filter).select('name code competition');
-    res.json(pencas); 
+    res.json(pencas);
   } catch (err) {
     console.error('list pencas error', err);
     res.status(500).json({ error: getMessage('ERROR_LISTING_PENCAS', req.lang) });
   }
 });
- 
+
+router.get('/lookup/:code', isAuthenticated, async (req, res) => {
+  const { code } = req.params;
+  try {
+    if (typeof code !== 'string' || !code.trim()) {
+      return res.status(400).json({ error: getMessage('PENCA_CODE_REQUIRED', req.lang) });
+    }
+
+    const penca = await Penca.findOne({ code: code.trim().toUpperCase() })
+      .select('name code competition owner isPublic participantLimit participants')
+      .populate('owner', 'username name surname email')
+      .lean();
+
+    if (!penca) {
+      return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
+    }
+
+    const owner = penca.owner || {};
+    const ownerFullName = [owner.name, owner.surname].filter(Boolean).join(' ').trim();
+    const participants = Array.isArray(penca.participants) ? penca.participants : [];
+
+    res.json({
+      name: penca.name,
+      competition: penca.competition,
+      owner: {
+        username: owner.username || '',
+        name: ownerFullName || owner.username || ''
+      },
+      isPublic: Boolean(penca.isPublic),
+      participantLimit: penca.participantLimit || null,
+      participantsCount: participants.length
+    });
+  } catch (err) {
+    console.error('lookup penca error', err);
+    res.status(500).json({ error: getMessage('ERROR_GETTING_PENCA', req.lang) });
+  }
+});
+
 // Pencas del owner logueado
 router.get('/mine', isAuthenticated, async (req, res) => {
   try {

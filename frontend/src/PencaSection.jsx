@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Accordion,
   AccordionDetails,
@@ -13,7 +13,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  CircularProgress,
   IconButton,
+  MenuItem,
   Paper,
   Snackbar,
   Stack,
@@ -29,22 +31,36 @@ import {
   useMediaQuery,
   useTheme
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupTable from './GroupTable';
-import roundOrder from './roundOrder';
+import { isGroupStage } from './stageOrdering';
 import useLang from './useLang';
 import pointsForPrediction from './calcPoints';
 import { formatLocalKickoff, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
+import { buildDateSections, buildStageSections, countMatchesInStage } from './matchSections';
 
-export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername }) {
+export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername, onOpen, isLoading }) {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [expandedPredictionKeys, setExpandedPredictionKeys] = useState([]);
+  const [expandedStageKeys, setExpandedStageKeys] = useState([]);
+  const [selectedDateKey, setSelectedDateKey] = useState('');
+  const [selectedStageKey, setSelectedStageKey] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { t } = useLang();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const predictionSectionRefs = useRef({});
+  const stageSectionRefs = useRef({});
+
+  useEffect(() => {
+    if (open && onOpen) {
+      onOpen();
+    }
+  }, [onOpen, open]);
 
   const matchTimeValue = match => matchKickoffValue(match);
 
@@ -52,6 +68,32 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     const minutes = minutesUntilKickoff(match);
     return minutes >= 30;
   }
+
+  useEffect(() => {
+    if (!predictionSections.length) {
+      setExpandedPredictionKeys([]);
+      setSelectedDateKey('');
+      predictionSectionRefs.current = {};
+      return;
+    }
+    predictionSectionRefs.current = {};
+    const nextUpcoming = predictionSections.find(section => section.matches.some(canPredict));
+    const defaultKey = nextUpcoming ? nextUpcoming.key : predictionSections[0].key;
+    setExpandedPredictionKeys([defaultKey]);
+    setSelectedDateKey('');
+  }, [predictionSections]);
+
+  useEffect(() => {
+    if (!stageSections.length) {
+      setExpandedStageKeys([]);
+      setSelectedStageKey('');
+      stageSectionRefs.current = {};
+      return;
+    }
+    stageSectionRefs.current = {};
+    setExpandedStageKeys([stageSections[0].key]);
+    setSelectedStageKey('');
+  }, [stageSections]);
 
   async function submitPrediction(e, pencaId, matchId) {
     const result = await handlePrediction(e, pencaId, matchId);
@@ -63,161 +105,369 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   }
 
   const scoringText = penca.rules?.trim() ? penca.rules : t('noRules');
-  const participantsCount = Array.isArray(penca.participants) ? penca.participants.length : 0;
+  const participantsCount = (() => {
+    if (typeof penca.participantsCount === 'number' && Number.isFinite(penca.participantsCount)) {
+      return penca.participantsCount;
+    }
+    if (typeof penca.participantsCount === 'string') {
+      const parsed = Number(penca.participantsCount);
+      if (!Number.isNaN(parsed)) {
+        return parsed;
+      }
+    }
+    if (typeof penca.metrics?.participants === 'number' && penca.metrics.participants >= 0) {
+      return penca.metrics.participants;
+    }
+    return Array.isArray(penca.participants) ? penca.participants.length : 0;
+  })();
+  const participantLimit = penca.participantLimit ? `/${penca.participantLimit}` : '';
   const modeKey = penca.tournamentMode ? `mode_${penca.tournamentMode}` : 'mode_group_stage_knockout';
   const translatedMode = t(modeKey);
   const tournamentLabel = translatedMode === modeKey ? penca.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
-  const participantsLabel = `${participantsCount} ${t('participantsShort')}`;
+  const participantsLabel = `${participantsCount}${participantLimit} ${t('participantsShort')}`.trim();
+  const ownerName = penca.ownerDisplayName || penca.owner?.name || penca.owner?.username || '';
 
-  const pMatches = (() => {
+  const sortedMatches = useMemo(() => {
     let list = [];
     if (Array.isArray(penca.fixture) && penca.fixture.length) {
-      list = matches.filter(m => penca.fixture.includes(m._id));
+      const fixtureSet = new Set(penca.fixture.map(String));
+      list = matches.filter(m => fixtureSet.has(String(m._id)));
     } else {
       list = matches.filter(m => m.competition === penca.competition);
     }
-    list.sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
-    if (filter === 'upcoming') {
-      list = list.filter(m => m.result1 == null && m.result2 == null);
-    } else if (filter === 'played') {
-      list = list.filter(m => m.result1 != null && m.result2 != null);
-    }
-    const grouped = {};
-    list.forEach(m => {
-      const g = m.group_name?.trim() || 'Otros';
-      if (!grouped[g]) grouped[g] = [];
-      grouped[g].push(m);
+    const sorted = [...list].sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
+    return sorted.filter(match => {
+      if (filter === 'upcoming') {
+        return match.result1 == null && match.result2 == null;
+      }
+      if (filter === 'played') {
+        return match.result1 != null && match.result2 != null;
+      }
+      return true;
     });
-    return grouped;
-  })();
+  }, [filter, matches, penca.competition, penca.fixture]);
 
-  const isGroupKey = key => /^Grupo\s+/i.test(key);
-  const compareGroupKey = (a, b) => {
-    const normalize = value => value.replace(/^Grupo\s+/i, '').trim();
-    return normalize(a).localeCompare(normalize(b), undefined, { sensitivity: 'base', numeric: true });
+  const hasAnyMatches = sortedMatches.length > 0;
+
+  const predictionSections = useMemo(
+    () =>
+      buildDateSections(sortedMatches, {
+        t,
+        matchTimeValue
+      }),
+    [sortedMatches, t]
+  );
+
+  const stageSections = useMemo(
+    () =>
+      buildStageSections(sortedMatches, {
+        t,
+        matchTimeValue
+      }),
+    [sortedMatches, t]
+  );
+
+  const renderTeam = name => (
+    <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
+      <Box
+        component="img"
+        src={`/images/${name.replace(/\s+/g, '').toLowerCase()}.png`}
+        alt={name}
+        sx={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'contain', backgroundColor: 'background.default' }}
+      />
+      <Typography variant="subtitle2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
+        {name}
+      </Typography>
+    </Stack>
+  );
+
+  const kickoffText = match => {
+    const localized = formatLocalKickoff(match);
+    if (localized) {
+      return localized;
+    }
+    if (match.date && match.time) {
+      return `${match.date} ${match.time}`;
+    }
+    if (match.originalDate && match.originalTime) {
+      return match.originalTimezone
+        ? `${match.originalDate} ${match.originalTime} (${match.originalTimezone})`
+        : `${match.originalDate} ${match.originalTime}`;
+    }
+    if (match.date) return match.date;
+    if (match.originalDate) return match.originalDate;
+    return t('scheduleTbd');
   };
-
-  const knockoutOrder = roundOrder.filter(label => !/^Grupo\s+/i.test(label));
-  const groupKeys = Object.keys(pMatches)
-    .filter(isGroupKey)
-    .sort(compareGroupKey);
-  const knockoutKeys = knockoutOrder.filter(label => Array.isArray(pMatches[label]));
-  const knockoutSet = new Set(knockoutKeys);
-  const otherKeys = Object.keys(pMatches)
-    .filter(key => !isGroupKey(key) && !knockoutSet.has(key))
-    .sort((a, b) => matchTimeValue(pMatches[a]?.[0]) - matchTimeValue(pMatches[b]?.[0]));
 
   const renderPredictionCard = match => {
     const pr = getPrediction(penca._id, match._id) || {};
     const editable = canPredict(match);
     return (
-      <Card key={match._id} className={pr.result1 !== undefined ? 'match-card saved' : 'match-card'}>
-        <CardContent>
-          <div className="match-header">
-            <div className="team">
-              <img src={`/images/${match.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team1} className="circle responsive-img" />
-              <span className="team-name">{match.team1}</span>
-            </div>
-            <span className="vs">{t('vs')}</span>
-            <div className="team">
-              <img src={`/images/${match.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team2} className="circle responsive-img" />
-              <span className="team-name">{match.team2}</span>
-            </div>
-          </div>
-          <div className="match-details">
-            <div className="match-time">
-              {formatLocalKickoff(match) ? (
-                <span>{formatLocalKickoff(match)}</span>
-              ) : match.date && match.time ? (
-                <span>{match.date} {match.time}</span>
-              ) : (
-                <span>{t('scheduleTbd')}</span>
+      <Paper
+        key={match._id}
+        variant="outlined"
+        sx={theme => ({
+          p: 2,
+          borderRadius: 3,
+          borderColor: pr.result1 != null ? theme.palette.primary.light : theme.palette.divider,
+          backgroundColor: pr.result1 != null ? alpha(theme.palette.primary.main, 0.06) : theme.palette.background.paper
+        })}
+      >
+        <Stack spacing={2}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            justifyContent="space-between"
+          >
+            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+              {renderTeam(match.team1)}
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {t('vs')}
+              </Typography>
+              {renderTeam(match.team2)}
+            </Stack>
+            <Stack spacing={0.5} alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
+              <Typography variant="body2" color="text.secondary">
+                {kickoffText(match)}
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                {match.group_name && <Chip size="small" label={match.group_name} />}
+                {match.series && <Chip size="small" color="secondary" label={match.series} />}
+              </Stack>
+            </Stack>
+          </Stack>
+
+          <Box
+            component="form"
+            onSubmit={e => submitPrediction(e, penca._id, match._id)}
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'stretch', sm: 'center' },
+              gap: 1.5
+            }}
+          >
+            <Stack direction="row" spacing={1} alignItems="center">
+              <TextField
+                name="result1"
+                type="number"
+                defaultValue={pr.result1 ?? ''}
+                required
+                size="small"
+                sx={{ width: 70 }}
+                inputProps={{ min: 0 }}
+                disabled={!editable}
+              />
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                -
+              </Typography>
+              <TextField
+                name="result2"
+                type="number"
+                defaultValue={pr.result2 ?? ''}
+                required
+                size="small"
+                sx={{ width: 70 }}
+                inputProps={{ min: 0 }}
+                disabled={!editable}
+              />
+            </Stack>
+            <Button variant="contained" type="submit" disabled={!editable} sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}>
+              {t('save')}
+            </Button>
+          </Box>
+
+          {match.result1 != null && match.result2 != null && (
+            <Stack spacing={0.5}>
+              <Typography variant="body2" fontWeight={600}>
+                {t('result')}: {match.result1} - {match.result2}
+              </Typography>
+              {pr.result1 != null && pr.result2 != null && (
+                <Typography variant="body2" color="text.secondary">
+                  {t('difference')}: ({pr.result1 - match.result1}/{pr.result2 - match.result2}) — {t('pointsEarned')}: {pointsForPrediction(pr, match, penca.scoring)} {t('pts')}
+                </Typography>
               )}
-            </div>
-            <form onSubmit={e => submitPrediction(e, penca._id, match._id)}>
-              <div className="input-field inline">
-                <TextField
-                  name="result1"
-                  type="number"
-                  defaultValue={pr.result1 ?? ''}
-                  required
-                  size="small"
-                  sx={{ width: 60 }}
-                  inputProps={{ min: 0 }}
-                  disabled={!editable}
-                />
-                <span>-</span>
-                <TextField
-                  name="result2"
-                  type="number"
-                  defaultValue={pr.result2 ?? ''}
-                  required
-                  size="small"
-                  sx={{ width: 60, ml: 1 }}
-                  inputProps={{ min: 0 }}
-                  disabled={!editable}
-                />
-              </div>
-              <Button variant="contained" type="submit" disabled={!editable}>{t('save')}</Button>
-            </form>
-          </div>
-          {match.result1 !== undefined && match.result2 !== undefined && (
-            <div className="match-info">
-              <strong>{t('result')}: {match.result1} - {match.result2}</strong>
-              {pr.result1 !== undefined && pr.result2 !== undefined && (
-                <>
-                  {' '}{t('difference')}: ({pr.result1 - match.result1}/{pr.result2 - match.result2})
-                  <span className="points-earned">{t('pointsEarned')}: {pointsForPrediction(pr, match, penca.scoring)} {t('pts')}</span>
-                </>
-              )}
-            </div>
+            </Stack>
           )}
-        </CardContent>
-      </Card>
+        </Stack>
+      </Paper>
     );
   };
 
   const renderMatchCard = match => (
-    <Card key={match._id} className="match-card">
-      <CardContent>
-        <div className="match-header">
-          <div className="team">
-            <img src={`/images/${match.team1.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team1} className="circle responsive-img" />
-            <span className="team-name">{match.team1}</span>
-          </div>
-          <span className="vs">{t('vs')}</span>
-          <div className="team">
-            <img src={`/images/${match.team2.replace(/\s+/g, '').toLowerCase()}.png`} alt={match.team2} className="circle responsive-img" />
-            <span className="team-name">{match.team2}</span>
-          </div>
-        </div>
-        <div className="match-details">
-          {match.result1 !== undefined && match.result2 !== undefined ? (
-            <strong>{match.result1} - {match.result2}</strong>
-          ) : formatLocalKickoff(match) ? (
-            <span>{formatLocalKickoff(match)}</span>
-          ) : match.date && match.time ? (
-            <span>{match.date} {match.time}</span>
-          ) : (
-            <span>{t('scheduleTbd')}</span>
+    <Paper
+      key={match._id}
+      variant="outlined"
+      sx={{ p: 2, borderRadius: 3, backgroundColor: 'background.paper' }}
+    >
+      <Stack spacing={1.5}>
+        <Stack
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={2}
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          justifyContent="space-between"
+        >
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+            {renderTeam(match.team1)}
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {t('vs')}
+            </Typography>
+            {renderTeam(match.team2)}
+          </Stack>
+          <Stack spacing={0.5} alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
+            {match.result1 != null && match.result2 != null ? (
+              <Typography variant="h6" component="span">
+                {match.result1} - {match.result2}
+              </Typography>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                {kickoffText(match)}
+              </Typography>
+            )}
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {match.group_name && <Chip size="small" label={match.group_name} />}
+              {match.series && <Chip size="small" color="secondary" label={match.series} />}
+            </Stack>
+          </Stack>
+        </Stack>
+      </Stack>
+    </Paper>
+  );
+
+  const togglePredictionSection = key => {
+    setExpandedPredictionKeys(prev =>
+      prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key]
+    );
+  };
+
+  const toggleStageSection = key => {
+    setExpandedStageKeys(prev =>
+      prev.includes(key) ? prev.filter(item => item !== key) : [...prev, key]
+    );
+  };
+
+  const scrollToSection = (mapRef, key) => {
+    const node = mapRef.current?.[key];
+    if (node && typeof node.scrollIntoView === 'function') {
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleJumpToDate = value => {
+    setSelectedDateKey(value);
+    if (!value) {
+      setExpandedPredictionKeys([]);
+      return;
+    }
+    setExpandedPredictionKeys([value]);
+    setTimeout(() => scrollToSection(predictionSectionRefs, value), 150);
+  };
+
+  const handleJumpToStage = value => {
+    setSelectedStageKey(value);
+    if (!value) {
+      setExpandedStageKeys([]);
+      return;
+    }
+    setExpandedStageKeys([value]);
+    setTimeout(() => scrollToSection(stageSectionRefs, value), 150);
+  };
+
+  const renderPredictionSection = section => (
+    <Accordion
+      key={section.key}
+      expanded={expandedPredictionKeys.includes(section.key)}
+      onChange={(_, expanded) => {
+        if (expanded) {
+          setExpandedPredictionKeys(prev => [...prev.filter(item => item !== section.key), section.key]);
+        } else {
+          togglePredictionSection(section.key);
+        }
+      }}
+      disableGutters
+      square
+      ref={el => {
+        if (el) {
+          predictionSectionRefs.current[section.key] = el;
+        } else {
+          delete predictionSectionRefs.current[section.key];
+        }
+      }}
+      sx={{
+        borderRadius: 2,
+        boxShadow: 0,
+        backgroundColor: 'transparent',
+        '&:before': { display: 'none' },
+        '& .MuiAccordionSummary-root': { px: 1 },
+        '& .MuiAccordionDetails-root': { px: 1 }
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+          <Typography variant="subtitle2">{section.label}</Typography>
+          <Chip size="small" label={t('matchesCountLabel', { count: section.matches.length })} />
+        </Stack>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Stack spacing={1.5} sx={{ pb: 1 }}>
+          {section.matches.map(renderPredictionCard)}
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
+  );
+
+  const renderMatchesSection = stage => (
+    <Accordion
+      key={stage.key}
+      expanded={expandedStageKeys.includes(stage.key)}
+      onChange={(_, expanded) => {
+        if (expanded) {
+          setExpandedStageKeys(prev => [...prev.filter(item => item !== stage.key), stage.key]);
+        } else {
+          toggleStageSection(stage.key);
+        }
+      }}
+      disableGutters
+      square
+      ref={el => {
+        if (el) {
+          stageSectionRefs.current[stage.key] = el;
+        } else {
+          delete stageSectionRefs.current[stage.key];
+        }
+      }}
+      sx={{
+        borderRadius: 2,
+        boxShadow: 0,
+        backgroundColor: 'transparent',
+        '&:before': { display: 'none' },
+        '& .MuiAccordionSummary-root': { px: 1 },
+        '& .MuiAccordionDetails-root': { px: 1 }
+      }}
+    >
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+          <Typography variant="subtitle2">{stage.label}</Typography>
+          <Chip size="small" label={t('matchesCountLabel', { count: countMatchesInStage(stage) })} />
+        </Stack>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Stack spacing={2} sx={{ pb: 1 }}>
+          {stage.dates.map(date => (
+            <Stack key={date.key} spacing={1.5}>
+              <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                {date.label}
+              </Typography>
+              {date.matches.map(renderMatchCard)}
+            </Stack>
+          ))}
+          {isGroupStage(stage.key) && Array.isArray(groups) && groups.some(gr => gr.group === stage.key) && (
+            <GroupTable groups={groups.filter(gr => gr.group === stage.key)} />
           )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
-  const renderPredictionSection = key => (
-    <div key={key} style={{ marginBottom: '1rem' }}>
-      <h6>{key}</h6>
-      {pMatches[key].map(renderPredictionCard)}
-    </div>
-  );
-
-  const renderMatchesSection = key => (
-    <div key={key} style={{ marginBottom: '1rem' }}>
-      <h6>{key}</h6>
-      {pMatches[key].map(renderMatchCard)}
-    </div>
+        </Stack>
+      </AccordionDetails>
+    </Accordion>
   );
 
   return (
@@ -225,14 +475,22 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       <Card
         onClick={() => setOpen(!open)}
         sx={{
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           cursor: 'pointer',
           borderRadius: 3,
           boxShadow: open ? 8 : 2,
           transition: 'box-shadow .2s ease-in-out'
         }}
       >
-        <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+        <CardContent
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            justifyContent: 'space-between',
+            gap: 2
+          }}
+        >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Typography variant="h6" component="h3">
               {penca.name}
@@ -240,6 +498,9 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               <Chip size="small" color="primary" label={tournamentLabel} />
               <Chip size="small" label={participantsLabel} />
+              {ownerName && (
+                <Chip size="small" color="secondary" label={`${t('pencaOwnerLabel')}: ${ownerName}`} />
+              )}
             </Stack>
           </Box>
           <Tooltip title={t('viewRules')}>
@@ -261,7 +522,14 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             <Stack
               direction={isMobile ? 'column' : 'row'}
               spacing={1}
-              sx={{ mb: 2, alignItems: 'center', justifyContent: 'flex-start' }}
+              sx={{
+                mb: 2,
+                alignItems: 'center',
+                justifyContent: 'flex-start',
+                flexWrap: 'wrap',
+                rowGap: 1,
+                columnGap: 1
+              }}
             >
               <Button
                 size="small"
@@ -287,15 +555,62 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               >
                 {t('played')}
               </Button>
+              {!!predictionSections.length && (
+                <TextField
+                  select
+                  size="small"
+                  label={t('jumpToDate')}
+                  value={selectedDateKey}
+                  onChange={e => handleJumpToDate(e.target.value)}
+                  sx={{ minWidth: { xs: '100%', sm: 180 } }}
+                  fullWidth={isMobile}
+                >
+                  <MenuItem value="">{t('jumpToDatePlaceholder')}</MenuItem>
+                  {predictionSections.map(section => (
+                    <MenuItem key={section.key} value={section.key}>
+                      {section.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+              {!!stageSections.length && (
+                <TextField
+                  select
+                  size="small"
+                  label={t('jumpToStage')}
+                  value={selectedStageKey}
+                  onChange={e => handleJumpToStage(e.target.value)}
+                  sx={{ minWidth: { xs: '100%', sm: 200 } }}
+                  fullWidth={isMobile}
+                >
+                  <MenuItem value="">{t('jumpToStagePlaceholder')}</MenuItem>
+                  {stageSections.map(stage => (
+                    <MenuItem key={stage.key} value={stage.key}>
+                      {stage.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
             </Stack>
+            {isLoading && (
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                <CircularProgress size={18} />
+                <Typography variant="body2" color="text.secondary">
+                  {t('loading')}
+                </Typography>
+              </Stack>
+            )}
+            {!isLoading && !hasAnyMatches && (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                {t('adminMatchesNoResults')}
+              </Alert>
+            )}
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                 <Typography>{t('predictions')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {groupKeys.map(renderPredictionSection)}
-                {knockoutKeys.map(renderPredictionSection)}
-                {otherKeys.map(renderPredictionSection)}
+                {predictionSections.map(renderPredictionSection)}
               </AccordionDetails>
             </Accordion>
 
@@ -304,9 +619,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 <Typography>{t('matches')}</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                {groupKeys.map(renderMatchesSection)}
-                {knockoutKeys.map(renderMatchesSection)}
-                {otherKeys.map(renderMatchesSection)}
+                {stageSections.map(renderMatchesSection)}
               </AccordionDetails>
             </Accordion>
 
