@@ -1,9 +1,16 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import strings from './strings';
 
+const interpolate = (template, vars) => {
+  if (!template || !vars) return template;
+  return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (match, key) => {
+    return Object.prototype.hasOwnProperty.call(vars, key) ? vars[key] : match;
+  });
+};
+
 const LangContext = createContext({
   lang: 'es',
-  t: (k) => strings.es[k] || k,
+  t: (k, vars) => interpolate(strings.es[k] || k, vars),
   toggleLang: () => {}
 });
 
@@ -23,7 +30,10 @@ export function LangProvider({ children }) {
     localStorage.setItem('lang', next);
   };
 
-  const t = (key) => strings[lang][key] || key;
+  const t = (key, vars) => {
+    const template = strings[lang]?.[key] ?? key;
+    return typeof template === 'string' ? interpolate(template, vars) : template;
+  };
 
   return (
     <LangContext.Provider value={{ lang, t, toggleLang }}>

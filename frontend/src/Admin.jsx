@@ -32,7 +32,14 @@ import {
 import Save from '@mui/icons-material/Save';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupTable from './GroupTable';
-import roundOrder from './roundOrder';
+import {
+  OTHER_STAGE_KEY,
+  compareGroupStage,
+  deriveStageKey,
+  isGroupStage,
+  knockoutIndexFor,
+  stageCategoryFor
+} from './stageOrdering';
 import CompetitionWizard from './CompetitionWizard';
 import useLang from './useLang';
 import { formatLocalKickoff as formatKickoff, matchKickoffValue } from './kickoffUtils';
@@ -121,14 +128,6 @@ export default function Admin() {
     city: venue?.city || '',
     stadium: venue?.stadium || ''
   });
-
-  const isGroupKey = key => /^Grupo\s+/i.test(key);
-  const compareGroupKey = (a, b) => {
-    const normalize = value => value.replace(/^Grupo\s+/i, '').trim();
-    return normalize(a).localeCompare(normalize(b), undefined, { sensitivity: 'base', numeric: true });
-  };
-
-  const knockoutOrder = roundOrder.filter(label => !/^Grupo\s+/i.test(label));
 
   useEffect(() => {
     loadAll();
@@ -551,7 +550,7 @@ export default function Admin() {
 
   async function saveOrder(comp, round) {
     const list = (matchesByCompetition[comp._id] || [])
-      .filter(m => (m.group_name || 'Otros') === round)
+      .filter(m => deriveStageKey(m.group_name, m.series) === round)
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
       .map(m => m._id);
     setIsSaving(true);
@@ -571,7 +570,7 @@ export default function Admin() {
   async function saveRound(compId, round) {
     setIsSaving(true);
     const matches = (matchesByCompetition[compId] || []).filter(
-      m => (m.group_name || 'Otros') === round
+      m => deriveStageKey(m.group_name, m.series) === round
     );
     try {
       await Promise.all(matches.map(m => saveMatch(compId, m, true)));
@@ -618,32 +617,59 @@ export default function Admin() {
 
   const groupedSelectedMatches = useMemo(() => {
     return selectedMatches.reduce((acc, match) => {
-      const key = match.group_name?.trim() || 'Otros';
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(match);
+      const stageKey = deriveStageKey(match.group_name, match.series) || OTHER_STAGE_KEY;
+      const label = stageKey === OTHER_STAGE_KEY ? t('otherMatches') : stageKey;
+      const category = stageCategoryFor(stageKey);
+      const entry = acc[stageKey] || {
+        key: stageKey,
+        label,
+        category,
+        matches: [],
+        order: Number.POSITIVE_INFINITY,
+        knockoutIndex: knockoutIndexFor(stageKey)
+      };
+      entry.matches.push(match);
+      entry.order = Math.min(entry.order, matchTimeValue(match));
+      acc[stageKey] = entry;
       return acc;
     }, {});
-  }, [selectedMatches]);
+  }, [selectedMatches, t]);
+
+  const stageEntries = useMemo(() => Object.values(groupedSelectedMatches), [groupedSelectedMatches]);
 
   const matchGroupKeys = useMemo(
-    () => Object.keys(groupedSelectedMatches).filter(isGroupKey).sort(compareGroupKey),
-    [groupedSelectedMatches]
+    () =>
+      stageEntries
+        .filter(entry => entry.category === 'group')
+        .sort((a, b) => compareGroupStage(a.key, b.key))
+        .map(entry => entry.key),
+    [stageEntries]
   );
 
   const matchKnockoutKeys = useMemo(
-    () => knockoutOrder.filter(label => Array.isArray(groupedSelectedMatches[label])),
-    [groupedSelectedMatches]
+    () =>
+      stageEntries
+        .filter(entry => entry.category === 'knockout')
+        .sort((a, b) => {
+          if (a.knockoutIndex !== b.knockoutIndex) {
+            return a.knockoutIndex - b.knockoutIndex;
+          }
+          return a.order - b.order;
+        })
+        .map(entry => entry.key),
+    [stageEntries]
   );
 
   const matchOtherKeys = useMemo(
     () =>
-      Object.keys(groupedSelectedMatches)
-        .filter(key => !isGroupKey(key) && !matchKnockoutKeys.includes(key))
-        .sort((a, b) => matchTimeValue(groupedSelectedMatches[a]?.[0]) - matchTimeValue(groupedSelectedMatches[b]?.[0])),
-    [groupedSelectedMatches, matchKnockoutKeys]
+      stageEntries
+        .filter(entry => entry.category === 'other')
+        .sort((a, b) => a.order - b.order)
+        .map(entry => entry.key),
+    [stageEntries]
   );
 
-  const matchHasData = matchGroupKeys.length + matchKnockoutKeys.length + matchOtherKeys.length > 0;
+  const matchHasData = stageEntries.some(entry => entry.matches.length > 0);
 
   const renderMatchAccordion = match => {
     const venue = ensureVenueObject(match.venue);
@@ -1096,10 +1122,13 @@ export default function Admin() {
 
       {selectedCompetition && matchHasData && (
         <Stack spacing={2}>
-          {matchGroupKeys.map(round => (
-            <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
+          {matchGroupKeys.map(round => {
+            const section = groupedSelectedMatches[round];
+            if (!section) return null;
+            return (
+              <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
-                <Typography variant="subtitle1">{round}</Typography>
+                <Typography variant="subtitle1">{section.label}</Typography>
                 <Stack direction="row" spacing={1} flexWrap="wrap">
                   <Button
                     variant="outlined"
@@ -1120,18 +1149,22 @@ export default function Admin() {
                 </Stack>
               </Stack>
               <Stack spacing={1.5} sx={{ mt: 1.5 }}>
-                {groupedSelectedMatches[round].map(renderMatchAccordion)}
+                {section.matches.map(renderMatchAccordion)}
               </Stack>
-              {Array.isArray(groups[selectedCompetition.name]) && (
-                <GroupTable groups={groups[selectedCompetition.name].filter(gr => gr.group === round)} />
-              )}
-            </Paper>
-          ))}
+                {Array.isArray(groups[selectedCompetition.name]) && (
+                <GroupTable groups={groups[selectedCompetition.name].filter(gr => gr.group === section.key)} />
+                )}
+              </Paper>
+            );
+          })}
 
-          {matchKnockoutKeys.map(round => (
-            <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
+          {matchKnockoutKeys.map(round => {
+            const section = groupedSelectedMatches[round];
+            if (!section) return null;
+            return (
+              <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
-                <Typography variant="subtitle1">{round}</Typography>
+                <Typography variant="subtitle1">{section.label}</Typography>
                 <Stack direction="row" spacing={1} flexWrap="wrap">
                   <Button
                     variant="outlined"
@@ -1152,15 +1185,19 @@ export default function Admin() {
                 </Stack>
               </Stack>
               <Stack spacing={1.5} sx={{ mt: 1.5 }}>
-                {groupedSelectedMatches[round].map(renderMatchAccordion)}
+                {section.matches.map(renderMatchAccordion)}
               </Stack>
-            </Paper>
-          ))}
+              </Paper>
+            );
+          })}
 
-          {matchOtherKeys.map(round => (
-            <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
+          {matchOtherKeys.map(round => {
+            const section = groupedSelectedMatches[round];
+            if (!section) return null;
+            return (
+              <Paper key={round} sx={{ p: 2, borderRadius: 2 }}>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between">
-                <Typography variant="subtitle1">{round}</Typography>
+                <Typography variant="subtitle1">{section.label}</Typography>
                 <Button
                   variant="outlined"
                   size="small"
@@ -1171,10 +1208,11 @@ export default function Admin() {
                 </Button>
               </Stack>
               <Stack spacing={1.5} sx={{ mt: 1.5 }}>
-                {groupedSelectedMatches[round].map(renderMatchAccordion)}
+                {section.matches.map(renderMatchAccordion)}
               </Stack>
-            </Paper>
-          ))}
+              </Paper>
+            );
+          })}
         </Stack>
       )}
     </Stack>

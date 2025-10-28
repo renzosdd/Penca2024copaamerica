@@ -19,7 +19,13 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useLang from './useLang';
-import roundOrder from './roundOrder';
+import {
+  OTHER_STAGE_KEY,
+  compareGroupStage,
+  deriveStageKey,
+  knockoutIndexFor,
+  stageCategoryFor
+} from './stageOrdering';
 import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue } from './kickoffUtils';
 import { useTheme } from '@mui/material/styles';
 
@@ -48,13 +54,166 @@ export default function OwnerPanel() {
     return null;
   };
 
-  const isGroupKey = key => /^Grupo\s+/i.test(key);
-  const compareGroupKey = (a, b) => {
-    const normalize = value => value.replace(/^Grupo\s+/i, '').trim();
-    return normalize(a).localeCompare(normalize(b), undefined, { sensitivity: 'base', numeric: true });
+  const formatDateLabel = date => {
+    if (!date) return t('scheduleTbd');
+    try {
+      const formatter = new Intl.DateTimeFormat(undefined, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short'
+      });
+      return formatter.format(new Date(`${date}T12:00:00Z`));
+    } catch (error) {
+      console.error('owner date format error', error);
+      return date;
+    }
   };
 
-  const knockoutOrder = roundOrder.filter(label => !/^Grupo\s+/i.test(label));
+  const buildStageSections = list => {
+    const stageMap = new Map();
+    list.forEach(match => {
+      const stageKey = deriveStageKey(match.group_name, match.series) || OTHER_STAGE_KEY;
+      const stageLabel = stageKey === OTHER_STAGE_KEY ? t('otherMatches') : stageKey;
+      const category = stageCategoryFor(stageKey);
+      const stageEntry = stageMap.get(stageKey) || {
+        key: stageKey,
+        label: stageLabel,
+        category,
+        knockoutIndex: knockoutIndexFor(stageKey),
+        order: Number.POSITIVE_INFINITY,
+        dates: new Map()
+      };
+      stageEntry.label = stageLabel;
+      stageEntry.category = category;
+      stageEntry.knockoutIndex = knockoutIndexFor(stageKey);
+      const dateKey = getDateKey(match);
+      const normalizedDateKey = dateKey || `unknown-${match._id}`;
+      const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
+      const dateEntry = stageEntry.dates.get(normalizedDateKey) || {
+        key: normalizedDateKey,
+        label,
+        order: matchTimeValue(match),
+        matches: []
+      };
+      dateEntry.order = Math.min(dateEntry.order, matchTimeValue(match));
+      dateEntry.label = label;
+      dateEntry.matches.push(match);
+      stageEntry.dates.set(normalizedDateKey, dateEntry);
+      stageEntry.order = Math.min(stageEntry.order, matchTimeValue(match));
+      stageEntry.label = stageLabel;
+      stageMap.set(stageKey, stageEntry);
+    });
+
+    const comparator = (a, b) => {
+      if (a.category === 'group' && b.category === 'group') return compareGroupStage(a.key, b.key);
+      if (a.category === 'group') return -1;
+      if (b.category === 'group') return 1;
+      if (a.category === 'knockout' || b.category === 'knockout') {
+        const aIndex = a.knockoutIndex ?? Number.POSITIVE_INFINITY;
+        const bIndex = b.knockoutIndex ?? Number.POSITIVE_INFINITY;
+        if (aIndex !== bIndex) return aIndex - bIndex;
+        return a.order - b.order;
+      }
+      return a.order - b.order;
+    };
+
+    return Array.from(stageMap.values())
+      .map(stage => ({
+        ...stage,
+        dates: Array.from(stage.dates.values()).sort((a, b) => a.order - b.order)
+      }))
+      .sort(comparator);
+  };
+
+  const matchSectionsByPenca = useMemo(() => {
+    const result = {};
+    pencas.forEach(p => {
+      let list = [];
+      if (Array.isArray(p.fixture) && p.fixture.length) {
+        const fixtureSet = new Set(p.fixture.map(String));
+        list = matches.filter(m => fixtureSet.has(String(m._id)));
+      } else {
+        list = matches.filter(m => m.competition === p.competition);
+      }
+      const sorted = [...list].sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
+      const filteredList = sorted.filter(match => {
+        if (filter === 'upcoming') {
+          return match.result1 == null && match.result2 == null;
+        }
+        if (filter === 'played') {
+          return match.result1 != null && match.result2 != null;
+        }
+        return true;
+      });
+      result[p._id] = buildStageSections(filteredList);
+    });
+    return result;
+  }, [filter, matches, pencas, t]);
+
+  useEffect(() => {
+    setExpandedStages(prev => {
+      const next = {};
+      Object.entries(matchSectionsByPenca).forEach(([pId, sections]) => {
+        if (!sections.length) {
+          next[pId] = [];
+          return;
+        }
+        const prevForId = (prev[pId] || []).filter(key => sections.some(section => section.key === key));
+        next[pId] = prevForId.length ? prevForId : [sections[0].key];
+      });
+      return next;
+    });
+  }, [matchSectionsByPenca]);
+
+  useEffect(() => {
+    setSelectedStages(prev => {
+      const next = {};
+      Object.entries(matchSectionsByPenca).forEach(([pId, sections]) => {
+        const validKeys = sections.map(section => section.key);
+        if (prev[pId] && validKeys.includes(prev[pId])) {
+          next[pId] = prev[pId];
+        }
+      });
+      return next;
+    });
+  }, [matchSectionsByPenca]);
+
+  const stageMatchesCount = stage => stage.dates.reduce((acc, date) => acc + date.matches.length, 0);
+
+  const registerStageRef = (pencaId, stageKey, node) => {
+    if (!stageRefs.current[pencaId]) {
+      stageRefs.current[pencaId] = {};
+    }
+    if (node) {
+      stageRefs.current[pencaId][stageKey] = node;
+    } else if (stageRefs.current[pencaId]) {
+      delete stageRefs.current[pencaId][stageKey];
+    }
+  };
+
+  const toggleStageExpansion = (pencaId, stageKey, expanded) => {
+    setExpandedStages(prev => {
+      const current = prev[pencaId] || [];
+      const filtered = current.filter(key => key !== stageKey);
+      const nextList = expanded ? [...filtered, stageKey] : filtered;
+      return { ...prev, [pencaId]: nextList };
+    });
+  };
+
+  const handleJumpStage = (pencaId, value) => {
+    setSelectedStages(prev => ({ ...prev, [pencaId]: value }));
+    if (!value) {
+      setExpandedStages(prev => ({ ...prev, [pencaId]: [] }));
+      return;
+    }
+    setExpandedStages(prev => ({ ...prev, [pencaId]: [value] }));
+    setTimeout(() => {
+      const node = stageRefs.current?.[pencaId]?.[value];
+      if (node && typeof node.scrollIntoView === 'function') {
+        node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+  };
 
   const formatDateLabel = date => {
     if (!date) return t('scheduleTbd');

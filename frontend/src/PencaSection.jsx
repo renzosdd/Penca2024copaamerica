@@ -35,7 +35,14 @@ import { alpha } from '@mui/material/styles';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupTable from './GroupTable';
-import roundOrder from './roundOrder';
+import {
+  OTHER_STAGE_KEY,
+  compareGroupStage,
+  deriveStageKey,
+  isGroupStage,
+  knockoutIndexFor,
+  stageCategoryFor
+} from './stageOrdering';
 import useLang from './useLang';
 import pointsForPrediction from './calcPoints';
 import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
@@ -136,14 +143,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const participantsLabel = `${participantsCount}${participantLimit} ${t('participantsShort')}`.trim();
   const ownerName = penca.ownerDisplayName || penca.owner?.name || penca.owner?.username || '';
 
-  const isGroupKey = key => /^Grupo\s+/i.test(key);
-  const compareGroupKey = (a, b) => {
-    const normalize = value => value.replace(/^Grupo\s+/i, '').trim();
-    return normalize(a).localeCompare(normalize(b), undefined, { sensitivity: 'base', numeric: true });
-  };
-
-  const knockoutOrder = roundOrder.filter(label => !/^Grupo\s+/i.test(label));
-
   const sortedMatches = useMemo(() => {
     let list = [];
     if (Array.isArray(penca.fixture) && penca.fixture.length) {
@@ -209,14 +208,20 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const stageSections = useMemo(() => {
     const stageMap = new Map();
     sortedMatches.forEach(match => {
-      const stageKey = match.group_name?.trim() || match.series || '__other__';
-      const stageLabel = match.group_name?.trim() || match.series || t('otherMatches');
+      const stageKey = deriveStageKey(match.group_name, match.series) || OTHER_STAGE_KEY;
+      const stageLabel = stageKey === OTHER_STAGE_KEY ? t('otherMatches') : stageKey;
+      const category = stageCategoryFor(stageKey);
       const stageEntry = stageMap.get(stageKey) || {
         key: stageKey,
         label: stageLabel,
+        category,
+        knockoutIndex: knockoutIndexFor(stageKey),
         order: Number.POSITIVE_INFINITY,
         dates: new Map()
       };
+      stageEntry.label = stageLabel;
+      stageEntry.category = category;
+      stageEntry.knockoutIndex = knockoutIndexFor(stageKey);
       const dateKey = getDateKey(match);
       const normalizedDateKey = dateKey || `unknown-${match._id}`;
       const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
@@ -231,22 +236,18 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       dateEntry.matches.push(match);
       stageEntry.dates.set(normalizedDateKey, dateEntry);
       stageEntry.order = Math.min(stageEntry.order, matchTimeValue(match));
-      stageEntry.label = stageLabel;
       stageMap.set(stageKey, stageEntry);
     });
 
     const comparator = (a, b) => {
-      const aIsGroup = isGroupKey(a.key);
-      const bIsGroup = isGroupKey(b.key);
-      if (aIsGroup && bIsGroup) return compareGroupKey(a.key, b.key);
-      if (aIsGroup) return -1;
-      if (bIsGroup) return 1;
-      const aKnock = knockoutOrder.indexOf(a.key);
-      const bKnock = knockoutOrder.indexOf(b.key);
-      if (aKnock !== -1 || bKnock !== -1) {
-        if (aKnock === -1) return 1;
-        if (bKnock === -1) return -1;
-        return aKnock - bKnock;
+      if (a.category === 'group' && b.category === 'group') return compareGroupStage(a.key, b.key);
+      if (a.category === 'group') return -1;
+      if (b.category === 'group') return 1;
+      if (a.category === 'knockout' || b.category === 'knockout') {
+        const aIndex = a.knockoutIndex ?? Number.POSITIVE_INFINITY;
+        const bIndex = b.knockoutIndex ?? Number.POSITIVE_INFINITY;
+        if (aIndex !== bIndex) return aIndex - bIndex;
+        return a.order - b.order;
       }
       return a.order - b.order;
     };
@@ -554,7 +555,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               {date.matches.map(renderMatchCard)}
             </Stack>
           ))}
-          {isGroupKey(stage.key) && Array.isArray(groups) && groups.some(gr => gr.group === stage.key) && (
+          {isGroupStage(stage.key) && Array.isArray(groups) && groups.some(gr => gr.group === stage.key) && (
             <GroupTable groups={groups.filter(gr => gr.group === stage.key)} />
           )}
         </Stack>
