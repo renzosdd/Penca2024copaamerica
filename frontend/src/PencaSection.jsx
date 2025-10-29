@@ -79,32 +79,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     return minutes >= 30;
   }
 
-  useEffect(() => {
-    if (!predictionSections.length) {
-      setExpandedPredictionKeys([]);
-      setSelectedDateKey('');
-      predictionSectionRefs.current = {};
-      return;
-    }
-    predictionSectionRefs.current = {};
-    const nextUpcoming = predictionSections.find(section => section.matches.some(canPredict));
-    const defaultKey = nextUpcoming ? nextUpcoming.key : predictionSections[0].key;
-    setExpandedPredictionKeys([defaultKey]);
-    setSelectedDateKey('');
-  }, [predictionSections]);
-
-  useEffect(() => {
-    if (!stageSections.length) {
-      setExpandedStageKeys([]);
-      setSelectedStageKey('');
-      stageSectionRefs.current = {};
-      return;
-    }
-    stageSectionRefs.current = {};
-    setExpandedStageKeys([stageSections[0].key]);
-    setSelectedStageKey('');
-  }, [stageSections]);
-
   async function submitPrediction(e, pencaId, matchId) {
     const result = await handlePrediction(e, pencaId, matchId);
     if (result?.success) {
@@ -176,6 +150,32 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       }),
     [sortedMatches, t]
   );
+
+  useEffect(() => {
+    if (!predictionSections.length) {
+      setExpandedPredictionKeys([]);
+      setSelectedDateKey('');
+      predictionSectionRefs.current = {};
+      return;
+    }
+    predictionSectionRefs.current = {};
+    const nextUpcoming = predictionSections.find(section => section.matches.some(canPredict));
+    const defaultKey = nextUpcoming ? nextUpcoming.key : predictionSections[0].key;
+    setExpandedPredictionKeys([defaultKey]);
+    setSelectedDateKey('');
+  }, [predictionSections]);
+
+  useEffect(() => {
+    if (!stageSections.length) {
+      setExpandedStageKeys([]);
+      setSelectedStageKey('');
+      stageSectionRefs.current = {};
+      return;
+    }
+    stageSectionRefs.current = {};
+    setExpandedStageKeys([stageSections[0].key]);
+    setSelectedStageKey('');
+  }, [stageSections]);
 
   const renderTeam = name => (
     <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
