@@ -1,8 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Box,
   Button,
   Card,
@@ -11,35 +8,30 @@ import {
   Chip,
   Container,
   FormControlLabel,
-  MenuItem,
   Stack,
   TextField,
   Typography,
   useMediaQuery
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useTheme } from '@mui/material/styles';
+import StageAccordionList from './StageAccordionList';
 import useLang from './useLang';
 import { OTHER_STAGE_KEY } from './stageOrdering';
 import { formatLocalKickoff, matchKickoffValue } from './kickoffUtils';
-import { buildStageSections, countMatchesInStage } from './matchSections';
-import { useTheme } from '@mui/material/styles';
 
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
   const [rankings, setRankings] = useState({});
   const [matches, setMatches] = useState([]);
+  const [matchesLoading, setMatchesLoading] = useState(false);
   const { t } = useLang();
-  const [expandedPenca, setExpandedPenca] = useState(null);
   const [filter, setFilter] = useState('all');
-  const [expandedStages, setExpandedStages] = useState({});
-  const [selectedStages, setSelectedStages] = useState({});
-  const stageRefs = useRef({});
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const matchTimeValue = match => matchKickoffValue(match);
 
-  const matchSectionsByPenca = useMemo(() => {
+  const matchesByPenca = useMemo(() => {
     const result = {};
     pencas.forEach(p => {
       let list = [];
@@ -59,78 +51,10 @@ export default function OwnerPanel() {
         }
         return true;
       });
-      result[p._id] = buildStageSections(filteredList, {
-        t,
-        matchTimeValue,
-        stageLabelForKey: stageKey => (stageKey === OTHER_STAGE_KEY ? t('otherMatches') : stageKey)
-      });
+      result[p._id] = filteredList;
     });
     return result;
-  }, [filter, matches, pencas, t]);
-
-  useEffect(() => {
-    setExpandedStages(prev => {
-      const next = {};
-      Object.entries(matchSectionsByPenca).forEach(([pId, sections]) => {
-        if (!sections.length) {
-          next[pId] = [];
-          return;
-        }
-        const prevForId = (prev[pId] || []).filter(key => sections.some(section => section.key === key));
-        next[pId] = prevForId.length ? prevForId : [sections[0].key];
-      });
-      return next;
-    });
-  }, [matchSectionsByPenca]);
-
-  useEffect(() => {
-    setSelectedStages(prev => {
-      const next = {};
-      Object.entries(matchSectionsByPenca).forEach(([pId, sections]) => {
-        const validKeys = sections.map(section => section.key);
-        if (prev[pId] && validKeys.includes(prev[pId])) {
-          next[pId] = prev[pId];
-        }
-      });
-      return next;
-    });
-  }, [matchSectionsByPenca]);
-
-  const registerStageRef = (pencaId, stageKey, node) => {
-    if (!stageRefs.current[pencaId]) {
-      stageRefs.current[pencaId] = {};
-    }
-    if (node) {
-      stageRefs.current[pencaId][stageKey] = node;
-    } else if (stageRefs.current[pencaId]) {
-      delete stageRefs.current[pencaId][stageKey];
-    }
-  };
-
-  const toggleStageExpansion = (pencaId, stageKey, expanded) => {
-    setExpandedStages(prev => {
-      const current = prev[pencaId] || [];
-      const filtered = current.filter(key => key !== stageKey);
-      const nextList = expanded ? [...filtered, stageKey] : filtered;
-      return { ...prev, [pencaId]: nextList };
-    });
-  };
-
-  const handleJumpStage = (pencaId, value) => {
-    setSelectedStages(prev => ({ ...prev, [pencaId]: value }));
-    if (!value) {
-      setExpandedStages(prev => ({ ...prev, [pencaId]: [] }));
-      return;
-    }
-    setExpandedStages(prev => ({ ...prev, [pencaId]: [value] }));
-    setTimeout(() => {
-      const node = stageRefs.current?.[pencaId]?.[value];
-      if (node && typeof node.scrollIntoView === 'function') {
-        node.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 150);
-  };
-
+  }, [filter, matches, pencas]);
 
   useEffect(() => {
     loadData();
@@ -144,13 +68,13 @@ export default function OwnerPanel() {
           setMatches([]);
           return;
         }
+        setMatchesLoading(true);
         const fetched = await Promise.all(
           comps.map(async c => {
             try {
               const r = await fetch(`/competitions/${encodeURIComponent(c)}/matches`);
               if (r.ok) {
-                const list = await r.json();
-                return list;
+                return r.json();
               }
             } catch (error) {
               console.error('load matches error', error);
@@ -161,9 +85,15 @@ export default function OwnerPanel() {
         setMatches(fetched.flat());
       } catch (err) {
         console.error('load matches error', err);
+      } finally {
+        setMatchesLoading(false);
       }
     }
-    if (pencas.length) loadMatches();
+    if (pencas.length) {
+      loadMatches();
+    } else {
+      setMatches([]);
+    }
   }, [pencas]);
 
   async function loadData() {
@@ -229,15 +159,17 @@ export default function OwnerPanel() {
   };
 
   const updateField = (id, field, value) => {
-    setPencas(ps => ps.map(p => p._id === id ? { ...p, [field]: value } : p));
+    setPencas(ps => ps.map(p => (p._id === id ? { ...p, [field]: value } : p)));
   };
 
   const updateScoring = (id, key, val) => {
-    setPencas(ps => ps.map(p => {
-      if (p._id !== id) return p;
-      const scoring = sanitizeScoring({ ...p.scoring, [key]: val });
-      return { ...p, scoring, rules: autoRules(scoring) };
-    }));
+    setPencas(ps =>
+      ps.map(p => {
+        if (p._id !== id) return p;
+        const scoring = sanitizeScoring({ ...p.scoring, [key]: val });
+        return { ...p, scoring, rules: autoRules(scoring) };
+      })
+    );
   };
 
   async function saveInfo(id) {
@@ -297,7 +229,7 @@ export default function OwnerPanel() {
   };
 
   const renderMatchCard = match => (
-    <Card key={match._id} sx={{ borderRadius: 2, boxShadow: 2 }}>
+    <Card sx={{ borderRadius: 2, boxShadow: 2 }}>
       <CardContent>
         <Stack spacing={1.5}>
           <Stack
@@ -353,259 +285,197 @@ export default function OwnerPanel() {
             {t('played')}
           </Button>
         </Stack>
-      {pencas.map(p => {
-        const ranking = rankings[p._id] || [];
-        const stageSections = matchSectionsByPenca[p._id] || [];
-        const stageKeys = stageSections.map(stage => stage.key);
-        const expandedStageKeys = expandedStages[p._id] || [];
-        const selectedStageValue = stageKeys.includes(selectedStages[p._id]) ? selectedStages[p._id] : '';
-        const pending = Array.isArray(p.pendingRequests) ? p.pendingRequests : [];
-        const participants = Array.isArray(p.participants) ? p.participants : [];
-        const scoring = sanitizeScoring(p.scoring);
-        const modeKey = p.tournamentMode ? `mode_${p.tournamentMode}` : 'mode_group_stage_knockout';
-        const translatedMode = t(modeKey);
-        const tournamentLabel = translatedMode === modeKey ? p.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
-        const hasStageMatches = stageSections.length > 0;
- 
-        return (
-          <Accordion
-            key={p._id}
-            expanded={expandedPenca === p._id}
-            onChange={(_, exp) => setExpandedPenca(exp ? p._id : null)}
-            sx={{ borderRadius: 2, boxShadow: 3 }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              sx={{ '& .MuiAccordionSummary-content': { width: '100%', margin: 0 } }}
-            >
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={1.5}
-                alignItems={{ xs: 'flex-start', sm: 'center' }}
-                justifyContent="space-between"
-                sx={{ width: '100%' }}
-              >
-                <Typography component="span" fontWeight="bold">
-                  {p.name} · {p.code}
-                </Typography>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-                  <Chip size="small" label={tournamentLabel} color="primary" />
-                  <FormControlLabel
-                    control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
-                    label={t('public')}
+        {pencas.map(p => {
+          const ranking = rankings[p._id] || [];
+          const stageMatches = matchesByPenca[p._id] || [];
+          const pending = Array.isArray(p.pendingRequests) ? p.pendingRequests : [];
+          const participants = Array.isArray(p.participants) ? p.participants : [];
+          const scoring = sanitizeScoring(p.scoring);
+          const modeKey = p.tournamentMode ? `mode_${p.tournamentMode}` : 'mode_group_stage_knockout';
+          const translatedMode = t(modeKey);
+          const tournamentLabel = translatedMode === modeKey ? p.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
+
+          return (
+            <Card key={p._id} sx={{ borderRadius: 2, boxShadow: 3 }}>
+              <CardContent>
+                <Stack
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
+                  justifyContent="space-between"
+                  sx={{ width: '100%' }}
+                >
+                  <Typography component="span" fontWeight="bold">
+                    {p.name} · {p.code}
+                  </Typography>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
+                    <Chip size="small" label={tournamentLabel} color="primary" />
+                    <FormControlLabel
+                      control={<Checkbox checked={p.isPublic || false} onChange={e => togglePublic(p._id, e.target.checked)} />}
+                      label={t('public')}
+                    />
+                  </Stack>
+                </Stack>
+
+                <Box sx={{ mt: 2 }}>
+                  <StageAccordionList
+                    matches={stageMatches}
+                    t={t}
+                    matchTimeValue={matchTimeValue}
+                    renderMatch={renderMatchCard}
+                    loading={matchesLoading}
+                    emptyMessage={t('adminMatchesNoResults')}
+                    stageLabelForKey={stageKey => (stageKey === OTHER_STAGE_KEY ? t('otherMatches') : stageKey)}
+                  />
+                </Box>
+
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 2 }}>
+                  <TextField
+                    label={t('exact')}
+                    type="number"
+                    size="small"
+                    value={scoring.exact}
+                    onChange={e => updateScoring(p._id, 'exact', e.target.value)}
+                  />
+                  <TextField
+                    label={t('outcome')}
+                    type="number"
+                    size="small"
+                    value={scoring.outcome}
+                    onChange={e => updateScoring(p._id, 'outcome', e.target.value)}
+                  />
+                  <TextField
+                    label={t('goalDifferenceLabel')}
+                    type="number"
+                    size="small"
+                    value={scoring.goalDifference}
+                    onChange={e => updateScoring(p._id, 'goalDifference', e.target.value)}
                   />
                 </Stack>
-              </Stack>
-            </AccordionSummary>
-            <AccordionDetails>
-              {hasStageMatches ? (
-                <Stack spacing={1.5} sx={{ mb: 2 }}>
+                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 1 }}>
                   <TextField
-                    select
+                    label={t('teamGoalsLabel')}
+                    type="number"
                     size="small"
-                    label={t('jumpToStage')}
-                    value={selectedStageValue}
-                    onChange={e => handleJumpStage(p._id, e.target.value)}
-                    sx={{ minWidth: { xs: '100%', sm: 220 } }}
-                    fullWidth={isMobile}
-                  >
-                    <MenuItem value="">{t('jumpToStagePlaceholder')}</MenuItem>
-                    {stageSections.map(stage => (
-                      <MenuItem key={stage.key} value={stage.key}>
-                        {stage.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                  {stageSections.map(stage => (
-                    <Accordion
-                      key={stage.key}
-                      expanded={expandedStageKeys.includes(stage.key)}
-                      onChange={(_, expanded) => toggleStageExpansion(p._id, stage.key, expanded)}
-                      disableGutters
-                      square
-                      ref={el => registerStageRef(p._id, stage.key, el)}
-                      sx={{
-                        borderRadius: 2,
-                        boxShadow: 0,
-                        backgroundColor: 'transparent',
-                        '&:before': { display: 'none' },
-                        '& .MuiAccordionSummary-root': { px: 1 },
-                        '& .MuiAccordionDetails-root': { px: 1 }
-                      }}
-                    >
-                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
-                          <Typography variant="subtitle2">{stage.label}</Typography>
-                          <Chip size="small" label={t('matchesCountLabel', { count: countMatchesInStage(stage) })} />
-                        </Stack>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Stack spacing={1.5} sx={{ pb: 1 }}>
-                          {stage.dates.map(date => (
-                            <Stack key={date.key} spacing={1.5}>
-                              <Typography variant="body2" color="text.secondary" fontWeight={600}>
-                                {date.label}
-                              </Typography>
-                              {date.matches.map(renderMatchCard)}
-                            </Stack>
-                          ))}
-                        </Stack>
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
+                    value={scoring.teamGoals}
+                    onChange={e => updateScoring(p._id, 'teamGoals', e.target.value)}
+                  />
+                  <TextField
+                    label={t('cleanSheetLabel')}
+                    type="number"
+                    size="small"
+                    value={scoring.cleanSheet}
+                    onChange={e => updateScoring(p._id, 'cleanSheet', e.target.value)}
+                  />
                 </Stack>
-              ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {t('adminMatchesNoResults')}
+
+                <TextField
+                  label={t('regulation')}
+                  value={p.rules || ''}
+                  onChange={e => updateField(p._id, 'rules', e.target.value)}
+                  multiline
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 2 }}
+                />
+                <TextField
+                  label={t('awards')}
+                  value={p.prizes || ''}
+                  onChange={e => updateField(p._id, 'prizes', e.target.value)}
+                  multiline
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 1 }}
+                />
+                <Button
+                  size="small"
+                  variant="contained"
+                  sx={{ mt: 2 }}
+                  onClick={() => saveInfo(p._id)}
+                >
+                  {t('save')}
+                </Button>
+
+                <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                  {t('requests')}
                 </Typography>
-              )}
-
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 2 }}>
-                <TextField
-                  label={t('exact')}
-                  type="number"
-                  size="small"
-                  value={scoring.exact}
-                  onChange={e => updateScoring(p._id, 'exact', e.target.value)}
-                />
-                <TextField
-                  label={t('outcome')}
-                  type="number"
-                  size="small"
-                  value={scoring.outcome}
-                  onChange={e => updateScoring(p._id, 'outcome', e.target.value)}
-                />
-                <TextField
-                  label={t('goalDifferenceLabel')}
-                  type="number"
-                  size="small"
-                  value={scoring.goalDifference}
-                  onChange={e => updateScoring(p._id, 'goalDifference', e.target.value)}
-                />
-              </Stack>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 1 }}>
-                <TextField
-                  label={t('teamGoalsLabel')}
-                  type="number"
-                  size="small"
-                  value={scoring.teamGoals}
-                  onChange={e => updateScoring(p._id, 'teamGoals', e.target.value)}
-                />
-                <TextField
-                  label={t('cleanSheetLabel')}
-                  type="number"
-                  size="small"
-                  value={scoring.cleanSheet}
-                  onChange={e => updateScoring(p._id, 'cleanSheet', e.target.value)}
-                />
-              </Stack>
-
-              <TextField
-                label={t('regulation')}
-                value={p.rules || ''}
-                onChange={e => updateField(p._id, 'rules', e.target.value)}
-                multiline
-                fullWidth
-                size="small"
-                sx={{ mt: 2 }}
-              />
-              <TextField
-                label={t('awards')}
-                value={p.prizes || ''}
-                onChange={e => updateField(p._id, 'prizes', e.target.value)}
-                multiline
-                fullWidth
-                size="small"
-                sx={{ mt: 1 }}
-              />
-              <Button
-                size="small"
-                variant="contained"
-                sx={{ mt: 2 }}
-                onClick={() => saveInfo(p._id)}
-              >
-                {t('save')}
-              </Button>
-              <Typography variant="subtitle1" sx={{ mt: 2 }}>
-                {t('requests')}
-              </Typography>
-              <Stack spacing={1} sx={{ mt: 1 }}>
-                {pending.map(u => (
-                  <Stack
-                    key={u._id || u}
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
-                  >
-                    <Typography variant="body2">{u.username || u}</Typography>
-                    <Button size="small" onClick={() => approve(p._id, u._id || u)}>
-                      {t('approve')}
-                    </Button>
-                  </Stack>
-                ))}
-                {pending.length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    {t('noRequests')}
-                  </Typography>
-                )}
-              </Stack>
-
-              <Typography variant="subtitle1" sx={{ mt: 2 }}>
-                {t('participants')}
-              </Typography>
-              <Stack spacing={1} sx={{ mt: 1 }}>
-                {participants.map(u => (
-                  <Stack
-                    key={u._id || u}
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
-                  >
-                    <Typography variant="body2">{u.username || u}</Typography>
-                    <Button size="small" color="error" onClick={() => removeParticipant(p._id, u._id || u)}>
-                      {t('remove')}
-                    </Button>
-                  </Stack>
-                ))}
-                {participants.length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    {t('noParticipants')}
-                  </Typography>
-                )}
-              </Stack>
-
-              <Typography variant="subtitle1" sx={{ mt: 2 }}>
-                {t('ranking')}
-              </Typography>
-              <Stack spacing={1} sx={{ mt: 1 }}>
-                {ranking.map((u, idx) => (
-                  <Stack
-                    key={u.userId}
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
-                  >
-                    <Typography variant="body2">
-                      {idx + 1}. {u.username}
+                <Stack spacing={1} sx={{ mt: 1 }}>
+                  {pending.map(u => (
+                    <Stack
+                      key={u._id || u}
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
+                    >
+                      <Typography variant="body2">{u.username || u}</Typography>
+                      <Button size="small" onClick={() => approve(p._id, u._id || u)}>
+                        {t('approve')}
+                      </Button>
+                    </Stack>
+                  ))}
+                  {pending.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      {t('noRequests')}
                     </Typography>
-                    <Typography variant="body2" fontWeight="bold">
-                      {u.score}
+                  )}
+                </Stack>
+
+                <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                  {t('participants')}
+                </Typography>
+                <Stack spacing={1} sx={{ mt: 1 }}>
+                  {participants.map(u => (
+                    <Stack
+                      key={u._id || u}
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
+                    >
+                      <Typography variant="body2">{u.username || u}</Typography>
+                      <Button size="small" color="error" onClick={() => removeParticipant(p._id, u._id || u)}>
+                        {t('remove')}
+                      </Button>
+                    </Stack>
+                  ))}
+                  {participants.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      {t('noParticipants')}
                     </Typography>
-                  </Stack>
-                ))}
-                {ranking.length === 0 && (
-                  <Typography variant="body2" color="text.secondary">
-                    {t('noRanking')}
-                  </Typography>
-                )}
-              </Stack>
-            </AccordionDetails>
-          </Accordion>
-        );
-      })}
+                  )}
+                </Stack>
+
+                <Typography variant="subtitle1" sx={{ mt: 2 }}>
+                  {t('ranking')}
+                </Typography>
+                <Stack spacing={1} sx={{ mt: 1 }}>
+                  {ranking.map((u, idx) => (
+                    <Stack
+                      key={u.userId}
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, px: 2, py: 1 }}
+                    >
+                      <Typography variant="body2">
+                        {idx + 1}. {u.username}
+                      </Typography>
+                      <Typography variant="body2" fontWeight="bold">
+                        {u.score}
+                      </Typography>
+                    </Stack>
+                  ))}
+                  {ranking.length === 0 && (
+                    <Typography variant="body2" color="text.secondary">
+                      {t('noRanking')}
+                    </Typography>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          );
+        })}
       </Stack>
     </Container>
   );
