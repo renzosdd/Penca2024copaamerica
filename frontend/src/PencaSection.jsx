@@ -64,6 +64,16 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
   const matchTimeValue = match => matchKickoffValue(match);
 
+  const getDateKey = match => {
+    if (match?.date) return match.date;
+    if (match?.originalDate) return match.originalDate;
+    const kickoffDate = getMatchKickoffDate(match);
+    if (kickoffDate) {
+      return kickoffDate.toISOString().slice(0, 10);
+    }
+    return null;
+  };
+
   function canPredict(match) {
     const minutes = minutesUntilKickoff(match);
     return minutes >= 30;
