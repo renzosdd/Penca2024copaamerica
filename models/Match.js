@@ -18,11 +18,16 @@ const matchSchema = new mongoose.Schema({
         city: String,
         stadium: String
     },
+    importId: String,
     result1: Number,
     result2: Number,
     order: Number
 });
 
+matchSchema.index(
+    { competition: 1, importId: 1 },
+    { unique: true, partialFilterExpression: { importId: { $exists: true, $ne: null } } }
+);
 matchSchema.index({ competition: 1, kickoff: 1, order: 1 });
 matchSchema.index({ competition: 1, date: 1, time: 1 });
 

@@ -81,6 +81,17 @@ async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {
         return team ? team.team : `${group}${pos + 1}`;
     }
 
+    const stageCounters = new Map();
+    const stageSlug = stage => String(stage || '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-');
+    function nextImportId(stage) {
+        const slug = stageSlug(stage);
+        const count = (stageCounters.get(slug) || 0) + 1;
+        stageCounters.set(slug, count);
+        return `${competition}::bracket-${slug}-${count}`;
+    }
+
     const pairs = [];
     for (let i = 0; i < letters.length; i += 2) {
         const a = letters[i];
@@ -103,7 +114,15 @@ async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {
 
     const matches = [];
     pairs.forEach(([team1, team2], idx) => {
-        matches.push({ team1, team2, competition, group_name: firstRound, series: 'Eliminatorias', tournament: competition });
+        matches.push({
+            team1,
+            team2,
+            competition,
+            group_name: firstRound,
+            series: 'Eliminatorias',
+            tournament: competition,
+            importId: nextImportId(firstRound)
+        });
     });
 
     let prefix = firstRound === 'Cuartos de final' ? 'QF'
@@ -118,11 +137,27 @@ async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {
         const roundTotal = current.length;
         const name = roundNames[roundTotal] || (roundTotal === 2 ? 'Final' : `Ronda de ${roundTotal}`);
         for (let i = 0; i < current.length; i += 2) {
-            matches.push({ team1: current[i], team2: current[i + 1], competition, group_name: name, series: 'Eliminatorias', tournament: competition });
+            matches.push({
+                team1: current[i],
+                team2: current[i + 1],
+                competition,
+                group_name: name,
+                series: 'Eliminatorias',
+                tournament: competition,
+                importId: nextImportId(name)
+            });
             next.push(`Ganador ${name.replace(/\s+/g, '')}-${Math.floor(i / 2) + 1}`);
         }
         if (roundTotal === 4) {
-            matches.push({ team1: 'Perdedor SF1', team2: 'Perdedor SF2', competition, group_name: 'Tercer puesto', series: 'Eliminatorias', tournament: competition });
+            matches.push({
+                team1: 'Perdedor SF1',
+                team2: 'Perdedor SF2',
+                competition,
+                group_name: 'Tercer puesto',
+                series: 'Eliminatorias',
+                tournament: competition,
+                importId: nextImportId('Tercer puesto')
+            });
         }
         current = next;
     }

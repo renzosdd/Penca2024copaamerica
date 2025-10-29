@@ -20,6 +20,7 @@ const uploadJson = require('../middleware/jsonUpload');
 const { sanitizeScoring } = require('../utils/scoring');
 const { recordAudit, getAuditConfig, updateAuditConfig, AUDIT_TYPES } = require('../utils/audit');
 const { getOrLoad, invalidate: invalidateMatchCache } = require('../utils/matchCache');
+const { deriveMatchImportId } = require('../utils/matchIdentity');
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -403,6 +404,7 @@ function normalizeMatchForInsert(match, index, competitionName, tournamentName) 
     const originalTimezone = match.originalTimezone || original.timezone || original.tz || null;
     const kickoffCandidate = match.kickoff || match.kickoffUtc || match.kickoffISO || null;
     const kickoff = parseKickoff(kickoffCandidate) || (originalDate && originalTime ? parseKickoff(`${originalDate}T${originalTime}Z`) : null);
+    const importId = deriveMatchImportId(match, competitionName, index);
 
     return {
         date: match.date || originalDate || null,
@@ -419,6 +421,7 @@ function normalizeMatchForInsert(match, index, competitionName, tournamentName) 
         tournament: match.tournament || tournamentName,
         venue: normalizeVenue(match),
         order: typeof match.order === 'number' ? match.order : index,
+        importId,
         result1: match.result1 ?? null,
         result2: match.result2 ?? null
     };

@@ -2,6 +2,7 @@ const path = require('path');
 const { promises: fs } = require('fs');
 const Competition = require('../models/Competition');
 const Match = require('../models/Match');
+const { deriveMatchImportId } = require('./matchIdentity');
 
 const COMPETITION_NAME = 'Mundial 2026';
 const DEFAULT_TOURNAMENT = 'Copa Mundial de la FIFA 2026';
@@ -29,6 +30,7 @@ function sanitizeMatch(match, index, competitionName, tournamentName) {
   };
 
   const hasVenue = Object.values(normalizedVenue).some(Boolean);
+  const importId = deriveMatchImportId(match, competitionName, index);
 
   return {
     date: match.date || originalDate || null,
@@ -45,6 +47,7 @@ function sanitizeMatch(match, index, competitionName, tournamentName) {
     tournament: match.tournament || tournamentName,
     venue: hasVenue ? normalizedVenue : undefined,
     order: index,
+    importId,
     result1: match.result1 ?? null,
     result2: match.result2 ?? null
   };
@@ -150,8 +153,15 @@ async function ensureWorldCup2026() {
         kickoff: m.kickoff || undefined,
         venue: m.venue || undefined
       }));
-      await Match.insertMany(insertPayload);
-      return { created: !existingCompetition, matchesInserted: true };
+      try {
+        await Match.insertMany(insertPayload, { ordered: false });
+        return { created: !existingCompetition, matchesInserted: true };
+      } catch (error) {
+        if (error?.code === 11000) {
+          return { created: !existingCompetition, matchesInserted: false };
+        }
+        throw error;
+      }
     }
 
     return { created: !existingCompetition, matchesInserted: false };

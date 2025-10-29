@@ -69,10 +69,13 @@ describe('ensureWorldCup2026', () => {
       integrantsPerGroup: 4,
       qualifiersPerGroup: 2
     }));
-    expect(Match.insertMany).toHaveBeenCalledWith(expect.arrayContaining([
-      expect.objectContaining({ team1: 'Equipo A', order: 0 }),
-      expect.objectContaining({ team1: 'Equipo C', order: 1 })
-    ]));
+    expect(Match.insertMany).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ team1: 'Equipo A', order: 0 }),
+        expect.objectContaining({ team1: 'Equipo C', order: 1 })
+      ]),
+      expect.objectContaining({ ordered: false })
+    );
     expect(result).toEqual({ created: true, matchesInserted: true });
   });
 
