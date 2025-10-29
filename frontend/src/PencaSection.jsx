@@ -35,17 +35,11 @@ import { alpha } from '@mui/material/styles';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupTable from './GroupTable';
-import {
-  OTHER_STAGE_KEY,
-  compareGroupStage,
-  deriveStageKey,
-  isGroupStage,
-  knockoutIndexFor,
-  stageCategoryFor
-} from './stageOrdering';
+import { isGroupStage } from './stageOrdering';
 import useLang from './useLang';
 import pointsForPrediction from './calcPoints';
-import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
+import { formatLocalKickoff, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
+import { buildDateSections, buildStageSections, countMatchesInStage } from './matchSections';
 
 export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername, onOpen, isLoading }) {
   const [open, setOpen] = useState(false);
@@ -165,100 +159,23 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
   const hasAnyMatches = sortedMatches.length > 0;
 
-  const formatDateLabel = date => {
-    if (!date) return t('scheduleTbd');
-    try {
-      const formatter = new Intl.DateTimeFormat(undefined, {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short'
-      });
-      return formatter.format(new Date(`${date}T12:00:00Z`));
-    } catch (error) {
-      console.error('date format error', error);
-      return date;
-    }
-  };
+  const predictionSections = useMemo(
+    () =>
+      buildDateSections(sortedMatches, {
+        t,
+        matchTimeValue
+      }),
+    [sortedMatches, t]
+  );
 
-  const predictionSections = useMemo(() => {
-    const map = new Map();
-    sortedMatches.forEach(match => {
-      const dateKey = getDateKey(match);
-      const normalizedKey = dateKey || `unknown-${match._id}`;
-      const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
-      const entry = map.get(normalizedKey) || {
-        key: normalizedKey,
-        label,
-        order: matchTimeValue(match),
-        matches: []
-      };
-      entry.order = Math.min(entry.order, matchTimeValue(match));
-      entry.label = label;
-      entry.matches.push(match);
-      map.set(normalizedKey, entry);
-    });
-    return Array.from(map.values())
-      .sort((a, b) => a.order - b.order)
-      .map(entry => ({
-        ...entry,
-        label: entry.label || formatDateLabel(entry.key)
-      }));
-  }, [sortedMatches, t]);
-
-  const stageSections = useMemo(() => {
-    const stageMap = new Map();
-    sortedMatches.forEach(match => {
-      const stageKey = deriveStageKey(match.group_name, match.series) || OTHER_STAGE_KEY;
-      const stageLabel = stageKey === OTHER_STAGE_KEY ? t('otherMatches') : stageKey;
-      const category = stageCategoryFor(stageKey);
-      const stageEntry = stageMap.get(stageKey) || {
-        key: stageKey,
-        label: stageLabel,
-        category,
-        knockoutIndex: knockoutIndexFor(stageKey),
-        order: Number.POSITIVE_INFINITY,
-        dates: new Map()
-      };
-      stageEntry.label = stageLabel;
-      stageEntry.category = category;
-      stageEntry.knockoutIndex = knockoutIndexFor(stageKey);
-      const dateKey = getDateKey(match);
-      const normalizedDateKey = dateKey || `unknown-${match._id}`;
-      const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
-      const dateEntry = stageEntry.dates.get(normalizedDateKey) || {
-        key: normalizedDateKey,
-        label,
-        order: matchTimeValue(match),
-        matches: []
-      };
-      dateEntry.order = Math.min(dateEntry.order, matchTimeValue(match));
-      dateEntry.label = label;
-      dateEntry.matches.push(match);
-      stageEntry.dates.set(normalizedDateKey, dateEntry);
-      stageEntry.order = Math.min(stageEntry.order, matchTimeValue(match));
-      stageMap.set(stageKey, stageEntry);
-    });
-
-    const comparator = (a, b) => {
-      if (a.category === 'group' && b.category === 'group') return compareGroupStage(a.key, b.key);
-      if (a.category === 'group') return -1;
-      if (b.category === 'group') return 1;
-      if (a.category === 'knockout' || b.category === 'knockout') {
-        const aIndex = a.knockoutIndex ?? Number.POSITIVE_INFINITY;
-        const bIndex = b.knockoutIndex ?? Number.POSITIVE_INFINITY;
-        if (aIndex !== bIndex) return aIndex - bIndex;
-        return a.order - b.order;
-      }
-      return a.order - b.order;
-    };
-
-    return Array.from(stageMap.values())
-      .map(stage => ({
-        ...stage,
-        dates: Array.from(stage.dates.values()).sort((a, b) => a.order - b.order)
-      }))
-      .sort(comparator);
-  }, [sortedMatches, t]);
+  const stageSections = useMemo(
+    () =>
+      buildStageSections(sortedMatches, {
+        t,
+        matchTimeValue
+      }),
+    [sortedMatches, t]
+  );
 
   const renderTeam = name => (
     <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
@@ -542,7 +459,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
           <Typography variant="subtitle2">{stage.label}</Typography>
-          <Chip size="small" label={t('matchesCountLabel', { count: stage.dates.reduce((acc, date) => acc + date.matches.length, 0) })} />
+          <Chip size="small" label={t('matchesCountLabel', { count: countMatchesInStage(stage) })} />
         </Stack>
       </AccordionSummary>
       <AccordionDetails>

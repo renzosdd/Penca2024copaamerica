@@ -19,14 +19,9 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import useLang from './useLang';
-import {
-  OTHER_STAGE_KEY,
-  compareGroupStage,
-  deriveStageKey,
-  knockoutIndexFor,
-  stageCategoryFor
-} from './stageOrdering';
-import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue } from './kickoffUtils';
+import { OTHER_STAGE_KEY } from './stageOrdering';
+import { formatLocalKickoff, matchKickoffValue } from './kickoffUtils';
+import { buildStageSections, countMatchesInStage } from './matchSections';
 import { useTheme } from '@mui/material/styles';
 
 export default function OwnerPanel() {
@@ -44,87 +39,6 @@ export default function OwnerPanel() {
 
   const matchTimeValue = match => matchKickoffValue(match);
 
-  const getDateKey = match => {
-    if (match?.date) return match.date;
-    if (match?.originalDate) return match.originalDate;
-    const kickoffDate = getMatchKickoffDate(match);
-    if (kickoffDate) {
-      return kickoffDate.toISOString().slice(0, 10);
-    }
-    return null;
-  };
-
-  const formatDateLabel = date => {
-    if (!date) return t('scheduleTbd');
-    try {
-      const formatter = new Intl.DateTimeFormat(undefined, {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short'
-      });
-      return formatter.format(new Date(`${date}T12:00:00Z`));
-    } catch (error) {
-      console.error('owner date format error', error);
-      return date;
-    }
-  };
-
-  const buildStageSections = list => {
-    const stageMap = new Map();
-    list.forEach(match => {
-      const stageKey = deriveStageKey(match.group_name, match.series) || OTHER_STAGE_KEY;
-      const stageLabel = stageKey === OTHER_STAGE_KEY ? t('otherMatches') : stageKey;
-      const category = stageCategoryFor(stageKey);
-      const stageEntry = stageMap.get(stageKey) || {
-        key: stageKey,
-        label: stageLabel,
-        category,
-        knockoutIndex: knockoutIndexFor(stageKey),
-        order: Number.POSITIVE_INFINITY,
-        dates: new Map()
-      };
-      stageEntry.label = stageLabel;
-      stageEntry.category = category;
-      stageEntry.knockoutIndex = knockoutIndexFor(stageKey);
-      const dateKey = getDateKey(match);
-      const normalizedDateKey = dateKey || `unknown-${match._id}`;
-      const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
-      const dateEntry = stageEntry.dates.get(normalizedDateKey) || {
-        key: normalizedDateKey,
-        label,
-        order: matchTimeValue(match),
-        matches: []
-      };
-      dateEntry.order = Math.min(dateEntry.order, matchTimeValue(match));
-      dateEntry.label = label;
-      dateEntry.matches.push(match);
-      stageEntry.dates.set(normalizedDateKey, dateEntry);
-      stageEntry.order = Math.min(stageEntry.order, matchTimeValue(match));
-      stageEntry.label = stageLabel;
-      stageMap.set(stageKey, stageEntry);
-    });
-
-    const comparator = (a, b) => {
-      if (a.category === 'group' && b.category === 'group') return compareGroupStage(a.key, b.key);
-      if (a.category === 'group') return -1;
-      if (b.category === 'group') return 1;
-      if (a.category === 'knockout' || b.category === 'knockout') {
-        const aIndex = a.knockoutIndex ?? Number.POSITIVE_INFINITY;
-        const bIndex = b.knockoutIndex ?? Number.POSITIVE_INFINITY;
-        if (aIndex !== bIndex) return aIndex - bIndex;
-        return a.order - b.order;
-      }
-      return a.order - b.order;
-    };
-
-    return Array.from(stageMap.values())
-      .map(stage => ({
-        ...stage,
-        dates: Array.from(stage.dates.values()).sort((a, b) => a.order - b.order)
-      }))
-      .sort(comparator);
-  };
-
   const matchSectionsByPenca = useMemo(() => {
     const result = {};
     pencas.forEach(p => {
@@ -145,7 +59,11 @@ export default function OwnerPanel() {
         }
         return true;
       });
-      result[p._id] = buildStageSections(filteredList);
+      result[p._id] = buildStageSections(filteredList, {
+        t,
+        matchTimeValue,
+        stageLabelForKey: stageKey => (stageKey === OTHER_STAGE_KEY ? t('otherMatches') : stageKey)
+      });
     });
     return result;
   }, [filter, matches, pencas, t]);
@@ -177,166 +95,6 @@ export default function OwnerPanel() {
       return next;
     });
   }, [matchSectionsByPenca]);
-
-  const stageMatchesCount = stage => stage.dates.reduce((acc, date) => acc + date.matches.length, 0);
-
-  const registerStageRef = (pencaId, stageKey, node) => {
-    if (!stageRefs.current[pencaId]) {
-      stageRefs.current[pencaId] = {};
-    }
-    if (node) {
-      stageRefs.current[pencaId][stageKey] = node;
-    } else if (stageRefs.current[pencaId]) {
-      delete stageRefs.current[pencaId][stageKey];
-    }
-  };
-
-  const toggleStageExpansion = (pencaId, stageKey, expanded) => {
-    setExpandedStages(prev => {
-      const current = prev[pencaId] || [];
-      const filtered = current.filter(key => key !== stageKey);
-      const nextList = expanded ? [...filtered, stageKey] : filtered;
-      return { ...prev, [pencaId]: nextList };
-    });
-  };
-
-  const handleJumpStage = (pencaId, value) => {
-    setSelectedStages(prev => ({ ...prev, [pencaId]: value }));
-    if (!value) {
-      setExpandedStages(prev => ({ ...prev, [pencaId]: [] }));
-      return;
-    }
-    setExpandedStages(prev => ({ ...prev, [pencaId]: [value] }));
-    setTimeout(() => {
-      const node = stageRefs.current?.[pencaId]?.[value];
-      if (node && typeof node.scrollIntoView === 'function') {
-        node.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 150);
-  };
-
-  const formatDateLabel = date => {
-    if (!date) return t('scheduleTbd');
-    try {
-      const formatter = new Intl.DateTimeFormat(undefined, {
-        weekday: 'short',
-        day: 'numeric',
-        month: 'short'
-      });
-      return formatter.format(new Date(`${date}T12:00:00Z`));
-    } catch (error) {
-      console.error('owner date format error', error);
-      return date;
-    }
-  };
-
-  const buildStageSections = list => {
-    const stageMap = new Map();
-    list.forEach(match => {
-      const stageKey = match.group_name?.trim() || match.series || '__other__';
-      const stageLabel = match.group_name?.trim() || match.series || t('otherMatches');
-      const stageEntry = stageMap.get(stageKey) || {
-        key: stageKey,
-        label: stageLabel,
-        order: Number.POSITIVE_INFINITY,
-        dates: new Map()
-      };
-      const dateKey = getDateKey(match);
-      const normalizedDateKey = dateKey || `unknown-${match._id}`;
-      const label = dateKey ? formatDateLabel(dateKey) : t('dateToBeDefined');
-      const dateEntry = stageEntry.dates.get(normalizedDateKey) || {
-        key: normalizedDateKey,
-        label,
-        order: matchTimeValue(match),
-        matches: []
-      };
-      dateEntry.order = Math.min(dateEntry.order, matchTimeValue(match));
-      dateEntry.label = label;
-      dateEntry.matches.push(match);
-      stageEntry.dates.set(normalizedDateKey, dateEntry);
-      stageEntry.order = Math.min(stageEntry.order, matchTimeValue(match));
-      stageEntry.label = stageLabel;
-      stageMap.set(stageKey, stageEntry);
-    });
-
-    const comparator = (a, b) => {
-      const aIsGroup = isGroupKey(a.key);
-      const bIsGroup = isGroupKey(b.key);
-      if (aIsGroup && bIsGroup) return compareGroupKey(a.key, b.key);
-      if (aIsGroup) return -1;
-      if (bIsGroup) return 1;
-      const aKnock = knockoutOrder.indexOf(a.key);
-      const bKnock = knockoutOrder.indexOf(b.key);
-      if (aKnock !== -1 || bKnock !== -1) {
-        if (aKnock === -1) return 1;
-        if (bKnock === -1) return -1;
-        return aKnock - bKnock;
-      }
-      return a.order - b.order;
-    };
-
-    return Array.from(stageMap.values())
-      .map(stage => ({
-        ...stage,
-        dates: Array.from(stage.dates.values()).sort((a, b) => a.order - b.order)
-      }))
-      .sort(comparator);
-  };
-
-  const matchSectionsByPenca = useMemo(() => {
-    const result = {};
-    pencas.forEach(p => {
-      let list = [];
-      if (Array.isArray(p.fixture) && p.fixture.length) {
-        const fixtureSet = new Set(p.fixture.map(String));
-        list = matches.filter(m => fixtureSet.has(String(m._id)));
-      } else {
-        list = matches.filter(m => m.competition === p.competition);
-      }
-      const sorted = [...list].sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
-      const filteredList = sorted.filter(match => {
-        if (filter === 'upcoming') {
-          return match.result1 == null && match.result2 == null;
-        }
-        if (filter === 'played') {
-          return match.result1 != null && match.result2 != null;
-        }
-        return true;
-      });
-      result[p._id] = buildStageSections(filteredList);
-    });
-    return result;
-  }, [filter, matches, pencas, t]);
-
-  useEffect(() => {
-    setExpandedStages(prev => {
-      const next = {};
-      Object.entries(matchSectionsByPenca).forEach(([pId, sections]) => {
-        if (!sections.length) {
-          next[pId] = [];
-          return;
-        }
-        const prevForId = (prev[pId] || []).filter(key => sections.some(section => section.key === key));
-        next[pId] = prevForId.length ? prevForId : [sections[0].key];
-      });
-      return next;
-    });
-  }, [matchSectionsByPenca]);
-
-  useEffect(() => {
-    setSelectedStages(prev => {
-      const next = {};
-      Object.entries(matchSectionsByPenca).forEach(([pId, sections]) => {
-        const validKeys = sections.map(section => section.key);
-        if (prev[pId] && validKeys.includes(prev[pId])) {
-          next[pId] = prev[pId];
-        }
-      });
-      return next;
-    });
-  }, [matchSectionsByPenca]);
-
-  const stageMatchesCount = stage => stage.dates.reduce((acc, date) => acc + date.matches.length, 0);
 
   const registerStageRef = (pencaId, stageKey, node) => {
     if (!stageRefs.current[pencaId]) {
@@ -678,7 +436,7 @@ export default function OwnerPanel() {
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
                           <Typography variant="subtitle2">{stage.label}</Typography>
-                          <Chip size="small" label={t('matchesCountLabel', { count: stageMatchesCount(stage) })} />
+                          <Chip size="small" label={t('matchesCountLabel', { count: countMatchesInStage(stage) })} />
                         </Stack>
                       </AccordionSummary>
                       <AccordionDetails>
