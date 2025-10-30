@@ -14,6 +14,7 @@ const AuditLog = require('../models/AuditLog');
 const ApiUsage = require('../models/ApiUsage');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
+const { getMessage } = require('../utils/messages');
 const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
 const updateResults = require('../scripts/updateResults');
 const uploadJson = require('../middleware/jsonUpload');
@@ -232,7 +233,7 @@ router.post('/cleanup', isAuthenticated, isAdmin, async (req, res) => {
                 if (key === 'matches') {
                     await Penca.updateMany({}, { $set: { fixture: [] } });
                 }
-                if (key === 'competitions') {
+                if (key === 'competitions' && DEFAULT_COMPETITION) {
                     await Penca.updateMany({}, { $set: { competition: DEFAULT_COMPETITION } });
                 }
             }
@@ -606,11 +607,17 @@ router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
         const sanitizedScoring = sanitizeScoring(scoring);
         const allowedModes = Penca.schema.path('tournamentMode').enumValues;
 
+        const requestedCompetition = typeof competition === 'string' ? competition.trim() : '';
+        const pencaCompetition = requestedCompetition || DEFAULT_COMPETITION;
+        if (!pencaCompetition) {
+            return res.status(400).json({ error: getMessage('COMPETITION_REQUIRED', req.lang) });
+        }
+
         const penca = new Penca({
             name,
             code: Math.random().toString(36).substring(2, 8).toUpperCase(),
             owner: ownerUser._id,
-            competition: competition || DEFAULT_COMPETITION,
+            competition: pencaCompetition,
             participantLimit: participantLimit ? Number(participantLimit) : undefined,
             isPublic: isPublic === true || isPublic === 'true',
             fixture: fixtureIds,

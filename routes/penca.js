@@ -91,12 +91,17 @@ router.post('/', isAuthenticated, async (req, res) => {
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
   try {
     const sc = sanitizeScoring(scoring);
+    const requestedCompetition = typeof competition === 'string' ? competition.trim() : '';
+    const pencaCompetition = requestedCompetition || DEFAULT_COMPETITION;
+    if (!pencaCompetition) {
+      return res.status(400).json({ error: getMessage('COMPETITION_REQUIRED', req.lang) });
+    }
     const penca = new Penca({
       name,
       code,
       owner: ownerId,
       participantLimit,
-      competition: competition || DEFAULT_COMPETITION,
+      competition: pencaCompetition,
       isPublic: isPublic === true || isPublic === 'true',
       tournamentMode: ALLOWED_MODES.has(tournamentMode) ? tournamentMode : 'group_stage_knockout',
       modeSettings: modeSettings || {},

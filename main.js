@@ -13,7 +13,6 @@ const language = require('./middleware/language');
 const { DEFAULT_COMPETITION } = require('./config');
 const { getMessage } = require('./utils/messages');
 const Penca = require("./models/Penca");
-const { ensureWorldCup2026 } = require('./utils/worldcupSeed');
 
 dotenv.config();
 
@@ -129,14 +128,12 @@ async function initializeDatabase() {
                 valid: true
             });
             await admin.save();
-            await Score.create({ userId: admin._id, competition: DEFAULT_COMPETITION });
+            if (DEFAULT_COMPETITION) {
+                await Score.create({ userId: admin._id, competition: DEFAULT_COMPETITION });
+            }
             debugLog('Usuario administrador creado.');
         }
 
-        const seedResult = await ensureWorldCup2026();
-        if (seedResult.created || seedResult.matchesInserted) {
-            debugLog('World Cup 2026 seed result:', seedResult);
-        }
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
     }
@@ -315,11 +312,13 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         });
         await user.save();
         // Crear registro de puntaje
-        const score = new Score({
-            userId: user._id,
-            competition: DEFAULT_COMPETITION
-        });
-        await score.save();
+        if (DEFAULT_COMPETITION) {
+            const score = new Score({
+                userId: user._id,
+                competition: DEFAULT_COMPETITION
+            });
+            await score.save();
+        }
         req.session.user = user;
         debugLog('Usuario registrado y sesión iniciada:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });
