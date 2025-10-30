@@ -112,6 +112,9 @@ router.post('/recalculate', async (req, res) => {
         const { pencaId, competition } = req.query;
         const scores = await calculateScores(pencaId, competition);
         const compName = competition || DEFAULT_COMPETITION;
+        if (!compName) {
+            return res.status(400).json({ error: getMessage('COMPETITION_REQUIRED', req.lang) });
+        }
         for (let score of scores) {
             await Score.updateOne(
                 { userId: score.userId, competition: compName },
