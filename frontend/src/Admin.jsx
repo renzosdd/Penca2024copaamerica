@@ -1513,7 +1513,14 @@ export default function Admin() {
 
   return (
     <Container maxWidth="xl" sx={{ py: { xs: 3, md: 4 } }}>
-      <Stack spacing={3}>
+      <Stack
+        spacing={3}
+        sx={{
+          alignItems: { xs: 'center', md: 'flex-start' },
+          maxWidth: { xs: 480, md: 'none' },
+          mx: { xs: 'auto', md: 0 }
+        }}
+      >
         <Typography variant="h5">{t('adminTitle')}</Typography>
         <Tabs
           value={activeTab}
@@ -1521,6 +1528,11 @@ export default function Admin() {
           variant="scrollable"
           scrollButtons
           allowScrollButtonsMobile
+          sx={{
+            '& .MuiTabs-flexContainer': {
+              justifyContent: { xs: 'center', md: 'flex-start' }
+            }
+          }}
         >
           <Tab value="overview" label={t('adminTabOverview')} />
           <Tab value="competitions" label={t('adminTabCompetitions')} />
