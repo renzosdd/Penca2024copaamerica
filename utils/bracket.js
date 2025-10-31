@@ -1,7 +1,38 @@
 const Match = require('../models/Match');
 
-async function calculateGroupStandings(competition) {
-    const matches = await Match.find({ competition });
+const GROUP_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+const standingsCache = new Map();
+
+function normalizeCompetition(value) {
+    return String(value ?? '').trim().toLowerCase();
+}
+
+function getCachedStandings(competition) {
+    const key = normalizeCompetition(competition);
+    const entry = standingsCache.get(key);
+    if (!entry) {
+        return null;
+    }
+    if (entry.expiresAt <= Date.now()) {
+        standingsCache.delete(key);
+        return null;
+    }
+    return entry.data;
+}
+
+function setCachedStandings(competition, data) {
+    const key = normalizeCompetition(competition);
+    standingsCache.set(key, {
+        data,
+        expiresAt: Date.now() + GROUP_CACHE_TTL_MS
+    });
+}
+
+async function computeGroupStandings(competition) {
+    const matches = await Match.find({ competition })
+        .select('group_name team1 team2 result1 result2')
+        .lean();
     const standings = {};
 
     for (const match of matches) {
@@ -70,6 +101,24 @@ async function calculateGroupStandings(competition) {
         });
     }
     return ordered;
+}
+
+async function calculateGroupStandings(competition) {
+    const cached = getCachedStandings(competition);
+    if (cached) {
+        return cached;
+    }
+    const ordered = await computeGroupStandings(competition);
+    setCachedStandings(competition, ordered);
+    return ordered;
+}
+
+async function invalidateGroupStandings(competition) {
+    if (!competition) {
+        standingsCache.clear();
+        return;
+    }
+    standingsCache.delete(normalizeCompetition(competition));
 }
 
 async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {
@@ -167,6 +216,7 @@ async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {
 }
 
 async function updateEliminationMatches(competition) {
+    await invalidateGroupStandings(competition);
     const standings = await calculateGroupStandings(competition);
 
     function team(group, pos) {
@@ -330,5 +380,6 @@ module.exports = {
     calculateGroupStandings,
     updateEliminationMatches,
     rankThirdPlacedTeams,
-    generateEliminationBracket
+    generateEliminationBracket,
+    invalidateGroupStandings
 };

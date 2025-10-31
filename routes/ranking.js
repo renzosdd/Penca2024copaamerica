@@ -8,6 +8,7 @@ const Penca = require('../models/Penca');
 const { DEFAULT_COMPETITION } = require('../config');
 const { DEFAULT_SCORING, sanitizeScoring, calculatePoints } = require('../utils/scoring');
 const { getMessage } = require('../utils/messages');
+const rankingCache = require('../utils/rankingCache');
 
 // Función para calcular los puntajes
 async function calculateScores(pencaId, competition) {
@@ -20,12 +21,17 @@ async function calculateScores(pencaId, competition) {
     let scoring = { ...DEFAULT_SCORING };
 
     if (pencaId) {
-        penca = await Penca.findById(pencaId).select('participants fixture competition scoring');
+        penca = await Penca.findById(pencaId)
+            .select('participants fixture competition scoring')
+            .lean();
         if (!penca) {
             return [];
         }
         if (penca.scoring) {
             scoring = sanitizeScoring(penca.scoring);
+        }
+        if (!Array.isArray(penca.participants) || penca.participants.length === 0) {
+            return [];
         }
         userFilter._id = { $in: penca.participants };
         predictionFilter.pencaId = pencaId;
@@ -42,42 +48,75 @@ async function calculateScores(pencaId, competition) {
         matchFilter.competition = competition;
     }
 
-    const users = await User.find(userFilter);
-    const matches = await Match.find(matchFilter);
+    const usersPromise = User.find(userFilter)
+        .select('username avatar avatarContentType')
+        .lean();
+    const matchesPromise = Match.find(matchFilter)
+        .select('result1 result2 competition')
+        .lean();
 
-    if (matchFilter._id || matchFilter.competition) {
-        const matchIds = matches.map(m => m._id);
-        if (!predictionFilter.matchId) {
-            predictionFilter.matchId = { $in: matchIds };
-        }
+    const [users, matches] = await Promise.all([usersPromise, matchesPromise]);
+
+    const completedMatches = matches.filter(match => match.result1 != null && match.result2 != null);
+    if (!completedMatches.length) {
+        return [];
     }
 
-    const predictions = await Prediction.find(predictionFilter);
+    const completedMatchIds = completedMatches.map(match => match._id);
+    if (predictionFilter.matchId && predictionFilter.matchId.$in) {
+        const idSet = new Set(completedMatchIds.map(id => id.toString()));
+        predictionFilter.matchId.$in = predictionFilter.matchId.$in.filter(id => idSet.has(id.toString()));
+        if (predictionFilter.matchId.$in.length === 0) {
+            return [];
+        }
+    } else {
+        predictionFilter.matchId = { $in: completedMatchIds };
+    }
 
-    let scores = [];
+    const predictions = await Prediction.find(predictionFilter)
+        .select('userId matchId result1 result2')
+        .lean();
 
-    for (const user of users) {
+    if (!users.length || !completedMatches.length) {
+        return [];
+    }
+
+    const matchesById = new Map();
+    completedMatches.forEach(match => {
+        matchesById.set(match._id.toString(), match);
+    });
+
+    const predictionsByUser = new Map();
+    predictions.forEach(prediction => {
+        const key = prediction.userId.toString();
+        if (!predictionsByUser.has(key)) {
+            predictionsByUser.set(key, []);
+        }
+        predictionsByUser.get(key).push(prediction);
+    });
+
+    const scores = users.map(user => {
+        const userPredictions = predictionsByUser.get(user._id.toString()) || [];
         let userScore = 0;
-        const userPredictions = predictions.filter(prediction => prediction.userId.toString() === user._id.toString());
 
         for (const prediction of userPredictions) {
-            const match = matches.find(m => m._id.toString() === prediction.matchId.toString());
-            if (match) {
-                userScore += calculatePoints({ prediction, match, scoring });
+            const match = matchesById.get(prediction.matchId.toString());
+            if (!match || match.result1 == null || match.result2 == null) {
+                continue;
             }
+            userScore += calculatePoints({ prediction, match, scoring });
         }
 
-        // Agregamos la referencia del avatar
         const avatarPath = user.avatar ? '/avatar/' + user.username : '/images/avatar.webp';
 
-        scores.push({
+        return {
             userId: user._id,
             username: user.username,
             avatar: avatarPath,
             avatarContentType: user.avatarContentType,
             score: userScore
-        });
-    }
+        };
+    });
 
     scores.sort((a, b) => b.score - a.score);
     return scores;
@@ -87,7 +126,12 @@ async function calculateScores(pencaId, competition) {
 router.get('/', async (req, res) => {
     try {
         const { pencaId, competition } = req.query;
+        const cached = await rankingCache.get(pencaId, competition);
+        if (cached) {
+            return res.json(cached);
+        }
         const scores = await calculateScores(pencaId, competition);
+        await rankingCache.set(pencaId, competition, scores);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
@@ -98,7 +142,13 @@ router.get('/', async (req, res) => {
 // Ranking por competencia (sin especificar penca)
 router.get('/competition/:competition', async (req, res) => {
     try {
-        const scores = await calculateScores(null, req.params.competition);
+        const cacheKeyCompetition = req.params.competition;
+        const cached = await rankingCache.get(null, cacheKeyCompetition);
+        if (cached) {
+            return res.json(cached);
+        }
+        const scores = await calculateScores(null, cacheKeyCompetition);
+        await rankingCache.set(null, cacheKeyCompetition, scores);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking por competencia:', err);
@@ -122,6 +172,7 @@ router.post('/recalculate', async (req, res) => {
                 { upsert: true }
             );
         }
+        await rankingCache.invalidate({ competition: compName });
         res.json({ message: getMessage('SCORES_RECALCULATED', req.lang) });
     } catch (err) {
         console.error('Error al recalcular los puntajes:', err);

@@ -1,31 +1,31 @@
-const CACHE_TTL_MS = 60 * 1000;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 const cache = new Map();
 
+function normalize(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
 function makeKey(competition) {
-  return String(competition || '').toLowerCase();
+  return competition ? normalize(competition) : '__all__';
 }
 
 function setCache(competition, data) {
-  if (!competition) {
-    return;
-  }
-  cache.set(makeKey(competition), {
+  const key = makeKey(competition);
+  cache.set(key, {
     expiresAt: Date.now() + CACHE_TTL_MS,
     data
   });
 }
 
 function getCache(competition) {
-  if (!competition) {
-    return null;
-  }
-  const entry = cache.get(makeKey(competition));
+  const key = makeKey(competition);
+  const entry = cache.get(key);
   if (!entry) {
     return null;
   }
-  if (entry.expiresAt < Date.now()) {
-    cache.delete(makeKey(competition));
+  if (entry.expiresAt <= Date.now()) {
+    cache.delete(key);
     return null;
   }
   return entry.data;
