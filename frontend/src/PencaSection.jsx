@@ -14,6 +14,8 @@ import {
   Paper,
   Snackbar,
   Stack,
+  Tab,
+  Tabs,
   Table,
   TableBody,
   TableCell,
@@ -33,9 +35,29 @@ import useLang from './useLang';
 import pointsForPrediction from './calcPoints';
 import { formatLocalKickoff, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
 
+function TabPanel({ current, value, children, sx, ...other }) {
+  const isActive = current === value;
+  const baseSx = [{ width: '100%', mt: 2 }, !isActive && { display: 'none' }];
+  const extraSx = Array.isArray(sx) ? sx : sx ? [sx] : [];
+
+  return (
+    <Box
+      role="tabpanel"
+      hidden={!isActive}
+      id={`penca-tabpanel-${value}`}
+      aria-labelledby={`penca-tab-${value}`}
+      {...other}
+      sx={[...baseSx, ...extraSx]}
+    >
+      {children}
+    </Box>
+  );
+}
+
 export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername, onOpen, isLoading }) {
   const [open, setOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('matches');
   const [filter, setFilter] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { t } = useLang();
@@ -113,6 +135,33 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const tournamentLabel = translatedMode === modeKey ? penca.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
   const participantsLabel = `${participantsCount}${participantLimit} ${t('participantsShort')}`.trim();
   const ownerName = penca.ownerDisplayName || penca.owner?.name || penca.owner?.username || '';
+
+  const InfoDetails = () => (
+    <Stack spacing={2}>
+      <Box>
+        <Typography variant="subtitle2" gutterBottom>
+          {t('format')}
+        </Typography>
+        <Chip size="small" color="primary" label={tournamentLabel} />
+      </Box>
+      <Box>
+        <Typography variant="subtitle2" gutterBottom>
+          {t('rules')}
+        </Typography>
+        <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+          {scoringText}
+        </Typography>
+      </Box>
+      <Box>
+        <Typography variant="subtitle2" gutterBottom>
+          {t('prizes')}
+        </Typography>
+        <Typography variant="body2">
+          {penca.prizes || t('noPrizes')}
+        </Typography>
+      </Box>
+    </Stack>
+  );
 
   const renderTeam = name => (
     <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
@@ -310,71 +359,102 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       {open && (
         <Card sx={{ mt: 1.5, borderRadius: 3, boxShadow: 4 }}>
           <CardContent>
-            <Stack
-              direction={isMobile ? 'column' : 'row'}
-              spacing={1}
-              sx={{
-                mb: 2,
-                alignItems: 'center',
-                justifyContent: 'flex-start',
-                flexWrap: 'wrap',
-                rowGap: 1,
-                columnGap: 1
-              }}
+            <Tabs
+              value={activeSection}
+              onChange={(_, value) => setActiveSection(value)}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
+              aria-label={t('pencaTabsLabel')}
+              sx={{ borderBottom: 1, borderColor: 'divider' }}
             >
-              <Button
-                size="small"
-                variant={filter === 'all' ? 'contained' : 'outlined'}
-                onClick={e => {
-                  e.stopPropagation();
-                  setFilter('all');
-                }}
-                fullWidth={isMobile}
-              >
-                {t('allMatches')}
-              </Button>
-              <Button
-                size="small"
-                variant={filter === 'upcoming' ? 'contained' : 'outlined'}
-                onClick={e => {
-                  e.stopPropagation();
-                  setFilter('upcoming');
-                }}
-                fullWidth={isMobile}
-              >
-                {t('upcoming')}
-              </Button>
-              <Button
-                size="small"
-                variant={filter === 'played' ? 'contained' : 'outlined'}
-                onClick={e => {
-                  e.stopPropagation();
-                  setFilter('played');
-                }}
-                fullWidth={isMobile}
-              >
-                {t('played')}
-              </Button>
-            </Stack>
+              <Tab
+                label={t('pencaTabMatches')}
+                value="matches"
+                id="penca-tab-matches"
+                aria-controls="penca-tabpanel-matches"
+              />
+              <Tab
+                label={t('pencaTabRanking')}
+                value="ranking"
+                id="penca-tab-ranking"
+                aria-controls="penca-tabpanel-ranking"
+              />
+              <Tab
+                label={t('pencaTabInfo')}
+                value="info"
+                id="penca-tab-info"
+                aria-controls="penca-tabpanel-info"
+              />
+            </Tabs>
 
-            {!hasAnyMatches && !isLoading && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                {t('adminMatchesNoResults')}
-              </Alert>
-            )}
+            <TabPanel current={activeSection} value="matches">
+              <Stack
+                direction={isMobile ? 'column' : 'row'}
+                spacing={1}
+                sx={{
+                  mb: 2,
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  flexWrap: 'wrap',
+                  rowGap: 1,
+                  columnGap: 1
+                }}
+              >
+                <Button
+                  size="small"
+                  variant={filter === 'all' ? 'contained' : 'outlined'}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setFilter('all');
+                  }}
+                  fullWidth={isMobile}
+                >
+                  {t('allMatches')}
+                </Button>
+                <Button
+                  size="small"
+                  variant={filter === 'upcoming' ? 'contained' : 'outlined'}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setFilter('upcoming');
+                  }}
+                  fullWidth={isMobile}
+                >
+                  {t('upcoming')}
+                </Button>
+                <Button
+                  size="small"
+                  variant={filter === 'played' ? 'contained' : 'outlined'}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setFilter('played');
+                  }}
+                  fullWidth={isMobile}
+                >
+                  {t('played')}
+                </Button>
+              </Stack>
 
-            <StageAccordionList
-              matches={filteredMatches}
-              groups={groups}
-              t={t}
-              matchTimeValue={matchTimeValue}
-              renderMatch={renderMatchCard}
-              loading={isLoading}
-              emptyMessage={t('adminMatchesNoResults')}
-              showGroupTables
-            />
+              {!hasAnyMatches && !isLoading && (
+                <Alert severity="info" sx={{ mb: 2 }}>
+                  {t('adminMatchesNoResults')}
+                </Alert>
+              )}
 
-            <Box sx={{ mt: 3 }}>
+              <StageAccordionList
+                matches={filteredMatches}
+                groups={groups}
+                t={t}
+                matchTimeValue={matchTimeValue}
+                renderMatch={renderMatchCard}
+                loading={isLoading}
+                emptyMessage={t('adminMatchesNoResults')}
+                showGroupTables
+              />
+            </TabPanel>
+
+            <TabPanel current={activeSection} value="ranking">
               <Typography variant="subtitle1" gutterBottom>
                 {t('ranking')}
               </Typography>
@@ -418,7 +498,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                   </TableBody>
                 </Table>
               </TableContainer>
-            </Box>
+            </TabPanel>
+
+            <TabPanel current={activeSection} value="info">
+              <InfoDetails />
+            </TabPanel>
           </CardContent>
         </Card>
       )}
@@ -426,30 +510,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>{penca.name}</DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2}>
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                {t('format')}
-              </Typography>
-              <Chip size="small" color="primary" label={tournamentLabel} />
-            </Box>
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                {t('rules')}
-              </Typography>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-                {scoringText}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                {t('prizes')}
-              </Typography>
-              <Typography variant="body2">
-                {penca.prizes || t('noPrizes')}
-              </Typography>
-            </Box>
-          </Stack>
+          <InfoDetails />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setInfoOpen(false)}>{t('close')}</Button>
