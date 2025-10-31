@@ -15,7 +15,7 @@ const ApiUsage = require('../models/ApiUsage');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { getMessage } = require('../utils/messages');
-const { updateEliminationMatches, generateEliminationBracket } = require('../utils/bracket');
+const { updateEliminationMatches, generateEliminationBracket, invalidateGroupStandings } = require('../utils/bracket');
 const updateResults = require('../scripts/updateResults');
 const uploadJson = require('../middleware/jsonUpload');
 const { sanitizeScoring } = require('../utils/scoring');
@@ -254,7 +254,11 @@ router.post('/cleanup', isAuthenticated, isAdmin, async (req, res) => {
         });
 
         if (selections.some(key => ['matches', 'competitions', 'pencas'].includes(key))) {
-            invalidateMatchCache();
+            await invalidateMatchCache();
+            await invalidateGroupStandings();
+        }
+        if (selections.some(key => ['matches', 'competitions', 'pencas', 'predictions', 'scores', 'users'].includes(key))) {
+            await rankingCache.invalidate();
         }
         if (selections.some(key => ['matches', 'competitions', 'pencas', 'predictions', 'scores', 'users'].includes(key))) {
             rankingCache.invalidate();
@@ -794,7 +798,8 @@ router.post('/competitions', isAuthenticated, isAdmin, uploadJson.single('fixtur
             await Match.insertMany(insertPayload);
         }
 
-        invalidateMatchCache(competition.name);
+        await invalidateMatchCache(competition.name);
+        await invalidateGroupStandings(competition.name);
 
         res.status(201).json({ competitionId: competition._id, matches: insertPayload.length });
     } catch (error) {
@@ -869,9 +874,11 @@ router.put('/competitions/:id', isAuthenticated, isAdmin, async (req, res) => {
         }
         await competition.save();
 
-        invalidateMatchCache(previousName);
+        await invalidateMatchCache(previousName);
+        await invalidateGroupStandings(previousName);
         if (competition.name && competition.name !== previousName) {
-            invalidateMatchCache(competition.name);
+            await invalidateMatchCache(competition.name);
+            await invalidateGroupStandings(competition.name);
         }
 
         res.json({ message: 'Competition updated' });
@@ -887,7 +894,8 @@ router.delete('/competitions/:id', isAuthenticated, isAdmin, async (req, res) =>
         const competition = await Competition.findByIdAndDelete(req.params.id);
         if (!competition) return res.status(404).json({ error: 'Competition not found' });
 
-        invalidateMatchCache(competition.name);
+        await invalidateMatchCache(competition.name);
+        await invalidateGroupStandings(competition.name);
 
         res.json({ message: 'Competition deleted' });
     } catch (error) {
@@ -987,7 +995,8 @@ router.put('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, async
         }
 
         await match.save();
-        invalidateMatchCache(comp.name);
+        await invalidateMatchCache(comp.name);
+        await invalidateGroupStandings(comp.name);
         res.json({ message: 'Match updated' });
     } catch (error) {
         console.error('Error updating match:', error);
@@ -1017,8 +1026,8 @@ router.post('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, asyn
         match.result2 = result2 === null || result2 === '' || result2 === undefined ? null : Number(result2);
         await match.save();
         await updateEliminationMatches(match.competition);
-        invalidateMatchCache(comp.name);
-        rankingCache.invalidate({ competition: match.competition });
+        await invalidateMatchCache(comp.name);
+        await rankingCache.invalidate({ competition: match.competition });
         res.json({ message: 'Match result updated' });
     } catch (error) {
         console.error('Error updating match result:', error);
@@ -1032,7 +1041,7 @@ router.post('/generate-bracket/:competition', isAuthenticated, isAdmin, async (r
         const q = Number(req.body.qualifiersPerGroup || 2);
         await Match.deleteMany({ competition: req.params.competition, series: 'Eliminatorias' });
         await generateEliminationBracket(req.params.competition, q);
-        invalidateMatchCache(req.params.competition);
+        await invalidateMatchCache(req.params.competition);
         res.json({ message: 'Bracket generated' });
     } catch (error) {
         console.error('Error generating bracket:', error);
@@ -1044,7 +1053,7 @@ router.post('/generate-bracket/:competition', isAuthenticated, isAdmin, async (r
 router.post('/recalculate-bracket/:competition', isAuthenticated, isAdmin, async (req, res) => {
     try {
         await updateEliminationMatches(req.params.competition);
-        invalidateMatchCache(req.params.competition);
+        await invalidateMatchCache(req.params.competition);
         res.json({ message: 'Bracket recalculated' });
     } catch (error) {
         console.error('Error recalculating bracket:', error);
@@ -1059,7 +1068,7 @@ router.post('/update-results/:competition', isAuthenticated, isAdmin, async (req
         if (result && result.skipped) {
             return res.json({ skipped: true });
         }
-        invalidateMatchCache(req.params.competition);
+        await invalidateMatchCache(req.params.competition);
         res.json({ message: 'Results updated' });
     } catch (error) {
         console.error('Error updating results:', error);

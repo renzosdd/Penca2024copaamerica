@@ -1,6 +1,8 @@
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+const cacheStore = require('./cacheStore');
 
-const cache = new Map();
+const CATEGORY = 'ranking';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const GLOBAL_COMPETITION = '__global__';
 
 function normalizeId(value) {
   if (!value) {
@@ -16,46 +18,82 @@ function normalizeId(value) {
 }
 
 function makeKey(pencaId, competition) {
-  return `${normalizeId(pencaId)}|${normalizeId(competition)}`;
+  const pencaKey = normalizeId(pencaId) || 'all';
+  const competitionKey = normalizeId(competition) || GLOBAL_COMPETITION;
+  return `${pencaKey}::${competitionKey}`;
 }
 
-function set(pencaId, competition, data) {
+function buildTags(pencaId, competition) {
+  const competitionTag = `competition:${normalizeId(competition) || GLOBAL_COMPETITION}`;
+  const tags = [competitionTag];
+  if (pencaId) {
+    tags.push(`penca:${normalizeId(pencaId)}`);
+    tags.push('scope:penca');
+  } else {
+    tags.push('scope:global');
+  }
+  tags.push('category:ranking');
+  return tags;
+}
+
+async function set(pencaId, competition, data) {
   const key = makeKey(pencaId, competition);
-  cache.set(key, {
+  const tags = buildTags(pencaId, competition);
+  await cacheStore.set({
+    category: CATEGORY,
+    key,
     data,
-    expiresAt: Date.now() + CACHE_TTL_MS
+    ttlMs: CACHE_TTL_MS,
+    tags
   });
 }
 
-function get(pencaId, competition) {
+async function get(pencaId, competition) {
   const key = makeKey(pencaId, competition);
-  const entry = cache.get(key);
-  if (!entry) {
-    return null;
-  }
-  if (entry.expiresAt <= Date.now()) {
-    cache.delete(key);
-    return null;
-  }
-  return entry.data;
+  return cacheStore.get({ category: CATEGORY, key });
 }
 
-function invalidate({ pencaId, competition } = {}) {
+async function invalidate({ pencaId, competition } = {}) {
   if (!pencaId && !competition) {
-    cache.clear();
+    await cacheStore.clearCategory(CATEGORY);
     return;
   }
-  const matchPenca = normalizeId(pencaId);
-  const matchCompetition = normalizeId(competition);
-  for (const key of cache.keys()) {
-    const [storedPenca, storedCompetition] = key.split('|');
-    if (
-      (matchPenca && storedPenca === matchPenca) ||
-      (matchCompetition && storedCompetition === matchCompetition)
-    ) {
-      cache.delete(key);
+  const operations = [];
+  if (pencaId) {
+    operations.push(
+      cacheStore.invalidate({
+        category: CATEGORY,
+        tagsAll: [`penca:${normalizeId(pencaId)}`]
+      })
+    );
+  }
+  if (competition) {
+    const competitionTag = `competition:${normalizeId(competition)}`;
+    if (pencaId) {
+      operations.push(
+        cacheStore.invalidate({
+          category: CATEGORY,
+          tagsAll: [competitionTag, 'scope:global']
+        })
+      );
+    } else {
+      operations.push(
+        cacheStore.invalidate({
+          category: CATEGORY,
+          tagsAll: [competitionTag]
+        })
+      );
     }
   }
+  if (!operations.length) {
+    operations.push(
+      cacheStore.invalidate({
+        category: CATEGORY,
+        tagsAll: [`competition:${GLOBAL_COMPETITION}`]
+      })
+    );
+  }
+  await Promise.all(operations);
 }
 
 module.exports = {

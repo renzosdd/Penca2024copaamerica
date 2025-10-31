@@ -126,12 +126,12 @@ async function calculateScores(pencaId, competition) {
 router.get('/', async (req, res) => {
     try {
         const { pencaId, competition } = req.query;
-        const cached = rankingCache.get(pencaId, competition);
+        const cached = await rankingCache.get(pencaId, competition);
         if (cached) {
             return res.json(cached);
         }
         const scores = await calculateScores(pencaId, competition);
-        rankingCache.set(pencaId, competition, scores);
+        await rankingCache.set(pencaId, competition, scores);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
@@ -143,12 +143,12 @@ router.get('/', async (req, res) => {
 router.get('/competition/:competition', async (req, res) => {
     try {
         const cacheKeyCompetition = req.params.competition;
-        const cached = rankingCache.get(null, cacheKeyCompetition);
+        const cached = await rankingCache.get(null, cacheKeyCompetition);
         if (cached) {
             return res.json(cached);
         }
         const scores = await calculateScores(null, cacheKeyCompetition);
-        rankingCache.set(null, cacheKeyCompetition, scores);
+        await rankingCache.set(null, cacheKeyCompetition, scores);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking por competencia:', err);
@@ -172,7 +172,7 @@ router.post('/recalculate', async (req, res) => {
                 { upsert: true }
             );
         }
-        rankingCache.invalidate({ competition: compName });
+        await rankingCache.invalidate({ competition: compName });
         res.json({ message: getMessage('SCORES_RECALCULATED', req.lang) });
     } catch (err) {
         console.error('Error al recalcular los puntajes:', err);

@@ -23,7 +23,7 @@ async function updateResults(competition) {
   }
 
   await updateEliminationMatches(competition);
-  rankingCache.invalidate({ competition });
+  await rankingCache.invalidate({ competition });
 
   return { updated: fixtures.length };
 }

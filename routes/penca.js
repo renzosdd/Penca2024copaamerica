@@ -180,7 +180,7 @@ router.put('/:pencaId', isAuthenticated, async (req, res) => {
       actor: req.session.user._id,
       metadata: { isPublic: penca.isPublic, scoring: penca.scoring, tournamentMode: penca.tournamentMode }
     });
-    rankingCache.invalidate({ pencaId, competition: penca.competition });
+    await rankingCache.invalidate({ pencaId, competition: penca.competition });
     res.json({ message: getMessage('PENCA_UPDATED', req.lang) });
   } catch (err) {
     console.error('update penca error', err);
@@ -270,7 +270,7 @@ router.post('/approve/:pencaId/:userId', isAuthenticated, async (req, res) => {
     }
 
     if (approved) {
-      rankingCache.invalidate({ pencaId, competition: penca.competition });
+      await rankingCache.invalidate({ pencaId, competition: penca.competition });
     }
 
     await recordAudit({
@@ -301,7 +301,7 @@ router.delete('/participant/:pencaId/:userId', isAuthenticated, async (req, res)
     penca.pendingRequests = penca.pendingRequests.filter(id => id.toString() !== userId);
     await penca.save();
     await User.updateOne({ _id: userId }, { $pull: { pencas: penca._id } });
-    rankingCache.invalidate({ pencaId, competition: penca.competition });
+    await rankingCache.invalidate({ pencaId, competition: penca.competition });
     await recordAudit({
       action: 'penca:participant-remove',
       entityType: 'penca',
