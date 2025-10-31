@@ -12,6 +12,8 @@ import {
   Grid,
   Paper,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Typography,
   useMediaQuery
@@ -22,6 +24,14 @@ import useLang from './useLang';
 import { OTHER_STAGE_KEY } from './stageOrdering';
 import { formatLocalKickoff, matchKickoffValue } from './kickoffUtils';
 
+function TabPanel({ current, value, children }) {
+  return (
+    <div role="tabpanel" hidden={current !== value}>
+      {current === value && <Box sx={{ pt: 2 }}>{children}</Box>}
+    </div>
+  );
+}
+
 export default function OwnerPanel() {
   const [pencas, setPencas] = useState([]);
   const [rankings, setRankings] = useState({});
@@ -29,6 +39,7 @@ export default function OwnerPanel() {
   const [matchesLoading, setMatchesLoading] = useState(false);
   const { t } = useLang();
   const [filter, setFilter] = useState('all');
+  const [activeTabs, setActiveTabs] = useState({});
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -311,6 +322,7 @@ export default function OwnerPanel() {
           const modeKey = p.tournamentMode ? `mode_${p.tournamentMode}` : 'mode_group_stage_knockout';
           const translatedMode = t(modeKey);
           const tournamentLabel = translatedMode === modeKey ? p.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
+          const activeTab = activeTabs[p._id] || 'matches';
 
           return (
             <Card key={p._id} sx={{ borderRadius: 3, boxShadow: 4 }}>
@@ -347,10 +359,23 @@ export default function OwnerPanel() {
                     </Paper>
                   </Stack>
 
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={7}>
-                      <Paper sx={{ ...sectionPaperSx, height: '100%' }}>
-                        <Stack spacing={2} sx={{ height: '100%' }}>
+                  <Box>
+                    <Tabs
+                      value={activeTab}
+                      onChange={(event, newValue) => setActiveTabs(prev => ({ ...prev, [p._id]: newValue }))}
+                      variant="scrollable"
+                      scrollButtons
+                      allowScrollButtonsMobile
+                    >
+                      <Tab value="matches" label={t('ownerTabMatches')} />
+                      <Tab value="config" label={t('ownerTabConfig')} />
+                      <Tab value="requests" label={t('ownerTabRequests')} />
+                      <Tab value="participants" label={t('ownerTabParticipants')} />
+                      <Tab value="ranking" label={t('ownerTabRanking')} />
+                    </Tabs>
+                    <TabPanel current={activeTab} value="matches">
+                      <Paper sx={{ ...sectionPaperSx, mt: 1 }}>
+                        <Stack spacing={2}>
                           <Stack direction="row" justifyContent="space-between" alignItems="center">
                             <Typography variant="h6">{t('matches')}</Typography>
                             <Chip size="small" label={stageMatches.length} />
@@ -369,179 +394,185 @@ export default function OwnerPanel() {
                           />
                         </Stack>
                       </Paper>
-                    </Grid>
-                    <Grid item xs={12} md={5}>
-                      <Stack spacing={2}>
-                        <Paper sx={sectionPaperSx}>
-                          <Stack spacing={2}>
-                            <Typography variant="h6">{t('scoring')}</Typography>
-                            <Grid container spacing={1.5}>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  label={t('exact')}
-                                  type="number"
-                                  size="small"
-                                  value={scoring.exact}
-                                  onChange={e => updateScoring(p._id, 'exact', e.target.value)}
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  label={t('outcome')}
-                                  type="number"
-                                  size="small"
-                                  value={scoring.outcome}
-                                  onChange={e => updateScoring(p._id, 'outcome', e.target.value)}
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  label={t('goalDifferenceLabel')}
-                                  type="number"
-                                  size="small"
-                                  value={scoring.goalDifference}
-                                  onChange={e => updateScoring(p._id, 'goalDifference', e.target.value)}
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  label={t('teamGoalsLabel')}
-                                  type="number"
-                                  size="small"
-                                  value={scoring.teamGoals}
-                                  onChange={e => updateScoring(p._id, 'teamGoals', e.target.value)}
-                                  fullWidth
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  label={t('cleanSheetLabel')}
-                                  type="number"
-                                  size="small"
-                                  value={scoring.cleanSheet}
-                                  onChange={e => updateScoring(p._id, 'cleanSheet', e.target.value)}
-                                  fullWidth
-                                />
-                              </Grid>
-                            </Grid>
-                            <Button size="small" variant="contained" onClick={() => saveInfo(p._id)}>
-                              {t('save')}
-                            </Button>
-                          </Stack>
-                        </Paper>
-
-                        <Paper sx={sectionPaperSx}>
-                          <Stack spacing={2}>
-                            <Typography variant="h6">{t('regulation')}</Typography>
-                            <TextField
-                              value={p.rules || ''}
-                              onChange={e => updateField(p._id, 'rules', e.target.value)}
-                              multiline
-                              minRows={3}
-                              fullWidth
-                              size="small"
-                            />
-                            <Divider flexItem />
-                            <Typography variant="h6">{t('awards')}</Typography>
-                            <TextField
-                              value={p.prizes || ''}
-                              onChange={e => updateField(p._id, 'prizes', e.target.value)}
-                              multiline
-                              minRows={2}
-                              fullWidth
-                              size="small"
-                            />
-                          </Stack>
-                        </Paper>
-
-                        <Paper sx={sectionPaperSx}>
-                          <Stack spacing={1.5}>
-                            <Typography variant="h6">{t('requests')}</Typography>
-                            <Stack spacing={1}>
-                              {pending.map(u => (
-                                <Paper
-                                  key={u._id || u}
-                                  variant="outlined"
-                                  sx={{ p: 1.5, borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 1 }}
-                                >
-                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                    {u.username || u}
-                                  </Typography>
-                                  <Button size="small" onClick={() => approve(p._id, u._id || u)}>
-                                    {t('approve')}
-                                  </Button>
-                                </Paper>
-                              ))}
-                              {pending.length === 0 && (
-                                <Typography variant="body2" color="text.secondary">
-                                  {t('noRequests')}
-                                </Typography>
-                              )}
-                            </Stack>
-                          </Stack>
-                        </Paper>
-
-                        <Paper sx={sectionPaperSx}>
-                          <Stack spacing={1.5}>
-                            <Typography variant="h6">{t('participants')}</Typography>
-                            <Stack spacing={1}>
-                              {participants.map(u => (
-                                <Paper
-                                  key={u._id || u}
-                                  variant="outlined"
-                                  sx={{ p: 1.5, borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 1 }}
-                                >
-                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                    {u.username || u}
-                                  </Typography>
-                                  <Button
+                    </TabPanel>
+                    <TabPanel current={activeTab} value="config">
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                          <Paper sx={{ ...sectionPaperSx, height: '100%' }}>
+                            <Stack spacing={2}>
+                              <Typography variant="h6">{t('scoring')}</Typography>
+                              <Grid container spacing={1.5}>
+                                <Grid item xs={12} sm={6}>
+                                  <TextField
+                                    label={t('exact')}
+                                    type="number"
                                     size="small"
-                                    color="error"
-                                    onClick={() => removeParticipant(p._id, u._id || u)}
-                                  >
-                                    {t('remove')}
-                                  </Button>
-                                </Paper>
-                              ))}
-                              {participants.length === 0 && (
-                                <Typography variant="body2" color="text.secondary">
-                                  {t('noParticipants')}
-                                </Typography>
-                              )}
+                                    value={scoring.exact}
+                                    onChange={e => updateScoring(p._id, 'exact', e.target.value)}
+                                    fullWidth
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <TextField
+                                    label={t('outcome')}
+                                    type="number"
+                                    size="small"
+                                    value={scoring.outcome}
+                                    onChange={e => updateScoring(p._id, 'outcome', e.target.value)}
+                                    fullWidth
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <TextField
+                                    label={t('goalDifferenceLabel')}
+                                    type="number"
+                                    size="small"
+                                    value={scoring.goalDifference}
+                                    onChange={e => updateScoring(p._id, 'goalDifference', e.target.value)}
+                                    fullWidth
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <TextField
+                                    label={t('teamGoalsLabel')}
+                                    type="number"
+                                    size="small"
+                                    value={scoring.teamGoals}
+                                    onChange={e => updateScoring(p._id, 'teamGoals', e.target.value)}
+                                    fullWidth
+                                  />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                  <TextField
+                                    label={t('cleanSheetLabel')}
+                                    type="number"
+                                    size="small"
+                                    value={scoring.cleanSheet}
+                                    onChange={e => updateScoring(p._id, 'cleanSheet', e.target.value)}
+                                    fullWidth
+                                  />
+                                </Grid>
+                              </Grid>
+                              <Button size="small" variant="contained" onClick={() => saveInfo(p._id)}>
+                                {t('save')}
+                              </Button>
                             </Stack>
+                          </Paper>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Paper sx={{ ...sectionPaperSx, height: '100%' }}>
+                            <Stack spacing={2}>
+                              <Typography variant="h6">{t('regulation')}</Typography>
+                              <TextField
+                                value={p.rules || ''}
+                                onChange={e => updateField(p._id, 'rules', e.target.value)}
+                                multiline
+                                minRows={3}
+                                fullWidth
+                                size="small"
+                              />
+                              <Divider flexItem />
+                              <Typography variant="h6">{t('awards')}</Typography>
+                              <TextField
+                                value={p.prizes || ''}
+                                onChange={e => updateField(p._id, 'prizes', e.target.value)}
+                                multiline
+                                minRows={2}
+                                fullWidth
+                                size="small"
+                              />
+                            </Stack>
+                          </Paper>
+                        </Grid>
+                      </Grid>
+                    </TabPanel>
+                    <TabPanel current={activeTab} value="requests">
+                      <Paper sx={sectionPaperSx}>
+                        <Stack spacing={1.5}>
+                          <Typography variant="h6">{t('requests')}</Typography>
+                          <Stack spacing={1}>
+                            {pending.map(u => (
+                              <Paper
+                                key={u._id || u}
+                                variant="outlined"
+                                sx={{ p: 1.5, borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 1 }}
+                              >
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {u.username || u}
+                                </Typography>
+                                <Button size="small" onClick={() => approve(p._id, u._id || u)}>
+                                  {t('approve')}
+                                </Button>
+                              </Paper>
+                            ))}
+                            {pending.length === 0 && (
+                              <Typography variant="body2" color="text.secondary">
+                                {t('noRequests')}
+                              </Typography>
+                            )}
                           </Stack>
-                        </Paper>
-
-                        <Paper sx={sectionPaperSx}>
-                          <Stack spacing={1.5}>
-                            <Typography variant="h6">{t('ranking')}</Typography>
-                            <Stack spacing={1}>
-                              {ranking.map((u, idx) => (
-                                <Paper
-                                  key={u.userId}
-                                  variant="outlined"
-                                  sx={{ p: 1.5, borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 1 }}
+                        </Stack>
+                      </Paper>
+                    </TabPanel>
+                    <TabPanel current={activeTab} value="participants">
+                      <Paper sx={sectionPaperSx}>
+                        <Stack spacing={1.5}>
+                          <Typography variant="h6">{t('participants')}</Typography>
+                          <Stack spacing={1}>
+                            {participants.map(u => (
+                              <Paper
+                                key={u._id || u}
+                                variant="outlined"
+                                sx={{ p: 1.5, borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 1 }}
+                              >
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {u.username || u}
+                                </Typography>
+                                <Button
+                                  size="small"
+                                  color="error"
+                                  onClick={() => removeParticipant(p._id, u._id || u)}
                                 >
-                                  <Typography variant="body2">
-                                    {idx + 1}. {u.username}
-                                  </Typography>
-                                  <Chip size="small" color="success" label={u.score} />
-                                </Paper>
-                              ))}
-                              {ranking.length === 0 && (
-                                <Typography variant="body2" color="text.secondary">
-                                  {t('noRanking')}
-                                </Typography>
-                              )}
-                            </Stack>
+                                  {t('remove')}
+                                </Button>
+                              </Paper>
+                            ))}
+                            {participants.length === 0 && (
+                              <Typography variant="body2" color="text.secondary">
+                                {t('noParticipants')}
+                              </Typography>
+                            )}
                           </Stack>
-                        </Paper>
-                      </Stack>
-                    </Grid>
-                  </Grid>
+                        </Stack>
+                      </Paper>
+                    </TabPanel>
+                    <TabPanel current={activeTab} value="ranking">
+                      <Paper sx={sectionPaperSx}>
+                        <Stack spacing={1.5}>
+                          <Typography variant="h6">{t('ranking')}</Typography>
+                          <Stack spacing={1}>
+                            {ranking.map((u, idx) => (
+                              <Paper
+                                key={u.userId}
+                                variant="outlined"
+                                sx={{ p: 1.5, borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 1 }}
+                              >
+                                <Typography variant="body2">
+                                  {idx + 1}. {u.username}
+                                </Typography>
+                                <Chip size="small" color="success" label={u.score} />
+                              </Paper>
+                            ))}
+                            {ranking.length === 0 && (
+                              <Typography variant="body2" color="text.secondary">
+                                {t('noRanking')}
+                              </Typography>
+                            )}
+                          </Stack>
+                        </Stack>
+                      </Paper>
+                    </TabPanel>
+                  </Box>
                 </Stack>
               </CardContent>
             </Card>
