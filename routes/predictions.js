@@ -5,6 +5,7 @@ const Match = require('../models/Match'); // Importar el modelo de partidos
 const Penca = require('../models/Penca');
 const { getMessage } = require('../utils/messages');
 const { recordAudit } = require('../utils/audit');
+const rankingCache = require('../utils/rankingCache');
 
 const DEBUG = process.env.DEBUG === 'true';
 function debugLog(...args) {
@@ -83,6 +84,8 @@ router.post('/', async (req, res) => {
             });
         }
         await prediction.save();
+
+        rankingCache.invalidate({ pencaId, competition: match.competition });
 
         await recordAudit({
             action: 'prediction:upsert',
