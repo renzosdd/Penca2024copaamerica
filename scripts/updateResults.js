@@ -2,6 +2,7 @@ const Match = require('../models/Match');
 const { fetchFixturesWithThrottle } = require('./apiFootball');
 const { updateEliminationMatches } = require('../utils/bracket');
 const Competition = require('../models/Competition');
+const rankingCache = require('../utils/rankingCache');
 
 async function updateResults(competition) {
   const comp = await Competition.findOne({ name: competition });
@@ -22,6 +23,7 @@ async function updateResults(competition) {
   }
 
   await updateEliminationMatches(competition);
+  rankingCache.invalidate({ competition });
 
   return { updated: fixtures.length };
 }

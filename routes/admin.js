@@ -22,6 +22,7 @@ const { sanitizeScoring } = require('../utils/scoring');
 const { recordAudit, getAuditConfig, updateAuditConfig, AUDIT_TYPES } = require('../utils/audit');
 const { getOrLoad, invalidate: invalidateMatchCache } = require('../utils/matchCache');
 const { deriveMatchImportId } = require('../utils/matchIdentity');
+const rankingCache = require('../utils/rankingCache');
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -254,6 +255,9 @@ router.post('/cleanup', isAuthenticated, isAdmin, async (req, res) => {
 
         if (selections.some(key => ['matches', 'competitions', 'pencas'].includes(key))) {
             invalidateMatchCache();
+        }
+        if (selections.some(key => ['matches', 'competitions', 'pencas', 'predictions', 'scores', 'users'].includes(key))) {
+            rankingCache.invalidate();
         }
 
         const collections = await buildCleanupSnapshot();
@@ -1014,6 +1018,7 @@ router.post('/competitions/:id/matches/:matchId', isAuthenticated, isAdmin, asyn
         await match.save();
         await updateEliminationMatches(match.competition);
         invalidateMatchCache(comp.name);
+        rankingCache.invalidate({ competition: match.competition });
         res.json({ message: 'Match result updated' });
     } catch (error) {
         console.error('Error updating match result:', error);
