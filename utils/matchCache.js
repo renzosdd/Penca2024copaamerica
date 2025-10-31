@@ -1,51 +1,59 @@
-const CACHE_TTL_MS = 60 * 1000;
+const cacheStore = require('./cacheStore');
 
-const cache = new Map();
+const CATEGORY = 'matches';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const GLOBAL_KEY = '__all__';
 
-function makeKey(competition) {
-  return String(competition || '').toLowerCase();
+function normalize(value) {
+  return String(value ?? '').trim().toLowerCase();
 }
 
-function setCache(competition, data) {
-  if (!competition) {
-    return;
+function makeKey(competition) {
+  return competition ? normalize(competition) : GLOBAL_KEY;
+}
+
+function buildTags(competition) {
+  const tags = ['category:matches'];
+  if (competition) {
+    tags.push(`competition:${normalize(competition)}`);
   }
-  cache.set(makeKey(competition), {
-    expiresAt: Date.now() + CACHE_TTL_MS,
-    data
+  return tags;
+}
+
+async function setCache(competition, data) {
+  const key = makeKey(competition);
+  await cacheStore.set({
+    category: CATEGORY,
+    key,
+    data,
+    ttlMs: CACHE_TTL_MS,
+    tags: buildTags(competition)
   });
 }
 
-function getCache(competition) {
-  if (!competition) {
-    return null;
-  }
-  const entry = cache.get(makeKey(competition));
-  if (!entry) {
-    return null;
-  }
-  if (entry.expiresAt < Date.now()) {
-    cache.delete(makeKey(competition));
-    return null;
-  }
-  return entry.data;
+async function getCache(competition) {
+  const key = makeKey(competition);
+  return cacheStore.get({ category: CATEGORY, key });
 }
 
-function invalidate(competition) {
+async function invalidate(competition) {
   if (!competition) {
-    cache.clear();
+    await cacheStore.clearCategory(CATEGORY);
     return;
   }
-  cache.delete(makeKey(competition));
+  await cacheStore.invalidate({
+    category: CATEGORY,
+    tagsAny: [`competition:${normalize(competition)}`]
+  });
 }
 
 async function getOrLoad(competition, loader) {
-  const cached = getCache(competition);
+  const cached = await getCache(competition);
   if (cached) {
     return cached;
   }
   const data = await loader();
-  setCache(competition, data);
+  await setCache(competition, data);
   return data;
 }
 

@@ -5,6 +5,7 @@ const Match = require('../models/Match'); // Importar el modelo de partidos
 const Penca = require('../models/Penca');
 const { getMessage } = require('../utils/messages');
 const { recordAudit } = require('../utils/audit');
+const rankingCache = require('../utils/rankingCache');
 
 const DEBUG = process.env.DEBUG === 'true';
 function debugLog(...args) {
@@ -15,7 +16,13 @@ function debugLog(...args) {
 
 router.get('/', async (req, res) => {
     try {
-        const predictions = await Prediction.find();
+        const user = req.session.user;
+        if (!user) {
+            return res.status(401).json({ error: getMessage('UNAUTHORIZED', req.lang) });
+        }
+        const predictions = await Prediction.find({ userId: user._id })
+            .select('matchId pencaId result1 result2 username')
+            .lean();
         res.json(predictions);
     } catch (err) {
         res.status(500).json({ error: getMessage('PREDICTIONS_FETCH_ERROR', req.lang) });
@@ -83,6 +90,8 @@ router.post('/', async (req, res) => {
             });
         }
         await prediction.save();
+
+        await rankingCache.invalidate({ pencaId, competition: match.competition });
 
         await recordAudit({
             action: 'prediction:upsert',

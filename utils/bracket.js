@@ -1,7 +1,17 @@
 const Match = require('../models/Match');
+const cacheStore = require('./cacheStore');
 
-async function calculateGroupStandings(competition) {
-    const matches = await Match.find({ competition });
+const GROUP_CACHE_CATEGORY = 'group-standings';
+const GROUP_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function normalizeCompetition(value) {
+    return String(value ?? '').trim().toLowerCase();
+}
+
+async function computeGroupStandings(competition) {
+    const matches = await Match.find({ competition })
+        .select('group_name team1 team2 result1 result2')
+        .lean();
     const standings = {};
 
     for (const match of matches) {
@@ -70,6 +80,34 @@ async function calculateGroupStandings(competition) {
         });
     }
     return ordered;
+}
+
+async function calculateGroupStandings(competition) {
+    const key = normalizeCompetition(competition);
+    const cached = await cacheStore.get({ category: GROUP_CACHE_CATEGORY, key });
+    if (cached) {
+        return cached;
+    }
+    const ordered = await computeGroupStandings(competition);
+    await cacheStore.set({
+        category: GROUP_CACHE_CATEGORY,
+        key,
+        data: ordered,
+        ttlMs: GROUP_CACHE_TTL_MS,
+        tags: ['category:groups', `competition:${key}`]
+    });
+    return ordered;
+}
+
+async function invalidateGroupStandings(competition) {
+    if (!competition) {
+        await cacheStore.clearCategory(GROUP_CACHE_CATEGORY);
+        return;
+    }
+    await cacheStore.invalidate({
+        category: GROUP_CACHE_CATEGORY,
+        tagsAny: [`competition:${normalizeCompetition(competition)}`]
+    });
 }
 
 async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {
@@ -167,6 +205,7 @@ async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {
 }
 
 async function updateEliminationMatches(competition) {
+    await invalidateGroupStandings(competition);
     const standings = await calculateGroupStandings(competition);
 
     function team(group, pos) {
@@ -330,5 +369,6 @@ module.exports = {
     calculateGroupStandings,
     updateEliminationMatches,
     rankThirdPlacedTeams,
-    generateEliminationBracket
+    generateEliminationBracket,
+    invalidateGroupStandings
 };
