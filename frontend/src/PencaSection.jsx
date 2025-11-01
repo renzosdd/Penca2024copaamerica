@@ -32,7 +32,7 @@ import { alpha } from '@mui/material/styles';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import StageAccordionList from './StageAccordionList';
 import useLang from './useLang';
-import pointsForPrediction from './calcPoints';
+import pointsForPrediction, { calculatePointsBreakdown } from './calcPoints';
 import { formatLocalKickoff, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
 
 function TabPanel({ current, value, children, sx, ...other }) {
@@ -60,6 +60,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [activeSection, setActiveSection] = useState('matches');
   const [filter, setFilter] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [rankingSearch, setRankingSearch] = useState('');
   const { t } = useLang();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -136,6 +137,16 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const participantsLabel = `${participantsCount}${participantLimit} ${t('participantsShort')}`.trim();
   const ownerName = penca.ownerDisplayName || penca.owner?.name || penca.owner?.username || '';
 
+  const filteredRanking = useMemo(() => {
+    const normalized = rankingSearch.trim().toLowerCase();
+    return ranking
+      .map((entry, index) => ({ ...entry, rank: index + 1 }))
+      .filter(entry => {
+        if (!normalized) return true;
+        return entry.username.toLowerCase().includes(normalized);
+      });
+  }, [ranking, rankingSearch]);
+
   const InfoDetails = () => (
     <Stack spacing={2}>
       <Box>
@@ -195,9 +206,47 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     return t('scheduleTbd');
   };
 
-  const renderMatchCard = match => {
+  const renderMatchCard = (match, section) => {
     const pr = getPrediction(penca._id, match._id) || {};
     const editable = canPredict(match);
+    const breakdown = calculatePointsBreakdown(pr, match, penca.scoring);
+    const breakdownItems = [
+      { key: 'exact', label: t('pointsBreakdownExact'), points: breakdown.scoring.exact, earned: breakdown.earned.exact },
+      { key: 'outcome', label: t('pointsBreakdownOutcome'), points: breakdown.scoring.outcome, earned: breakdown.earned.outcome },
+      {
+        key: 'goalDifference',
+        label: t('pointsBreakdownGoalDifference'),
+        points: breakdown.scoring.goalDifference,
+        earned: breakdown.earned.goalDifference
+      },
+      {
+        key: 'team1Goals',
+        label: t('pointsBreakdownTeamGoals', { team: match.team1 }),
+        points: breakdown.scoring.teamGoals,
+        earned: breakdown.earned.team1Goals
+      },
+      {
+        key: 'team2Goals',
+        label: t('pointsBreakdownTeamGoals', { team: match.team2 }),
+        points: breakdown.scoring.teamGoals,
+        earned: breakdown.earned.team2Goals
+      },
+      {
+        key: 'team1CleanSheet',
+        label: t('pointsBreakdownCleanSheet', { team: match.team1 }),
+        points: breakdown.scoring.cleanSheet,
+        earned: breakdown.earned.team1CleanSheet
+      },
+      {
+        key: 'team2CleanSheet',
+        label: t('pointsBreakdownCleanSheet', { team: match.team2 }),
+        points: breakdown.scoring.cleanSheet,
+        earned: breakdown.earned.team2CleanSheet
+      }
+    ].filter(item => item.points > 0);
+
+    const hasPrediction = pr.result1 != null && pr.result2 != null;
+    const hasResult = match.result1 != null && match.result2 != null;
 
     return (
       <Paper
@@ -286,15 +335,59 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             </Button>
           </Box>
 
-          {match.result1 != null && match.result2 != null && (
-            <Stack spacing={0.5}>
+          {hasResult && (
+            <Stack spacing={1}>
               <Typography variant="body2" fontWeight={600}>
                 {t('result')}: {match.result1} - {match.result2}
               </Typography>
-              {pr.result1 != null && pr.result2 != null && (
-                <Typography variant="body2" color="text.secondary">
-                  {t('difference')}: ({pr.result1 - match.result1}/{pr.result2 - match.result2}) — {t('pointsEarned')}: {pointsForPrediction(pr, match, penca.scoring)} {t('pts')}
-                </Typography>
+              {hasPrediction && (
+                <Stack spacing={0.75}>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('difference')}: ({pr.result1 - match.result1}/{pr.result2 - match.result2})
+                  </Typography>
+                  <Typography variant="body2" fontWeight={600} color="primary.main">
+                    {t('pointsEarned')}: {pointsForPrediction(pr, match, penca.scoring)} {t('pts')}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('pointsBreakdownTitle', { stage: section?.label || t('pointsBreakdownDefaultStage') })}
+                  </Typography>
+                  <Stack spacing={0.5}>
+                    {breakdownItems.map(item => (
+                      <Box
+                        key={item.key}
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          px: 1.25,
+                          py: 0.75,
+                          borderRadius: 1.5,
+                          border: theme => `1px solid ${item.earned ? theme.palette.success.light : theme.palette.divider}`,
+                          backgroundColor: theme =>
+                            item.earned ? alpha(theme.palette.success.light, 0.18) : alpha(theme.palette.background.paper, 0.6)
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{ color: item.earned ? 'success.dark' : 'text.secondary', fontWeight: item.earned ? 600 : 400 }}
+                        >
+                          {item.label}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: item.earned ? 'success.dark' : 'text.secondary', fontWeight: 600 }}
+                        >
+                          {item.earned ? `+${item.points}` : '+0'}
+                        </Typography>
+                      </Box>
+                    ))}
+                    {!breakdownItems.length && (
+                      <Typography variant="body2" color="text.secondary">
+                        {t('pointsBreakdownHint')}
+                      </Typography>
+                    )}
+                  </Stack>
+                </Stack>
               )}
             </Stack>
           )}
@@ -362,11 +455,22 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             <Tabs
               value={activeSection}
               onChange={(_, value) => setActiveSection(value)}
-              variant="scrollable"
-              scrollButtons="auto"
-              allowScrollButtonsMobile
               aria-label={t('pencaTabsLabel')}
-              sx={{ borderBottom: 1, borderColor: 'divider' }}
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                '& .MuiTabs-flexContainer': {
+                  flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                  justifyContent: { xs: 'center', md: 'center' },
+                  gap: { xs: 1, sm: 0 }
+                },
+                '& .MuiTab-root': {
+                  flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' },
+                  minHeight: 'auto',
+                  borderRadius: { xs: 2, sm: 0 }
+                }
+              }}
+              centered={!isMobile}
             >
               <Tab
                 label={t('pencaTabMatches')}
@@ -455,9 +559,19 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             </TabPanel>
 
             <TabPanel current={activeSection} value="ranking">
-              <Typography variant="subtitle1" gutterBottom>
-                {t('ranking')}
-              </Typography>
+              <Stack spacing={1.5}>
+                <Typography variant="subtitle1">
+                  {t('ranking')}
+                </Typography>
+                <TextField
+                  size="small"
+                  value={rankingSearch}
+                  onChange={e => setRankingSearch(e.target.value)}
+                  label={t('searchPlayer')}
+                  placeholder={t('searchPlayerPlaceholder')}
+                  sx={{ maxWidth: { xs: '100%', sm: 320 } }}
+                />
+              </Stack>
               <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
                 <Table size="small">
                   <TableHead>
@@ -468,12 +582,12 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {ranking.map((u, idx) => (
+                    {filteredRanking.map(u => (
                       <TableRow
                         key={u.userId}
-                        className={`rank-${idx + 1} ${u.username === currentUsername ? 'current-user-row' : ''}`.trim()}
+                        className={`rank-${u.rank} ${u.username === currentUsername ? 'current-user-row' : ''}`.trim()}
                       >
-                        <TableCell>{idx + 1}</TableCell>
+                        <TableCell>{u.rank}</TableCell>
                         <TableCell>
                           <img
                             src={u.avatar}
@@ -485,8 +599,8 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                         </TableCell>
                         <TableCell>{u.score}</TableCell>
                       </TableRow>
-                    ))}
-                    {ranking.length === 0 && (
+                      ))}
+                    {filteredRanking.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={3}>
                           <Typography variant="body2" color="text.secondary">
