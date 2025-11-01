@@ -50,13 +50,7 @@ export default function StageAccordionList({
     }
 
     sectionRefs.current = {};
-    setExpandedKeys(prev => {
-      const next = prev.filter(key => sections.some(section => section.key === key));
-      if (next.length) {
-        return next;
-      }
-      return [sections[0].key];
-    });
+    setExpandedKeys(prev => prev.filter(key => sections.some(section => section.key === key)));
   }, [sections]);
 
   useEffect(() => {

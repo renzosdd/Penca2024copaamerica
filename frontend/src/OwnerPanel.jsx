@@ -40,6 +40,7 @@ export default function OwnerPanel() {
   const { t } = useLang();
   const [filter, setFilter] = useState('all');
   const [activeTabs, setActiveTabs] = useState({});
+  const [rankingFilters, setRankingFilters] = useState({});
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -189,11 +190,24 @@ export default function OwnerPanel() {
   async function saveInfo(id) {
     const penca = pencas.find(p => p._id === id);
     if (!penca) return;
+    const limitRaw = penca.participantLimit;
+    let limitValue = null;
+    if (limitRaw !== '' && limitRaw !== null && limitRaw !== undefined) {
+      const parsed = Number(limitRaw);
+      if (Number.isFinite(parsed) && parsed > 0) {
+        limitValue = parsed;
+      }
+    }
     try {
       const res = await fetch(`/pencas/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rules: penca.rules, prizes: penca.prizes, scoring: penca.scoring })
+        body: JSON.stringify({
+          rules: penca.rules,
+          prizes: penca.prizes,
+          scoring: penca.scoring,
+          participantLimit: limitValue
+        })
       });
       if (res.ok) loadData();
     } catch (err) {
@@ -323,6 +337,12 @@ export default function OwnerPanel() {
           const translatedMode = t(modeKey);
           const tournamentLabel = translatedMode === modeKey ? p.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
           const activeTab = activeTabs[p._id] || 'matches';
+          const rankingEntries = ranking.map((u, idx) => ({ ...u, rank: idx + 1 }));
+          const rankingQuery = (rankingFilters[p._id] || '').trim().toLowerCase();
+          const filteredRanking = rankingEntries.filter(u => {
+            if (!rankingQuery) return true;
+            return u.username.toLowerCase().includes(rankingQuery);
+          });
 
           return (
             <Card key={p._id} sx={{ borderRadius: 3, boxShadow: 4 }}>
@@ -363,9 +383,19 @@ export default function OwnerPanel() {
                     <Tabs
                       value={activeTab}
                       onChange={(event, newValue) => setActiveTabs(prev => ({ ...prev, [p._id]: newValue }))}
-                      variant="scrollable"
-                      scrollButtons
-                      allowScrollButtonsMobile
+                      sx={{
+                        '& .MuiTabs-flexContainer': {
+                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          justifyContent: { xs: 'center', md: 'center' },
+                          gap: { xs: 1, sm: 0 }
+                        },
+                        '& .MuiTab-root': {
+                          flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' },
+                          minHeight: 'auto',
+                          borderRadius: { xs: 2, sm: 0 }
+                        }
+                      }}
+                      centered={!isMobile}
                     >
                       <Tab value="matches" label={t('ownerTabMatches')} />
                       <Tab value="config" label={t('ownerTabConfig')} />
@@ -453,15 +483,27 @@ export default function OwnerPanel() {
                                   />
                                 </Grid>
                               </Grid>
-                              <Button size="small" variant="contained" onClick={() => saveInfo(p._id)}>
-                                {t('save')}
-                              </Button>
                             </Stack>
                           </Paper>
                         </Grid>
                         <Grid item xs={12} md={6}>
                           <Paper sx={{ ...sectionPaperSx, height: '100%' }}>
                             <Stack spacing={2}>
+                              <Box>
+                                <Typography variant="h6">{t('ownerMaxParticipantsTitle')}</Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  {t('ownerMaxParticipantsHelper')}
+                                </Typography>
+                              </Box>
+                              <TextField
+                                label={t('ownerMaxParticipantsLabel')}
+                                type="number"
+                                size="small"
+                                value={p.participantLimit ?? ''}
+                                onChange={e => updateField(p._id, 'participantLimit', e.target.value)}
+                                inputProps={{ min: 0 }}
+                                fullWidth
+                              />
                               <Typography variant="h6">{t('regulation')}</Typography>
                               <TextField
                                 value={p.rules || ''}
@@ -483,6 +525,18 @@ export default function OwnerPanel() {
                               />
                             </Stack>
                           </Paper>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <Stack
+                            direction={{ xs: 'column', sm: 'row' }}
+                            spacing={1}
+                            justifyContent={{ xs: 'stretch', sm: 'flex-end' }}
+                            alignItems={{ xs: 'stretch', sm: 'center' }}
+                          >
+                            <Button variant="contained" size="small" onClick={() => saveInfo(p._id)}>
+                              {t('save')}
+                            </Button>
+                          </Stack>
                         </Grid>
                       </Grid>
                     </TabPanel>
@@ -550,22 +604,38 @@ export default function OwnerPanel() {
                       <Paper sx={sectionPaperSx}>
                         <Stack spacing={1.5}>
                           <Typography variant="h6">{t('ranking')}</Typography>
+                          <TextField
+                            size="small"
+                            value={rankingFilters[p._id] || ''}
+                            onChange={e =>
+                              setRankingFilters(prev => ({ ...prev, [p._id]: e.target.value }))
+                            }
+                            label={t('searchPlayer')}
+                            placeholder={t('searchPlayerPlaceholder')}
+                            sx={{ maxWidth: { xs: '100%', sm: 320 } }}
+                            fullWidth={isMobile}
+                          />
                           <Stack spacing={1}>
-                            {ranking.map((u, idx) => (
-                              <Paper
-                                key={u.userId}
-                                variant="outlined"
-                                sx={{ p: 1.5, borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 1 }}
-                              >
-                                <Typography variant="body2">
-                                  {idx + 1}. {u.username}
-                                </Typography>
-                                <Chip size="small" color="success" label={u.score} />
-                              </Paper>
-                            ))}
+                            {filteredRanking.map(u => (
+                                <Paper
+                                  key={u.userId}
+                                  variant="outlined"
+                                  sx={{ p: 1.5, borderRadius: 2, display: 'flex', justifyContent: 'space-between', gap: 1 }}
+                                >
+                                  <Typography variant="body2">
+                                    {u.rank}. {u.username}
+                                  </Typography>
+                                  <Chip size="small" color="success" label={u.score} />
+                                </Paper>
+                              ))}
                             {ranking.length === 0 && (
                               <Typography variant="body2" color="text.secondary">
                                 {t('noRanking')}
+                              </Typography>
+                            )}
+                            {ranking.length > 0 && filteredRanking.length === 0 && (
+                              <Typography variant="body2" color="text.secondary">
+                                {t('noRankingResults')}
                               </Typography>
                             )}
                           </Stack>

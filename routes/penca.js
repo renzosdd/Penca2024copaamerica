@@ -150,7 +150,7 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
 // Actualizar una penca (owner)
 router.put('/:pencaId', isAuthenticated, async (req, res) => {
   const { pencaId } = req.params;
-  const { isPublic, rules, prizes, scoring, tournamentMode, modeSettings } = req.body;
+  const { isPublic, rules, prizes, scoring, tournamentMode, modeSettings, participantLimit } = req.body;
   try {
     const penca = await Penca.findById(pencaId);
     if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
@@ -166,6 +166,14 @@ router.put('/:pencaId', isAuthenticated, async (req, res) => {
     }
     if (rules !== undefined) penca.rules = rules;
     if (prizes !== undefined) penca.prizes = prizes;
+    if (participantLimit !== undefined) {
+      const parsedLimit = Number(participantLimit);
+      if (Number.isFinite(parsedLimit) && parsedLimit > 0) {
+        penca.participantLimit = parsedLimit;
+      } else {
+        penca.participantLimit = null;
+      }
+    }
     if (tournamentMode && ALLOWED_MODES.has(tournamentMode)) {
       penca.tournamentMode = tournamentMode;
     }

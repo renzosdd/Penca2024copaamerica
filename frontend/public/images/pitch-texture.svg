@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="grassGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b4d26" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#0b4d26" stop-opacity="0.2" />
+    </linearGradient>
+    <pattern id="pitchPattern" width="80" height="80" patternUnits="userSpaceOnUse">
+      <rect width="80" height="80" fill="url(#grassGradient)" />
+      <path d="M0 40h80M40 0v80" stroke="#ffffff" stroke-opacity="0.08" stroke-width="3" />
+    </pattern>
+  </defs>
+  <rect width="400" height="400" fill="#0f3d21" fill-opacity="0.22" />
+  <rect width="400" height="400" fill="url(#pitchPattern)" />
+</svg>

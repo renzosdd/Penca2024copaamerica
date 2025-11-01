@@ -1,4 +1,4 @@
-const DEFAULT_SCORING = {
+export const DEFAULT_SCORING = {
   exact: 5,
   outcome: 3,
   goalDifference: 2,
@@ -6,7 +6,7 @@ const DEFAULT_SCORING = {
   cleanSheet: 1
 };
 
-const sanitize = scoring => ({
+export const sanitizeScoring = scoring => ({
   exact: Number.isFinite(Number(scoring?.exact)) ? Number(scoring.exact) : DEFAULT_SCORING.exact,
   outcome: Number.isFinite(Number(scoring?.outcome)) ? Number(scoring.outcome) : DEFAULT_SCORING.outcome,
   goalDifference: Number.isFinite(Number(scoring?.goalDifference))
@@ -21,41 +21,69 @@ const outcome = (a, b) => {
   return a > b ? 'team1' : 'team2';
 };
 
-export default function pointsForPrediction(prediction, match, scoring) {
-  if (!prediction || !match) return 0;
-  if (match.result1 === undefined || match.result2 === undefined) return 0;
+export function calculatePointsBreakdown(prediction, match, scoring) {
+  const safeScoring = sanitizeScoring(scoring);
+  const breakdown = {
+    total: 0,
+    scoring: safeScoring,
+    earned: {
+      exact: false,
+      outcome: false,
+      goalDifference: false,
+      team1Goals: false,
+      team2Goals: false,
+      team1CleanSheet: false,
+      team2CleanSheet: false
+    }
+  };
 
-  const safeScoring = sanitize(scoring);
-  let pts = 0;
+  if (!prediction || !match) {
+    return breakdown;
+  }
+
+  if (match.result1 == null || match.result2 == null) {
+    return breakdown;
+  }
 
   const predictedOutcome = outcome(prediction.result1, prediction.result2);
   const actualOutcome = outcome(match.result1, match.result2);
 
   if (prediction.result1 === match.result1 && prediction.result2 === match.result2) {
-    pts += safeScoring.exact;
+    breakdown.earned.exact = true;
+    breakdown.total += safeScoring.exact;
   } else if (predictedOutcome === actualOutcome) {
-    pts += safeScoring.outcome;
+    breakdown.earned.outcome = true;
+    breakdown.total += safeScoring.outcome;
   }
 
   const predictedDiff = prediction.result1 - prediction.result2;
   const actualDiff = match.result1 - match.result2;
   if (predictedDiff === actualDiff) {
-    pts += safeScoring.goalDifference;
+    breakdown.earned.goalDifference = true;
+    breakdown.total += safeScoring.goalDifference;
   }
 
   if (prediction.result1 === match.result1) {
-    pts += safeScoring.teamGoals;
+    breakdown.earned.team1Goals = true;
+    breakdown.total += safeScoring.teamGoals;
   }
   if (prediction.result2 === match.result2) {
-    pts += safeScoring.teamGoals;
+    breakdown.earned.team2Goals = true;
+    breakdown.total += safeScoring.teamGoals;
   }
 
   if (prediction.result2 === 0 && match.result2 === 0) {
-    pts += safeScoring.cleanSheet;
+    breakdown.earned.team2CleanSheet = true;
+    breakdown.total += safeScoring.cleanSheet;
   }
   if (prediction.result1 === 0 && match.result1 === 0) {
-    pts += safeScoring.cleanSheet;
+    breakdown.earned.team1CleanSheet = true;
+    breakdown.total += safeScoring.cleanSheet;
   }
 
-  return pts;
+  return breakdown;
+}
+
+export default function pointsForPrediction(prediction, match, scoring) {
+  return calculatePointsBreakdown(prediction, match, scoring).total;
 }
