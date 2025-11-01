@@ -8,26 +8,35 @@ const Penca = require('../models/Penca');
 const { DEFAULT_COMPETITION } = require('../config');
 const { DEFAULT_SCORING, sanitizeScoring, calculatePoints } = require('../utils/scoring');
 const { getMessage } = require('../utils/messages');
+const rankingCache = require('../utils/rankingCache');
 
 // Función para calcular los puntajes
 async function calculateScores(pencaId, competition) {
     // Solo filtramos por participantes de la penca cuando sea necesario
     // No requerimos que los usuarios sean válidos aquí
+    const matchFilter = {};
+    const predictionFilter = {};
     let userFilter = {};
-    let matchFilter = {};
-    let predictionFilter = {};
     let penca;
     let scoring = { ...DEFAULT_SCORING };
+    let participantIds = null;
 
     if (pencaId) {
-        penca = await Penca.findById(pencaId).select('participants fixture competition scoring');
+        penca = await Penca.findById(pencaId)
+            .select('participants fixture competition scoring')
+            .lean();
         if (!penca) {
             return [];
         }
         if (penca.scoring) {
             scoring = sanitizeScoring(penca.scoring);
         }
-        userFilter._id = { $in: penca.participants };
+
+        if (Array.isArray(penca.participants) && penca.participants.length > 0) {
+            participantIds = penca.participants.map(id => id.toString());
+            userFilter._id = { $in: penca.participants };
+        }
+
         predictionFilter.pencaId = pencaId;
 
         if (Array.isArray(penca.fixture) && penca.fixture.length > 0) {
@@ -42,42 +51,96 @@ async function calculateScores(pencaId, competition) {
         matchFilter.competition = competition;
     }
 
-    const users = await User.find(userFilter);
-    const matches = await Match.find(matchFilter);
+    const matches = await Match.find(matchFilter)
+        .select('result1 result2 competition')
+        .lean();
 
-    if (matchFilter._id || matchFilter.competition) {
-        const matchIds = matches.map(m => m._id);
-        if (!predictionFilter.matchId) {
-            predictionFilter.matchId = { $in: matchIds };
+    const matchesById = new Map();
+    const completedMatches = [];
+    matches.forEach(match => {
+        const key = match._id.toString();
+        matchesById.set(key, match);
+        if (match.result1 != null && match.result2 != null) {
+            completedMatches.push(match);
+        }
+    });
+
+    const completedMatchIds = completedMatches.map(match => match._id);
+    const completedIdSet = new Set(completedMatches.map(match => match._id.toString()));
+
+    let shouldLoadPredictions = completedMatches.length > 0;
+
+    if (predictionFilter.matchId && predictionFilter.matchId.$in) {
+        predictionFilter.matchId.$in = predictionFilter.matchId.$in.filter(id => completedIdSet.has(id.toString()));
+        if (!predictionFilter.matchId.$in.length) {
+            delete predictionFilter.matchId;
+        }
+    } else if (completedMatchIds.length) {
+        predictionFilter.matchId = { $in: completedMatchIds };
+    }
+
+    if (!participantIds) {
+        shouldLoadPredictions = true;
+    }
+
+    let predictions = [];
+    if (shouldLoadPredictions) {
+        predictions = await Prediction.find(predictionFilter)
+            .select('userId matchId result1 result2 pencaId')
+            .lean();
+    }
+
+    if (!participantIds && predictions.length) {
+        const participantSet = new Set(predictions.map(prediction => prediction.userId.toString()));
+        if (participantSet.size) {
+            userFilter._id = { $in: Array.from(participantSet) };
         }
     }
 
-    const predictions = await Prediction.find(predictionFilter);
+    if (!participantIds && pencaId && !predictions.length) {
+        // No tenemos participantes explícitos ni predicciones registradas
+        return [];
+    }
 
-    let scores = [];
+    const users = await User.find(userFilter)
+        .select('username avatar avatarContentType')
+        .lean();
 
-    for (const user of users) {
+    if (!users.length) {
+        return [];
+    }
+
+    const predictionsByUser = new Map();
+    predictions.forEach(prediction => {
+        const key = prediction.userId.toString();
+        if (!predictionsByUser.has(key)) {
+            predictionsByUser.set(key, []);
+        }
+        predictionsByUser.get(key).push(prediction);
+    });
+
+    const scores = users.map(user => {
+        const userPredictions = predictionsByUser.get(user._id.toString()) || [];
         let userScore = 0;
-        const userPredictions = predictions.filter(prediction => prediction.userId.toString() === user._id.toString());
 
         for (const prediction of userPredictions) {
-            const match = matches.find(m => m._id.toString() === prediction.matchId.toString());
-            if (match) {
-                userScore += calculatePoints({ prediction, match, scoring });
+            const match = matchesById.get(prediction.matchId.toString());
+            if (!match || match.result1 == null || match.result2 == null) {
+                continue;
             }
+            userScore += calculatePoints({ prediction, match, scoring });
         }
 
-        // Agregamos la referencia del avatar
         const avatarPath = user.avatar ? '/avatar/' + user.username : '/images/avatar.webp';
 
-        scores.push({
+        return {
             userId: user._id,
             username: user.username,
             avatar: avatarPath,
             avatarContentType: user.avatarContentType,
             score: userScore
-        });
-    }
+        };
+    });
 
     scores.sort((a, b) => b.score - a.score);
     return scores;
@@ -87,7 +150,12 @@ async function calculateScores(pencaId, competition) {
 router.get('/', async (req, res) => {
     try {
         const { pencaId, competition } = req.query;
+        const cached = await rankingCache.get(pencaId, competition);
+        if (cached) {
+            return res.json(cached);
+        }
         const scores = await calculateScores(pencaId, competition);
+        await rankingCache.set(pencaId, competition, scores);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
@@ -98,7 +166,13 @@ router.get('/', async (req, res) => {
 // Ranking por competencia (sin especificar penca)
 router.get('/competition/:competition', async (req, res) => {
     try {
-        const scores = await calculateScores(null, req.params.competition);
+        const cacheKeyCompetition = req.params.competition;
+        const cached = await rankingCache.get(null, cacheKeyCompetition);
+        if (cached) {
+            return res.json(cached);
+        }
+        const scores = await calculateScores(null, cacheKeyCompetition);
+        await rankingCache.set(null, cacheKeyCompetition, scores);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking por competencia:', err);
@@ -122,6 +196,7 @@ router.post('/recalculate', async (req, res) => {
                 { upsert: true }
             );
         }
+        await rankingCache.invalidate({ competition: compName });
         res.json({ message: getMessage('SCORES_RECALCULATED', req.lang) });
     } catch (err) {
         console.error('Error al recalcular los puntajes:', err);
