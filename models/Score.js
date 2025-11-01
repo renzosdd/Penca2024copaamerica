@@ -6,7 +6,8 @@ const scoreSchema = new mongoose.Schema({
     score: { type: Number, default: 0 }
 });
 
-const Score = mongoose.model('Score', scoreSchema);
+scoreSchema.index({ userId: 1, competition: 1 }, { unique: true });
+scoreSchema.index({ competition: 1, score: -1 });
 
-module.exports = Score;
+module.exports = mongoose.models.Score || mongoose.model('Score', scoreSchema);
  

@@ -1,4 +1,12 @@
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+function parsePositiveInt(value, fallback) {
+  const parsed = parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
+}
+
+const CACHE_TTL_MS = parsePositiveInt(process.env.RANKING_CACHE_TTL_SECONDS, 5 * 60) * 1000;
 const GLOBAL_COMPETITION = '__global__';
 
 const cache = new Map();
