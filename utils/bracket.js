@@ -1,11 +1,33 @@
 const Match = require('../models/Match');
 const cacheStore = require('./cacheStore');
 
-const GROUP_CACHE_CATEGORY = 'group-standings';
 const GROUP_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+const standingsCache = new Map();
 
 function normalizeCompetition(value) {
     return String(value ?? '').trim().toLowerCase();
+}
+
+function getCachedStandings(competition) {
+    const key = normalizeCompetition(competition);
+    const entry = standingsCache.get(key);
+    if (!entry) {
+        return null;
+    }
+    if (entry.expiresAt <= Date.now()) {
+        standingsCache.delete(key);
+        return null;
+    }
+    return entry.data;
+}
+
+function setCachedStandings(competition, data) {
+    const key = normalizeCompetition(competition);
+    standingsCache.set(key, {
+        data,
+        expiresAt: Date.now() + GROUP_CACHE_TTL_MS
+    });
 }
 
 async function computeGroupStandings(competition) {
@@ -83,31 +105,21 @@ async function computeGroupStandings(competition) {
 }
 
 async function calculateGroupStandings(competition) {
-    const key = normalizeCompetition(competition);
-    const cached = await cacheStore.get({ category: GROUP_CACHE_CATEGORY, key });
+    const cached = getCachedStandings(competition);
     if (cached) {
         return cached;
     }
     const ordered = await computeGroupStandings(competition);
-    await cacheStore.set({
-        category: GROUP_CACHE_CATEGORY,
-        key,
-        data: ordered,
-        ttlMs: GROUP_CACHE_TTL_MS,
-        tags: ['category:groups', `competition:${key}`]
-    });
+    setCachedStandings(competition, ordered);
     return ordered;
 }
 
 async function invalidateGroupStandings(competition) {
     if (!competition) {
-        await cacheStore.clearCategory(GROUP_CACHE_CATEGORY);
+        standingsCache.clear();
         return;
     }
-    await cacheStore.invalidate({
-        category: GROUP_CACHE_CATEGORY,
-        tagsAny: [`competition:${normalizeCompetition(competition)}`]
-    });
+    standingsCache.delete(normalizeCompetition(competition));
 }
 
 async function generateEliminationBracket(competition, qualifiersPerGroup = 2) {

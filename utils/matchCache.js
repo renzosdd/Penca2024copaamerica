@@ -1,4 +1,4 @@
-const cacheStore = require('./cacheStore');
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 const CATEGORY = 'matches';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -8,32 +8,33 @@ function normalize(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
+function normalize(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
 function makeKey(competition) {
-  return competition ? normalize(competition) : GLOBAL_KEY;
+  return competition ? normalize(competition) : '__all__';
 }
 
-function buildTags(competition) {
-  const tags = ['category:matches'];
-  if (competition) {
-    tags.push(`competition:${normalize(competition)}`);
-  }
-  return tags;
-}
-
-async function setCache(competition, data) {
+function setCache(competition, data) {
   const key = makeKey(competition);
-  await cacheStore.set({
-    category: CATEGORY,
-    key,
-    data,
-    ttlMs: CACHE_TTL_MS,
-    tags: buildTags(competition)
+  cache.set(key, {
+    expiresAt: Date.now() + CACHE_TTL_MS,
+    data
   });
 }
 
-async function getCache(competition) {
+function getCache(competition) {
   const key = makeKey(competition);
-  return cacheStore.get({ category: CATEGORY, key });
+  const entry = cache.get(key);
+  if (!entry) {
+    return null;
+  }
+  if (entry.expiresAt <= Date.now()) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data;
 }
 
 async function invalidate(competition) {

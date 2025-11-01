@@ -260,9 +260,6 @@ router.post('/cleanup', isAuthenticated, isAdmin, async (req, res) => {
         if (selections.some(key => ['matches', 'competitions', 'pencas', 'predictions', 'scores', 'users'].includes(key))) {
             await rankingCache.invalidate();
         }
-        if (selections.some(key => ['matches', 'competitions', 'pencas', 'predictions', 'scores', 'users'].includes(key))) {
-            rankingCache.invalidate();
-        }
 
         const collections = await buildCleanupSnapshot();
         res.json({ operations, collections });
