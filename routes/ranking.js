@@ -14,11 +14,12 @@ const rankingCache = require('../utils/rankingCache');
 async function calculateScores(pencaId, competition) {
     // Solo filtramos por participantes de la penca cuando sea necesario
     // No requerimos que los usuarios sean válidos aquí
+    const matchFilter = {};
+    const predictionFilter = {};
     let userFilter = {};
-    let matchFilter = {};
-    let predictionFilter = {};
     let penca;
     let scoring = { ...DEFAULT_SCORING };
+    let participantIds = null;
 
     if (pencaId) {
         penca = await Penca.findById(pencaId)
@@ -30,10 +31,12 @@ async function calculateScores(pencaId, competition) {
         if (penca.scoring) {
             scoring = sanitizeScoring(penca.scoring);
         }
-        if (!Array.isArray(penca.participants) || penca.participants.length === 0) {
-            return [];
+
+        if (Array.isArray(penca.participants) && penca.participants.length > 0) {
+            participantIds = penca.participants.map(id => id.toString());
+            userFilter._id = { $in: penca.participants };
         }
-        userFilter._id = { $in: penca.participants };
+
         predictionFilter.pencaId = pencaId;
 
         if (Array.isArray(penca.fixture) && penca.fixture.length > 0) {
@@ -48,43 +51,64 @@ async function calculateScores(pencaId, competition) {
         matchFilter.competition = competition;
     }
 
-    const usersPromise = User.find(userFilter)
-        .select('username avatar avatarContentType')
-        .lean();
-    const matchesPromise = Match.find(matchFilter)
+    const matches = await Match.find(matchFilter)
         .select('result1 result2 competition')
         .lean();
 
-    const [users, matches] = await Promise.all([usersPromise, matchesPromise]);
-
-    const completedMatches = matches.filter(match => match.result1 != null && match.result2 != null);
-    if (!completedMatches.length) {
-        return [];
-    }
+    const matchesById = new Map();
+    const completedMatches = [];
+    matches.forEach(match => {
+        const key = match._id.toString();
+        matchesById.set(key, match);
+        if (match.result1 != null && match.result2 != null) {
+            completedMatches.push(match);
+        }
+    });
 
     const completedMatchIds = completedMatches.map(match => match._id);
+    const completedIdSet = new Set(completedMatches.map(match => match._id.toString()));
+
+    let shouldLoadPredictions = completedMatches.length > 0;
+
     if (predictionFilter.matchId && predictionFilter.matchId.$in) {
-        const idSet = new Set(completedMatchIds.map(id => id.toString()));
-        predictionFilter.matchId.$in = predictionFilter.matchId.$in.filter(id => idSet.has(id.toString()));
-        if (predictionFilter.matchId.$in.length === 0) {
-            return [];
+        predictionFilter.matchId.$in = predictionFilter.matchId.$in.filter(id => completedIdSet.has(id.toString()));
+        if (!predictionFilter.matchId.$in.length) {
+            delete predictionFilter.matchId;
         }
-    } else {
+    } else if (completedMatchIds.length) {
         predictionFilter.matchId = { $in: completedMatchIds };
     }
 
-    const predictions = await Prediction.find(predictionFilter)
-        .select('userId matchId result1 result2')
-        .lean();
+    if (!participantIds) {
+        shouldLoadPredictions = true;
+    }
 
-    if (!users.length || !completedMatches.length) {
+    let predictions = [];
+    if (shouldLoadPredictions) {
+        predictions = await Prediction.find(predictionFilter)
+            .select('userId matchId result1 result2 pencaId')
+            .lean();
+    }
+
+    if (!participantIds && predictions.length) {
+        const participantSet = new Set(predictions.map(prediction => prediction.userId.toString()));
+        if (participantSet.size) {
+            userFilter._id = { $in: Array.from(participantSet) };
+        }
+    }
+
+    if (!participantIds && pencaId && !predictions.length) {
+        // No tenemos participantes explícitos ni predicciones registradas
         return [];
     }
 
-    const matchesById = new Map();
-    completedMatches.forEach(match => {
-        matchesById.set(match._id.toString(), match);
-    });
+    const users = await User.find(userFilter)
+        .select('username avatar avatarContentType')
+        .lean();
+
+    if (!users.length) {
+        return [];
+    }
 
     const predictionsByUser = new Map();
     predictions.forEach(prediction => {

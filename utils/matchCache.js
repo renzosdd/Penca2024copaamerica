@@ -12,6 +12,10 @@ function normalize(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
+function normalize(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
 function makeKey(competition) {
   return competition ? normalize(competition) : '__all__';
 }

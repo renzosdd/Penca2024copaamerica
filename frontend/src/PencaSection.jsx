@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -65,7 +65,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const predictionForms = useRef(new Map());
 
-  const matchTimeValue = match => matchKickoffValue(match);
+  const matchTimeValue = useCallback(match => matchKickoffValue(match), []);
 
   const filteredMatches = useMemo(() => {
     let list = [];
