@@ -1,6 +1,12 @@
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-const cache = new Map();
+const CATEGORY = 'matches';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const GLOBAL_KEY = '__all__';
+
+function normalize(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
 
 function normalize(value) {
   return String(value ?? '').trim().toLowerCase();
@@ -31,21 +37,24 @@ function getCache(competition) {
   return entry.data;
 }
 
-function invalidate(competition) {
+async function invalidate(competition) {
   if (!competition) {
-    cache.clear();
+    await cacheStore.clearCategory(CATEGORY);
     return;
   }
-  cache.delete(makeKey(competition));
+  await cacheStore.invalidate({
+    category: CATEGORY,
+    tagsAny: [`competition:${normalize(competition)}`]
+  });
 }
 
 async function getOrLoad(competition, loader) {
-  const cached = getCache(competition);
+  const cached = await getCache(competition);
   if (cached) {
     return cached;
   }
   const data = await loader();
-  setCache(competition, data);
+  await setCache(competition, data);
   return data;
 }
 
