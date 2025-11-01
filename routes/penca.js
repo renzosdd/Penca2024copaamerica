@@ -19,7 +19,9 @@ router.get('/', isAuthenticated, async (req, res) => {
     const filter = {};
     if (req.query.competition) filter.competition = req.query.competition;
     if (req.query.public === 'true') filter.isPublic = true;
-    const pencas = await Penca.find(filter).select('name code competition');
+    const pencas = await Penca.find(filter)
+      .select('name code competition')
+      .lean();
     res.json(pencas);
   } catch (err) {
     console.error('list pencas error', err);
@@ -75,7 +77,8 @@ router.get('/mine', isAuthenticated, async (req, res) => {
     const pencas = await Penca.find(filter)
       .select('name code competition participants pendingRequests rules prizes isPublic fixture scoring')
       .populate('pendingRequests', 'username')
-      .populate('participants', 'username');
+      .populate('participants', 'username')
+      .lean();
 
     res.json(pencas);
   } catch (err) {
@@ -135,7 +138,8 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
   try {
     const penca = await Penca.findById(pencaId)
       .populate('participants', 'username')
-      .populate('pendingRequests', 'username');
+      .populate('pendingRequests', 'username')
+      .lean();
     if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
     if (penca.owner.toString() !== req.session.user._id.toString() && req.session.user.role !== 'admin') {
       return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });

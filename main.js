@@ -43,30 +43,71 @@ if (!uri) {
 const maskedUri = uri.replace(/(mongodb(?:\+srv)?:\/\/)([^:]+):([^@]+)@/, '$1****:****@');
 debugLog('Mongo URI:', maskedUri);
 
+function parsePositiveInt(value, fallback) {
+    const parsed = parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return fallback;
+    }
+    return parsed;
+}
+
 const mongooseOptions = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    connectTimeoutMS: 60000,
-    socketTimeoutMS: 60000,
-    maxPoolSize: 10 // Ajusta el tamaño del pool según tus necesidades
+    connectTimeoutMS: parsePositiveInt(process.env.MONGODB_CONNECT_TIMEOUT_MS, 60000),
+    socketTimeoutMS: parsePositiveInt(process.env.MONGODB_SOCKET_TIMEOUT_MS, 60000),
+    serverSelectionTimeoutMS: parsePositiveInt(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS, 30000),
+    heartbeatFrequencyMS: parsePositiveInt(process.env.MONGODB_HEARTBEAT_FREQUENCY_MS, 10000),
+    maxPoolSize: parsePositiveInt(process.env.MONGODB_MAX_POOL_SIZE, 10)
 };
 
+const minPoolSize = parsePositiveInt(process.env.MONGODB_MIN_POOL_SIZE, 0);
+if (minPoolSize) {
+    mongooseOptions.minPoolSize = minPoolSize;
+}
+
 mongoose.set('strictQuery', true);
+if (process.env.MONGOOSE_DEBUG === 'true') {
+    mongoose.set('debug', true);
+}
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.use(language);
+const sessionTtlSeconds = parsePositiveInt(process.env.SESSION_TTL_SECONDS, 30 * 60);
+const sessionTouchAfter = parsePositiveInt(process.env.SESSION_TOUCH_AFTER_SECONDS, 5 * 60);
+const sessionAutoRemoveInterval = parsePositiveInt(process.env.SESSION_AUTO_REMOVE_INTERVAL, 10);
+
+const sessionStoreOptions = {
+    mongoUrl: process.env.SESSION_STORE_URI || uri,
+    collectionName: process.env.SESSION_COLLECTION_NAME || 'sessions',
+    ttl: sessionTtlSeconds,
+    autoRemove: process.env.SESSION_AUTO_REMOVE || 'interval'
+};
+
+if (sessionTouchAfter) {
+    sessionStoreOptions.touchAfter = sessionTouchAfter;
+}
+
+if (sessionStoreOptions.autoRemove === 'interval' && sessionAutoRemoveInterval) {
+    sessionStoreOptions.autoRemoveInterval = sessionAutoRemoveInterval;
+}
+
+const sessionCookieMaxAge = sessionTtlSeconds * 1000;
+
 app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: uri,
-        collectionName: 'sessions',
-        ttl: 30 * 60, // 30 minutos en segundos
-    }),
-    cookie: { maxAge: 30 * 60 * 1000 } // 30 minutos en milisegundos
+    rolling: process.env.SESSION_ROLLING === 'true',
+    store: MongoStore.create(sessionStoreOptions),
+    name: process.env.SESSION_COOKIE_NAME || 'penca.sid',
+    cookie: {
+        maxAge: sessionCookieMaxAge,
+        sameSite: process.env.SESSION_COOKIE_SAMESITE || 'lax',
+        secure: process.env.SESSION_COOKIE_SECURE === 'true'
+    }
 }));
 
 mongoose.connect(uri, mongooseOptions)

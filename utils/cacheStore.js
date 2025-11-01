@@ -1,11 +1,13 @@
 const CacheEntry = require('../models/CacheEntry');
 
+const CACHE_STORE_ENABLED = process.env.CACHE_STORE_ENABLED !== 'false';
+
 function normalizeKey(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
 async function get({ category, key }) {
-  if (!category || key == null) {
+  if (!CACHE_STORE_ENABLED || !category || key == null) {
     return null;
   }
   const now = new Date();
@@ -16,7 +18,7 @@ async function get({ category, key }) {
 }
 
 async function set({ category, key, data, ttlMs, tags = [] }) {
-  if (!category || key == null || ttlMs == null) {
+  if (!CACHE_STORE_ENABLED || !category || key == null || ttlMs == null) {
     return;
   }
   const expiresAt = new Date(Date.now() + Math.max(0, ttlMs));
@@ -31,7 +33,7 @@ async function set({ category, key, data, ttlMs, tags = [] }) {
 }
 
 async function invalidate({ category, key, tagsAny = [], tagsAll = [] }) {
-  if (!category) {
+  if (!CACHE_STORE_ENABLED || !category) {
     return;
   }
   const filter = { category };
@@ -52,7 +54,7 @@ async function invalidate({ category, key, tagsAny = [], tagsAll = [] }) {
 }
 
 async function clearCategory(category) {
-  if (!category) {
+  if (!CACHE_STORE_ENABLED || !category) {
     return;
   }
   await CacheEntry.deleteMany({ category });

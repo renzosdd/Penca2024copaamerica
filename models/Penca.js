@@ -42,5 +42,9 @@ pencaSchema.methods.applyScoring = function applyScoring(scoring) {
   }
 };
 
+pencaSchema.index({ owner: 1, competition: 1 });
+pencaSchema.index({ competition: 1, isPublic: 1 });
+pencaSchema.index({ participants: 1 });
+
 module.exports = mongoose.models.Penca || mongoose.model('Penca', pencaSchema);
  

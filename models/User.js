@@ -14,7 +14,9 @@ const userSchema = new mongoose.Schema({
     ownedPencas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Penca' }],
     pencas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Penca' }]
 });
- 
-const User = mongoose.model('User', userSchema);
 
-module.exports = User;
+userSchema.index({ role: 1, valid: 1 });
+userSchema.index({ username: 1 });
+userSchema.index({ email: 1 });
+
+module.exports = mongoose.models.User || mongoose.model('User', userSchema);
