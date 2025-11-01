@@ -1517,7 +1517,7 @@ export default function Admin() {
         spacing={3}
         sx={{
           alignItems: { xs: 'center', md: 'flex-start' },
-          maxWidth: { xs: 480, md: 'none' },
+          maxWidth: { xs: 480, md: '100%' },
           mx: { xs: 'auto', md: 0 }
         }}
       >
@@ -1530,7 +1530,8 @@ export default function Admin() {
           allowScrollButtonsMobile
           sx={{
             '& .MuiTabs-flexContainer': {
-              justifyContent: { xs: 'center', md: 'flex-start' }
+              justifyContent: { xs: 'center', md: 'flex-start' },
+              flexGrow: { xs: 0, md: 1 }
             }
           }}
         >
