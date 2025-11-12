@@ -73,6 +73,23 @@ export default function Admin() {
   const [cleanupLoading, setCleanupLoading] = useState(false);
   const [cleanupConfirmOpen, setCleanupConfirmOpen] = useState(false);
 
+  const formItemSx = {
+    flex: { xs: '1 1 100%', md: '0 0 auto' },
+    width: { xs: '100%', md: 'auto' },
+    minWidth: { md: 200 }
+  };
+
+  const selectItemSx = {
+    flex: { xs: '1 1 100%', md: '0 0 auto' },
+    width: { xs: '100%', md: 'auto' },
+    minWidth: { md: 180 }
+  };
+
+  const buttonItemSx = {
+    flex: { xs: '1 1 100%', md: '0 0 auto' },
+    width: { xs: '100%', md: 'auto' }
+  };
+
   const auditTypeLabels = {
     user: t('auditTypeUser'),
     penca: t('auditTypePenca'),
@@ -1230,6 +1247,7 @@ export default function Admin() {
           direction={{ xs: 'column', md: 'row' }}
           spacing={1.5}
           flexWrap="wrap"
+          sx={{ width: '100%' }}
         >
           <TextField
             value={ownerForm.username}
@@ -1237,7 +1255,7 @@ export default function Admin() {
             label={t('username')}
             required
             size="small"
-            fullWidth
+            sx={formItemSx}
           />
           <TextField
             type="password"
@@ -1246,7 +1264,7 @@ export default function Admin() {
             label={t('password')}
             required
             size="small"
-            fullWidth
+            sx={formItemSx}
           />
           <TextField
             type="email"
@@ -1255,9 +1273,15 @@ export default function Admin() {
             label={t('email')}
             required
             size="small"
-            fullWidth
+            sx={formItemSx}
           />
-          <Button variant="contained" type="submit" size="small" disabled={isSaving}>
+          <Button
+            variant="contained"
+            type="submit"
+            size="small"
+            disabled={isSaving}
+            sx={buttonItemSx}
+          >
             {t('create')}
           </Button>
         </Stack>
@@ -1266,13 +1290,19 @@ export default function Admin() {
       <Stack spacing={1.5}>
         {owners.map(owner => (
           <Paper key={owner._id} sx={{ p: 2, borderRadius: 2 }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} flexWrap="wrap" alignItems={{ xs: 'flex-start', md: 'center' }}>
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={1.5}
+              flexWrap="wrap"
+              alignItems={{ xs: 'flex-start', md: 'center' }}
+              sx={{ width: '100%' }}
+            >
               <TextField
                 label={t('username')}
                 value={owner.username || ''}
                 onChange={e => updateOwnerField(owner._id, 'username', e.target.value)}
                 size="small"
-                fullWidth
+                sx={formItemSx}
               />
               <TextField
                 label={t('email')}
@@ -1280,17 +1310,23 @@ export default function Admin() {
                 value={owner.email || ''}
                 onChange={e => updateOwnerField(owner._id, 'email', e.target.value)}
                 size="small"
-                fullWidth
+                sx={formItemSx}
               />
               <Button
                 variant="contained"
                 size="small"
                 onClick={() => saveOwner(owner)}
                 disabled={isSaving}
+                sx={buttonItemSx}
               >
                 {t('save')}
               </Button>
-              <Button color="error" size="small" onClick={() => deleteOwner(owner._id)}>
+              <Button
+                color="error"
+                size="small"
+                onClick={() => deleteOwner(owner._id)}
+                sx={buttonItemSx}
+              >
                 {t('delete')}
               </Button>
             </Stack>
@@ -1312,6 +1348,7 @@ export default function Admin() {
           direction={{ xs: 'column', md: 'row' }}
           spacing={1.5}
           flexWrap="wrap"
+          sx={{ width: '100%' }}
         >
           <TextField
             value={pencaForm.name}
@@ -1319,7 +1356,7 @@ export default function Admin() {
             label={t('name')}
             required
             size="small"
-            fullWidth
+            sx={formItemSx}
           />
           <Select
             value={pencaForm.owner}
@@ -1327,7 +1364,7 @@ export default function Admin() {
             displayEmpty
             required
             size="small"
-            sx={{ minWidth: 180 }}
+            sx={selectItemSx}
           >
             <MenuItem value="" disabled>
               {t('owner')}
@@ -1342,7 +1379,7 @@ export default function Admin() {
             displayEmpty
             required
             size="small"
-            sx={{ minWidth: 180 }}
+            sx={selectItemSx}
           >
             <MenuItem value="" disabled>
               {t('competition')}
@@ -1359,8 +1396,15 @@ export default function Admin() {
               />
             )}
             label={t('public')}
+            sx={buttonItemSx}
           />
-          <Button variant="contained" type="submit" size="small" disabled={isSaving}>
+          <Button
+            variant="contained"
+            type="submit"
+            size="small"
+            disabled={isSaving}
+            sx={buttonItemSx}
+          >
             {t('create')}
           </Button>
         </Stack>
@@ -1369,26 +1413,32 @@ export default function Admin() {
       <Stack spacing={1.5}>
         {pencas.map(penca => (
           <Paper key={penca._id} sx={{ p: 2, borderRadius: 2 }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} flexWrap="wrap" alignItems={{ xs: 'flex-start', md: 'center' }}>
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={1.5}
+              flexWrap="wrap"
+              alignItems={{ xs: 'flex-start', md: 'center' }}
+              sx={{ width: '100%' }}
+            >
               <TextField
                 label={t('name')}
                 value={penca.name || ''}
                 onChange={e => updatePencaField(penca._id, 'name', e.target.value)}
                 size="small"
-                fullWidth
+                sx={formItemSx}
               />
               <TextField
                 label={t('code')}
                 value={penca.code || ''}
                 size="small"
                 InputProps={{ readOnly: true }}
-                sx={{ maxWidth: 140 }}
+                sx={{ ...buttonItemSx, maxWidth: { xs: '100%', md: 140 } }}
               />
               <Select
                 value={penca.owner}
                 onChange={e => updatePencaField(penca._id, 'owner', e.target.value)}
                 size="small"
-                sx={{ minWidth: 180 }}
+                sx={selectItemSx}
               >
                 {owners.map(o => (
                   <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
@@ -1398,7 +1448,7 @@ export default function Admin() {
                 value={penca.competition}
                 onChange={e => updatePencaField(penca._id, 'competition', e.target.value)}
                 size="small"
-                sx={{ minWidth: 180 }}
+                sx={selectItemSx}
               >
                 {competitions.map(c => (
                   <MenuItem key={c._id} value={c.name}>{c.name}</MenuItem>
@@ -1412,16 +1462,23 @@ export default function Admin() {
                   />
                 )}
                 label={t('public')}
+                sx={buttonItemSx}
               />
               <Button
                 variant="contained"
                 size="small"
                 onClick={() => savePenca(penca)}
                 disabled={isSaving}
+                sx={buttonItemSx}
               >
                 {t('save')}
               </Button>
-              <Button color="error" size="small" onClick={() => deletePenca(penca._id)}>
+              <Button
+                color="error"
+                size="small"
+                onClick={() => deletePenca(penca._id)}
+                sx={buttonItemSx}
+              >
                 {t('delete')}
               </Button>
             </Stack>
@@ -1516,9 +1573,8 @@ export default function Admin() {
       <Stack
         spacing={3}
         sx={{
-          alignItems: { xs: 'center', md: 'flex-start' },
-          maxWidth: { xs: 480, md: '100%' },
-          mx: { xs: 'auto', md: 0 }
+          width: '100%',
+          alignItems: 'stretch'
         }}
       >
         <Typography variant="h5">{t('adminTitle')}</Typography>
@@ -1529,6 +1585,7 @@ export default function Admin() {
           scrollButtons
           allowScrollButtonsMobile
           sx={{
+            alignSelf: 'stretch',
             '& .MuiTabs-flexContainer': {
               justifyContent: { xs: 'center', md: 'flex-start' },
               flexGrow: { xs: 0, md: 1 }
