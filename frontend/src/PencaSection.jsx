@@ -174,6 +174,32 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     </Stack>
   );
 
+  useEffect(() => {
+    if (!predictionSections.length) {
+      setExpandedPredictionKeys([]);
+      setSelectedDateKey('');
+      predictionSectionRefs.current = {};
+      return;
+    }
+    predictionSectionRefs.current = {};
+    const nextUpcoming = predictionSections.find(section => section.matches.some(canPredict));
+    const defaultKey = nextUpcoming ? nextUpcoming.key : predictionSections[0].key;
+    setExpandedPredictionKeys([defaultKey]);
+    setSelectedDateKey('');
+  }, [predictionSections]);
+
+  useEffect(() => {
+    if (!stageSections.length) {
+      setExpandedStageKeys([]);
+      setSelectedStageKey('');
+      stageSectionRefs.current = {};
+      return;
+    }
+    stageSectionRefs.current = {};
+    setExpandedStageKeys([stageSections[0].key]);
+    setSelectedStageKey('');
+  }, [stageSections]);
+
   const renderTeam = name => (
     <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
       <Box
