@@ -27,10 +27,10 @@ describe('Penca Routes creation', () => {
     jest.clearAllMocks();
   });
 
-  it('does not add owner to participants when creating', async () => {
+  it('creates a penca without adding participants', async () => {
     const app = express();
     app.use(express.json());
-    app.use((req, res, next) => { req.session = { user: { _id: 'u1' } }; next(); });
+    app.use((req, res, next) => { req.session = { user: { _id: 'u1', role: 'admin' } }; next(); });
     app.use('/pencas', pencaRouter);
 
     const res = await request(app)
@@ -52,7 +52,7 @@ describe('Penca join role check', () => {
     require('../models/Penca').findOne = jest.fn();
     const app = express();
     app.use(express.json());
-    app.use((req, res, next) => { req.session = { user: { _id: 'u1', role: 'owner', pencas: [] } }; next(); });
+    app.use((req, res, next) => { req.session = { user: { _id: 'u1', role: 'admin', pencas: [] } }; next(); });
     app.use('/pencas', pencaRouter);
 
     const res = await request(app)
@@ -118,7 +118,6 @@ describe('Penca participant approval and removal', () => {
   it('approves a pending participant', async () => {
     const penca = {
       _id: 'p1',
-      owner: 'o1',
       participants: [],
       pendingRequests: ['u2'],
       save: jest.fn().mockResolvedValue(true)
@@ -127,7 +126,7 @@ describe('Penca participant approval and removal', () => {
 
     const app = express();
     app.use(express.json());
-    app.use((req, res, next) => { req.session = { user: { _id: 'o1' } }; next(); });
+    app.use((req, res, next) => { req.session = { user: { _id: 'admin1', role: 'admin' } }; next(); });
     app.use('/pencas', pencaRouter);
 
     const res = await request(app).post('/pencas/approve/p1/u2');
@@ -141,7 +140,6 @@ describe('Penca participant approval and removal', () => {
   it('removes a participant', async () => {
     const penca = {
       _id: 'p1',
-      owner: 'o1',
       participants: ['u2'],
       pendingRequests: [],
       save: jest.fn().mockResolvedValue(true)
@@ -150,7 +148,7 @@ describe('Penca participant approval and removal', () => {
 
     const app = express();
     app.use(express.json());
-    app.use((req, res, next) => { req.session = { user: { _id: 'o1' } }; next(); });
+    app.use((req, res, next) => { req.session = { user: { _id: 'admin1', role: 'admin' } }; next(); });
     app.use('/pencas', pencaRouter);
 
     const res = await request(app).delete('/pencas/participant/p1/u2');
@@ -178,23 +176,6 @@ describe('Penca listing includes code', () => {
     expect(res.body[0]).toHaveProperty('code', 'ABCD');
   });
 
-  it('returns code for owner pencas', async () => {
-    const pencaData = [{ name: 'P2', code: 'EFGH', participants: [], pendingRequests: [] }];
-    const query = { select: jest.fn(() => query), populate: jest.fn() };
-    query.select.mockReturnValue(query);
-    query.populate
-      .mockReturnValueOnce(query)
-      .mockResolvedValueOnce(pencaData);
-    Penca.find = jest.fn().mockReturnValue(query);
-
-    const app = express();
-    app.use((req, res, next) => { req.session = { user: { _id: 'o1' } }; next(); });
-    app.use('/pencas', pencaRouter);
-
-    const res = await request(app).get('/pencas/mine');
-    expect(res.status).toBe(200);
-    expect(res.body[0]).toHaveProperty('code', 'EFGH');
-  });
 });
 
 describe('Penca rules and prizes update', () => {
@@ -205,7 +186,6 @@ describe('Penca rules and prizes update', () => {
   it('updates rules and prizes', async () => {
     const penca = {
       _id: 'p1',
-      owner: 'o1',
       scoring: { exact: 3, outcome: 1, goals: 1 },
       save: jest.fn().mockResolvedValue(true)
     };
@@ -213,7 +193,7 @@ describe('Penca rules and prizes update', () => {
 
     const app = express();
     app.use(express.json());
-    app.use((req, res, next) => { req.session = { user: { _id: 'o1' } }; next(); });
+    app.use((req, res, next) => { req.session = { user: { _id: 'admin1', role: 'admin' } }; next(); });
     app.use('/pencas', pencaRouter);
 
     const res = await request(app)
@@ -229,7 +209,6 @@ describe('Penca rules and prizes update', () => {
   it('updates scoring and autogenerates rules when missing', async () => {
     const penca = {
       _id: 'p2',
-      owner: 'o1',
       scoring: { exact: 3, outcome: 1, goals: 1 },
       save: jest.fn().mockResolvedValue(true)
     };
@@ -237,7 +216,7 @@ describe('Penca rules and prizes update', () => {
 
     const app = express();
     app.use(express.json());
-    app.use((req, res, next) => { req.session = { user: { _id: 'o1' } }; next(); });
+    app.use((req, res, next) => { req.session = { user: { _id: 'admin1', role: 'admin' } }; next(); });
     app.use('/pencas', pencaRouter);
 
     const res = await request(app)

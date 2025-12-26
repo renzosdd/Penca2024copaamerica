@@ -82,7 +82,7 @@ EMAIL_FROM="Penca 2026 <no-reply@tudominio.com>"
 Si las credenciales no están presentes, la aplicación registrará el intento de
 envío en consola sin fallar. Para evitar alcanzar el límite de concurrencia en la
 base de datos, la auditoría se mantiene desactivada por defecto. Podés habilitarla
-desde el panel de administración y elegir qué tipos de cambios (owners,
+desde el panel de administración y elegir qué tipos de cambios (usuarios,
 pencas, predicciones) se registran en la colección `auditlogs` cuando esté activa,
 lo que permite reconstruir el historial de cambios en caso de controversias.
 
@@ -158,9 +158,7 @@ definidas en tu archivo `.env`.
 
 Los partidos ya no se insertan automáticamente al iniciar la aplicación. Debes cargarlos manualmente desde el panel de administración.
 
-El esquema `Penca` permite organizar competiciones privadas. Los usuarios se unen con un código y el propietario decide aprobar o eliminar participantes.
-
-Los owners cuentan con un panel propio disponible en `/owner` para administrar sus pencas. Desde allí pueden aprobar o rechazar solicitudes de ingreso y revisar el ranking de cada penca.
+El esquema `Penca` permite organizar competiciones privadas. Los usuarios se unen con un código y el equipo de administración decide aprobar o eliminar participantes.
 
 Con esta estructura puedes navegar fácilmente por cada componente de la aplicación.
 
@@ -198,7 +196,6 @@ El comando utilizará los valores `apiLeagueId` y `apiSeason` definidos en la co
 - `POST /admin/recalculate-bracket` – fuerza el nuevo cálculo del bracket con
   los resultados cargados.
 - `POST /admin/update-results/:competition` – obtiene los resultados desde la API-Football.
-- `GET /api/owner` – devuelve las pencas administradas por el owner autenticado.
 - `GET /competitions/:competition/matches` – lista los partidos de la competencia indicada.
 
 ## Ideas para próximas iteraciones
@@ -206,7 +203,7 @@ El comando utilizará los valores `apiLeagueId` y `apiSeason` definidos en la co
 - Crear dashboards en tiempo real con WebSockets para reflejar cambios en los marcadores al instante.
 - Permitir configuraciones de scoring avanzadas por penca (bonos por ronda, resultados parciales) mediante presets.
 - Integrar notificaciones push y recordatorios antes de cada partido para mejorar el engagement móvil.
-- Añadir un historial visual de auditoría en el panel de owners para rastrear aprobaciones, cambios de fixture y edición de resultados.
+- Añadir un historial visual de auditoría en el panel de administración para rastrear aprobaciones, cambios de fixture y edición de resultados.
 - Incorporar un modo “simulador” que genere estadísticas hipotéticas de clasificación al ingresar predicciones.
 
 ## Pruebas

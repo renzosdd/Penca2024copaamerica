@@ -135,7 +135,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const translatedMode = t(modeKey);
   const tournamentLabel = translatedMode === modeKey ? penca.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
   const participantsLabel = `${participantsCount}${participantLimit} ${t('participantsShort')}`.trim();
-  const ownerName = penca.ownerDisplayName || penca.owner?.name || penca.owner?.username || '';
 
   const filteredRanking = useMemo(() => {
     const normalized = rankingSearch.trim().toLowerCase();
@@ -430,9 +429,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
               <Chip size="small" color="primary" label={tournamentLabel} />
               <Chip size="small" label={participantsLabel} />
-              {ownerName && (
-                <Chip size="small" color="secondary" label={`${t('pencaOwnerLabel')}: ${ownerName}`} />
-              )}
             </Stack>
           </Box>
           <Tooltip title={t('viewRules')}>

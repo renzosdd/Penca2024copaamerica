@@ -199,9 +199,6 @@ app.get('/', (req, res) => {
         if (req.session.user.role === 'admin') {
             return res.redirect('/admin/edit');
         }
-        if (req.session.user.role === 'owner') {
-            return res.redirect('/owner');
-        }
         return res.redirect('/dashboard');
     }
     // Enviar la aplicación React compilada
@@ -213,21 +210,7 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
     if (user.role === 'admin') {
         return res.redirect('/admin/edit');
     }
-    if (user.role === 'owner') {
-        return res.redirect('/owner');
-    }
     // Enviar la aplicación React para el dashboard
-    res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
-});
-
-app.get('/owner', isAuthenticated, async (req, res) => {
-    const { user } = req.session;
-    if (user.role !== 'owner') {
-        if (user.role === 'admin') {
-            return res.redirect('/admin/edit');
-        }
-        return res.redirect('/dashboard');
-    }
     res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 
@@ -240,19 +223,15 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
     try {
         const pencas = await Penca.find({ participants: user._id })
             .select(
-                'name _id competition fixture rules prizes scoring tournamentMode modeSettings participants participantLimit owner'
+                'name _id competition fixture rules prizes scoring tournamentMode modeSettings participants participantLimit'
             )
-            .populate('owner', 'username name surname')
             .lean();
 
         const formatted = pencas.map(penca => {
-            const { participants = [], owner = {}, ...rest } = penca;
-            const ownerFullName = [owner.name, owner.surname].filter(Boolean).join(' ').trim();
+            const { participants = [], ...rest } = penca;
             return {
                 ...rest,
-                owner,
-                participantsCount: Array.isArray(participants) ? participants.length : 0,
-                ownerDisplayName: ownerFullName || owner.username || ''
+                participantsCount: Array.isArray(participants) ? participants.length : 0
             };
         });
 
@@ -263,24 +242,6 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/api/owner', isAuthenticated, async (req, res) => {
-    const { user } = req.session;
-    if (user.role !== 'owner') {
-        return res.status(403).json({ error: getMessage('OWNER_ONLY', req.lang) });
-    }
-    try {
-        const pencas = await Penca.find({ owner: user._id })
-            .select(
-                'name code competition participants pendingRequests rules prizes isPublic fixture scoring tournamentMode modeSettings'
-            )
-            .populate('participants', 'username')
-            .populate('pendingRequests', 'username');
-        res.json({ user: { username: user.username, role: user.role }, pencas });
-    } catch (err) {
-        console.error('owner api error', err);
-        res.status(500).json({ error: getMessage('OWNER_DATA_ERROR', req.lang) });
-    }
-});
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body;
@@ -306,8 +267,6 @@ app.post('/login', async (req, res) => {
         let redirectUrl = '/dashboard';
         if (user.role === 'admin') {
             redirectUrl = '/admin/edit';
-        } else if (user.role === 'owner') {
-            redirectUrl = '/owner';
         }
         res.json({ success: true, redirectUrl });
     } catch (err) {
