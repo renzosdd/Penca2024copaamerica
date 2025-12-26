@@ -1,9 +1,17 @@
-# Penca Copa América 2024
+# Penca Mundial 2026
 
 Aplicación web desarrollada en **Node.js** y **Express** con un frontend en
-**React**. Permite administrar una penca de la Copa América 2024. Los usuarios
-pueden registrarse, realizar predicciones de los partidos y consultar el
-ranking general.
+**React**. Permite administrar una penca del Mundial 2026 con modelo
+freemium: usuarios gratuitos compiten en el ranking general y quienes activen
+Premium acceden a rankings especiales y beneficios.
+
+Características principales:
+
+- Registro e inicio de sesión con autenticación JWT.
+- Gestión de partidos, resultados oficiales y cierre automático de predicciones.
+- Sistema de puntos configurable con soporte para diferentes formatos de torneo.
+- Rankings general y Premium con actualizaciones automáticas.
+- Panel de administración para gestionar competencias, usuarios y resultados.
 
 Esta aplicación requiere Node.js 18 o superior para utilizar la función `fetch` en el backend.
 
