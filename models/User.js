@@ -9,9 +9,10 @@ const userSchema = new mongoose.Schema({
     dob: { type: Date, required: false },
     avatar: { type: Buffer, required: false },
     avatarContentType: { type: String, required: false },
-    role: { type: String, enum: ['user', 'owner', 'admin'], default: 'user' },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
     valid: { type: Boolean, default: false },
-    ownedPencas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Penca' }],
+    isPremium: { type: Boolean, default: false },
+    premiumUntil: { type: Date, required: false },
     pencas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Penca' }]
 });
 

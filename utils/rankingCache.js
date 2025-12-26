@@ -24,27 +24,30 @@ function normalizeId(value) {
   return String(value).trim().toLowerCase();
 }
 
-function makeKey(pencaId, competition) {
+function makeKey(pencaId, competition, variant) {
   const pencaKey = normalizeId(pencaId) || 'all';
   const competitionKey = normalizeId(competition) || GLOBAL_COMPETITION;
-  return `${pencaKey}::${competitionKey}`;
+  const variantKey = normalizeId(variant) || 'all';
+  return `${pencaKey}::${competitionKey}::${variantKey}`;
 }
 
-function set(pencaId, competition, data) {
+function set(pencaId, competition, variant, data) {
   const pencaKey = normalizeId(pencaId);
   const competitionKey = normalizeId(competition) || GLOBAL_COMPETITION;
-  const key = makeKey(pencaId, competition);
+  const variantKey = normalizeId(variant) || 'all';
+  const key = makeKey(pencaId, competition, variant);
   cache.set(key, {
     data,
     expiresAt: Date.now() + CACHE_TTL_MS,
     pencaKey,
     competitionKey,
+    variantKey,
     scope: pencaKey ? 'penca' : 'global'
   });
 }
 
-function get(pencaId, competition) {
-  const key = makeKey(pencaId, competition);
+function get(pencaId, competition, variant) {
+  const key = makeKey(pencaId, competition, variant);
   const entry = cache.get(key);
   if (!entry) {
     return null;
@@ -99,11 +102,11 @@ function invalidateCache({ pencaId, competition } = {}) {
 
 module.exports = {
   CACHE_TTL_MS,
-  async get(pencaId, competition) {
-    return get(pencaId, competition);
+  async get(pencaId, competition, variant) {
+    return get(pencaId, competition, variant);
   },
-  async set(pencaId, competition, data) {
-    set(pencaId, competition, data);
+  async set(pencaId, competition, variant, data) {
+    set(pencaId, competition, variant, data);
   },
   async invalidate(params) {
     invalidateCache(params || {});

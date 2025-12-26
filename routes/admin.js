@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const bcrypt = require('bcrypt');
 const path = require('path');
 const mongoose = require('mongoose');
 const User = require('../models/User');
@@ -55,7 +54,7 @@ const CLEANUP_COLLECTIONS = Object.freeze({
     pencas: {
         model: Penca,
         label: 'Pencas',
-        description: 'Pencas creadas por owners y relaciones con usuarios'
+        description: 'Pencas creadas y relaciones con usuarios'
     },
     predictions: {
         model: Prediction,
@@ -80,7 +79,7 @@ const CLEANUP_COLLECTIONS = Object.freeze({
     users: {
         model: User,
         label: 'Usuarios (no administradores)',
-        description: 'Jugadores y owners registrados, se preservan los administradores'
+        description: 'Jugadores registrados, se preservan los administradores'
     }
 });
 
@@ -223,11 +222,11 @@ router.post('/cleanup', isAuthenticated, isAdmin, async (req, res) => {
                 const result = await cfg.model.deleteMany({ role: { $ne: 'admin' } });
                 deletedCount = result.deletedCount || 0;
                 await Penca.updateMany({}, { $set: { participants: [], pendingRequests: [] } });
-                await User.updateMany({ role: 'admin' }, { $set: { ownedPencas: [], pencas: [] } });
+                await User.updateMany({ role: 'admin' }, { $set: { pencas: [] } });
             } else if (key === 'pencas') {
                 const result = await cfg.model.deleteMany({});
                 deletedCount = result.deletedCount || 0;
-                await User.updateMany({}, { $set: { pencas: [], ownedPencas: [] } });
+                await User.updateMany({}, { $set: { pencas: [] } });
             } else {
                 const result = await cfg.model.deleteMany({});
                 deletedCount = result.deletedCount || 0;
@@ -243,7 +242,7 @@ router.post('/cleanup', isAuthenticated, isAdmin, async (req, res) => {
         }
 
         if (selections.includes('pencas') && !selections.includes('users')) {
-            await User.updateMany({ role: { $ne: 'admin' } }, { $set: { pencas: [], ownedPencas: [] } });
+            await User.updateMany({ role: { $ne: 'admin' } }, { $set: { pencas: [] } });
         }
 
         await recordAudit({
@@ -471,7 +470,7 @@ router.get('/user/:username', isAuthenticated, isAdmin, async (req, res) => {
 // Actualizar perfil de usuario
 router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async (req, res) => {
     try {
-        const { username, name, surname, email, dob, role, valid } = req.body;
+        const { username, name, surname, email, dob, role, valid, isPremium, premiumUntil } = req.body;
         const avatar = req.file;
 
         const user = await User.findOne({ username });
@@ -483,6 +482,13 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
         if (dob) user.dob = new Date(dob);
         if (role) user.role = role;
         if (valid !== undefined) user.valid = valid === 'true';
+        if (isPremium !== undefined) user.isPremium = isPremium === 'true' || isPremium === true;
+        if (premiumUntil !== undefined) {
+            const parsedPremiumUntil = premiumUntil ? new Date(premiumUntil) : null;
+            user.premiumUntil = parsedPremiumUntil && !Number.isNaN(parsedPremiumUntil.getTime())
+                ? parsedPremiumUntil
+                : null;
+        }
         if (avatar) {
             user.avatar = avatar.buffer;
             user.avatarContentType = avatar.mimetype;
@@ -496,116 +502,13 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
     }
 });
 
-// Crear owner
-router.post('/owners', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const { username, password, email, name, surname, dob } = req.body;
-
-        if (!username || !password || !email) {
-            return res.status(400).json({ error: 'Username, password and email are required' });
-        }
-
-        const existing = await User.findOne({ $or: [{ username }, { email }] });
-        if (existing) return res.status(409).json({ error: 'Username or email already exists' });
-
-        const hashed = await bcrypt.hash(password, 10);
-        const owner = new User({
-            username,
-            password: hashed,
-            email,
-            name,
-            surname,
-            dob,
-            role: 'owner',
-            valid: true
-        });
-
-        await owner.save();
-        await recordAudit({
-            action: 'owner:create',
-            entityType: 'user',
-            entityId: owner._id,
-            actor: req.session.user._id,
-            metadata: { username: owner.username }
-        });
-        res.status(201).json({ ownerId: owner._id });
-    } catch (error) {
-        console.error('Error creating owner:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Listar owners
-router.get('/owners', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const owners = await User.find({ role: 'owner' }).select('username email name surname _id');
-        res.json(owners);
-    } catch (error) {
-        console.error('Error listing owners:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Actualizar owner
-router.put('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const owner = await User.findById(req.params.id);
-        if (!owner || owner.role !== 'owner') return res.status(404).json({ error: 'Owner not found' });
-
-        const { username, email, name, surname } = req.body;
-        if (username) owner.username = username;
-        if (email) owner.email = email;
-        if (name !== undefined) owner.name = name;
-        if (surname !== undefined) owner.surname = surname;
-
-        await owner.save();
-        await recordAudit({
-            action: 'owner:update',
-            entityType: 'user',
-            entityId: owner._id,
-            actor: req.session.user._id,
-            metadata: { username: owner.username }
-        });
-        res.status(200).json({ message: 'Owner updated' });
-    } catch (error) {
-        console.error('Error updating owner:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Eliminar owner
-router.delete('/owners/:id', isAuthenticated, isAdmin, async (req, res) => {
-    try {
-        const owner = await User.findById(req.params.id);
-        if (!owner) return res.status(404).json({ error: 'Owner not found' });
-
-        await Penca.deleteMany({ owner: owner._id });
-        await User.deleteOne({ _id: owner._id });
-        await User.updateMany({}, { $pull: { pencas: { $in: owner.ownedPencas } } });
-
-        await recordAudit({
-            action: 'owner:delete',
-            entityType: 'user',
-            entityId: owner._id,
-            actor: req.session.user._id,
-            metadata: { username: owner.username }
-        });
-
-        res.json({ message: 'Owner deleted' });
-    } catch (error) {
-        console.error('Error deleting owner:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 // Crear penca
 router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, owner, participantLimit, competition, isPublic, scoring, rules, tournamentMode, modeSettings } = req.body;
+        const { name, participantLimit, competition, isPublic, scoring, rules, tournamentMode, modeSettings } = req.body;
         if (!name) return res.status(400).json({ error: 'Name required' });
 
-        const ownerUser = owner ? await User.findById(owner) : req.session.user;
-        if (!ownerUser) return res.status(404).json({ error: 'Owner not found' });
+        const ownerUser = req.session.user;
 
         let fixtureIds = [];
 
@@ -637,10 +540,6 @@ router.post('/pencas', isAuthenticated, isAdmin, async (req, res) => {
 
         await penca.save();
 
-        ownerUser.ownedPencas = ownerUser.ownedPencas || [];
-        ownerUser.ownedPencas.push(penca._id);
-        await ownerUser.save();
-
         await recordAudit({
             action: 'penca:create-admin',
             entityType: 'penca',
@@ -670,18 +569,9 @@ router.get('/pencas', isAuthenticated, isAdmin, async (req, res) => {
 // Actualizar penca
 router.put('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
-        const { name, participantLimit, owner, competition, isPublic, scoring, rules, tournamentMode, modeSettings } = req.body;
+        const { name, participantLimit, competition, isPublic, scoring, rules, tournamentMode, modeSettings } = req.body;
         const penca = await Penca.findById(req.params.id);
         if (!penca) return res.status(404).json({ error: 'Penca not found' });
-
-        if (owner && owner !== penca.owner.toString()) {
-            const newOwner = await User.findById(owner);
-            if (!newOwner) return res.status(404).json({ error: 'Owner not found' });
-
-            await User.updateOne({ _id: penca.owner }, { $pull: { ownedPencas: penca._id } });
-            await User.updateOne({ _id: newOwner._id }, { $addToSet: { ownedPencas: penca._id }, $set: { role: 'owner' } });
-            penca.owner = newOwner._id;
-        }
 
         if (name) penca.name = name;
         if (participantLimit !== undefined) penca.participantLimit = Number(participantLimit);
@@ -720,8 +610,6 @@ router.delete('/pencas/:id', isAuthenticated, isAdmin, async (req, res) => {
     try {
         const penca = await Penca.findByIdAndDelete(req.params.id);
         if (!penca) return res.status(404).json({ error: 'Penca not found' });
-
-        await User.updateOne({ _id: penca.owner }, { $pull: { ownedPencas: penca._id } });
         await recordAudit({
             action: 'penca:delete-admin',
             entityType: 'penca',

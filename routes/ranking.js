@@ -11,7 +11,15 @@ const { getMessage } = require('../utils/messages');
 const rankingCache = require('../utils/rankingCache');
 
 // Función para calcular los puntajes
-async function calculateScores(pencaId, competition) {
+function premiumCriteria() {
+    const now = new Date();
+    return {
+        isPremium: true,
+        $or: [{ premiumUntil: null }, { premiumUntil: { $gte: now } }]
+    };
+}
+
+async function calculateScores(pencaId, competition, { premiumOnly = false } = {}) {
     // Solo filtramos por participantes de la penca cuando sea necesario
     // No requerimos que los usuarios sean válidos aquí
     const matchFilter = {};
@@ -102,6 +110,11 @@ async function calculateScores(pencaId, competition) {
         return [];
     }
 
+    if (premiumOnly) {
+        const criteria = premiumCriteria();
+        userFilter = Object.keys(userFilter).length ? { $and: [userFilter, criteria] } : criteria;
+    }
+
     const users = await User.find(userFilter)
         .select('username avatar avatarContentType')
         .lean();
@@ -150,12 +163,14 @@ async function calculateScores(pencaId, competition) {
 router.get('/', async (req, res) => {
     try {
         const { pencaId, competition } = req.query;
-        const cached = await rankingCache.get(pencaId, competition);
+        const premiumOnly = req.query.premium === 'true';
+        const variant = premiumOnly ? 'premium' : 'all';
+        const cached = await rankingCache.get(pencaId, competition, variant);
         if (cached) {
             return res.json(cached);
         }
-        const scores = await calculateScores(pencaId, competition);
-        await rankingCache.set(pencaId, competition, scores);
+        const scores = await calculateScores(pencaId, competition, { premiumOnly });
+        await rankingCache.set(pencaId, competition, variant, scores);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
@@ -167,12 +182,14 @@ router.get('/', async (req, res) => {
 router.get('/competition/:competition', async (req, res) => {
     try {
         const cacheKeyCompetition = req.params.competition;
-        const cached = await rankingCache.get(null, cacheKeyCompetition);
+        const premiumOnly = req.query.premium === 'true';
+        const variant = premiumOnly ? 'premium' : 'all';
+        const cached = await rankingCache.get(null, cacheKeyCompetition, variant);
         if (cached) {
             return res.json(cached);
         }
-        const scores = await calculateScores(null, cacheKeyCompetition);
-        await rankingCache.set(null, cacheKeyCompetition, scores);
+        const scores = await calculateScores(null, cacheKeyCompetition, { premiumOnly });
+        await rankingCache.set(null, cacheKeyCompetition, variant, scores);
         res.json(scores);
     } catch (err) {
         console.error('Error al obtener el ranking por competencia:', err);

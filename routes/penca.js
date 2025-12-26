@@ -7,7 +7,7 @@ const { DEFAULT_COMPETITION, MAX_PENCAS_PER_USER } = require('../config');
 const { getMessage } = require('../utils/messages');
 const { sanitizeScoring, DEFAULT_SCORING } = require('../utils/scoring');
 const { recordAudit } = require('../utils/audit');
-const { notifyOwnerJoinRequest, notifyPlayerApproval } = require('../utils/emailService');
+const { notifyPlayerApproval } = require('../utils/emailService');
 const rankingCache = require('../utils/rankingCache');
 
 const ALLOWED_MODES = new Set(['group_stage_knockout', 'league', 'knockout', 'custom']);
@@ -37,25 +37,18 @@ router.get('/lookup/:code', isAuthenticated, async (req, res) => {
     }
 
     const penca = await Penca.findOne({ code: code.trim().toUpperCase() })
-      .select('name code competition owner isPublic participantLimit participants')
-      .populate('owner', 'username name surname email')
+      .select('name code competition isPublic participantLimit participants')
       .lean();
 
     if (!penca) {
       return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
     }
 
-    const owner = penca.owner || {};
-    const ownerFullName = [owner.name, owner.surname].filter(Boolean).join(' ').trim();
     const participants = Array.isArray(penca.participants) ? penca.participants : [];
 
     res.json({
       name: penca.name,
       competition: penca.competition,
-      owner: {
-        username: owner.username || '',
-        name: ownerFullName || owner.username || ''
-      },
       isPublic: Boolean(penca.isPublic),
       participantLimit: penca.participantLimit || null,
       participantsCount: participants.length
@@ -66,34 +59,15 @@ router.get('/lookup/:code', isAuthenticated, async (req, res) => {
   }
 });
 
-// Pencas del owner logueado
-router.get('/mine', isAuthenticated, async (req, res) => {
-  try {
-    const filter = { owner: req.session.user._id };
-    if (req.query.competition) {
-      filter.competition = req.query.competition;
-    }
-
-    const pencas = await Penca.find(filter)
-      .select('name code competition participants pendingRequests rules prizes isPublic fixture scoring')
-      .populate('pendingRequests', 'username')
-      .populate('participants', 'username')
-      .lean();
-
-    res.json(pencas);
-  } catch (err) {
-    console.error('mine pencas error', err);
-    res.status(500).json({ error: getMessage('ERROR_GETTING_PENCAS', req.lang) });
-  }
-});
-
-
 // Crear una penca
 router.post('/', isAuthenticated, async (req, res) => {
   const { name, participantLimit, competition, isPublic, scoring, tournamentMode, modeSettings } = req.body;
   const ownerId = req.session.user._id;
   const code = Math.random().toString(36).substring(2, 8).toUpperCase();
   try {
+    if (req.session.user.role !== 'admin') {
+      return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
+    }
     const sc = sanitizeScoring(scoring);
     const requestedCompetition = typeof competition === 'string' ? competition.trim() : '';
     const pencaCompetition = requestedCompetition || DEFAULT_COMPETITION;
@@ -114,10 +88,6 @@ router.post('/', isAuthenticated, async (req, res) => {
       participants: []
     });
     await penca.save();
-    await User.updateOne({ _id: ownerId }, {
-      $addToSet: { ownedPencas: penca._id },
-      $set: { role: 'owner' }
-    });
     await recordAudit({
       action: 'penca:create',
       entityType: 'penca',
@@ -132,7 +102,7 @@ router.post('/', isAuthenticated, async (req, res) => {
   }
 });
 
-// Detalle de una penca (solo owner)
+// Detalle de una penca (solo admin)
 router.get('/:pencaId', isAuthenticated, async (req, res) => {
   const { pencaId } = req.params;
   try {
@@ -141,7 +111,7 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
       .populate('pendingRequests', 'username')
       .lean();
     if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
-    if (penca.owner.toString() !== req.session.user._id.toString() && req.session.user.role !== 'admin') {
+    if (req.session.user.role !== 'admin') {
       return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     res.json(penca);
@@ -151,14 +121,14 @@ router.get('/:pencaId', isAuthenticated, async (req, res) => {
   }
 });
 
-// Actualizar una penca (owner)
+// Actualizar una penca (admin)
 router.put('/:pencaId', isAuthenticated, async (req, res) => {
   const { pencaId } = req.params;
   const { isPublic, rules, prizes, scoring, tournamentMode, modeSettings, participantLimit } = req.body;
   try {
     const penca = await Penca.findById(pencaId);
     if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
-    if (penca.owner.toString() !== req.session.user._id.toString() && req.session.user.role !== 'admin') {
+    if (req.session.user.role !== 'admin') {
       return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     if (isPublic !== undefined) penca.isPublic = isPublic === true || isPublic === 'true';
@@ -232,15 +202,6 @@ router.post('/join', isAuthenticated, async (req, res) => {
     penca.pendingRequests.push(userId);
     await penca.save();
 
-    const [ownerUser, applicant] = await Promise.all([
-      User.findById(penca.owner).select('email username name'),
-      User.findById(userId).select('email username name')
-    ]);
-
-    notifyOwnerJoinRequest({ owner: ownerUser, penca, applicant }).catch(err =>
-      console.error('notify owner join request error', err)
-    );
-
     await recordAudit({
       action: 'penca:join-request',
       entityType: 'penca',
@@ -262,7 +223,7 @@ router.post('/approve/:pencaId/:userId', isAuthenticated, async (req, res) => {
   try {
     const penca = await Penca.findById(pencaId);
     if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
-    if (penca.owner.toString() !== sessionUser._id.toString()) {
+    if (sessionUser.role !== 'admin') {
       return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     penca.pendingRequests = penca.pendingRequests.filter(id => id.toString() !== userId);
@@ -306,7 +267,7 @@ router.delete('/participant/:pencaId/:userId', isAuthenticated, async (req, res)
   try {
     const penca = await Penca.findById(pencaId);
     if (!penca) return res.status(404).json({ error: getMessage('PENCA_NOT_FOUND', req.lang) });
-    if (penca.owner.toString() !== sessionUser._id.toString()) {
+    if (sessionUser.role !== 'admin') {
       return res.status(403).json({ error: getMessage('FORBIDDEN', req.lang) });
     }
     penca.participants = penca.participants.filter(id => id.toString() !== userId);

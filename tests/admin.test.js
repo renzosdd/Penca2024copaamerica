@@ -51,6 +51,17 @@ const User = require('../models/User');
 const Competition = require('../models/Competition');
 const adminRouter = require('../routes/admin');
 
+const buildAdminApp = () => {
+  const app = express();
+  app.use(express.json());
+  app.use((req, res, next) => {
+    req.session = { user: { _id: 'admin1', role: 'admin' } };
+    next();
+  });
+  app.use('/admin', adminRouter);
+  return app;
+};
+
 // -----------------------------
 // TESTS
 // -----------------------------
@@ -59,17 +70,11 @@ describe('Admin penca creation', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('creates a penca without fixture', async () => {
-
-    User.findById.mockResolvedValue({ _id: 'u1', ownedPencas: [], save: jest.fn().mockResolvedValue(true) });
-
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app)
       .post('/admin/pencas')
       .field('name', 'Test')
-      .field('owner', 'u1')
       .field('participantLimit', '10')
       .field('competition', 'Comp1');
 
@@ -77,7 +82,7 @@ describe('Admin penca creation', () => {
     expect(res.status).toBe(201);
     expect(Penca).toHaveBeenCalledWith(expect.objectContaining({
       name: 'Test',
-      owner: 'u1',
+      owner: 'admin1',
       participantLimit: 10,
       competition: 'Comp1'
     }));
@@ -92,8 +97,7 @@ describe('Admin penca listing', () => {
     const query = { select: jest.fn().mockResolvedValue([{ name: 'P1', code: 'ABCD' }]) };
     Penca.find.mockReturnValue(query);
 
-    const app = express();
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app).get('/admin/pencas');
 
@@ -108,9 +112,7 @@ describe('Admin competition creation', () => {
   it('creates a competition', async () => {
     Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
 
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app)
       .post('/admin/competitions')
@@ -137,9 +139,7 @@ describe('Admin competition creation', () => {
   it('creates a competition with fixture', async () => {
     Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
 
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const fixture = [
       { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
@@ -160,9 +160,7 @@ describe('Admin competition creation', () => {
   it('creates a competition with fixture JSON', async () => {
     Match.insertMany.mockResolvedValue([{ _id: 'm1' }]);
 
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const fixture = [
       { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
@@ -182,9 +180,7 @@ describe('Admin competition creation', () => {
   });
 
   it('rejects fixture missing required fields', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const fixture = [
       { date: '2024-06-01', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
@@ -199,9 +195,7 @@ describe('Admin competition creation', () => {
   });
 
   it('rejects fixture with mismatched match count', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const fixture = [
       { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' }
@@ -215,9 +209,7 @@ describe('Admin competition creation', () => {
   });
 
   it('rejects duplicate matches', async () => {
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const fixture = [
       { date: '2024-06-01', time: '10:00', team1: 'A', team2: 'B', group_name: 'Grupo A', series: 'Fase de grupos', tournament: 'Copa' },
@@ -234,85 +226,12 @@ describe('Admin competition creation', () => {
   it('lists competitions', async () => {
     Competition.find.mockResolvedValue([{ name: 'Copa Test' }]);
 
-    const app = express();
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app).get('/admin/competitions');
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([{ name: 'Copa Test' }]);
-  });
-});
-
-describe('Admin owner creation', () => {
-  afterEach(() => jest.clearAllMocks());
-
-  it('creates a new owner', async () => {
-    User.findOne.mockResolvedValue(null);
-
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
-
-    const res = await request(app)
-      .post('/admin/owners')
-      .send({ username: 'owner1', password: 'pass', email: 'o1@example.com' });
-
-    expect(res.status).toBe(201);
-    expect(User).toHaveBeenCalledWith(expect.objectContaining({
-      username: 'owner1',
-      email: 'o1@example.com',
-      role: 'owner'
-    }));
-  });
-
-  it('fails when username or email exists', async () => {
-    User.findOne.mockResolvedValue({ _id: 'exists' });
-
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
-
-    const res = await request(app)
-      .post('/admin/owners')
-      .send({ username: 'owner1', password: 'pass', email: 'o1@example.com' });
-
-    expect(res.status).toBe(409);
-  });
-});
-
-describe('Admin owner update and delete', () => {
-  afterEach(() => jest.clearAllMocks());
-
-  it('updates an owner', async () => {
-    const owner = { _id: 'o1', role: 'owner', save: jest.fn().mockResolvedValue(true) };
-    User.findById.mockResolvedValue(owner);
-
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
-
-    const res = await request(app)
-      .put('/admin/owners/o1')
-      .send({ username: 'new' });
-
-    expect(res.status).toBe(200);
-    expect(owner.save).toHaveBeenCalled();
-    expect(owner.username).toBe('new');
-  });
-
-  it('deletes an owner', async () => {
-    const owner = { _id: 'o1', role: 'owner' };
-    User.findById.mockResolvedValue(owner);
-    User.deleteOne.mockResolvedValue({ deletedCount: 1 });
-
-    const app = express();
-    app.use('/admin', adminRouter);
-
-    const res = await request(app).delete('/admin/owners/o1');
-
-    expect(res.status).toBe(200);
-    expect(User.deleteOne).toHaveBeenCalledWith({ _id: 'o1' });
   });
 });
 
@@ -323,9 +242,7 @@ describe('Admin competition modification', () => {
     const comp = { _id: 'c1', save: jest.fn().mockResolvedValue(true) };
     Competition.findById.mockResolvedValue(comp);
 
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app)
       .put('/admin/competitions/c1')
@@ -340,8 +257,7 @@ describe('Admin competition modification', () => {
   it('deletes a competition', async () => {
     Competition.findByIdAndDelete.mockResolvedValue({ _id: 'c1' });
 
-    const app = express();
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app).delete('/admin/competitions/c1');
 
@@ -352,31 +268,11 @@ describe('Admin competition modification', () => {
 describe('Admin penca modification', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('updates a penca owner', async () => {
-    const penca = { _id: 'p1', owner: 'u1', save: jest.fn().mockResolvedValue(true) };
-    Penca.findById.mockResolvedValue(penca);
-    User.findById.mockResolvedValue({ _id: 'u2' });
-
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
-
-    const res = await request(app)
-      .put('/admin/pencas/p1')
-      .send({ owner: 'u2' });
-
-    expect(res.status).toBe(200);
-    expect(penca.owner).toBe('u2');
-    expect(User.updateOne).toHaveBeenCalled();
-  });
-
   it('updates a penca competition', async () => {
     const penca = { _id: 'p1', save: jest.fn().mockResolvedValue(true) };
     Penca.findById.mockResolvedValue(penca);
 
-    const app = express();
-    app.use(express.json());
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app)
       .put('/admin/pencas/p1')
@@ -389,13 +285,11 @@ describe('Admin penca modification', () => {
   it('deletes a penca', async () => {
     Penca.findByIdAndDelete.mockResolvedValue({ _id: 'p1', owner: 'u1' });
 
-    const app = express();
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app).delete('/admin/pencas/p1');
 
     expect(res.status).toBe(200);
-    expect(User.updateOne).toHaveBeenCalled();
   });
 });
 
@@ -410,8 +304,7 @@ describe('Admin edit pagination', () => {
     };
     User.find.mockReturnValue(query);
 
-    const app = express();
-    app.use('/admin', adminRouter);
+    const app = buildAdminApp();
 
     const res = await request(app)
       .get('/admin/edit')

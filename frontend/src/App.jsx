@@ -5,7 +5,6 @@ import Login from './Login';
 import Register from './Register';
 import Dashboard from './Dashboard';
 import Admin from './Admin';
-import OwnerPanel from './OwnerPanel';
 import Header from './Header';
 import Footer from './Footer';
  
@@ -21,7 +20,6 @@ export default function App() {
               <Route path="/" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/owner" element={<OwnerPanel />} />
               <Route path="/admin/edit" element={<Admin />} />
             </Routes>
           </Box>
