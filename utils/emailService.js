@@ -38,19 +38,6 @@ async function sendEmail({ to, subject, text, html }) {
   return true;
 }
 
-function buildJoinRequestMessage({ ownerName, applicantName, pencaName }) {
-  const subject = `Nueva solicitud de ingreso a ${pencaName}`;
-  const body = [
-    `Hola ${ownerName || 'Owner'},`,
-    '',
-    `${applicantName} solicitó unirse a la penca "${pencaName}".`,
-    'Ingresá al panel de owner para aceptar o rechazar la solicitud.',
-    '',
-    'Equipo de Penca'
-  ].join('\n');
-  return { subject, text: body, html: body.replace(/\n/g, '<br/>') };
-}
-
 function buildApprovalMessage({ playerName, pencaName }) {
   const subject = `Tu acceso a ${pencaName} fue aprobado`;
   const body = [
@@ -64,16 +51,6 @@ function buildApprovalMessage({ playerName, pencaName }) {
   return { subject, text: body, html: body.replace(/\n/g, '<br/>') };
 }
 
-async function notifyOwnerJoinRequest({ owner, penca, applicant }) {
-  if (!owner?.email || !penca) return false;
-  const message = buildJoinRequestMessage({
-    ownerName: owner.name || owner.username,
-    applicantName: applicant?.name || applicant?.username || 'Un usuario',
-    pencaName: penca.name
-  });
-  return sendEmail({ to: owner.email, ...message });
-}
-
 async function notifyPlayerApproval({ player, penca }) {
   if (!player?.email || !penca) return false;
   const message = buildApprovalMessage({
@@ -85,7 +62,6 @@ async function notifyPlayerApproval({ player, penca }) {
 
 module.exports = {
   sendEmail,
-  notifyOwnerJoinRequest,
   notifyPlayerApproval,
   isConfigured
 };

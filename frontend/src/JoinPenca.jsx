@@ -102,9 +102,6 @@ export default function JoinPenca({ onJoined }) {
               {t('competition')}: {details.competition}
             </Typography>
             <Typography variant="body2">
-              {t('pencaLookupOwner')}: {details.owner?.name || details.owner?.username}
-            </Typography>
-            <Typography variant="body2">
               {t('pencaLookupPlayers')}: {details.participantsCount}
               {details.participantLimit ? `/${details.participantLimit}` : ''}
             </Typography>

@@ -29,8 +29,6 @@ export default function Login() {
       if (res.ok && data.redirectUrl) {
         if (data.redirectUrl === '/dashboard') {
           navigate('/dashboard');
-        } else if (data.redirectUrl === '/owner') {
-          navigate('/owner');
         } else {
           window.location.href = data.redirectUrl;
         }

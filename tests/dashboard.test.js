@@ -9,11 +9,6 @@ describe('Dashboard view', () => {
     expect(html).not.toContain('id="join"');
   });
 
-  it('does not render join form for owner role', async () => {
-    const html = await ejs.renderFile(tpl, { user: { role: 'owner', username: 'o' }, pencas: [], debug: false });
-    expect(html).not.toContain('id="join"');
-  });
-
   it('renders join form for user role', async () => {
     const html = await ejs.renderFile(tpl, { user: { role: 'user', username: 'u' }, pencas: [], debug: false });
     expect(html).toContain('id="join"');

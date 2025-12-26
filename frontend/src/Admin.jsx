@@ -46,7 +46,6 @@ import { formatLocalKickoff as formatKickoff, matchKickoffValue } from './kickof
 
 export default function Admin() {
   const [competitions, setCompetitions] = useState([]);
-  const [owners, setOwners] = useState([]);
   const [pencas, setPencas] = useState([]);
   const [matchesByCompetition, setMatchesByCompetition] = useState({});
   const [groups, setGroups] = useState({});
@@ -57,8 +56,7 @@ export default function Admin() {
   const { t } = useLang();
 
   const [wizardOpen, setWizardOpen] = useState(false);
-  const [ownerForm, setOwnerForm] = useState({ username: '', password: '', email: '' });
-  const [pencaForm, setPencaForm] = useState({ name: '', owner: '', competition: '', isPublic: false });
+  const [pencaForm, setPencaForm] = useState({ name: '', competition: '', isPublic: false });
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -149,7 +147,6 @@ export default function Admin() {
   async function loadAll() {
     await Promise.all([
       loadCompetitions(),
-      loadOwners(),
       loadPencas(),
       loadAuditConfig(),
       loadCleanupCollections()
@@ -162,15 +159,6 @@ export default function Admin() {
       if (res.ok) setCompetitions(await res.json());
     } catch (err) {
       console.error('load competitions error', err);
-    }
-  }
-
-  async function loadOwners() {
-    try {
-      const res = await fetch('/admin/owners');
-      if (res.ok) setOwners(await res.json());
-    } catch (err) {
-      console.error('load owners error', err);
     }
   }
 
@@ -376,56 +364,6 @@ export default function Admin() {
     }
   }
 
-  async function createOwner(e) {
-    e.preventDefault();
-    setIsSaving(true);
-    try {
-      const res = await fetch('/admin/owners', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ownerForm),
-      });
-      if (res.ok) {
-        setOwnerForm({ username: '', password: '', email: '' });
-        loadOwners();
-      }
-    } catch (err) {
-      console.error('create owner error', err);
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  const updateOwnerField = (id, field, value) => {
-    setOwners(os => os.map(o => o._id === id ? { ...o, [field]: value } : o));
-  };
-
-  async function saveOwner(owner) {
-    setIsSaving(true);
-    try {
-      const { username, email, name, surname } = owner;
-      const res = await fetch(`/admin/owners/${owner._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, name, surname }),
-      });
-      if (res.ok) loadOwners();
-    } catch (err) {
-      console.error('update owner error', err);
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  async function deleteOwner(id) {
-    try {
-      const res = await fetch(`/admin/owners/${id}`, { method: 'DELETE' });
-      if (res.ok) loadOwners();
-    } catch (err) {
-      console.error('delete owner error', err);
-    }
-  }
-
   async function createPenca(e) {
     e.preventDefault();
     setIsSaving(true);
@@ -438,7 +376,7 @@ export default function Admin() {
       if (res.ok) {
         const comp = competitions.find(c => c.name === pencaForm.competition);
         if (comp) loadCompetitionMatches(comp);
-        setPencaForm({ name: '', owner: '', competition: '', isPublic: false });
+        setPencaForm({ name: '', competition: '', isPublic: false });
         loadPencas();
       }
     } catch (err) {
@@ -455,11 +393,11 @@ export default function Admin() {
   async function savePenca(penca) {
     setIsSaving(true);
     try {
-      const { name, owner, competition, participantLimit, isPublic } = penca;
+      const { name, competition, participantLimit, isPublic } = penca;
       const res = await fetch(`/admin/pencas/${penca._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, owner, competition, participantLimit, isPublic }),
+        body: JSON.stringify({ name, competition, participantLimit, isPublic }),
       });
       if (res.ok) loadPencas();
     } catch (err) {
@@ -916,9 +854,6 @@ export default function Admin() {
       }, {
         label: t('adminStatsPencas'),
         value: pencas.length
-      }, {
-        label: t('adminStatsOwners'),
-        value: owners.length
       }].map(item => (
         <Grid item xs={12} sm={6} md={3} key={item.label}>
           <Paper sx={{ p: 2, borderRadius: 2 }}>
@@ -1218,88 +1153,6 @@ export default function Admin() {
     </Stack>
   );
 
-  const renderOwnersTab = () => (
-    <Stack spacing={2}>
-      <Paper sx={{ p: 2, borderRadius: 2 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          {t('owners')}
-        </Typography>
-        <Stack
-          component="form"
-          onSubmit={createOwner}
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={1.5}
-          flexWrap="wrap"
-        >
-          <TextField
-            value={ownerForm.username}
-            onChange={e => setOwnerForm({ ...ownerForm, username: e.target.value })}
-            label={t('username')}
-            required
-            size="small"
-            fullWidth
-          />
-          <TextField
-            type="password"
-            value={ownerForm.password}
-            onChange={e => setOwnerForm({ ...ownerForm, password: e.target.value })}
-            label={t('password')}
-            required
-            size="small"
-            fullWidth
-          />
-          <TextField
-            type="email"
-            value={ownerForm.email}
-            onChange={e => setOwnerForm({ ...ownerForm, email: e.target.value })}
-            label={t('email')}
-            required
-            size="small"
-            fullWidth
-          />
-          <Button variant="contained" type="submit" size="small" disabled={isSaving}>
-            {t('create')}
-          </Button>
-        </Stack>
-      </Paper>
-
-      <Stack spacing={1.5}>
-        {owners.map(owner => (
-          <Paper key={owner._id} sx={{ p: 2, borderRadius: 2 }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} flexWrap="wrap" alignItems={{ xs: 'flex-start', md: 'center' }}>
-              <TextField
-                label={t('username')}
-                value={owner.username || ''}
-                onChange={e => updateOwnerField(owner._id, 'username', e.target.value)}
-                size="small"
-                fullWidth
-              />
-              <TextField
-                label={t('email')}
-                type="email"
-                value={owner.email || ''}
-                onChange={e => updateOwnerField(owner._id, 'email', e.target.value)}
-                size="small"
-                fullWidth
-              />
-              <Button
-                variant="contained"
-                size="small"
-                onClick={() => saveOwner(owner)}
-                disabled={isSaving}
-              >
-                {t('save')}
-              </Button>
-              <Button color="error" size="small" onClick={() => deleteOwner(owner._id)}>
-                {t('delete')}
-              </Button>
-            </Stack>
-          </Paper>
-        ))}
-      </Stack>
-    </Stack>
-  );
-
   const renderPencasTab = () => (
     <Stack spacing={2}>
       <Paper sx={{ p: 2, borderRadius: 2 }}>
@@ -1321,21 +1174,6 @@ export default function Admin() {
             size="small"
             fullWidth
           />
-          <Select
-            value={pencaForm.owner}
-            onChange={e => setPencaForm({ ...pencaForm, owner: e.target.value })}
-            displayEmpty
-            required
-            size="small"
-            sx={{ minWidth: 180 }}
-          >
-            <MenuItem value="" disabled>
-              {t('owner')}
-            </MenuItem>
-            {owners.map(o => (
-              <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
-            ))}
-          </Select>
           <Select
             value={pencaForm.competition}
             onChange={e => setPencaForm({ ...pencaForm, competition: e.target.value })}
@@ -1384,16 +1222,6 @@ export default function Admin() {
                 InputProps={{ readOnly: true }}
                 sx={{ maxWidth: 140 }}
               />
-              <Select
-                value={penca.owner}
-                onChange={e => updatePencaField(penca._id, 'owner', e.target.value)}
-                size="small"
-                sx={{ minWidth: 180 }}
-              >
-                {owners.map(o => (
-                  <MenuItem key={o._id} value={o._id}>{o.username}</MenuItem>
-                ))}
-              </Select>
               <Select
                 value={penca.competition}
                 onChange={e => updatePencaField(penca._id, 'competition', e.target.value)}
@@ -1539,14 +1367,12 @@ export default function Admin() {
           <Tab value="competitions" label={t('adminTabCompetitions')} />
           <Tab value="matches" label={t('adminTabMatches')} />
           <Tab value="pencas" label={t('adminTabPencas')} />
-          <Tab value="owners" label={t('adminTabOwners')} />
           <Tab value="settings" label={t('adminTabSettings')} />
         </Tabs>
         {activeTab === 'overview' && renderOverviewTab()}
         {activeTab === 'competitions' && renderCompetitionsTab()}
         {activeTab === 'matches' && renderMatchesTab()}
         {activeTab === 'pencas' && renderPencasTab()}
-        {activeTab === 'owners' && renderOwnersTab()}
         {activeTab === 'settings' && renderSettingsTab()}
       </Stack>
 
