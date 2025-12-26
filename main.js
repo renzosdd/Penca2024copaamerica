@@ -12,9 +12,9 @@ const cacheControl = require('./middleware/cacheControl');
 const language = require('./middleware/language');
 const { DEFAULT_COMPETITION } = require('./config');
 const { getMessage } = require('./utils/messages');
-const { ensureWorldCup2026 } = require('./utils/worldcupSeed');
 const { ensureUserInPenca, ensureWorldCupPenca } = require('./utils/worldcupPenca');
 const updateResults = require('./scripts/updateResults');
+const importMatches = require('./scripts/importMatches');
 
 dotenv.config();
 
@@ -194,11 +194,26 @@ async function initializeDatabase() {
             }
             debugLog('Usuario administrador creado.');
         }
-        await ensureWorldCup2026();
         await ensureWorldCupPenca(admin._id);
+        await ensureInitialMatchesFromApi();
 
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
+    }
+}
+
+async function ensureInitialMatchesFromApi() {
+    try {
+        const existingMatches = await Match.countDocuments({ competition: DEFAULT_COMPETITION });
+        if (existingMatches > 0) {
+            return;
+        }
+        const result = await importMatches(DEFAULT_COMPETITION, { force: true });
+        if (result?.skipped) {
+            debugLog('Carga inicial de partidos omitida por intervalo mínimo.');
+        }
+    } catch (error) {
+        console.error('Error al cargar partidos desde API:', error);
     }
 }
 

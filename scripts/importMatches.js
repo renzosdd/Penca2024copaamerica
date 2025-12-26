@@ -63,13 +63,14 @@ function buildMatchPayload(event, competition, order) {
   };
 }
 
-async function importMatches(competition) {
+async function importMatches(competition, options = {}) {
   const comp = await Competition.findOne({ name: competition });
   const { events, skipped } = await fetchEventsWithThrottle(
     'importMatches',
     competition,
     comp?.apiLeagueId,
-    comp?.apiSeason
+    comp?.apiSeason,
+    options
   );
   if (skipped) {
     return { skipped: true };

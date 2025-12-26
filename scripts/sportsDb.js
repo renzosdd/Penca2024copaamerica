@@ -18,23 +18,29 @@ function resolveSportsDbConfig(leagueId, season) {
 
   const finalLeague = leagueId || SPORTSDB_LEAGUE_ID;
   const finalSeason = season || SPORTSDB_SEASON;
+  const apiKey = SPORTSDB_API_KEY || '123';
 
-  if (!SPORTSDB_API_KEY || !finalLeague || !finalSeason) {
+  if (!finalLeague || !finalSeason) {
     throw new Error('SportsDB env vars missing');
   }
 
-  const base = (SPORTSDB_API_URL || 'https://www.thesportsdb.com/api/v2/json').replace(/\/$/, '');
-  const apiBase = `${base}/${SPORTSDB_API_KEY}`;
+  const defaultBase =
+    apiKey === '123'
+      ? 'https://www.thesportsdb.com/api/v1/json'
+      : 'https://www.thesportsdb.com/api/v2/json';
+  const base = (SPORTSDB_API_URL || defaultBase).replace(/\/$/, '');
+  const apiBase = `${base}/${apiKey}`;
 
   return { apiBase, finalLeague, finalSeason };
 }
 
-async function fetchEventsWithThrottle(name, competition, leagueId, season) {
+async function fetchEventsWithThrottle(name, competition, leagueId, season, options = {}) {
   const { SPORTSDB_UPDATE_INTERVAL } = process.env;
   const interval = parsePositiveInt(SPORTSDB_UPDATE_INTERVAL, 3600000);
+  const { force = false } = options;
 
   const usage = await ApiUsage.findOne({ name, competition });
-  if (usage && Date.now() - usage.lastUsed.getTime() < interval) {
+  if (!force && usage && Date.now() - usage.lastUsed.getTime() < interval) {
     return { skipped: true, events: [] };
   }
 

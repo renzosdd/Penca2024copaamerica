@@ -25,7 +25,6 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useMediaQuery,
   useTheme
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
@@ -63,7 +62,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [rankingSearch, setRankingSearch] = useState('');
   const { t } = useLang();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const predictionForms = useRef(new Map());
 
   const matchTimeValue = useCallback(match => matchKickoffValue(match), []);
@@ -174,14 +172,20 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   );
 
   const renderTeam = name => (
-    <Stack direction="row" spacing={1} alignItems="center" key={name} sx={{ minWidth: 0 }}>
+    <Stack direction="row" spacing={1.5} alignItems="center" key={name} sx={{ minWidth: 0 }}>
       <Box
         component="img"
         src={`/images/${name.replace(/\s+/g, '').toLowerCase()}.png`}
         alt={name}
-        sx={{ width: 34, height: 34, borderRadius: '50%', objectFit: 'contain', backgroundColor: 'background.default' }}
+        sx={{
+          width: { xs: 32, sm: 36 },
+          height: { xs: 32, sm: 36 },
+          borderRadius: '50%',
+          objectFit: 'contain',
+          backgroundColor: 'background.default'
+        }}
       />
-      <Typography variant="subtitle2" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
+      <Typography variant="subtitle1" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
         {name}
       </Typography>
     </Stack>
@@ -251,35 +255,29 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       <Paper
         variant="outlined"
         sx={theme => ({
-          p: 2,
+          p: { xs: 2, sm: 2.5 },
           borderRadius: 3,
           borderColor: pr.result1 != null ? theme.palette.primary.light : theme.palette.divider,
           backgroundColor: pr.result1 != null ? alpha(theme.palette.primary.main, 0.06) : theme.palette.background.paper
         })}
       >
         <Stack spacing={2}>
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            justifyContent="space-between"
-          >
-            <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-              {renderTeam(match.team1)}
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {t('vs')}
-              </Typography>
-              {renderTeam(match.team2)}
+          <Stack spacing={0.75}>
+            <Typography variant="caption" color="text.secondary">
+              {kickoffText(match)}
+            </Typography>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {match.group_name && <Chip size="small" label={match.group_name} />}
+              {match.series && <Chip size="small" color="secondary" label={match.series} />}
             </Stack>
-            <Stack spacing={0.5} alignItems={{ xs: 'flex-start', sm: 'flex-end' }}>
-              <Typography variant="body2" color="text.secondary">
-                {kickoffText(match)}
-              </Typography>
-              <Stack direction="row" spacing={1} flexWrap="wrap">
-                {match.group_name && <Chip size="small" label={match.group_name} />}
-                {match.series && <Chip size="small" color="secondary" label={match.series} />}
-              </Stack>
-            </Stack>
+          </Stack>
+
+          <Stack spacing={1.5}>
+            {renderTeam(match.team1)}
+            <Typography variant="overline" color="text.secondary">
+              {t('vs')}
+            </Typography>
+            {renderTeam(match.team2)}
           </Stack>
 
           <Box
@@ -292,46 +290,50 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               }
             }}
             onSubmit={e => submitPrediction(e, penca._id, match._id)}
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { xs: 'stretch', sm: 'center' },
-              gap: 1.5
-            }}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
           >
-            <Stack direction="row" spacing={1} alignItems="center">
-              <TextField
-                name="result1"
-                type="number"
-                defaultValue={pr.result1 ?? ''}
-                required
-                size="small"
-                sx={{ width: 70 }}
-                inputProps={{ min: 0 }}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }}>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1 }}>
+                <TextField
+                  name="result1"
+                  type="number"
+                  defaultValue={pr.result1 ?? ''}
+                  required
+                  size="small"
+                  fullWidth
+                  inputProps={{ min: 0, inputMode: 'numeric', pattern: '[0-9]*' }}
+                  disabled={!editable}
+                />
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  -
+                </Typography>
+                <TextField
+                  name="result2"
+                  type="number"
+                  defaultValue={pr.result2 ?? ''}
+                  required
+                  size="small"
+                  fullWidth
+                  inputProps={{ min: 0, inputMode: 'numeric', pattern: '[0-9]*' }}
+                  disabled={!editable}
+                />
+              </Stack>
+              <Button
+                variant="contained"
+                type="submit"
                 disabled={!editable}
-              />
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                -
-              </Typography>
-              <TextField
-                name="result2"
-                type="number"
-                defaultValue={pr.result2 ?? ''}
-                required
-                size="small"
-                sx={{ width: 70 }}
-                inputProps={{ min: 0 }}
-                disabled={!editable}
-              />
+                size="large"
+                fullWidth
+                sx={{ flexShrink: 0 }}
+              >
+                {t('save')}
+              </Button>
             </Stack>
-            <Button
-              variant="contained"
-              type="submit"
-              disabled={!editable}
-              sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
-            >
-              {t('save')}
-            </Button>
+            {!editable && (
+              <Typography variant="caption" color="text.secondary">
+                {t('predictionClosed')}
+              </Typography>
+            )}
           </Box>
 
           {hasResult && (
@@ -452,6 +454,9 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               value={activeSection}
               onChange={(_, value) => setActiveSection(value)}
               aria-label={t('pencaTabsLabel')}
+              variant="scrollable"
+              scrollButtons="auto"
+              allowScrollButtonsMobile
               sx={{
                 borderBottom: 1,
                 borderColor: 'divider',
@@ -466,7 +471,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                   borderRadius: { xs: 2, sm: 0 }
                 }
               }}
-              centered={!isMobile}
             >
               <Tab
                 label={t('pencaTabMatches')}
@@ -490,7 +494,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
             <TabPanel current={activeSection} value="matches">
               <Stack
-                direction={isMobile ? 'column' : 'row'}
+                direction={{ xs: 'column', sm: 'row' }}
                 spacing={1}
                 sx={{
                   mb: 2,
@@ -508,7 +512,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     e.stopPropagation();
                     setFilter('all');
                   }}
-                  fullWidth={isMobile}
+                  fullWidth
                 >
                   {t('allMatches')}
                 </Button>
@@ -519,7 +523,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     e.stopPropagation();
                     setFilter('upcoming');
                   }}
-                  fullWidth={isMobile}
+                  fullWidth
                 >
                   {t('upcoming')}
                 </Button>
@@ -530,7 +534,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     e.stopPropagation();
                     setFilter('played');
                   }}
-                  fullWidth={isMobile}
+                  fullWidth
                 >
                   {t('played')}
                 </Button>

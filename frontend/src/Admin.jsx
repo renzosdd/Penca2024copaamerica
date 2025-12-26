@@ -179,19 +179,21 @@ export default function Admin() {
   }, [matches, matchSearch, matchStatus]);
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
-      <Stack spacing={3}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'flex-start', sm: 'center' }}>
-          <Typography variant="h5">{t('adminTitle')}</Typography>
-          {competitionName && (
-            <Typography variant="body2" color="text.secondary">
-              {competitionName}
-            </Typography>
-          )}
-        </Stack>
+    <Container maxWidth="md" sx={{ py: { xs: 2.5, md: 4 } }}>
+      <Stack spacing={{ xs: 2.5, md: 3.5 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
+          <Stack spacing={1}>
+            <Typography variant="h5">{t('adminTitle')}</Typography>
+            {competitionName && (
+              <Typography variant="body2" color="text.secondary">
+                {competitionName}
+              </Typography>
+            )}
+          </Stack>
+        </Paper>
 
-        <Paper sx={{ p: 2, borderRadius: 2 }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} flexWrap="wrap">
+        <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
+          <Stack spacing={2}>
             <TextField
               label={t('adminMatchesSearch')}
               value={matchSearch}
@@ -199,42 +201,48 @@ export default function Admin() {
               size="small"
               fullWidth
             />
-            <Button variant="outlined" size="small" onClick={loadMatches} disabled={loading}>
-              {t('adminMatchesRefresh')}
-            </Button>
-            <Button variant="outlined" size="small" onClick={handleRecalculate} disabled={saving}>
-              {t('recalculateBracket')}
-            </Button>
-            <Button
-              variant="contained"
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Button variant="outlined" size="small" onClick={loadMatches} disabled={loading} fullWidth>
+                {t('adminMatchesRefresh')}
+              </Button>
+              <Button variant="outlined" size="small" onClick={handleRecalculate} disabled={saving} fullWidth>
+                {t('recalculateBracket')}
+              </Button>
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleUpdateResults}
+                disabled={updatingResults}
+                fullWidth
+              >
+                {updatingResults ? <CircularProgress size={18} /> : t('updateResults')}
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleImportMatches}
+                disabled={importingMatches}
+                fullWidth
+              >
+                {importingMatches ? <CircularProgress size={18} /> : t('importMatches')}
+              </Button>
+            </Stack>
+            <ToggleButtonGroup
+              value={matchStatus}
+              exclusive
               size="small"
-              onClick={handleUpdateResults}
-              disabled={updatingResults}
+              onChange={(_, value) => {
+                if (value) setMatchStatus(value);
+              }}
+              sx={{ flexWrap: 'wrap', gap: 1 }}
             >
-              {updatingResults ? <CircularProgress size={18} /> : t('updateResults')}
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleImportMatches}
-              disabled={importingMatches}
-            >
-              {importingMatches ? <CircularProgress size={18} /> : t('importMatches')}
-            </Button>
+              <ToggleButton value="all">{t('allMatches')}</ToggleButton>
+              <ToggleButton value="upcoming">{t('upcoming')}</ToggleButton>
+              <ToggleButton value="played">{t('played')}</ToggleButton>
+            </ToggleButtonGroup>
           </Stack>
-          <ToggleButtonGroup
-            value={matchStatus}
-            exclusive
-            size="small"
-            onChange={(_, value) => {
-              if (value) setMatchStatus(value);
-            }}
-            sx={{ mt: 2 }}
-          >
-            <ToggleButton value="all">{t('allMatches')}</ToggleButton>
-            <ToggleButton value="upcoming">{t('upcoming')}</ToggleButton>
-            <ToggleButton value="played">{t('played')}</ToggleButton>
-          </ToggleButtonGroup>
         </Paper>
 
         {loading && <CircularProgress sx={{ alignSelf: 'center' }} />}
@@ -249,80 +257,88 @@ export default function Admin() {
           <Alert severity="info">{t('adminMatchesNoResults')}</Alert>
         )}
 
-        <Stack spacing={2}>
+        <Stack spacing={2.5}>
           {filteredMatches.map(match => (
-            <Paper key={match._id} sx={{ p: 2, borderRadius: 2 }}>
-              <Stack spacing={1.5}>
+            <Paper key={match._id} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
+              <Stack spacing={2}>
                 <Typography variant="subtitle2" color="text.secondary">
                   {formatLocalKickoff(match) || t('scheduleTbd')}
                 </Typography>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-                  <TextField
-                    label={t('team1Label')}
-                    value={match.team1 || ''}
-                    onChange={e => updateMatchField(match._id, 'team1', e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
-                  <TextField
-                    label={t('team2Label')}
-                    value={match.team2 || ''}
-                    onChange={e => updateMatchField(match._id, 'team2', e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
+                <Stack spacing={1.5}>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                    <TextField
+                      label={t('team1Label')}
+                      value={match.team1 || ''}
+                      onChange={e => updateMatchField(match._id, 'team1', e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                    <TextField
+                      label={t('team2Label')}
+                      value={match.team2 || ''}
+                      onChange={e => updateMatchField(match._id, 'team2', e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                  </Stack>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                    <TextField
+                      label={t('dateLabel')}
+                      value={match.date || ''}
+                      onChange={e => updateMatchField(match._id, 'date', e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                    <TextField
+                      label={t('timeLabel')}
+                      value={match.time || ''}
+                      onChange={e => updateMatchField(match._id, 'time', e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                  </Stack>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                    <TextField
+                      label={t('group')}
+                      value={match.group_name || ''}
+                      onChange={e => updateMatchField(match._id, 'group_name', e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                    <TextField
+                      label={t('seriesLabel')}
+                      value={match.series || ''}
+                      onChange={e => updateMatchField(match._id, 'series', e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                  </Stack>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                    <TextField
+                      label={t('scoreTeam1Label')}
+                      type="number"
+                      value={match.result1 ?? ''}
+                      onChange={e => updateMatchField(match._id, 'result1', e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                    <TextField
+                      label={t('scoreTeam2Label')}
+                      type="number"
+                      value={match.result2 ?? ''}
+                      onChange={e => updateMatchField(match._id, 'result2', e.target.value)}
+                      size="small"
+                      fullWidth
+                    />
+                  </Stack>
                 </Stack>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-                  <TextField
-                    label={t('dateLabel')}
-                    value={match.date || ''}
-                    onChange={e => updateMatchField(match._id, 'date', e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
-                  <TextField
-                    label={t('timeLabel')}
-                    value={match.time || ''}
-                    onChange={e => updateMatchField(match._id, 'time', e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
-                </Stack>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-                  <TextField
-                    label={t('group')}
-                    value={match.group_name || ''}
-                    onChange={e => updateMatchField(match._id, 'group_name', e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
-                  <TextField
-                    label={t('seriesLabel')}
-                    value={match.series || ''}
-                    onChange={e => updateMatchField(match._id, 'series', e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
-                </Stack>
-                <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
-                  <TextField
-                    label={t('scoreTeam1Label')}
-                    type="number"
-                    value={match.result1 ?? ''}
-                    onChange={e => updateMatchField(match._id, 'result1', e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
-                  <TextField
-                    label={t('scoreTeam2Label')}
-                    type="number"
-                    value={match.result2 ?? ''}
-                    onChange={e => updateMatchField(match._id, 'result2', e.target.value)}
-                    size="small"
-                    fullWidth
-                  />
-                </Stack>
-                <Button variant="contained" size="small" onClick={() => handleSave(match)} disabled={saving}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => handleSave(match)}
+                  disabled={saving}
+                  fullWidth
+                >
                   {saving ? <CircularProgress size={18} /> : t('save')}
                 </Button>
               </Stack>

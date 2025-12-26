@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
+  Alert,
   Button,
   Card,
   CardContent,
+  Container,
+  Stack,
   TextField,
   Typography
 } from '@mui/material';
@@ -41,52 +44,53 @@ export default function Login() {
   };
 
   return (
-    <Card className="login-container">
-      <CardContent>
-        <Typography variant="h5" gutterBottom>
-          {t('loginTitle')}
-        </Typography>
-        <form onSubmit={handleSubmit}>
-          <div className="input-field">
-            <TextField
-              id="login-username"
-              label={t('username')}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
+    <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 6 } }}>
+      <Card sx={{ borderRadius: 3, boxShadow: { xs: 2, sm: 6 } }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <Stack spacing={2}>
+            <Stack spacing={0.5}>
+              <Typography variant="h5">{t('loginTitle')}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t('login')}
+              </Typography>
+            </Stack>
+            <Stack component="form" spacing={2} onSubmit={handleSubmit}>
+              <TextField
+                id="login-username"
+                label={t('username')}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                fullWidth
+                autoComplete="username"
+              />
+              <TextField
+                id="login-password"
+                label={t('password')}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                fullWidth
+                autoComplete="current-password"
+              />
+              <Button variant="contained" type="submit" fullWidth size="large">
+                {t('login')}
+              </Button>
+            </Stack>
+            <Button
+              component={Link}
+              to="/register"
+              variant="outlined"
               fullWidth
-              margin="normal"
-            />
-          </div>
-          <div className="input-field">
-            <TextField
-              id="login-password"
-              label={t('password')}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              fullWidth
-              margin="normal"
-            />
-          </div>
-          <Button variant="contained" type="submit" fullWidth>
-            {t('login')}
-          </Button>
-        </form>
-        <Button
-          component={Link}
-          to="/register"
-          variant="outlined"
-          fullWidth
-          style={{ marginTop: '1rem' }}
-        >
-          {t('register')}
-        </Button>
-        {error && (
-          <div className="red-text" style={{ marginTop: '1rem' }}>{error}</div>
-        )}
-      </CardContent>
-    </Card>
+              size="large"
+            >
+              {t('register')}
+            </Button>
+            {error && <Alert severity="error">{error}</Alert>}
+          </Stack>
+        </CardContent>
+      </Card>
+    </Container>
   );
 }
