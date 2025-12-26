@@ -6,6 +6,8 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches } = require('../utils/bracket');
 const updateResults = require('../scripts/updateResults');
+const importMatches = require('../scripts/importMatches');
+const { fetchCompetitionData } = require('../scripts/sportsDb');
 const { getOrLoad, invalidate: invalidateMatchCache } = require('../utils/matchCache');
 const rankingCache = require('../utils/rankingCache');
 
@@ -16,6 +18,49 @@ function parseKickoff(value) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
+
+function parseNumeric(value) {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+router.post('/competitions/preview', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const leagueId = parseNumeric(req.body.apiLeagueId);
+    const season = req.body.apiSeason;
+    if (!leagueId || !season) {
+      return res.status(400).json({ error: 'invalid payload' });
+    }
+
+    const { league, events } = await fetchCompetitionData(leagueId, season);
+    const groupsMap = new Map();
+    const matches = (events || []).map(event => {
+      const groupName = event.strGroup || event.strRound || 'Otros';
+      const groupEntry = groupsMap.get(groupName) || { name: groupName, teams: new Set() };
+      if (event.strHomeTeam) groupEntry.teams.add(event.strHomeTeam);
+      if (event.strAwayTeam) groupEntry.teams.add(event.strAwayTeam);
+      groupsMap.set(groupName, groupEntry);
+      return {
+        team1: event.strHomeTeam,
+        team2: event.strAwayTeam,
+        date: event.dateEvent,
+        time: event.strTime,
+        group_name: groupName,
+        series: event.idEvent
+      };
+    });
+
+    const groups = [...groupsMap.values()].map(group => ({
+      name: group.name,
+      teams: [...group.teams]
+    }));
+
+    res.json({ league, matches, groups });
+  } catch (error) {
+    console.error('Error previewing competition:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 router.get('/edit', isAuthenticated, isAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
@@ -147,6 +192,20 @@ router.post('/update-results', isAuthenticated, isAdmin, async (req, res) => {
     res.json({ message: 'Results updated' });
   } catch (error) {
     console.error('Error updating results:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/import-matches', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const result = await importMatches(DEFAULT_COMPETITION);
+    if (result && result.skipped) {
+      return res.json({ skipped: true });
+    }
+    await invalidateMatchCache(DEFAULT_COMPETITION);
+    res.json({ message: 'Matches imported', imported: result.imported });
+  } catch (error) {
+    console.error('Error importing matches:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

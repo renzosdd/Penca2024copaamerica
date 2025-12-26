@@ -20,6 +20,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [updatingResults, setUpdatingResults] = useState(false);
+  const [importingMatches, setImportingMatches] = useState(false);
   const [matchSearch, setMatchSearch] = useState('');
   const [matchStatus, setMatchStatus] = useState('all');
   const [error, setError] = useState('');
@@ -127,6 +128,23 @@ export default function Admin() {
     }
   };
 
+  const handleImportMatches = async () => {
+    setImportingMatches(true);
+    setError('');
+    try {
+      const res = await fetch('/admin/import-matches', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('import matches failed');
+      }
+      await loadMatches();
+    } catch (err) {
+      console.error('import matches error', err);
+      setError(t('networkError'));
+    } finally {
+      setImportingMatches(false);
+    }
+  };
+
   const filteredMatches = useMemo(() => {
     const query = matchSearch.trim().toLowerCase();
     return [...matches]
@@ -194,6 +212,14 @@ export default function Admin() {
               disabled={updatingResults}
             >
               {updatingResults ? <CircularProgress size={18} /> : t('updateResults')}
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleImportMatches}
+              disabled={importingMatches}
+            >
+              {importingMatches ? <CircularProgress size={18} /> : t('importMatches')}
             </Button>
           </Stack>
           <ToggleButtonGroup

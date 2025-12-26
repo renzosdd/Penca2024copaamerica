@@ -14,6 +14,7 @@ const { DEFAULT_COMPETITION } = require('./config');
 const { getMessage } = require('./utils/messages');
 const { ensureWorldCup2026 } = require('./utils/worldcupSeed');
 const { ensureUserInPenca, ensureWorldCupPenca } = require('./utils/worldcupPenca');
+const updateResults = require('./scripts/updateResults');
 
 dotenv.config();
 
@@ -115,6 +116,7 @@ mongoose.connect(uri, mongooseOptions)
     .then(async () => {
         debugLog('Conexión a la base de datos establecida');
         await initializeDatabase();
+        scheduleResultsUpdates();
     })
     .catch(err => {
         console.error('Error al conectar a la base de datos. Saliendo...', err);
@@ -143,6 +145,24 @@ const Prediction = require('./models/Prediction');
 const adminRouter = require('./routes/admin');
 const matchesRouter = require('./routes/matches');
 const profileRouter = require('./routes/profile');
+const resultsScheduleMs = parsePositiveInt(process.env.SPORTSDB_RESULTS_SCHEDULE_MS, 0);
+let resultsScheduleHandle = null;
+
+function scheduleResultsUpdates() {
+    if (!resultsScheduleMs) {
+        return;
+    }
+    resultsScheduleHandle = setInterval(async () => {
+        try {
+            const result = await updateResults(DEFAULT_COMPETITION);
+            if (result?.skipped) {
+                debugLog('Actualización de resultados omitida por intervalo mínimo.');
+            }
+        } catch (error) {
+            console.error('Error al actualizar resultados en segundo plano:', error);
+        }
+    }, resultsScheduleMs);
+}
 
 async function initializeDatabase() {
     try {
@@ -364,6 +384,9 @@ app.use((req, res) => {
 process.on('SIGINT', async () => {
     debugLog('Cerrando la conexión de Mongoose...');
     await mongoose.connection.close();
+    if (resultsScheduleHandle) {
+        clearInterval(resultsScheduleHandle);
+    }
     debugLog('Conexión de Mongoose cerrada.');
     process.exit(0);
 });

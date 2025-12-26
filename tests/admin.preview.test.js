@@ -1,7 +1,7 @@
 const request = require('supertest');
 const express = require('express');
 
-jest.mock('../scripts/apiFootball', () => ({
+jest.mock('../scripts/sportsDb', () => ({
   fetchCompetitionData: jest.fn()
 }));
 
@@ -10,7 +10,7 @@ jest.mock('../middleware/auth', () => ({
   isAdmin: jest.fn((req, res, next) => next())
 }));
 
-const { fetchCompetitionData } = require('../scripts/apiFootball');
+const { fetchCompetitionData } = require('../scripts/sportsDb');
 const adminRouter = require('../routes/admin');
 
 describe('Admin competition preview', () => {
@@ -18,12 +18,15 @@ describe('Admin competition preview', () => {
 
   it('returns parsed groups and matches', async () => {
     fetchCompetitionData.mockResolvedValue({
-      league: { league: { name: 'L' } },
-      fixtures: [
+      league: { idLeague: '1', strLeague: 'L' },
+      events: [
         {
-          fixture: { id: 1, date: '2024-06-01T10:00' },
-          teams: { home: { name: 'A' }, away: { name: 'B' } },
-          league: { round: 'Grupo A' }
+          idEvent: '1',
+          dateEvent: '2024-06-01',
+          strTime: '10:00:00',
+          strHomeTeam: 'A',
+          strAwayTeam: 'B',
+          strRound: 'Grupo A'
         }
       ]
     });
