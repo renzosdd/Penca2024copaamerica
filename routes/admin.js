@@ -470,7 +470,7 @@ router.get('/user/:username', isAuthenticated, isAdmin, async (req, res) => {
 // Actualizar perfil de usuario
 router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async (req, res) => {
     try {
-        const { username, name, surname, email, dob, role, valid } = req.body;
+        const { username, name, surname, email, dob, role, valid, isPremium, premiumUntil } = req.body;
         const avatar = req.file;
 
         const user = await User.findOne({ username });
@@ -482,6 +482,13 @@ router.post('/update', isAuthenticated, isAdmin, upload.single('avatar'), async 
         if (dob) user.dob = new Date(dob);
         if (role) user.role = role;
         if (valid !== undefined) user.valid = valid === 'true';
+        if (isPremium !== undefined) user.isPremium = isPremium === 'true' || isPremium === true;
+        if (premiumUntil !== undefined) {
+            const parsedPremiumUntil = premiumUntil ? new Date(premiumUntil) : null;
+            user.premiumUntil = parsedPremiumUntil && !Number.isNaN(parsedPremiumUntil.getTime())
+                ? parsedPremiumUntil
+                : null;
+        }
         if (avatar) {
             user.avatar = avatar.buffer;
             user.avatarContentType = avatar.mimetype;

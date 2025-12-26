@@ -11,6 +11,8 @@ const userSchema = new mongoose.Schema({
     avatarContentType: { type: String, required: false },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     valid: { type: Boolean, default: false },
+    isPremium: { type: Boolean, default: false },
+    premiumUntil: { type: Date, required: false },
     pencas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Penca' }]
 });
 
