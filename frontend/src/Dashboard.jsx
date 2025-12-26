@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, CircularProgress, Alert, Container, Stack, Typography, Box } from '@mui/material';
+import { Button, CircularProgress, Alert, Container, Stack, Typography, Paper } from '@mui/material';
 import PencaSection from './PencaSection';
 import ProfileForm from './ProfileForm';
 import useLang from './useLang';
@@ -141,16 +141,28 @@ export default function Dashboard() {
 
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
-      <Stack spacing={3}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-          <Typography variant="h5">{t('dashboardTitle')}</Typography>
-          {user && (
-            <Button size="small" onClick={() => setShowProfile(!showProfile)}>
-              {showProfile ? t('hide') : t('editProfile')}
-            </Button>
-          )}
-        </Box>
+    <Container maxWidth="md" sx={{ py: { xs: 2.5, sm: 4 } }}>
+      <Stack spacing={{ xs: 2.5, md: 3.5 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
+          <Stack spacing={1.5}>
+            <Typography variant="h5">{t('dashboardTitle')}</Typography>
+            {user && (
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  {user.username}
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setShowProfile(!showProfile)}
+                  sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
+                >
+                  {showProfile ? t('hide') : t('editProfile')}
+                </Button>
+              </Stack>
+            )}
+          </Stack>
+        </Paper>
 
         {showProfile && <ProfileForm user={user} onUpdated={loadDashboard} />}
 

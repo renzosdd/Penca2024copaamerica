@@ -117,7 +117,7 @@ export default function StageAccordionList({
           label={t('jumpToStage')}
           value={selectedKey}
           onChange={e => handleJump(e.target.value)}
-          sx={{ minWidth: { xs: '100%', sm: 220 } }}
+          sx={{ width: { xs: '100%', sm: 260 } }}
         >
           <MenuItem value="">{t('jumpToStagePlaceholder')}</MenuItem>
           {sections.map(section => (
@@ -146,7 +146,13 @@ export default function StageAccordionList({
           }}
         >
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%' }}>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              justifyContent="space-between"
+              alignItems={{ xs: 'flex-start', sm: 'center' }}
+              spacing={0.5}
+              sx={{ width: '100%' }}
+            >
               <Typography variant="subtitle2">{section.label}</Typography>
               <Chip size="small" label={t('matchesCountLabel', { count: countMatchesInStage(section) })} />
             </Stack>
