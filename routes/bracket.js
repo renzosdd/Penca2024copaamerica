@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Match = require('../models/Match');
+const { DEFAULT_COMPETITION } = require('../config');
 
 function labelRound(name) {
   const n = name.toLowerCase();
@@ -11,9 +12,9 @@ function labelRound(name) {
   return null;
 }
 
-router.get('/:competition', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const matches = await Match.find({ competition: req.params.competition });
+    const matches = await Match.find({ competition: DEFAULT_COMPETITION });
     const bracket = {};
     for (const m of matches) {
       const round = labelRound(m.group_name || '');

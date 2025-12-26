@@ -2,18 +2,20 @@ const request = require('supertest');
 const express = require('express');
 const session = require('express-session');
 
-jest.mock('../models/Penca', () => ({ find: jest.fn() }));
+jest.mock('../utils/worldcupPenca', () => ({ ensureUserInPenca: jest.fn() }));
 jest.mock('../middleware/auth', () => ({ isAuthenticated: jest.fn((req, res, next) => next()) }));
 
-const Penca = require('../models/Penca');
+const { ensureUserInPenca } = require('../utils/worldcupPenca');
 const { isAuthenticated } = require('../middleware/auth');
 
 describe('GET /api/dashboard', () => {
   afterEach(() => jest.clearAllMocks());
 
-  it('returns pencas with scoring property', async () => {
-    const query = { select: jest.fn().mockResolvedValue([{ name: 'P1', scoring: { exact: 3 } }]) };
-    Penca.find.mockReturnValue(query);
+  it('returns the world cup penca with scoring', async () => {
+    ensureUserInPenca.mockResolvedValue({
+      participants: [],
+      toObject: () => ({ name: 'P1', scoring: { exact: 3 }, participants: [] })
+    });
 
     const app = express();
     app.use(session({ secret: 'test', resave: false, saveUninitialized: true }));
@@ -28,8 +30,14 @@ describe('GET /api/dashboard', () => {
         return res.status(403).json({ error: 'ADMIN_ONLY' });
       }
       try {
-        const pencas = await Penca.find({ participants: user._id }).select('name _id competition fixture rules prizes scoring');
-        res.json({ user: { username: user.username, role: user.role }, pencas });
+        const penca = await ensureUserInPenca(user._id);
+        res.json({
+          user: { username: user.username, role: user.role },
+          penca: {
+            ...penca.toObject(),
+            participantsCount: penca.participants.length
+          }
+        });
       } catch (err) {
         res.status(500).json({ error: 'DASHBOARD_ERROR' });
       }
@@ -37,7 +45,6 @@ describe('GET /api/dashboard', () => {
 
     const res = await request(app).get('/api/dashboard');
     expect(res.status).toBe(200);
-    expect(res.body.pencas[0]).toHaveProperty('scoring');
-    expect(query.select).toHaveBeenCalledWith('name _id competition fixture rules prizes scoring');
+    expect(res.body.penca).toHaveProperty('scoring');
   });
 });

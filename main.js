@@ -12,7 +12,8 @@ const cacheControl = require('./middleware/cacheControl');
 const language = require('./middleware/language');
 const { DEFAULT_COMPETITION } = require('./config');
 const { getMessage } = require('./utils/messages');
-const Penca = require("./models/Penca");
+const { ensureWorldCup2026 } = require('./utils/worldcupSeed');
+const { ensureUserInPenca, ensureWorldCupPenca } = require('./utils/worldcupPenca');
 
 dotenv.config();
 
@@ -140,8 +141,7 @@ const Score = require('./models/Score');
 const Match = require('./models/Match');
 const Prediction = require('./models/Prediction');
 const adminRouter = require('./routes/admin');
-const pencaRouter = require('./routes/penca');
-const competitionsRouter = require('./routes/competitions');
+const matchesRouter = require('./routes/matches');
 const profileRouter = require('./routes/profile');
 
 async function initializeDatabase() {
@@ -174,6 +174,8 @@ async function initializeDatabase() {
             }
             debugLog('Usuario administrador creado.');
         }
+        await ensureWorldCup2026();
+        await ensureWorldCupPenca(admin._id);
 
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
@@ -221,21 +223,16 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
         return res.status(403).json({ error: getMessage('ADMIN_ONLY', req.lang) });
     }
     try {
-        const pencas = await Penca.find({ participants: user._id })
-            .select(
-                'name _id competition fixture rules prizes scoring tournamentMode modeSettings participants participantLimit'
-            )
-            .lean();
+        const penca = await ensureUserInPenca(user._id);
+        if (!penca) {
+            return res.status(500).json({ error: getMessage('DASHBOARD_ERROR', req.lang) });
+        }
+        const formatted = {
+            ...penca.toObject(),
+            participantsCount: Array.isArray(penca.participants) ? penca.participants.length : 0
+        };
 
-        const formatted = pencas.map(penca => {
-            const { participants = [], ...rest } = penca;
-            return {
-                ...rest,
-                participantsCount: Array.isArray(participants) ? participants.length : 0
-            };
-        });
-
-        res.json({ user: { username: user.username, role: user.role }, pencas: formatted });
+        res.json({ user: { username: user.username, role: user.role }, penca: formatted });
     } catch (err) {
         console.error('dashboard api error', err);
         res.status(500).json({ error: getMessage('DASHBOARD_ERROR', req.lang) });
@@ -319,6 +316,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             });
             await score.save();
         }
+        await ensureUserInPenca(user._id);
         req.session.user = user;
         debugLog('Usuario registrado y sesión iniciada:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });
@@ -345,9 +343,8 @@ app.use('/predictions', isAuthenticated, require('./routes/predictions'));
 app.use('/ranking', isAuthenticated, require('./routes/ranking'));
 app.use('/groups', isAuthenticated, require('./routes/groups').router);
 app.use('/bracket', isAuthenticated, require('./routes/bracket'));
-app.use('/pencas', isAuthenticated, pencaRouter);
 app.use('/admin', adminRouter);
-app.use('/competitions', competitionsRouter);
+app.use('/matches', matchesRouter);
 app.use(profileRouter);
 
 app.post('/logout', (req, res) => {
