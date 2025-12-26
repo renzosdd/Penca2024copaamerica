@@ -50,6 +50,8 @@ function buildMatchPayload(event, competition, order) {
     competition,
     team1: normalizeText(event.strHomeTeam),
     team2: normalizeText(event.strAwayTeam),
+    team1Badge: normalizeText(event.strHomeTeamBadge),
+    team2Badge: normalizeText(event.strAwayTeamBadge),
     date: dateValue,
     time: timeValue,
     kickoff,

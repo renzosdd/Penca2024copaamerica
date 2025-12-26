@@ -16,8 +16,8 @@ function resolveSportsDbConfig(leagueId, season) {
     SPORTSDB_API_URL
   } = process.env;
 
-  const finalLeague = leagueId || SPORTSDB_LEAGUE_ID;
-  const finalSeason = season || SPORTSDB_SEASON;
+  const finalLeague = leagueId || SPORTSDB_LEAGUE_ID || '4429';
+  const finalSeason = season || SPORTSDB_SEASON || '2024';
   const apiKey = SPORTSDB_API_KEY || '123';
 
   if (!finalLeague || !finalSeason) {

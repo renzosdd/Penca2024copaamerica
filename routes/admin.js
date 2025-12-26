@@ -71,7 +71,7 @@ router.get('/matches', isAuthenticated, isAdmin, async (req, res) => {
     const matches = await getOrLoad(DEFAULT_COMPETITION, () =>
       Match.find({ competition: DEFAULT_COMPETITION })
         .select(
-          'team1 team2 competition date time kickoff group_name series venue result1 result2 order originalDate originalTime originalTimezone'
+          'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 order originalDate originalTime originalTimezone'
         )
         .sort({ order: 1, kickoff: 1, date: 1, time: 1 })
         .lean()

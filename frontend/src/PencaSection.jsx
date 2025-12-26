@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Avatar,
   Box,
   Button,
   Card,
@@ -24,8 +25,7 @@ import {
   TableRow,
   TextField,
   Tooltip,
-  Typography,
-  useTheme
+  Typography
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
@@ -61,7 +61,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [rankingSearch, setRankingSearch] = useState('');
   const { t } = useLang();
-  const theme = useTheme();
   const predictionForms = useRef(new Map());
 
   const matchTimeValue = useCallback(match => matchKickoffValue(match), []);
@@ -171,20 +170,23 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     </Stack>
   );
 
-  const renderTeam = name => (
+  const renderTeam = (name, badgeUrl) => (
     <Stack direction="row" spacing={1.5} alignItems="center" key={name} sx={{ minWidth: 0 }}>
-      <Box
-        component="img"
-        src={`/images/${name.replace(/\s+/g, '').toLowerCase()}.png`}
+      <Avatar
+        src={badgeUrl || undefined}
         alt={name}
+        imgProps={{ referrerPolicy: 'no-referrer' }}
         sx={{
-          width: { xs: 32, sm: 36 },
-          height: { xs: 32, sm: 36 },
-          borderRadius: '50%',
-          objectFit: 'contain',
-          backgroundColor: 'background.default'
+          width: { xs: 36, sm: 40 },
+          height: { xs: 36, sm: 40 },
+          bgcolor: 'grey.100',
+          color: 'text.secondary',
+          border: theme => `1px solid ${theme.palette.divider}`,
+          fontWeight: 600
         }}
-      />
+      >
+        {name?.slice(0, 2)?.toUpperCase() || '?'}
+      </Avatar>
       <Typography variant="subtitle1" sx={{ fontWeight: 600, wordBreak: 'break-word' }}>
         {name}
       </Typography>
@@ -258,26 +260,25 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
           p: { xs: 2, sm: 2.5 },
           borderRadius: 3,
           borderColor: pr.result1 != null ? theme.palette.primary.light : theme.palette.divider,
-          backgroundColor: pr.result1 != null ? alpha(theme.palette.primary.main, 0.06) : theme.palette.background.paper
+          backgroundColor: pr.result1 != null ? alpha(theme.palette.primary.main, 0.06) : theme.palette.background.paper,
+          boxShadow: pr.result1 != null ? `0 0 0 1px ${alpha(theme.palette.primary.main, 0.1)}` : 'none'
         })}
       >
         <Stack spacing={2}>
           <Stack spacing={0.75}>
-            <Typography variant="caption" color="text.secondary">
-              {kickoffText(match)}
-            </Typography>
-            <Stack direction="row" spacing={1} flexWrap="wrap">
+            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+              <Chip size="small" label={kickoffText(match)} variant="outlined" />
               {match.group_name && <Chip size="small" label={match.group_name} />}
               {match.series && <Chip size="small" color="secondary" label={match.series} />}
             </Stack>
           </Stack>
 
-          <Stack spacing={1.5}>
-            {renderTeam(match.team1)}
-            <Typography variant="overline" color="text.secondary">
+          <Stack spacing={1.5} sx={{ px: { xs: 0, sm: 0.5 } }}>
+            {renderTeam(match.team1, match.team1Badge)}
+            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 2 }}>
               {t('vs')}
             </Typography>
-            {renderTeam(match.team2)}
+            {renderTeam(match.team2, match.team2Badge)}
           </Stack>
 
           <Box

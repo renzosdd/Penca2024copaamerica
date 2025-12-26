@@ -11,8 +11,8 @@ const theme = createTheme({
       contrastText: '#001219'
     },
     background: {
-      default: '#e8edf3',
-      paper: 'rgba(255, 255, 255, 0.92)'
+      default: '#ffffff',
+      paper: '#ffffff'
     },
     error: {
       main: '#b00020',
@@ -32,12 +32,7 @@ const theme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundImage:
-            'linear-gradient(180deg, rgba(15, 23, 42, 0.08) 0%, rgba(15, 23, 42, 0.02) 60%), url("/images/pitch-texture.svg")',
-          backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundColor: '#ffffff',
           minHeight: '100vh'
         }
       }
@@ -45,8 +40,7 @@ const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundImage: 'none',
-          backdropFilter: 'blur(6px)'
+          backgroundImage: 'none'
         }
       }
     },
