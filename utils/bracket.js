@@ -220,6 +220,56 @@ async function updateEliminationMatches(competition) {
     await invalidateGroupStandings(competition);
     const standings = await calculateGroupStandings(competition);
 
+    function winnerFromMatch(match) {
+        if (match.result1 == null || match.result2 == null) return null;
+        if (match.result1 === match.result2) return null;
+        return match.result1 > match.result2 ? match.team1 : match.team2;
+    }
+
+    function loserFromMatch(match) {
+        if (match.result1 == null || match.result2 == null) return null;
+        if (match.result1 === match.result2) return null;
+        return match.result1 > match.result2 ? match.team2 : match.team1;
+    }
+
+    function buildPlaceholderVariants(label, index, prefix = 'Ganador') {
+        const variants = new Set();
+        const normalized = String(label || '').trim();
+        if (!normalized) return [];
+        const compact = normalized.replace(/\s+/g, '');
+        for (const name of new Set([normalized, compact])) {
+            variants.add(`${prefix} ${name}-${index}`);
+            variants.add(`${prefix} ${name}${index}`);
+        }
+        return Array.from(variants);
+    }
+
+    async function replacePlaceholderTeam(stage, placeholder, team) {
+        await Match.updateMany(
+            { competition, group_name: stage, $or: [{ team1: placeholder }, { team2: placeholder }] },
+            [{
+                $set: {
+                    team1: { $cond: [{ $eq: ['$team1', placeholder] }, team, '$team1'] },
+                    team2: { $cond: [{ $eq: ['$team2', placeholder] }, team, '$team2'] }
+                }
+            }]
+        );
+    }
+
+    async function propagateWinners(stageName, nextStageName, labels) {
+        const matches = await Match.find({ competition, group_name: stageName })
+            .sort({ order: 1, kickoff: 1, date: 1, time: 1, _id: 1 });
+        for (const [index, match] of matches.entries()) {
+            const winner = winnerFromMatch(match);
+            if (!winner) continue;
+            const slot = index + 1;
+            const placeholders = labels.flatMap(label => buildPlaceholderVariants(label, slot));
+            for (const placeholder of placeholders) {
+                await replacePlaceholderTeam(nextStageName, placeholder, winner);
+            }
+        }
+    }
+
     function team(group, pos) {
         return standings[`Grupo ${group}`] && standings[`Grupo ${group}`][pos] && standings[`Grupo ${group}`][pos].team;
     }
@@ -269,6 +319,9 @@ async function updateEliminationMatches(competition) {
                 }]
             );
         }
+
+        await propagateWinners('Ronda de 32', 'Octavos de final', ['R32', 'Ronda de 32']);
+        await propagateWinners('Octavos de final', 'Cuartos de final', ['Octavos', 'Octavos de final', 'R16']);
     } else {
         // Copa America style with 4 groups
         const pairs = [
@@ -297,62 +350,28 @@ async function updateEliminationMatches(competition) {
         }
     }
 
-    const quarterMatches = await Match.find({ competition, group_name: 'Cuartos de final' });
-    const qfWinners = {};
-    quarterMatches.forEach((m, idx) => {
-        if (m.result1 === undefined || m.result2 === undefined) return;
-        qfWinners[`QF${idx + 1}`] = m.result1 > m.result2 ? m.team1 : m.team2;
-    });
+    await propagateWinners('Cuartos de final', 'Semifinales', ['QF', 'Cuartos', 'Cuartos de final']);
 
-    const semiPairs = [
-        ['Ganador QF-1', qfWinners.QF1],
-        ['Ganador QF-2', qfWinners.QF2],
-        ['Ganador QF-3', qfWinners.QF3],
-        ['Ganador QF-4', qfWinners.QF4]
-    ];
-
-    for (const [placeholder, realTeam] of semiPairs) {
-        if (realTeam) {
-            await Match.updateOne(
-                { competition, group_name: 'Semifinales', $or: [{ team1: placeholder }, { team2: placeholder }] },
-                [{
-                    $set: {
-                        team1: { $cond: [{ $eq: ['$team1', placeholder] }, realTeam, '$team1'] },
-                        team2: { $cond: [{ $eq: ['$team2', placeholder] }, realTeam, '$team2'] }
-                    }
-                }]
-            );
+    const semiMatches = await Match.find({ competition, group_name: 'Semifinales' })
+        .sort({ order: 1, kickoff: 1, date: 1, time: 1, _id: 1 });
+    for (const [index, match] of semiMatches.entries()) {
+        const slot = index + 1;
+        const winner = winnerFromMatch(match);
+        const loser = loserFromMatch(match);
+        if (winner) {
+            const placeholders = buildPlaceholderVariants('Semifinales', slot)
+                .concat(buildPlaceholderVariants('SF', slot));
+            for (const placeholder of placeholders) {
+                await replacePlaceholderTeam('Final', placeholder, winner);
+            }
         }
-    }
-
-    const semiMatches = await Match.find({ competition, group_name: 'Semifinales' });
-    const sfResults = {};
-    semiMatches.forEach((m, idx) => {
-        if (m.result1 === undefined || m.result2 === undefined) return;
-        const winner = m.result1 > m.result2 ? m.team1 : m.team2;
-        const loser = m.result1 > m.result2 ? m.team2 : m.team1;
-        sfResults[`SF${idx + 1}`] = { winner, loser };
-    });
-
-    if (sfResults.SF1) {
-        await Match.updateOne(
-            { competition, group_name: 'Final', team1: 'Ganador Semifinales-1' },
-            { $set: { team1: sfResults.SF1.winner } }
-        );
-        await Match.updateOne(
-            { competition, group_name: 'Tercer puesto', team1: 'Perdedor SF1' },
-            { $set: { team1: sfResults.SF1.loser } }
-        );
-    }
-    if (sfResults.SF2) {
-        await Match.updateOne(
-            { competition, group_name: 'Final', team2: 'Ganador Semifinales-2' },
-            { $set: { team2: sfResults.SF2.winner } }
-        );
-        await Match.updateOne(
-            { competition, group_name: 'Tercer puesto', team2: 'Perdedor SF2' },
-            { $set: { team2: sfResults.SF2.loser } }
-        );
+        if (loser) {
+            const placeholders = buildPlaceholderVariants('SF', slot, 'Perdedor')
+                .concat(buildPlaceholderVariants('Semifinales', slot, 'Perdedor'));
+            for (const placeholder of placeholders) {
+                await replacePlaceholderTeam('Tercer puesto', placeholder, loser);
+            }
+        }
     }
 }
 

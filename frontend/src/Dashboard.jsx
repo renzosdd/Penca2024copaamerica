@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, CircularProgress, Alert, Container, Stack, Typography, Box } from '@mui/material';
 import PencaSection from './PencaSection';
 import ProfileForm from './ProfileForm';
@@ -92,12 +92,21 @@ export default function Dashboard() {
     loadBaseData();
   }, [penca, t]);
 
+  const predictionIndex = useMemo(() => {
+    const map = new Map();
+    if (!user) return map;
+    const username = user.username;
+    predictions.forEach(prediction => {
+      if (prediction.username !== username) return;
+      map.set(`${prediction.pencaId}:${prediction.matchId}`, prediction);
+    });
+    return map;
+  }, [predictions, user]);
+
   const getPrediction = useCallback((pencaId, matchId) => {
     if (!user) return undefined;
-    return predictions.find(
-      p => p.pencaId === pencaId && p.matchId === matchId && p.username === user.username
-    );
-  }, [predictions, user]);
+    return predictionIndex.get(`${pencaId}:${matchId}`);
+  }, [predictionIndex, user]);
 
   const handlePrediction = async (e, pencaId, matchId) => {
     e.preventDefault();
@@ -110,13 +119,15 @@ export default function Dashboard() {
       });
       const result = await res.json();
       if (res.ok) {
-        const updated = predictions.filter(
-          p => !(p.pencaId === pencaId && p.matchId === matchId && p.username === user?.username)
-        );
-        if (user) {
-          updated.push({ pencaId, matchId, result1: Number(data.result1), result2: Number(data.result2), username: user.username });
-        }
-        setPredictions(updated);
+        setPredictions(prev => {
+          const updated = prev.filter(
+            p => !(p.pencaId === pencaId && p.matchId === matchId && p.username === user?.username)
+          );
+          if (user) {
+            updated.push({ pencaId, matchId, result1: Number(data.result1), result2: Number(data.result2), username: user.username });
+          }
+          return updated;
+        });
         return { success: true, message: result.message || 'OK' };
       }
       return { success: false, error: result.error || 'Error' };
