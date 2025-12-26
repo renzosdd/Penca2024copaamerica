@@ -9,6 +9,8 @@ const matchSchema = new mongoose.Schema({
     originalTimezone: String,
     team1: String,
     team2: String,
+    team1Badge: String,
+    team2Badge: String,
     competition: String,
     group_name: String,
     series: String,
