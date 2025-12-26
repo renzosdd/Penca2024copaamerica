@@ -41,15 +41,17 @@ MAX_PENCAS_PER_USER=3
 # Idioma de los mensajes (es o en)
 APP_LANG=es
 Tambin puedes cambiar el idioma de las respuestas agregando `?lang=es` o `?lang=en` a cada solicitud, o enviando el encabezado `Accept-Language`.
-# Credenciales para obtener fixtures desde API-Football
-FOOTBALL_API_KEY=<tu_api_key>
+# Credenciales para obtener fixtures desde TheSportsDB
+SPORTSDB_API_KEY=<tu_api_key>
 # Identificador de liga y temporada
-FOOTBALL_LEAGUE_ID=<id_liga>
-FOOTBALL_SEASON=<temporada>
+SPORTSDB_LEAGUE_ID=<id_liga>
+SPORTSDB_SEASON=<temporada>
 # URL base opcional de la API
-FOOTBALL_API_URL=https://v3.football.api-sports.io
+SPORTSDB_API_URL=https://www.thesportsdb.com/api/v2/json
 # Intervalo mínimo entre actualizaciones de resultados (ms)
-FOOTBALL_UPDATE_INTERVAL=3600000
+SPORTSDB_UPDATE_INTERVAL=3600000
+# Intervalo para ejecutar actualizaciones automáticas de resultados (ms)
+SPORTSDB_RESULTS_SCHEDULE_MS=3600000
 ```
 Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
 El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
@@ -180,7 +182,7 @@ encuentros de forma agrupada. Al guardar un resultado la aplicación actualiza
 automáticamente la llave del knockout. El endpoint
 `/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel) queda como
 opción de respaldo para recalcular manualmente si fuera necesario.
-También puedes usar `/admin/update-results/<competencia>` para obtener marcadores directamente desde API‑Football. La frecuencia de actualización se controla con la variable `FOOTBALL_UPDATE_INTERVAL`.
+También puedes usar `/admin/update-results` para obtener marcadores directamente desde TheSportsDB. La frecuencia de actualización se controla con la variable `SPORTSDB_UPDATE_INTERVAL`. Si defines `SPORTSDB_RESULTS_SCHEDULE_MS`, el servidor ejecutará actualizaciones automáticas en segundo plano.
 El comando utilizará los valores `apiLeagueId` y `apiSeason` definidos en la competencia.
 
 ### Ejemplo de uso
@@ -195,7 +197,8 @@ El comando utilizará los valores `apiLeagueId` y `apiSeason` definidos en la co
 - `GET /bracket` – muestra la llave del knockout según la última recalculación.
 - `POST /admin/recalculate-bracket` – fuerza el nuevo cálculo del bracket con
   los resultados cargados.
-- `POST /admin/update-results/:competition` – obtiene los resultados desde la API-Football.
+- `POST /admin/update-results` – obtiene los resultados desde TheSportsDB.
+- `POST /admin/import-matches` – importa el fixture desde TheSportsDB.
 - `GET /competitions/:competition/matches` – lista los partidos de la competencia indicada.
 
 ## Ideas para próximas iteraciones

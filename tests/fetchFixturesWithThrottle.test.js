@@ -1,4 +1,4 @@
-const { fetchFixturesWithThrottle } = require('../scripts/apiFootball');
+const { fetchEventsWithThrottle } = require('../scripts/sportsDb');
 
 jest.mock('../models/ApiUsage', () => ({
   findOne: jest.fn(),
@@ -8,39 +8,38 @@ jest.mock('../models/ApiUsage', () => ({
 
 beforeEach(() => {
   global.fetch = jest.fn();
-  process.env.FOOTBALL_API_KEY = 'k';
-  process.env.FOOTBALL_LEAGUE_ID = '1';
-  process.env.FOOTBALL_SEASON = '2024';
-  process.env.FOOTBALL_API_URL = 'http://api';
-  process.env.FOOTBALL_UPDATE_INTERVAL = '3600000';
+  process.env.SPORTSDB_API_KEY = 'k';
+  process.env.SPORTSDB_LEAGUE_ID = '1';
+  process.env.SPORTSDB_SEASON = '2024';
+  process.env.SPORTSDB_API_URL = 'http://api';
+  process.env.SPORTSDB_UPDATE_INTERVAL = '3600000';
 });
 
 afterEach(() => jest.clearAllMocks());
 
 const ApiUsage = require('../models/ApiUsage');
 
-test('fetches fixtures and records usage', async () => {
+test('fetches events and records usage', async () => {
   ApiUsage.findOne.mockResolvedValue(null);
   global.fetch.mockResolvedValue({
     ok: true,
-    json: async () => ({ response: [{ fixture: { id: 1 } }] })
+    json: async () => ({ events: [{ idEvent: '1' }] })
   });
 
-  const { fixtures, skipped } = await fetchFixturesWithThrottle('createCompetition', 'Copa', 1, 2024);
+  const { events, skipped } = await fetchEventsWithThrottle('createCompetition', 'Copa', 1, 2024);
 
   expect(skipped).toBe(false);
   expect(global.fetch).toHaveBeenCalledWith(
-    'http://api/fixtures?league=1&season=2024',
-    { headers: { 'x-apisports-key': 'k' } }
+    'http://api/k/eventsseason.php?id=1&season=2024'
   );
   expect(ApiUsage.create).toHaveBeenCalled();
-  expect(fixtures.length).toBe(1);
+  expect(events.length).toBe(1);
 });
 
 test('skips when interval not elapsed', async () => {
   ApiUsage.findOne.mockResolvedValue({ lastUsed: new Date() });
 
-  const { skipped } = await fetchFixturesWithThrottle('createCompetition', 'Copa', 1, 2024);
+  const { skipped } = await fetchEventsWithThrottle('createCompetition', 'Copa', 1, 2024);
 
   expect(skipped).toBe(true);
   expect(global.fetch).not.toHaveBeenCalled();

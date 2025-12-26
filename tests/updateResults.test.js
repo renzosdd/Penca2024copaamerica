@@ -25,11 +25,11 @@ const { updateEliminationMatches } = require('../utils/bracket');
 describe('updateResults script', () => {
   beforeEach(() => {
     global.fetch = jest.fn();
-    process.env.FOOTBALL_API_KEY = 'k';
-    process.env.FOOTBALL_LEAGUE_ID = '1';
-    process.env.FOOTBALL_SEASON = '2024';
-    process.env.FOOTBALL_API_URL = 'http://api';
-    process.env.FOOTBALL_UPDATE_INTERVAL = '3600000';
+    process.env.SPORTSDB_API_KEY = 'k';
+    process.env.SPORTSDB_LEAGUE_ID = '1';
+    process.env.SPORTSDB_SEASON = '2024';
+    process.env.SPORTSDB_API_URL = 'http://api';
+    process.env.SPORTSDB_UPDATE_INTERVAL = '3600000';
     Competition.findOne.mockResolvedValue({ apiLeagueId: 1, apiSeason: 2024 });
   });
 
@@ -42,10 +42,11 @@ describe('updateResults script', () => {
     global.fetch.mockResolvedValue({
       ok: true,
       json: async () => ({
-        response: [
+        events: [
           {
-            fixture: { id: 10 },
-            goals: { home: 2, away: 1 }
+            idEvent: '10',
+            intHomeScore: 2,
+            intAwayScore: 1
           }
         ]
       })
@@ -54,10 +55,7 @@ describe('updateResults script', () => {
     const res = await updateResults('Copa');
 
     expect(Competition.findOne).toHaveBeenCalledWith({ name: 'Copa' });
-    expect(global.fetch).toHaveBeenCalledWith(
-      'http://api/fixtures?league=1&season=2024',
-      { headers: { 'x-apisports-key': 'k' } }
-    );
+    expect(global.fetch).toHaveBeenCalledWith('http://api/k/eventsseason.php?id=1&season=2024');
     expect(Match.updateOne).toHaveBeenCalledWith(
       { series: '10', competition: 'Copa' },
       { result1: 2, result2: 1 }
