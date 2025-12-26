@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Prediction = require('../models/Prediction');
 const Match = require('../models/Match'); // Importar el modelo de partidos
-const Penca = require('../models/Penca');
 const { getMessage } = require('../utils/messages');
+const { ensureUserInPenca } = require('../utils/worldcupPenca');
 const { recordAudit } = require('../utils/audit');
 const rankingCache = require('../utils/rankingCache');
 
@@ -20,7 +20,11 @@ router.get('/', async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: getMessage('UNAUTHORIZED', req.lang) });
         }
-        const predictions = await Prediction.find({ userId: user._id })
+        const penca = await ensureUserInPenca(user._id);
+        if (!penca) {
+            return res.status(500).json({ error: getMessage('PREDICTIONS_FETCH_ERROR', req.lang) });
+        }
+        const predictions = await Prediction.find({ userId: user._id, pencaId: penca._id })
             .select('matchId pencaId result1 result2 username')
             .lean();
         res.json(predictions);
@@ -31,7 +35,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     try {
-        const { matchId, result1, result2, pencaId } = req.body;
+        const { matchId, result1, result2 } = req.body;
         const r1 = Number(result1);
         const r2 = Number(result2);
         if (Number.isNaN(r1) || Number.isNaN(r2)) {
@@ -45,11 +49,7 @@ router.post('/', async (req, res) => {
             return res.status(401).json({ error: getMessage('UNAUTHORIZED', req.lang) });
         }
 
-        if (!pencaId) {
-            return res.status(400).json({ error: getMessage('PENCA_ID_REQUIRED', req.lang) });
-        }
-
-        const penca = await Penca.findById(pencaId);
+        const penca = await ensureUserInPenca(user._id);
         if (!penca || !penca.participants.some(id => id.equals(user._id))) {
             return res.status(403).json({ error: getMessage('NOT_IN_PENCA', req.lang) });
         }
@@ -75,7 +75,7 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: getMessage('PREDICTION_TIME', req.lang) });
         }
 
-        let prediction = await Prediction.findOne({ userId: user._id, matchId, pencaId });
+        let prediction = await Prediction.findOne({ userId: user._id, matchId, pencaId: penca._id });
         if (prediction) {
             prediction.result1 = r1;
             prediction.result2 = r2;
@@ -83,7 +83,7 @@ router.post('/', async (req, res) => {
             prediction = new Prediction({
                 userId: user._id,
                 matchId,
-                pencaId,
+                pencaId: penca._id,
                 result1: r1,
                 result2: r2,
                 username: user.username
@@ -91,14 +91,14 @@ router.post('/', async (req, res) => {
         }
         await prediction.save();
 
-        await rankingCache.invalidate({ pencaId, competition: match.competition });
+        await rankingCache.invalidate({ pencaId: penca._id, competition: match.competition });
 
         await recordAudit({
             action: 'prediction:upsert',
             entityType: 'prediction',
             entityId: prediction._id,
             actor: user._id,
-            metadata: { pencaId, matchId }
+            metadata: { pencaId: penca._id, matchId }
         });
         res.json({ message: getMessage('PREDICTION_SAVED', req.lang) });
     } catch (err) {

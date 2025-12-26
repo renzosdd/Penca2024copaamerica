@@ -1,25 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Button, CircularProgress, Alert, Container, Stack, Typography, Box, Chip } from '@mui/material';
+import { useCallback, useEffect, useState } from 'react';
+import { Button, CircularProgress, Alert, Container, Stack, Typography, Box } from '@mui/material';
 import PencaSection from './PencaSection';
-import JoinPenca from './JoinPenca';
 import ProfileForm from './ProfileForm';
 import useLang from './useLang';
 
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
-  const [pencas, setPencas] = useState([]);
-  const [matchesByCompetition, setMatchesByCompetition] = useState({});
+  const [penca, setPenca] = useState(null);
+  const [matches, setMatches] = useState([]);
   const [predictions, setPredictions] = useState([]);
-  const [rankings, setRankings] = useState({});
-  const [groupsByCompetition, setGroupsByCompetition] = useState({});
+  const [ranking, setRanking] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [competitionLoading, setCompetitionLoading] = useState({});
   const [error, setError] = useState('');
-  const [showJoin, setShowJoin] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const { t } = useLang();
-  const competitionRequests = useRef(new Map());
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -27,9 +23,9 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
-        setPencas(data.pencas || []);
-        setMatchesByCompetition({});
-        setGroupsByCompetition({});
+        setPenca(data.penca || null);
+        setMatches([]);
+        setGroups([]);
       } else {
         setError(t('networkError'));
       }
@@ -39,12 +35,12 @@ export default function Dashboard() {
     }
   }, [t]);
 
-  const loadRanking = useCallback(async id => {
+  const loadRanking = useCallback(async () => {
     try {
-      const res = await fetch(`/ranking?pencaId=${id}`);
+      const res = await fetch('/ranking');
       if (res.ok) {
         const data = await res.json();
-        setRankings(r => ({ ...r, [id]: data }));
+        setRanking(data);
       }
     } catch (err) {
       console.error('ranking error', err);
@@ -58,21 +54,34 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadBaseData() {
-      if (!pencas.length) {
-        setMatchesByCompetition({});
-        setGroupsByCompetition({});
+      if (!penca) {
+        setMatches([]);
+        setGroups([]);
         setPredictions([]);
-        setRankings({});
+        setRanking([]);
         return;
       }
       setLoading(true);
       setError('');
       try {
-        const pRes = await fetch('/predictions');
+        const [pRes, rankingRes, matchesRes, groupsRes] = await Promise.all([
+          fetch('/predictions'),
+          fetch('/ranking'),
+          fetch('/matches'),
+          fetch('/groups')
+        ]);
         if (pRes.ok) {
           setPredictions(await pRes.json());
         }
-        await Promise.all(pencas.map(p => loadRanking(p._id)));
+        if (rankingRes.ok) {
+          setRanking(await rankingRes.json());
+        }
+        if (matchesRes.ok) {
+          setMatches(await matchesRes.json());
+        }
+        if (groupsRes.ok) {
+          setGroups(await groupsRes.json());
+        }
       } catch (err) {
         console.error('dashboard data error', err);
         setError(t('networkError'));
@@ -81,60 +90,7 @@ export default function Dashboard() {
       }
     }
     loadBaseData();
-  }, [loadRanking, pencas, t]);
-
-  const ensureCompetitionData = useCallback(async competitionName => {
-    if (!competitionName) return;
-    const hasMatches = Array.isArray(matchesByCompetition[competitionName]);
-    const hasGroups = Array.isArray(groupsByCompetition[competitionName]);
-    if (hasMatches && hasGroups) return;
-
-    if (competitionRequests.current.has(competitionName)) {
-      return competitionRequests.current.get(competitionName);
-    }
-
-    const request = (async () => {
-      setCompetitionLoading(state => ({ ...state, [competitionName]: true }));
-      try {
-        const [matchesData, groupsData] = await Promise.all([
-          hasMatches
-            ? null
-            : (async () => {
-                const res = await fetch(`/competitions/${encodeURIComponent(competitionName)}/matches`);
-                if (res.ok) {
-                  return res.json();
-                }
-                throw new Error('matches request failed');
-              })(),
-          hasGroups
-            ? null
-            : (async () => {
-                const resGroups = await fetch(`/groups/${encodeURIComponent(competitionName)}`);
-                if (resGroups.ok) {
-                  return resGroups.json();
-                }
-                throw new Error('groups request failed');
-              })()
-        ]);
-
-        if (matchesData) {
-          setMatchesByCompetition(prev => ({ ...prev, [competitionName]: matchesData }));
-        }
-        if (groupsData) {
-          setGroupsByCompetition(prev => ({ ...prev, [competitionName]: groupsData }));
-        }
-      } catch (err) {
-        console.error('competition data error', err);
-        setError(t('networkError'));
-      } finally {
-        setCompetitionLoading(state => ({ ...state, [competitionName]: false }));
-        competitionRequests.current.delete(competitionName);
-      }
-    })();
-
-    competitionRequests.current.set(competitionName, request);
-    return request;
-  }, [groupsByCompetition, matchesByCompetition, t]);
+  }, [penca, t]);
 
   const getPrediction = useCallback((pencaId, matchId) => {
     if (!user) return undefined;
@@ -150,7 +106,7 @@ export default function Dashboard() {
       const res = await fetch('/predictions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, pencaId, matchId })
+        body: JSON.stringify({ ...data, matchId })
       });
       const result = await res.json();
       if (res.ok) {
@@ -194,49 +150,26 @@ export default function Dashboard() {
             {error}
           </Alert>
         )}
-
-        {pencas.length > 0 && (
-          <Chip
-            size="small"
-            color="default"
-            label={`${pencas.length} ${t('pencas')}`}
-            sx={{ alignSelf: 'flex-start' }}
-          />
-        )}
-
-        {pencas.length === 0 && (
+        {penca ? (
+          <Stack spacing={3}>
+            <PencaSection
+              penca={penca}
+              matches={matches}
+              groups={groups}
+              getPrediction={getPrediction}
+              handlePrediction={handlePrediction}
+              ranking={ranking}
+              currentUsername={user?.username}
+              onOpen={loadRanking}
+              isLoading={loading}
+            />
+          </Stack>
+        ) : (
           <Stack spacing={2} alignItems="flex-start">
             <Typography variant="body1">{t('noPencas')}</Typography>
-            <JoinPenca onJoined={loadDashboard} />
-          </Stack>
-        )}
-
-        {pencas.length > 0 && (
-          <Stack spacing={3}>
-            {pencas.map(p => (
-              <PencaSection
-                key={p._id}
-                penca={p}
-                matches={matchesByCompetition[p.competition] || []}
-                groups={groupsByCompetition[p.competition] || []}
-                getPrediction={getPrediction}
-                handlePrediction={handlePrediction}
-                ranking={rankings[p._id] || []}
-                currentUsername={user?.username}
-                onOpen={() => ensureCompetitionData(p.competition)}
-                isLoading={Boolean(competitionLoading[p.competition])}
-              />
-            ))}
-            <Box>
-              <Button size="small" onClick={() => setShowJoin(!showJoin)}>
-                {showJoin ? t('hide') : t('joinAnother')}
-              </Button>
-              {showJoin && (
-                <Box sx={{ mt: 2 }}>
-                  <JoinPenca onJoined={loadDashboard} />
-                </Box>
-              )}
-            </Box>
+            <Button size="small" onClick={loadDashboard}>
+              {t('loading')}
+            </Button>
           </Stack>
         )}
       </Stack>

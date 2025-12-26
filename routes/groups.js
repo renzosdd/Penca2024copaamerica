@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { calculateGroupStandings } = require('../utils/bracket');
+const { DEFAULT_COMPETITION } = require('../config');
 
 
-router.get('/:competition', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const raw = await calculateGroupStandings(req.params.competition);
+    const raw = await calculateGroupStandings(DEFAULT_COMPETITION);
     const standings = Object.entries(raw).map(([group, teams]) => ({ group, teams }));
     res.json(standings);
   } catch (err) {
