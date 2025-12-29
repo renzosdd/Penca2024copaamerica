@@ -12,6 +12,46 @@ function parseScore(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function normalizeText(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const trimmed = String(value).trim();
+  return trimmed.length ? trimmed : null;
+}
+
+function buildFallbackMatchQuery(competition, event) {
+  const team1 = normalizeText(event.strHomeTeam);
+  const team2 = normalizeText(event.strAwayTeam);
+  const date = normalizeText(event.dateEvent);
+  const time = normalizeText(event.strTime);
+
+  if (!team1 || !team2 || !date) {
+    return null;
+  }
+
+  const teamFilters = [
+    { team1, team2 },
+    { team1: team2, team2: team1 }
+  ];
+
+  const dateFilters = [];
+  if (time) {
+    dateFilters.push({ date, time });
+    dateFilters.push({ originalDate: date, originalTime: time });
+  }
+  dateFilters.push({ date });
+  dateFilters.push({ originalDate: date });
+
+  return {
+    competition,
+    $and: [
+      { $or: teamFilters },
+      { $or: dateFilters }
+    ]
+  };
+}
+
 async function updateResults(competition) {
   const comp = await Competition.findOne({ name: competition });
   const { events, skipped } = await fetchEventsWithThrottle(
@@ -27,7 +67,21 @@ async function updateResults(competition) {
     const id = String(event.idEvent || '');
     const result1 = parseScore(event.intHomeScore);
     const result2 = parseScore(event.intAwayScore);
-    await Match.updateOne({ series: id, competition }, { result1, result2 });
+    const updatePayload = { $set: { result1, result2 } };
+    const primaryResult = await Match.updateOne(
+      { series: id, competition },
+      updatePayload
+    );
+    if (primaryResult.matchedCount === 0) {
+      const fallbackQuery = buildFallbackMatchQuery(competition, event);
+      if (fallbackQuery) {
+        const fallbackUpdate = { ...updatePayload };
+        if (id) {
+          fallbackUpdate.$set.series = id;
+        }
+        await Match.updateOne(fallbackQuery, fallbackUpdate);
+      }
+    }
   }
 
   await updateEliminationMatches(competition);

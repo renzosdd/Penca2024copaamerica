@@ -198,7 +198,7 @@ router.post('/update-results', isAuthenticated, isAdmin, async (req, res) => {
 
 router.post('/import-matches', isAuthenticated, isAdmin, async (req, res) => {
   try {
-    const result = await importMatches(DEFAULT_COMPETITION);
+    const result = await importMatches(DEFAULT_COMPETITION, { preferFixture: true });
     if (result && result.skipped) {
       return res.json({ skipped: true });
     }

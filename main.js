@@ -208,7 +208,7 @@ async function ensureInitialMatchesFromApi() {
         if (existingMatches > 0) {
             return;
         }
-        const result = await importMatches(DEFAULT_COMPETITION, { force: true });
+        const result = await importMatches(DEFAULT_COMPETITION, { force: true, preferFixture: true });
         if (result?.skipped) {
             debugLog('Carga inicial de partidos omitida por intervalo mínimo.');
         }
