@@ -210,4 +210,18 @@ router.post('/import-matches', isAuthenticated, isAdmin, async (req, res) => {
   }
 });
 
+router.post('/import-fixture', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const result = await importMatches.importFixture(DEFAULT_COMPETITION);
+    if (result && result.missing) {
+      return res.json({ skipped: true });
+    }
+    await invalidateMatchCache(DEFAULT_COMPETITION);
+    res.json({ message: 'Fixture imported', imported: result.imported });
+  } catch (error) {
+    console.error('Error importing fixture:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
