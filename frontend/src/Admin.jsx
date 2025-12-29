@@ -7,8 +7,6 @@ import {
   Paper,
   Stack,
   TextField,
-  ToggleButton,
-  ToggleButtonGroup,
   Typography
 } from '@mui/material';
 import useLang from './useLang';
@@ -19,10 +17,7 @@ export default function Admin() {
   const [competitionName, setCompetitionName] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [updatingResults, setUpdatingResults] = useState(false);
-  const [importingMatches, setImportingMatches] = useState(false);
-  const [matchSearch, setMatchSearch] = useState('');
-  const [matchStatus, setMatchStatus] = useState('all');
+  const [importingFixture, setImportingFixture] = useState(false);
   const [error, setError] = useState('');
   const { t } = useLang();
 
@@ -111,72 +106,27 @@ export default function Admin() {
     }
   };
 
-  const handleUpdateResults = async () => {
-    setUpdatingResults(true);
+  const handleImportFixture = async () => {
+    setImportingFixture(true);
     setError('');
     try {
-      const res = await fetch('/admin/update-results', { method: 'POST' });
+      const res = await fetch('/admin/import-fixture', { method: 'POST' });
       if (!res.ok) {
-        throw new Error('update results failed');
+        throw new Error('import fixture failed');
       }
       await loadMatches();
     } catch (err) {
-      console.error('update results error', err);
+      console.error('import fixture error', err);
       setError(t('networkError'));
     } finally {
-      setUpdatingResults(false);
-    }
-  };
-
-  const handleImportMatches = async () => {
-    setImportingMatches(true);
-    setError('');
-    try {
-      const res = await fetch('/admin/import-matches', { method: 'POST' });
-      if (!res.ok) {
-        throw new Error('import matches failed');
-      }
-      await loadMatches();
-    } catch (err) {
-      console.error('import matches error', err);
-      setError(t('networkError'));
-    } finally {
-      setImportingMatches(false);
+      setImportingFixture(false);
     }
   };
 
   const filteredMatches = useMemo(() => {
-    const query = matchSearch.trim().toLowerCase();
     return [...matches]
       .sort((a, b) => matchKickoffValue(a) - matchKickoffValue(b))
-      .filter(match => {
-        if (matchStatus === 'upcoming') {
-          if (match.result1 != null && match.result2 != null) {
-            return false;
-          }
-        }
-        if (matchStatus === 'played') {
-          if (match.result1 == null || match.result2 == null) {
-            return false;
-          }
-        }
-        if (!query) {
-          return true;
-        }
-        const haystack = [
-          match.team1,
-          match.team2,
-          match.group_name,
-          match.series,
-          match.venue?.city,
-          match.venue?.stadium
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(query);
-      });
-  }, [matches, matchSearch, matchStatus]);
+  }, [matches]);
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2.5, md: 4 } }}>
@@ -194,13 +144,6 @@ export default function Admin() {
 
         <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
           <Stack spacing={2}>
-            <TextField
-              label={t('adminMatchesSearch')}
-              value={matchSearch}
-              onChange={e => setMatchSearch(e.target.value)}
-              size="small"
-              fullWidth
-            />
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
               <Button variant="outlined" size="small" onClick={loadMatches} disabled={loading} fullWidth>
                 {t('adminMatchesRefresh')}
@@ -213,35 +156,13 @@ export default function Admin() {
               <Button
                 variant="contained"
                 size="small"
-                onClick={handleUpdateResults}
-                disabled={updatingResults}
+                onClick={handleImportFixture}
+                disabled={importingFixture}
                 fullWidth
               >
-                {updatingResults ? <CircularProgress size={18} /> : t('updateResults')}
-              </Button>
-              <Button
-                variant="contained"
-                size="small"
-                onClick={handleImportMatches}
-                disabled={importingMatches}
-                fullWidth
-              >
-                {importingMatches ? <CircularProgress size={18} /> : t('importMatches')}
+                {importingFixture ? <CircularProgress size={18} /> : t('importFixture')}
               </Button>
             </Stack>
-            <ToggleButtonGroup
-              value={matchStatus}
-              exclusive
-              size="small"
-              onChange={(_, value) => {
-                if (value) setMatchStatus(value);
-              }}
-              sx={{ flexWrap: 'wrap', gap: 1 }}
-            >
-              <ToggleButton value="all">{t('allMatches')}</ToggleButton>
-              <ToggleButton value="upcoming">{t('upcoming')}</ToggleButton>
-              <ToggleButton value="played">{t('played')}</ToggleButton>
-            </ToggleButtonGroup>
           </Stack>
         </Paper>
 

@@ -85,6 +85,13 @@ if (globalThis.__matchCacheModule) {
   async function getOrLoad(competition, loader) {
     const cached = await getCache(competition);
     if (cached) {
+      if (Array.isArray(cached) && cached.length === 0) {
+        const data = await loader();
+        if (Array.isArray(data) && data.length > 0) {
+          await setCache(competition, data);
+        }
+        return data;
+      }
       return cached;
     }
     const data = await loader();
