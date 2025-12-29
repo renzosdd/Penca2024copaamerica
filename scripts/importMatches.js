@@ -154,13 +154,17 @@ async function importMatches(competition, options = {}) {
 
   const allowFixtureFallback =
     options.allowFixtureFallback ?? process.env.ALLOW_FIXTURE_FALLBACK === 'true';
+  const preferFixture = options.preferFixture ?? process.env.PREFER_FIXTURE_IMPORT === 'true';
   let fixtures = null;
-  if (events.length === 0 && allowFixtureFallback) {
+  if (allowFixtureFallback || preferFixture) {
     fixtures = await loadFixtureFromFile();
   }
+  const shouldUseFixture = Boolean(
+    fixtures?.length && (preferFixture || events.length === 0)
+  );
 
   let imported = 0;
-  if (fixtures) {
+  if (shouldUseFixture) {
     for (const [index, match] of fixtures.entries()) {
       const fixtureId = normalizeText(match?.id) || String(index);
       const importId = `fixture:${fixtureId}`;
