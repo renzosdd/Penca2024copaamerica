@@ -123,6 +123,23 @@ export default function Admin() {
     }
   };
 
+  const handleImportFixture = async () => {
+    setImportingFixture(true);
+    setError('');
+    try {
+      const res = await fetch('/admin/import-fixture', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('import fixture failed');
+      }
+      await loadMatches();
+    } catch (err) {
+      console.error('import fixture error', err);
+      setError(t('networkError'));
+    } finally {
+      setImportingFixture(false);
+    }
+  };
+
   const filteredMatches = useMemo(() => {
     return [...matches]
       .sort((a, b) => matchKickoffValue(a) - matchKickoffValue(b))
@@ -153,6 +170,15 @@ export default function Admin() {
               </Button>
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleImportFixture}
+                disabled={importingFixture}
+                fullWidth
+              >
+                {importingFixture ? <CircularProgress size={18} /> : t('importFixture')}
+              </Button>
               <Button
                 variant="contained"
                 size="small"
