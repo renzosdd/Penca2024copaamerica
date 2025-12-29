@@ -6,7 +6,131 @@
     "groupsCount": 12,
     "integrantsPerGroup": 4,
     "qualifiersPerGroup": 2,
-    "apiSeason": 2026
+    "apiSeason": 2026,
+    "groups": {
+      "Grupo A": [
+        "México",
+        "Sudáfrica",
+        "República de Corea",
+        "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)"
+      ],
+      "Grupo B": [
+        "Canadá",
+        "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+        "Qatar",
+        "Suiza"
+      ],
+      "Grupo C": [
+        "Brasil",
+        "Marruecos",
+        "Haití",
+        "Escocia"
+      ],
+      "Grupo D": [
+        "Estados Unidos",
+        "Paraguay",
+        "Australia",
+        "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)"
+      ],
+      "Grupo E": [
+        "Alemania",
+        "Curazao",
+        "Costa de Marfil",
+        "Ecuador"
+      ],
+      "Grupo F": [
+        "Países Bajos",
+        "Japón",
+        "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+        "Túnez"
+      ],
+      "Grupo G": [
+        "Bélgica",
+        "Egipto",
+        "Irán",
+        "Nueva Zelanda"
+      ],
+      "Grupo H": [
+        "España",
+        "Cabo Verde",
+        "Arabia Saudita",
+        "Uruguay"
+      ],
+      "Grupo I": [
+        "Francia",
+        "Senegal",
+        "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+        "Noruega"
+      ],
+      "Grupo J": [
+        "Argentina",
+        "Argelia",
+        "Austria",
+        "Jordania"
+      ],
+      "Grupo K": [
+        "Portugal",
+        "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+        "Uzbekistán",
+        "Colombia"
+      ],
+      "Grupo L": [
+        "Inglaterra",
+        "Croacia",
+        "Ghana",
+        "Panamá"
+      ]
+    },
+    "slots": {
+      "A1": "México",
+      "A2": "Sudáfrica",
+      "A3": "República de Corea",
+      "A4": "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)",
+      "B1": "Canadá",
+      "B2": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "B3": "Qatar",
+      "B4": "Suiza",
+      "C1": "Brasil",
+      "C2": "Marruecos",
+      "C3": "Haití",
+      "C4": "Escocia",
+      "D1": "Estados Unidos",
+      "D2": "Paraguay",
+      "D3": "Australia",
+      "D4": "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)",
+      "E1": "Alemania",
+      "E2": "Curazao",
+      "E3": "Costa de Marfil",
+      "E4": "Ecuador",
+      "F1": "Países Bajos",
+      "F2": "Japón",
+      "F3": "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+      "F4": "Túnez",
+      "G1": "Bélgica",
+      "G2": "Egipto",
+      "G3": "Irán",
+      "G4": "Nueva Zelanda",
+      "H1": "España",
+      "H2": "Cabo Verde",
+      "H3": "Arabia Saudita",
+      "H4": "Uruguay",
+      "I1": "Francia",
+      "I2": "Senegal",
+      "I3": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "I4": "Noruega",
+      "J1": "Argentina",
+      "J2": "Argelia",
+      "J3": "Austria",
+      "J4": "Jordania",
+      "K1": "Portugal",
+      "K2": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "K3": "Uzbekistán",
+      "K4": "Colombia",
+      "L1": "Inglaterra",
+      "L2": "Croacia",
+      "L3": "Ghana",
+      "L4": "Panamá"
+    }
   },
   "metadata": {
     "expectedMatches": 104,
@@ -14,25 +138,32 @@
       "fase_de_grupos",
       "eliminatorias"
     ],
-    "description": "Fixture actualizado para cargar automáticamente la Copa Mundial de la FIFA 2026."
+    "description": "Fixture con equipos reales del sorteo (grupos) y calendario de fase de grupos (ESPN). Eliminatorias conservan los kickoffs/venues de tu template y placeholders de avance.",
+    "sources": [
+      "https://www.espn.com.uy/futbol/mundial/nota/_/id/16047796/mundial-2026-asi-quedan-los-grupos-fase-de-grupos-copa-del-mundo"
+    ],
+    "knownGaps": [
+      "Estadios no incluidos en el snippet de ESPN (se dejan en null).",
+      "Un partido de Grupo F (Túnez vs Japón en jornada 2) quedó con sede 'TBD' por falta de dato en el recorte; si me pasás ese dato lo completo."
+    ]
   },
   "matches": [
     {
       "id": "match-1",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "A1",
-      "team2": "A2",
-      "kickoff": "2026-06-08T12:00-05:00",
+      "team1": "México",
+      "team2": "Sudáfrica",
+      "kickoff": "2026-06-11T13:00-06:00",
       "originalKickoff": {
-        "date": "2026-06-08",
-        "time": "12:00",
+        "date": "2026-06-11",
+        "time": "13:00",
         "timezone": "America/Mexico_City"
       },
       "venue": {
         "country": "México",
         "city": "Ciudad de México",
-        "stadium": "Estadio Azteca"
+        "stadium": null
       },
       "order": 0,
       "result1": null,
@@ -42,18 +173,18 @@
       "id": "match-2",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "A3",
-      "team2": "A4",
-      "kickoff": "2026-06-09T12:00-05:00",
+      "team1": "República de Corea",
+      "team2": "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)",
+      "kickoff": "2026-06-11T20:00-06:00",
       "originalKickoff": {
-        "date": "2026-06-09",
-        "time": "12:00",
+        "date": "2026-06-11",
+        "time": "20:00",
         "timezone": "America/Mexico_City"
       },
       "venue": {
         "country": "México",
         "city": "Guadalajara",
-        "stadium": "Estadio Akron"
+        "stadium": null
       },
       "order": 1,
       "result1": null,
@@ -63,18 +194,18 @@
       "id": "match-3",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "A1",
-      "team2": "A3",
-      "kickoff": "2026-06-10T12:00-05:00",
+      "team1": "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)",
+      "team2": "Sudáfrica",
+      "kickoff": "2026-06-18T12:00-04:00",
       "originalKickoff": {
-        "date": "2026-06-10",
+        "date": "2026-06-18",
         "time": "12:00",
-        "timezone": "America/Monterrey"
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "México",
-        "city": "Monterrey",
-        "stadium": "Estadio BBVA"
+        "country": "Estados Unidos",
+        "city": "Atlanta",
+        "stadium": null
       },
       "order": 2,
       "result1": null,
@@ -84,18 +215,18 @@
       "id": "match-4",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "A2",
-      "team2": "A4",
-      "kickoff": "2026-06-11T12:00-05:00",
+      "team1": "México",
+      "team2": "República de Corea",
+      "kickoff": "2026-06-18T19:00-06:00",
       "originalKickoff": {
-        "date": "2026-06-11",
-        "time": "12:00",
+        "date": "2026-06-18",
+        "time": "19:00",
         "timezone": "America/Mexico_City"
       },
       "venue": {
         "country": "México",
-        "city": "Ciudad de México",
-        "stadium": "Estadio Azteca"
+        "city": "Guadalajara",
+        "stadium": null
       },
       "order": 3,
       "result1": null,
@@ -105,18 +236,18 @@
       "id": "match-5",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "A1",
-      "team2": "A4",
-      "kickoff": "2026-06-12T12:00-05:00",
+      "team1": "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)",
+      "team2": "México",
+      "kickoff": "2026-06-24T19:00-06:00",
       "originalKickoff": {
-        "date": "2026-06-12",
-        "time": "12:00",
+        "date": "2026-06-24",
+        "time": "19:00",
         "timezone": "America/Mexico_City"
       },
       "venue": {
         "country": "México",
-        "city": "Guadalajara",
-        "stadium": "Estadio Akron"
+        "city": "Ciudad de México",
+        "stadium": null
       },
       "order": 4,
       "result1": null,
@@ -126,18 +257,18 @@
       "id": "match-6",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "A2",
-      "team2": "A3",
-      "kickoff": "2026-06-13T12:00-05:00",
+      "team1": "Sudáfrica",
+      "team2": "República de Corea",
+      "kickoff": "2026-06-24T19:00-06:00",
       "originalKickoff": {
-        "date": "2026-06-13",
-        "time": "12:00",
+        "date": "2026-06-24",
+        "time": "19:00",
         "timezone": "America/Monterrey"
       },
       "venue": {
         "country": "México",
         "city": "Monterrey",
-        "stadium": "Estadio BBVA"
+        "stadium": null
       },
       "order": 5,
       "result1": null,
@@ -147,18 +278,18 @@
       "id": "match-7",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "B1",
-      "team2": "B2",
-      "kickoff": "2026-06-14T12:00-05:00",
+      "team1": "Canadá",
+      "team2": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "kickoff": "2026-06-12T15:00-04:00",
       "originalKickoff": {
-        "date": "2026-06-14",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-12",
+        "time": "15:00",
+        "timezone": "America/Toronto"
       },
       "venue": {
-        "country": "México",
-        "city": "Ciudad de México",
-        "stadium": "Estadio Azteca"
+        "country": "Canadá",
+        "city": "Toronto",
+        "stadium": null
       },
       "order": 6,
       "result1": null,
@@ -168,18 +299,18 @@
       "id": "match-8",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "B3",
-      "team2": "B4",
-      "kickoff": "2026-06-15T12:00-05:00",
+      "team1": "Qatar",
+      "team2": "Suiza",
+      "kickoff": "2026-06-13T15:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-15",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-13",
+        "time": "15:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "México",
-        "city": "Guadalajara",
-        "stadium": "Estadio Akron"
+        "country": "Estados Unidos",
+        "city": "San Francisco",
+        "stadium": null
       },
       "order": 7,
       "result1": null,
@@ -189,18 +320,18 @@
       "id": "match-9",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "B1",
-      "team2": "B3",
-      "kickoff": "2026-06-16T12:00-05:00",
+      "team1": "Suiza",
+      "team2": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "kickoff": "2026-06-18T15:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-16",
-        "time": "12:00",
-        "timezone": "America/Monterrey"
+        "date": "2026-06-18",
+        "time": "15:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "México",
-        "city": "Monterrey",
-        "stadium": "Estadio BBVA"
+        "country": "Estados Unidos",
+        "city": "Los Ángeles",
+        "stadium": null
       },
       "order": 8,
       "result1": null,
@@ -210,18 +341,18 @@
       "id": "match-10",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "B2",
-      "team2": "B4",
-      "kickoff": "2026-06-17T12:00-05:00",
+      "team1": "Canadá",
+      "team2": "Qatar",
+      "kickoff": "2026-06-18T18:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-17",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-18",
+        "time": "18:00",
+        "timezone": "America/Vancouver"
       },
       "venue": {
-        "country": "México",
-        "city": "Ciudad de México",
-        "stadium": "Estadio Azteca"
+        "country": "Canadá",
+        "city": "Vancouver",
+        "stadium": null
       },
       "order": 9,
       "result1": null,
@@ -231,18 +362,18 @@
       "id": "match-11",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "B1",
-      "team2": "B4",
-      "kickoff": "2026-06-18T12:00-05:00",
+      "team1": "Suiza",
+      "team2": "Canadá",
+      "kickoff": "2026-06-24T15:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-18",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-24",
+        "time": "15:00",
+        "timezone": "America/Vancouver"
       },
       "venue": {
-        "country": "México",
-        "city": "Guadalajara",
-        "stadium": "Estadio Akron"
+        "country": "Canadá",
+        "city": "Vancouver",
+        "stadium": null
       },
       "order": 10,
       "result1": null,
@@ -252,18 +383,18 @@
       "id": "match-12",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "B2",
-      "team2": "B3",
-      "kickoff": "2026-06-19T12:00-05:00",
+      "team1": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "team2": "Qatar",
+      "kickoff": "2026-06-24T15:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-19",
-        "time": "12:00",
-        "timezone": "America/Monterrey"
+        "date": "2026-06-24",
+        "time": "15:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "México",
-        "city": "Monterrey",
-        "stadium": "Estadio BBVA"
+        "country": "Estados Unidos",
+        "city": "Seattle",
+        "stadium": null
       },
       "order": 11,
       "result1": null,
@@ -273,18 +404,18 @@
       "id": "match-13",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "C1",
-      "team2": "C2",
-      "kickoff": "2026-06-20T12:00-05:00",
+      "team1": "Brasil",
+      "team2": "Marruecos",
+      "kickoff": "2026-06-13T18:00-04:00",
       "originalKickoff": {
-        "date": "2026-06-20",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-13",
+        "time": "18:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "México",
-        "city": "Ciudad de México",
-        "stadium": "Estadio Azteca"
+        "country": "Estados Unidos",
+        "city": "Nueva York/Nueva Jersey",
+        "stadium": null
       },
       "order": 12,
       "result1": null,
@@ -294,18 +425,18 @@
       "id": "match-14",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "C3",
-      "team2": "C4",
-      "kickoff": "2026-06-21T12:00-05:00",
+      "team1": "Haití",
+      "team2": "Escocia",
+      "kickoff": "2026-06-13T21:00-04:00",
       "originalKickoff": {
-        "date": "2026-06-21",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-13",
+        "time": "21:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "México",
-        "city": "Guadalajara",
-        "stadium": "Estadio Akron"
+        "country": "Estados Unidos",
+        "city": "Boston",
+        "stadium": null
       },
       "order": 13,
       "result1": null,
@@ -315,18 +446,18 @@
       "id": "match-15",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "C1",
-      "team2": "C3",
-      "kickoff": "2026-06-22T12:00-05:00",
+      "team1": "Escocia",
+      "team2": "Marruecos",
+      "kickoff": "2026-06-19T18:00-04:00",
       "originalKickoff": {
-        "date": "2026-06-22",
-        "time": "12:00",
-        "timezone": "America/Monterrey"
+        "date": "2026-06-19",
+        "time": "18:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "México",
-        "city": "Monterrey",
-        "stadium": "Estadio BBVA"
+        "country": "Estados Unidos",
+        "city": "Boston",
+        "stadium": null
       },
       "order": 14,
       "result1": null,
@@ -336,18 +467,18 @@
       "id": "match-16",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "C2",
-      "team2": "C4",
-      "kickoff": "2026-06-23T12:00-05:00",
+      "team1": "Brasil",
+      "team2": "Haití",
+      "kickoff": "2026-06-19T21:00-04:00",
       "originalKickoff": {
-        "date": "2026-06-23",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-19",
+        "time": "21:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "México",
-        "city": "Ciudad de México",
-        "stadium": "Estadio Azteca"
+        "country": "Estados Unidos",
+        "city": "Filadelfia",
+        "stadium": null
       },
       "order": 15,
       "result1": null,
@@ -357,18 +488,18 @@
       "id": "match-17",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "C1",
-      "team2": "C4",
-      "kickoff": "2026-06-24T12:00-05:00",
+      "team1": "Escocia",
+      "team2": "Brasil",
+      "kickoff": "2026-06-24T18:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "time": "18:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "México",
-        "city": "Guadalajara",
-        "stadium": "Estadio Akron"
+        "country": "Estados Unidos",
+        "city": "Miami",
+        "stadium": null
       },
       "order": 16,
       "result1": null,
@@ -378,18 +509,18 @@
       "id": "match-18",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "C2",
-      "team2": "C3",
-      "kickoff": "2026-06-25T12:00-05:00",
+      "team1": "Marruecos",
+      "team2": "Haití",
+      "kickoff": "2026-06-24T18:00-04:00",
       "originalKickoff": {
-        "date": "2026-06-25",
-        "time": "12:00",
-        "timezone": "America/Monterrey"
+        "date": "2026-06-24",
+        "time": "18:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "México",
-        "city": "Monterrey",
-        "stadium": "Estadio BBVA"
+        "country": "Estados Unidos",
+        "city": "Atlanta",
+        "stadium": null
       },
       "order": 17,
       "result1": null,
@@ -399,18 +530,18 @@
       "id": "match-19",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "D1",
-      "team2": "D2",
-      "kickoff": "2026-06-26T12:00-05:00",
+      "team1": "Estados Unidos",
+      "team2": "Paraguay",
+      "kickoff": "2026-06-12T21:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-26",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-12",
+        "time": "21:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "México",
-        "city": "Ciudad de México",
-        "stadium": "Estadio Azteca"
+        "country": "Estados Unidos",
+        "city": "Los Ángeles",
+        "stadium": null
       },
       "order": 18,
       "result1": null,
@@ -420,18 +551,18 @@
       "id": "match-20",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "D3",
-      "team2": "D4",
-      "kickoff": "2026-06-27T12:00-05:00",
+      "team1": "Australia",
+      "team2": "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)",
+      "kickoff": "2026-06-13T22:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-27",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-13",
+        "time": "22:00",
+        "timezone": "America/Vancouver"
       },
       "venue": {
-        "country": "México",
-        "city": "Guadalajara",
-        "stadium": "Estadio Akron"
+        "country": "Canadá",
+        "city": "Vancouver",
+        "stadium": null
       },
       "order": 19,
       "result1": null,
@@ -441,18 +572,18 @@
       "id": "match-21",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "D1",
-      "team2": "D3",
-      "kickoff": "2026-06-28T12:00-05:00",
+      "team1": "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)",
+      "team2": "Paraguay",
+      "kickoff": "2026-06-19T22:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-28",
-        "time": "12:00",
-        "timezone": "America/Monterrey"
+        "date": "2026-06-19",
+        "time": "22:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "México",
-        "city": "Monterrey",
-        "stadium": "Estadio BBVA"
+        "country": "Estados Unidos",
+        "city": "San Francisco",
+        "stadium": null
       },
       "order": 20,
       "result1": null,
@@ -462,18 +593,18 @@
       "id": "match-22",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "D2",
-      "team2": "D4",
-      "kickoff": "2026-06-29T12:00-05:00",
+      "team1": "Estados Unidos",
+      "team2": "Australia",
+      "kickoff": "2026-06-19T15:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-29",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-19",
+        "time": "15:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "México",
-        "city": "Ciudad de México",
-        "stadium": "Estadio Azteca"
+        "country": "Estados Unidos",
+        "city": "Seattle",
+        "stadium": null
       },
       "order": 21,
       "result1": null,
@@ -483,18 +614,18 @@
       "id": "match-23",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "D1",
-      "team2": "D4",
-      "kickoff": "2026-06-30T12:00-05:00",
+      "team1": "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)",
+      "team2": "Estados Unidos",
+      "kickoff": "2026-06-25T22:00-07:00",
       "originalKickoff": {
-        "date": "2026-06-30",
-        "time": "12:00",
-        "timezone": "America/Mexico_City"
+        "date": "2026-06-25",
+        "time": "22:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "México",
-        "city": "Guadalajara",
-        "stadium": "Estadio Akron"
+        "country": "Estados Unidos",
+        "city": "Los Ángeles",
+        "stadium": null
       },
       "order": 22,
       "result1": null,
@@ -504,18 +635,18 @@
       "id": "match-24",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "D2",
-      "team2": "D3",
-      "kickoff": "2026-07-01T12:00-05:00",
+      "team1": "Paraguay",
+      "team2": "Australia",
+      "kickoff": "2026-06-25T22:00-07:00",
       "originalKickoff": {
-        "date": "2026-07-01",
-        "time": "12:00",
-        "timezone": "America/Monterrey"
+        "date": "2026-06-25",
+        "time": "22:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "México",
-        "city": "Monterrey",
-        "stadium": "Estadio BBVA"
+        "country": "Estados Unidos",
+        "city": "San Francisco",
+        "stadium": null
       },
       "order": 23,
       "result1": null,
@@ -525,18 +656,18 @@
       "id": "match-25",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "E1",
-      "team2": "E2",
-      "kickoff": "2026-07-02T12:00-04:00",
+      "team1": "Alemania",
+      "team2": "Curazao",
+      "kickoff": "2026-06-14T13:00-05:00",
       "originalKickoff": {
-        "date": "2026-07-02",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-14",
+        "time": "13:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Nueva York",
-        "stadium": "MetLife Stadium"
+        "city": "Houston",
+        "stadium": null
       },
       "order": 24,
       "result1": null,
@@ -546,18 +677,18 @@
       "id": "match-26",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "E3",
-      "team2": "E4",
-      "kickoff": "2026-07-03T12:00-07:00",
+      "team1": "Costa de Marfil",
+      "team2": "Ecuador",
+      "kickoff": "2026-06-14T19:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-03",
-        "time": "12:00",
-        "timezone": "America/Los_Angeles"
+        "date": "2026-06-14",
+        "time": "19:00",
+        "timezone": "America/New_York"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Los Ángeles",
-        "stadium": "SoFi Stadium"
+        "city": "Filadelfia",
+        "stadium": null
       },
       "order": 25,
       "result1": null,
@@ -567,18 +698,18 @@
       "id": "match-27",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "E1",
-      "team2": "E3",
-      "kickoff": "2026-07-04T12:00-05:00",
+      "team1": "Alemania",
+      "team2": "Costa de Marfil",
+      "kickoff": "2026-06-20T16:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-04",
-        "time": "12:00",
-        "timezone": "America/Chicago"
+        "date": "2026-06-20",
+        "time": "16:00",
+        "timezone": "America/Toronto"
       },
       "venue": {
-        "country": "Estados Unidos",
-        "city": "Dallas",
-        "stadium": "AT&T Stadium"
+        "country": "Canadá",
+        "city": "Toronto",
+        "stadium": null
       },
       "order": 26,
       "result1": null,
@@ -588,18 +719,18 @@
       "id": "match-28",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "E2",
-      "team2": "E4",
-      "kickoff": "2026-07-05T12:00-04:00",
+      "team1": "Ecuador",
+      "team2": "Curazao",
+      "kickoff": "2026-06-20T20:00-05:00",
       "originalKickoff": {
-        "date": "2026-07-05",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-20",
+        "time": "20:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Atlanta",
-        "stadium": "Mercedes-Benz Stadium"
+        "city": "Kansas City",
+        "stadium": null
       },
       "order": 27,
       "result1": null,
@@ -609,18 +740,18 @@
       "id": "match-29",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "E1",
-      "team2": "E4",
-      "kickoff": "2026-07-06T12:00-04:00",
+      "team1": "Ecuador",
+      "team2": "Alemania",
+      "kickoff": "2026-06-25T16:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-06",
-        "time": "12:00",
+        "date": "2026-06-25",
+        "time": "16:00",
         "timezone": "America/New_York"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Nueva York",
-        "stadium": "MetLife Stadium"
+        "city": "Nueva York/Nueva Jersey",
+        "stadium": null
       },
       "order": 28,
       "result1": null,
@@ -630,18 +761,18 @@
       "id": "match-30",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "E2",
-      "team2": "E3",
-      "kickoff": "2026-07-07T12:00-07:00",
+      "team1": "Curazao",
+      "team2": "Costa de Marfil",
+      "kickoff": "2026-06-25T16:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-07",
-        "time": "12:00",
-        "timezone": "America/Los_Angeles"
+        "date": "2026-06-25",
+        "time": "16:00",
+        "timezone": "America/New_York"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Los Ángeles",
-        "stadium": "SoFi Stadium"
+        "city": "Filadelfia",
+        "stadium": null
       },
       "order": 29,
       "result1": null,
@@ -651,18 +782,18 @@
       "id": "match-31",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "F1",
-      "team2": "F2",
-      "kickoff": "2026-07-08T12:00-05:00",
+      "team1": "Países Bajos",
+      "team2": "Japón",
+      "kickoff": "2026-06-14T16:00-05:00",
       "originalKickoff": {
-        "date": "2026-07-08",
-        "time": "12:00",
+        "date": "2026-06-14",
+        "time": "16:00",
         "timezone": "America/Chicago"
       },
       "venue": {
         "country": "Estados Unidos",
         "city": "Dallas",
-        "stadium": "AT&T Stadium"
+        "stadium": null
       },
       "order": 30,
       "result1": null,
@@ -672,18 +803,18 @@
       "id": "match-32",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "F3",
-      "team2": "F4",
-      "kickoff": "2026-07-09T12:00-04:00",
+      "team1": "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+      "team2": "Túnez",
+      "kickoff": "2026-06-14T22:00-06:00",
       "originalKickoff": {
-        "date": "2026-07-09",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-14",
+        "time": "22:00",
+        "timezone": "America/Monterrey"
       },
       "venue": {
-        "country": "Estados Unidos",
-        "city": "Atlanta",
-        "stadium": "Mercedes-Benz Stadium"
+        "country": "México",
+        "city": "Monterrey",
+        "stadium": null
       },
       "order": 31,
       "result1": null,
@@ -693,18 +824,18 @@
       "id": "match-33",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "F1",
-      "team2": "F3",
-      "kickoff": "2026-07-10T12:00-04:00",
+      "team1": "Países Bajos",
+      "team2": "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+      "kickoff": "2026-06-20T13:00-05:00",
       "originalKickoff": {
-        "date": "2026-07-10",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-20",
+        "time": "13:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Nueva York",
-        "stadium": "MetLife Stadium"
+        "city": "Houston",
+        "stadium": null
       },
       "order": 32,
       "result1": null,
@@ -714,18 +845,18 @@
       "id": "match-34",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "F2",
-      "team2": "F4",
-      "kickoff": "2026-07-11T12:00-07:00",
+      "team1": "Túnez",
+      "team2": "Japón",
+      "kickoff": "2026-06-20T22:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-11",
-        "time": "12:00",
-        "timezone": "America/Los_Angeles"
+        "date": "2026-06-20",
+        "time": "22:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Estados Unidos",
-        "city": "Los Ángeles",
-        "stadium": "SoFi Stadium"
+        "country": null,
+        "city": null,
+        "stadium": null
       },
       "order": 33,
       "result1": null,
@@ -735,18 +866,18 @@
       "id": "match-35",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "F1",
-      "team2": "F4",
-      "kickoff": "2026-07-12T12:00-05:00",
+      "team1": "Japón",
+      "team2": "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+      "kickoff": "2026-06-25T19:00-05:00",
       "originalKickoff": {
-        "date": "2026-07-12",
-        "time": "12:00",
+        "date": "2026-06-25",
+        "time": "19:00",
         "timezone": "America/Chicago"
       },
       "venue": {
         "country": "Estados Unidos",
         "city": "Dallas",
-        "stadium": "AT&T Stadium"
+        "stadium": null
       },
       "order": 34,
       "result1": null,
@@ -756,18 +887,18 @@
       "id": "match-36",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "F2",
-      "team2": "F3",
-      "kickoff": "2026-07-13T12:00-04:00",
+      "team1": "Túnez",
+      "team2": "Países Bajos",
+      "kickoff": "2026-06-25T19:00-05:00",
       "originalKickoff": {
-        "date": "2026-07-13",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-25",
+        "time": "19:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Atlanta",
-        "stadium": "Mercedes-Benz Stadium"
+        "city": "Kansas City",
+        "stadium": null
       },
       "order": 35,
       "result1": null,
@@ -777,18 +908,18 @@
       "id": "match-37",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "G1",
-      "team2": "G2",
-      "kickoff": "2026-07-14T12:00-04:00",
+      "team1": "Irán",
+      "team2": "Nueva Zelanda",
+      "kickoff": "2026-06-15T21:00-07:00",
       "originalKickoff": {
-        "date": "2026-07-14",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-15",
+        "time": "21:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Nueva York",
-        "stadium": "MetLife Stadium"
+        "city": "Los Ángeles",
+        "stadium": null
       },
       "order": 36,
       "result1": null,
@@ -798,18 +929,18 @@
       "id": "match-38",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "G3",
-      "team2": "G4",
-      "kickoff": "2026-07-15T12:00-07:00",
+      "team1": "Bélgica",
+      "team2": "Egipto",
+      "kickoff": "2026-06-15T15:00-07:00",
       "originalKickoff": {
-        "date": "2026-07-15",
-        "time": "12:00",
+        "date": "2026-06-15",
+        "time": "15:00",
         "timezone": "America/Los_Angeles"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Los Ángeles",
-        "stadium": "SoFi Stadium"
+        "city": "Seattle",
+        "stadium": null
       },
       "order": 37,
       "result1": null,
@@ -819,18 +950,18 @@
       "id": "match-39",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "G1",
-      "team2": "G3",
-      "kickoff": "2026-07-16T12:00-05:00",
+      "team1": "Bélgica",
+      "team2": "Irán",
+      "kickoff": "2026-06-21T15:00-07:00",
       "originalKickoff": {
-        "date": "2026-07-16",
-        "time": "12:00",
-        "timezone": "America/Chicago"
+        "date": "2026-06-21",
+        "time": "15:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Dallas",
-        "stadium": "AT&T Stadium"
+        "city": "Los Ángeles",
+        "stadium": null
       },
       "order": 38,
       "result1": null,
@@ -840,18 +971,18 @@
       "id": "match-40",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "G2",
-      "team2": "G4",
-      "kickoff": "2026-07-17T12:00-04:00",
+      "team1": "Nueva Zelanda",
+      "team2": "Egipto",
+      "kickoff": "2026-06-21T21:00-07:00",
       "originalKickoff": {
-        "date": "2026-07-17",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-21",
+        "time": "21:00",
+        "timezone": "America/Vancouver"
       },
       "venue": {
-        "country": "Estados Unidos",
-        "city": "Atlanta",
-        "stadium": "Mercedes-Benz Stadium"
+        "country": "Canadá",
+        "city": "Vancouver",
+        "stadium": null
       },
       "order": 39,
       "result1": null,
@@ -861,18 +992,18 @@
       "id": "match-41",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "G1",
-      "team2": "G4",
-      "kickoff": "2026-07-18T12:00-04:00",
+      "team1": "Egipto",
+      "team2": "Irán",
+      "kickoff": "2026-06-26T23:00-07:00",
       "originalKickoff": {
-        "date": "2026-07-18",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-26",
+        "time": "23:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Nueva York",
-        "stadium": "MetLife Stadium"
+        "city": "Seattle",
+        "stadium": null
       },
       "order": 40,
       "result1": null,
@@ -882,18 +1013,18 @@
       "id": "match-42",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "G2",
-      "team2": "G3",
-      "kickoff": "2026-07-19T12:00-07:00",
+      "team1": "Nueva Zelanda",
+      "team2": "Bélgica",
+      "kickoff": "2026-06-26T23:00-07:00",
       "originalKickoff": {
-        "date": "2026-07-19",
-        "time": "12:00",
-        "timezone": "America/Los_Angeles"
+        "date": "2026-06-26",
+        "time": "23:00",
+        "timezone": "America/Vancouver"
       },
       "venue": {
-        "country": "Estados Unidos",
-        "city": "Los Ángeles",
-        "stadium": "SoFi Stadium"
+        "country": "Canadá",
+        "city": "Vancouver",
+        "stadium": null
       },
       "order": 41,
       "result1": null,
@@ -903,18 +1034,18 @@
       "id": "match-43",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "H1",
-      "team2": "H2",
-      "kickoff": "2026-07-20T12:00-05:00",
+      "team1": "España",
+      "team2": "Cabo Verde",
+      "kickoff": "2026-06-15T12:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-20",
+        "date": "2026-06-15",
         "time": "12:00",
-        "timezone": "America/Chicago"
+        "timezone": "America/New_York"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Dallas",
-        "stadium": "AT&T Stadium"
+        "city": "Atlanta",
+        "stadium": null
       },
       "order": 42,
       "result1": null,
@@ -924,18 +1055,18 @@
       "id": "match-44",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "H3",
-      "team2": "H4",
-      "kickoff": "2026-07-21T12:00-04:00",
+      "team1": "Arabia Saudita",
+      "team2": "Uruguay",
+      "kickoff": "2026-06-15T18:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-21",
-        "time": "12:00",
+        "date": "2026-06-15",
+        "time": "18:00",
         "timezone": "America/New_York"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Atlanta",
-        "stadium": "Mercedes-Benz Stadium"
+        "city": "Miami",
+        "stadium": null
       },
       "order": 43,
       "result1": null,
@@ -945,18 +1076,18 @@
       "id": "match-45",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "H1",
-      "team2": "H3",
-      "kickoff": "2026-07-22T12:00-04:00",
+      "team1": "España",
+      "team2": "Arabia Saudita",
+      "kickoff": "2026-06-21T12:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-22",
+        "date": "2026-06-21",
         "time": "12:00",
         "timezone": "America/New_York"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Nueva York",
-        "stadium": "MetLife Stadium"
+        "city": "Atlanta",
+        "stadium": null
       },
       "order": 44,
       "result1": null,
@@ -966,18 +1097,18 @@
       "id": "match-46",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "H2",
-      "team2": "H4",
-      "kickoff": "2026-07-23T12:00-07:00",
+      "team1": "Uruguay",
+      "team2": "Cabo Verde",
+      "kickoff": "2026-06-21T18:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-23",
-        "time": "12:00",
-        "timezone": "America/Los_Angeles"
+        "date": "2026-06-21",
+        "time": "18:00",
+        "timezone": "America/New_York"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Los Ángeles",
-        "stadium": "SoFi Stadium"
+        "city": "Miami",
+        "stadium": null
       },
       "order": 45,
       "result1": null,
@@ -987,18 +1118,18 @@
       "id": "match-47",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "H1",
-      "team2": "H4",
-      "kickoff": "2026-07-24T12:00-05:00",
+      "team1": "Cabo Verde",
+      "team2": "Arabia Saudita",
+      "kickoff": "2026-06-26T20:00-05:00",
       "originalKickoff": {
-        "date": "2026-07-24",
-        "time": "12:00",
+        "date": "2026-06-26",
+        "time": "20:00",
         "timezone": "America/Chicago"
       },
       "venue": {
         "country": "Estados Unidos",
-        "city": "Dallas",
-        "stadium": "AT&T Stadium"
+        "city": "Houston",
+        "stadium": null
       },
       "order": 46,
       "result1": null,
@@ -1008,18 +1139,18 @@
       "id": "match-48",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "H2",
-      "team2": "H3",
-      "kickoff": "2026-07-25T12:00-04:00",
+      "team1": "Uruguay",
+      "team2": "España",
+      "kickoff": "2026-06-26T20:00-06:00",
       "originalKickoff": {
-        "date": "2026-07-25",
-        "time": "12:00",
-        "timezone": "America/New_York"
+        "date": "2026-06-26",
+        "time": "20:00",
+        "timezone": "America/Mexico_City"
       },
       "venue": {
-        "country": "Estados Unidos",
-        "city": "Atlanta",
-        "stadium": "Mercedes-Benz Stadium"
+        "country": "México",
+        "city": "Guadalajara",
+        "stadium": null
       },
       "order": 47,
       "result1": null,
@@ -1029,18 +1160,18 @@
       "id": "match-49",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "I1",
-      "team2": "I2",
-      "kickoff": "2026-07-26T12:00-04:00",
+      "team1": "Francia",
+      "team2": "Senegal",
+      "kickoff": "2026-06-16T15:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-26",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-16",
+        "time": "15:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Toronto",
-        "stadium": "BMO Field"
+        "country": "Estados Unidos",
+        "city": "Nueva York/Nueva Jersey",
+        "stadium": null
       },
       "order": 48,
       "result1": null,
@@ -1050,18 +1181,18 @@
       "id": "match-50",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "I3",
-      "team2": "I4",
-      "kickoff": "2026-07-27T12:00-07:00",
+      "team1": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "team2": "Noruega",
+      "kickoff": "2026-06-16T18:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-27",
-        "time": "12:00",
-        "timezone": "America/Vancouver"
+        "date": "2026-06-16",
+        "time": "18:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Vancouver",
-        "stadium": "BC Place"
+        "country": "Estados Unidos",
+        "city": "Boston",
+        "stadium": null
       },
       "order": 49,
       "result1": null,
@@ -1071,18 +1202,18 @@
       "id": "match-51",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "I1",
-      "team2": "I3",
-      "kickoff": "2026-07-28T12:00-04:00",
+      "team1": "Francia",
+      "team2": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "kickoff": "2026-06-22T17:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-28",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-22",
+        "time": "17:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Montreal",
-        "stadium": "Estadio Olímpico"
+        "country": "Estados Unidos",
+        "city": "Filadelfia",
+        "stadium": null
       },
       "order": 50,
       "result1": null,
@@ -1092,18 +1223,18 @@
       "id": "match-52",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "I2",
-      "team2": "I4",
-      "kickoff": "2026-07-29T12:00-04:00",
+      "team1": "Noruega",
+      "team2": "Senegal",
+      "kickoff": "2026-06-22T20:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-29",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-22",
+        "time": "20:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Toronto",
-        "stadium": "BMO Field"
+        "country": "Estados Unidos",
+        "city": "Nueva York/Nueva Jersey",
+        "stadium": null
       },
       "order": 51,
       "result1": null,
@@ -1113,18 +1244,18 @@
       "id": "match-53",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "I1",
-      "team2": "I4",
-      "kickoff": "2026-07-30T12:00-07:00",
+      "team1": "Noruega",
+      "team2": "Francia",
+      "kickoff": "2026-06-26T15:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-30",
-        "time": "12:00",
-        "timezone": "America/Vancouver"
+        "date": "2026-06-26",
+        "time": "15:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Vancouver",
-        "stadium": "BC Place"
+        "country": "Estados Unidos",
+        "city": "Boston",
+        "stadium": null
       },
       "order": 52,
       "result1": null,
@@ -1134,18 +1265,18 @@
       "id": "match-54",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "I2",
-      "team2": "I3",
-      "kickoff": "2026-07-31T12:00-04:00",
+      "team1": "Senegal",
+      "team2": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "kickoff": "2026-06-26T15:00-04:00",
       "originalKickoff": {
-        "date": "2026-07-31",
-        "time": "12:00",
+        "date": "2026-06-26",
+        "time": "15:00",
         "timezone": "America/Toronto"
       },
       "venue": {
         "country": "Canadá",
-        "city": "Montreal",
-        "stadium": "Estadio Olímpico"
+        "city": "Toronto",
+        "stadium": null
       },
       "order": 53,
       "result1": null,
@@ -1155,18 +1286,18 @@
       "id": "match-55",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "J1",
-      "team2": "J2",
-      "kickoff": "2026-08-01T12:00-04:00",
+      "team1": "Argentina",
+      "team2": "Argelia",
+      "kickoff": "2026-06-16T21:00-05:00",
       "originalKickoff": {
-        "date": "2026-08-01",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-16",
+        "time": "21:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Toronto",
-        "stadium": "BMO Field"
+        "country": "Estados Unidos",
+        "city": "Kansas City",
+        "stadium": null
       },
       "order": 54,
       "result1": null,
@@ -1176,18 +1307,18 @@
       "id": "match-56",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "J3",
-      "team2": "J4",
-      "kickoff": "2026-08-02T12:00-07:00",
+      "team1": "Austria",
+      "team2": "Jordania",
+      "kickoff": "2026-06-16T22:00-07:00",
       "originalKickoff": {
-        "date": "2026-08-02",
-        "time": "12:00",
-        "timezone": "America/Vancouver"
+        "date": "2026-06-16",
+        "time": "22:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Vancouver",
-        "stadium": "BC Place"
+        "country": "Estados Unidos",
+        "city": "San Francisco",
+        "stadium": null
       },
       "order": 55,
       "result1": null,
@@ -1197,18 +1328,18 @@
       "id": "match-57",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "J1",
-      "team2": "J3",
-      "kickoff": "2026-08-03T12:00-04:00",
+      "team1": "Argentina",
+      "team2": "Austria",
+      "kickoff": "2026-06-22T13:00-05:00",
       "originalKickoff": {
-        "date": "2026-08-03",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-22",
+        "time": "13:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Montreal",
-        "stadium": "Estadio Olímpico"
+        "country": "Estados Unidos",
+        "city": "Dallas",
+        "stadium": null
       },
       "order": 56,
       "result1": null,
@@ -1218,18 +1349,18 @@
       "id": "match-58",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "J2",
-      "team2": "J4",
-      "kickoff": "2026-08-04T12:00-04:00",
+      "team1": "Jordania",
+      "team2": "Argelia",
+      "kickoff": "2026-06-22T23:00-07:00",
       "originalKickoff": {
-        "date": "2026-08-04",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-22",
+        "time": "23:00",
+        "timezone": "America/Los_Angeles"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Toronto",
-        "stadium": "BMO Field"
+        "country": "Estados Unidos",
+        "city": "San Francisco",
+        "stadium": null
       },
       "order": 57,
       "result1": null,
@@ -1239,18 +1370,18 @@
       "id": "match-59",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "J1",
-      "team2": "J4",
-      "kickoff": "2026-08-05T12:00-07:00",
+      "team1": "Argelia",
+      "team2": "Austria",
+      "kickoff": "2026-06-27T22:00-05:00",
       "originalKickoff": {
-        "date": "2026-08-05",
-        "time": "12:00",
-        "timezone": "America/Vancouver"
+        "date": "2026-06-27",
+        "time": "22:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Vancouver",
-        "stadium": "BC Place"
+        "country": "Estados Unidos",
+        "city": "Kansas City",
+        "stadium": null
       },
       "order": 58,
       "result1": null,
@@ -1260,18 +1391,18 @@
       "id": "match-60",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "J2",
-      "team2": "J3",
-      "kickoff": "2026-08-06T12:00-04:00",
+      "team1": "Jordania",
+      "team2": "Argentina",
+      "kickoff": "2026-06-27T22:00-05:00",
       "originalKickoff": {
-        "date": "2026-08-06",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-27",
+        "time": "22:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Montreal",
-        "stadium": "Estadio Olímpico"
+        "country": "Estados Unidos",
+        "city": "Dallas",
+        "stadium": null
       },
       "order": 59,
       "result1": null,
@@ -1281,18 +1412,18 @@
       "id": "match-61",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "K1",
-      "team2": "K2",
-      "kickoff": "2026-08-07T12:00-04:00",
+      "team1": "Portugal",
+      "team2": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "kickoff": "2026-06-17T13:00-05:00",
       "originalKickoff": {
-        "date": "2026-08-07",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-17",
+        "time": "13:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Toronto",
-        "stadium": "BMO Field"
+        "country": "Estados Unidos",
+        "city": "Houston",
+        "stadium": null
       },
       "order": 60,
       "result1": null,
@@ -1302,18 +1433,18 @@
       "id": "match-62",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "K3",
-      "team2": "K4",
-      "kickoff": "2026-08-08T12:00-07:00",
+      "team1": "Uzbekistán",
+      "team2": "Colombia",
+      "kickoff": "2026-06-17T22:00-06:00",
       "originalKickoff": {
-        "date": "2026-08-08",
-        "time": "12:00",
-        "timezone": "America/Vancouver"
+        "date": "2026-06-17",
+        "time": "22:00",
+        "timezone": "America/Mexico_City"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Vancouver",
-        "stadium": "BC Place"
+        "country": "México",
+        "city": "Ciudad de México",
+        "stadium": null
       },
       "order": 61,
       "result1": null,
@@ -1323,18 +1454,18 @@
       "id": "match-63",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "K1",
-      "team2": "K3",
-      "kickoff": "2026-08-09T12:00-04:00",
+      "team1": "Portugal",
+      "team2": "Uzbekistán",
+      "kickoff": "2026-06-23T13:00-05:00",
       "originalKickoff": {
-        "date": "2026-08-09",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-23",
+        "time": "13:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Montreal",
-        "stadium": "Estadio Olímpico"
+        "country": "Estados Unidos",
+        "city": "Houston",
+        "stadium": null
       },
       "order": 62,
       "result1": null,
@@ -1344,18 +1475,18 @@
       "id": "match-64",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "K2",
-      "team2": "K4",
-      "kickoff": "2026-08-10T12:00-04:00",
+      "team1": "Colombia",
+      "team2": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "kickoff": "2026-06-23T22:00-06:00",
       "originalKickoff": {
-        "date": "2026-08-10",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-23",
+        "time": "22:00",
+        "timezone": "America/Mexico_City"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Toronto",
-        "stadium": "BMO Field"
+        "country": "México",
+        "city": "Guadalajara",
+        "stadium": null
       },
       "order": 63,
       "result1": null,
@@ -1365,18 +1496,18 @@
       "id": "match-65",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "K1",
-      "team2": "K4",
-      "kickoff": "2026-08-11T12:00-07:00",
+      "team1": "Colombia",
+      "team2": "Portugal",
+      "kickoff": "2026-06-27T19:30-04:00",
       "originalKickoff": {
-        "date": "2026-08-11",
-        "time": "12:00",
-        "timezone": "America/Vancouver"
+        "date": "2026-06-27",
+        "time": "19:30",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Vancouver",
-        "stadium": "BC Place"
+        "country": "Estados Unidos",
+        "city": "Miami",
+        "stadium": null
       },
       "order": 64,
       "result1": null,
@@ -1386,18 +1517,18 @@
       "id": "match-66",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "K2",
-      "team2": "K3",
-      "kickoff": "2026-08-12T12:00-04:00",
+      "team1": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "team2": "Uzbekistán",
+      "kickoff": "2026-06-27T19:30-04:00",
       "originalKickoff": {
-        "date": "2026-08-12",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-27",
+        "time": "19:30",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Montreal",
-        "stadium": "Estadio Olímpico"
+        "country": "Estados Unidos",
+        "city": "Atlanta",
+        "stadium": null
       },
       "order": 65,
       "result1": null,
@@ -1407,18 +1538,18 @@
       "id": "match-67",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "L1",
-      "team2": "L2",
-      "kickoff": "2026-08-13T12:00-04:00",
+      "team1": "Inglaterra",
+      "team2": "Croacia",
+      "kickoff": "2026-06-17T16:00-05:00",
       "originalKickoff": {
-        "date": "2026-08-13",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-17",
+        "time": "16:00",
+        "timezone": "America/Chicago"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Toronto",
-        "stadium": "BMO Field"
+        "country": "Estados Unidos",
+        "city": "Dallas",
+        "stadium": null
       },
       "order": 66,
       "result1": null,
@@ -1428,18 +1559,18 @@
       "id": "match-68",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "L3",
-      "team2": "L4",
-      "kickoff": "2026-08-14T12:00-07:00",
+      "team1": "Ghana",
+      "team2": "Panamá",
+      "kickoff": "2026-06-17T19:00-04:00",
       "originalKickoff": {
-        "date": "2026-08-14",
-        "time": "12:00",
-        "timezone": "America/Vancouver"
+        "date": "2026-06-17",
+        "time": "19:00",
+        "timezone": "America/Toronto"
       },
       "venue": {
         "country": "Canadá",
-        "city": "Vancouver",
-        "stadium": "BC Place"
+        "city": "Toronto",
+        "stadium": null
       },
       "order": 67,
       "result1": null,
@@ -1449,18 +1580,18 @@
       "id": "match-69",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "L1",
-      "team2": "L3",
-      "kickoff": "2026-08-15T12:00-04:00",
+      "team1": "Inglaterra",
+      "team2": "Ghana",
+      "kickoff": "2026-06-23T16:00-04:00",
       "originalKickoff": {
-        "date": "2026-08-15",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-23",
+        "time": "16:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Montreal",
-        "stadium": "Estadio Olímpico"
+        "country": "Estados Unidos",
+        "city": "Boston",
+        "stadium": null
       },
       "order": 68,
       "result1": null,
@@ -1470,18 +1601,18 @@
       "id": "match-70",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "L2",
-      "team2": "L4",
-      "kickoff": "2026-08-16T12:00-04:00",
+      "team1": "Panamá",
+      "team2": "Croacia",
+      "kickoff": "2026-06-23T19:00-04:00",
       "originalKickoff": {
-        "date": "2026-08-16",
-        "time": "12:00",
+        "date": "2026-06-23",
+        "time": "19:00",
         "timezone": "America/Toronto"
       },
       "venue": {
         "country": "Canadá",
         "city": "Toronto",
-        "stadium": "BMO Field"
+        "stadium": null
       },
       "order": 69,
       "result1": null,
@@ -1491,18 +1622,18 @@
       "id": "match-71",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "L1",
-      "team2": "L4",
-      "kickoff": "2026-08-17T12:00-07:00",
+      "team1": "Panamá",
+      "team2": "Inglaterra",
+      "kickoff": "2026-06-27T17:00-04:00",
       "originalKickoff": {
-        "date": "2026-08-17",
-        "time": "12:00",
-        "timezone": "America/Vancouver"
+        "date": "2026-06-27",
+        "time": "17:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Vancouver",
-        "stadium": "BC Place"
+        "country": "Estados Unidos",
+        "city": "Nueva York/Nueva Jersey",
+        "stadium": null
       },
       "order": 70,
       "result1": null,
@@ -1512,18 +1643,18 @@
       "id": "match-72",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "L2",
-      "team2": "L3",
-      "kickoff": "2026-08-18T12:00-04:00",
+      "team1": "Croacia",
+      "team2": "Ghana",
+      "kickoff": "2026-06-27T17:00-04:00",
       "originalKickoff": {
-        "date": "2026-08-18",
-        "time": "12:00",
-        "timezone": "America/Toronto"
+        "date": "2026-06-27",
+        "time": "17:00",
+        "timezone": "America/New_York"
       },
       "venue": {
-        "country": "Canadá",
-        "city": "Montreal",
-        "stadium": "Estadio Olímpico"
+        "country": "Estados Unidos",
+        "city": "Filadelfia",
+        "stadium": null
       },
       "order": 71,
       "result1": null,
@@ -1533,14 +1664,10 @@
       "id": "match-73",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "A1",
-      "team2": "B2",
+      "team1": "México",
+      "team2": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
       "kickoff": "2026-08-19T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-08-19",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Nueva York",
@@ -1554,14 +1681,10 @@
       "id": "match-74",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "C1",
-      "team2": "D2",
+      "team1": "Brasil",
+      "team2": "Paraguay",
       "kickoff": "2026-08-20T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-08-20",
-        "time": "18:00",
-        "timezone": "America/Mexico_City"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "México",
         "city": "Guadalajara",
@@ -1575,14 +1698,10 @@
       "id": "match-75",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "E1",
-      "team2": "F2",
+      "team1": "Alemania",
+      "team2": "Japón",
       "kickoff": "2026-08-21T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-08-21",
-        "time": "18:00",
-        "timezone": "America/Toronto"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Canadá",
         "city": "Montreal",
@@ -1596,14 +1715,10 @@
       "id": "match-76",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "G1",
-      "team2": "H2",
+      "team1": "Bélgica",
+      "team2": "Cabo Verde",
       "kickoff": "2026-08-22T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-08-22",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Atlanta",
@@ -1617,14 +1732,10 @@
       "id": "match-77",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "I1",
-      "team2": "J2",
+      "team1": "Francia",
+      "team2": "Argelia",
       "kickoff": "2026-08-23T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-08-23",
-        "time": "18:00",
-        "timezone": "America/Mexico_City"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "México",
         "city": "Guadalajara",
@@ -1638,14 +1749,10 @@
       "id": "match-78",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "K1",
-      "team2": "L2",
+      "team1": "Portugal",
+      "team2": "Croacia",
       "kickoff": "2026-08-24T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-08-24",
-        "time": "18:00",
-        "timezone": "America/Toronto"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Canadá",
         "city": "Montreal",
@@ -1659,14 +1766,10 @@
       "id": "match-79",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "B1",
-      "team2": "A2",
+      "team1": "Canadá",
+      "team2": "Sudáfrica",
       "kickoff": "2026-08-25T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-08-25",
-        "time": "18:00",
-        "timezone": "America/Chicago"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Dallas",
@@ -1680,14 +1783,10 @@
       "id": "match-80",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "D1",
-      "team2": "C2",
+      "team1": "Estados Unidos",
+      "team2": "Marruecos",
       "kickoff": "2026-08-26T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-08-26",
-        "time": "18:00",
-        "timezone": "America/Mexico_City"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "México",
         "city": "Guadalajara",
@@ -1701,14 +1800,10 @@
       "id": "match-81",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "F1",
-      "team2": "E2",
+      "team1": "Países Bajos",
+      "team2": "Curazao",
       "kickoff": "2026-08-27T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-08-27",
-        "time": "18:00",
-        "timezone": "America/Toronto"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Canadá",
         "city": "Montreal",
@@ -1722,14 +1817,10 @@
       "id": "match-82",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "H1",
-      "team2": "G2",
+      "team1": "España",
+      "team2": "Egipto",
       "kickoff": "2026-08-28T18:00-07:00",
-      "originalKickoff": {
-        "date": "2026-08-28",
-        "time": "18:00",
-        "timezone": "America/Los_Angeles"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Los Ángeles",
@@ -1743,14 +1834,10 @@
       "id": "match-83",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "J1",
-      "team2": "I2",
+      "team1": "Argentina",
+      "team2": "Senegal",
       "kickoff": "2026-08-29T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-08-29",
-        "time": "18:00",
-        "timezone": "America/Mexico_City"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "México",
         "city": "Guadalajara",
@@ -1764,14 +1851,10 @@
       "id": "match-84",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "L1",
-      "team2": "K2",
+      "team1": "Inglaterra",
+      "team2": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
       "kickoff": "2026-08-30T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-08-30",
-        "time": "18:00",
-        "timezone": "America/Toronto"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Canadá",
         "city": "Montreal",
@@ -1785,14 +1868,10 @@
       "id": "match-85",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "A3",
-      "team2": "C3",
+      "team1": "República de Corea",
+      "team2": "Haití",
       "kickoff": "2026-08-31T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-08-31",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Nueva York",
@@ -1806,14 +1885,10 @@
       "id": "match-86",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "E3",
-      "team2": "G3",
+      "team1": "Costa de Marfil",
+      "team2": "Irán",
       "kickoff": "2026-09-01T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-09-01",
-        "time": "18:00",
-        "timezone": "America/Mexico_City"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "México",
         "city": "Guadalajara",
@@ -1827,14 +1902,10 @@
       "id": "match-87",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "I3",
-      "team2": "K3",
+      "team1": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "team2": "Uzbekistán",
       "kickoff": "2026-09-02T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-02",
-        "time": "18:00",
-        "timezone": "America/Toronto"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Canadá",
         "city": "Montreal",
@@ -1848,14 +1919,10 @@
       "id": "match-88",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "B3",
-      "team2": "D3",
+      "team1": "Qatar",
+      "team2": "Australia",
       "kickoff": "2026-09-03T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-03",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Atlanta",
@@ -1872,11 +1939,7 @@
       "team1": "Ganador R32-1",
       "team2": "Ganador R32-2",
       "kickoff": "2026-09-03T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-03",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Nueva York",
@@ -1893,11 +1956,7 @@
       "team1": "Ganador R32-3",
       "team2": "Ganador R32-4",
       "kickoff": "2026-09-04T18:00-07:00",
-      "originalKickoff": {
-        "date": "2026-09-04",
-        "time": "18:00",
-        "timezone": "America/Los_Angeles"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Los Ángeles",
@@ -1914,11 +1973,7 @@
       "team1": "Ganador R32-5",
       "team2": "Ganador R32-6",
       "kickoff": "2026-09-05T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-09-05",
-        "time": "18:00",
-        "timezone": "America/Chicago"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Dallas",
@@ -1935,11 +1990,7 @@
       "team1": "Ganador R32-7",
       "team2": "Ganador R32-8",
       "kickoff": "2026-09-06T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-06",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Atlanta",
@@ -1956,11 +2007,7 @@
       "team1": "Ganador R32-9",
       "team2": "Ganador R32-10",
       "kickoff": "2026-09-07T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-07",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Nueva York",
@@ -1977,11 +2024,7 @@
       "team1": "Ganador R32-11",
       "team2": "Ganador R32-12",
       "kickoff": "2026-09-08T18:00-07:00",
-      "originalKickoff": {
-        "date": "2026-09-08",
-        "time": "18:00",
-        "timezone": "America/Los_Angeles"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Los Ángeles",
@@ -1998,11 +2041,7 @@
       "team1": "Ganador R32-13",
       "team2": "Ganador R32-14",
       "kickoff": "2026-09-09T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-09-09",
-        "time": "18:00",
-        "timezone": "America/Chicago"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Dallas",
@@ -2019,11 +2058,7 @@
       "team1": "Ganador R32-15",
       "team2": "Ganador R32-16",
       "kickoff": "2026-09-10T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-10",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Atlanta",
@@ -2040,11 +2075,7 @@
       "team1": "Ganador Octavos-1",
       "team2": "Ganador Octavos-2",
       "kickoff": "2026-09-08T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-08",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Nueva York",
@@ -2061,11 +2092,7 @@
       "team1": "Ganador Octavos-3",
       "team2": "Ganador Octavos-4",
       "kickoff": "2026-09-09T18:00-05:00",
-      "originalKickoff": {
-        "date": "2026-09-09",
-        "time": "18:00",
-        "timezone": "America/Mexico_City"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "México",
         "city": "Guadalajara",
@@ -2082,11 +2109,7 @@
       "team1": "Ganador Octavos-5",
       "team2": "Ganador Octavos-6",
       "kickoff": "2026-09-09T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-09",
-        "time": "18:00",
-        "timezone": "America/Toronto"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Canadá",
         "city": "Montreal",
@@ -2103,11 +2126,7 @@
       "team1": "Ganador Octavos-7",
       "team2": "Ganador Octavos-8",
       "kickoff": "2026-09-09T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-09",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Atlanta",
@@ -2124,11 +2143,7 @@
       "team1": "Ganador QF-1",
       "team2": "Ganador QF-2",
       "kickoff": "2026-09-10T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-10",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Nueva York",
@@ -2145,11 +2160,7 @@
       "team1": "Ganador QF-3",
       "team2": "Ganador QF-4",
       "kickoff": "2026-09-11T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-11",
-        "time": "18:00",
-        "timezone": "America/Toronto"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Canadá",
         "city": "Montreal",
@@ -2166,11 +2177,7 @@
       "team1": "Perdedor SF1",
       "team2": "Perdedor SF2",
       "kickoff": "2026-09-12T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-12",
-        "time": "18:00",
-        "timezone": "America/Toronto"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Canadá",
         "city": "Toronto",
@@ -2187,11 +2194,7 @@
       "team1": "Ganador Semifinales-1",
       "team2": "Ganador Semifinales-2",
       "kickoff": "2026-09-13T18:00-04:00",
-      "originalKickoff": {
-        "date": "2026-09-13",
-        "time": "18:00",
-        "timezone": "America/New_York"
-      },
+      "originalKickoff": null,
       "venue": {
         "country": "Estados Unidos",
         "city": "Atlanta",
