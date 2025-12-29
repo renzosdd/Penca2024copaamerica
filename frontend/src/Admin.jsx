@@ -21,6 +21,7 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [updatingResults, setUpdatingResults] = useState(false);
   const [importingMatches, setImportingMatches] = useState(false);
+  const [importingFixture, setImportingFixture] = useState(false);
   const [matchSearch, setMatchSearch] = useState('');
   const [matchStatus, setMatchStatus] = useState('all');
   const [error, setError] = useState('');
@@ -145,6 +146,23 @@ export default function Admin() {
     }
   };
 
+  const handleImportFixture = async () => {
+    setImportingFixture(true);
+    setError('');
+    try {
+      const res = await fetch('/admin/import-fixture', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('import fixture failed');
+      }
+      await loadMatches();
+    } catch (err) {
+      console.error('import fixture error', err);
+      setError(t('networkError'));
+    } finally {
+      setImportingFixture(false);
+    }
+  };
+
   const filteredMatches = useMemo(() => {
     const query = matchSearch.trim().toLowerCase();
     return [...matches]
@@ -227,6 +245,15 @@ export default function Admin() {
                 fullWidth
               >
                 {importingMatches ? <CircularProgress size={18} /> : t('importMatches')}
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleImportFixture}
+                disabled={importingFixture}
+                fullWidth
+              >
+                {importingFixture ? <CircularProgress size={18} /> : t('importFixture')}
               </Button>
             </Stack>
             <ToggleButtonGroup

@@ -139,6 +139,33 @@ async function loadFixtureFromFile() {
   return [];
 }
 
+async function upsertFixtureMatches(competition, fixtures) {
+  let imported = 0;
+  for (const [index, match] of fixtures.entries()) {
+    const fixtureId = normalizeText(match?.id) || String(index);
+    const importId = `fixture:${fixtureId}`;
+    const payload = buildMatchPayloadFromFixture(match, competition, index);
+    await Match.updateOne(
+      { competition, importId },
+      { $set: payload, $setOnInsert: { importId } },
+      { upsert: true }
+    );
+    imported += 1;
+  }
+  return imported;
+}
+
+async function importFixtureMatches(competition) {
+  const fixtures = await loadFixtureFromFile();
+  if (!fixtures.length) {
+    return { imported: 0, missing: true };
+  }
+  const imported = await upsertFixtureMatches(competition, fixtures);
+  await updateEliminationMatches(competition);
+  await rankingCache.invalidate({ competition });
+  return { imported };
+}
+
 async function importMatches(competition, options = {}) {
   const comp = await Competition.findOne({ name: competition });
   const { events, skipped } = await fetchEventsWithThrottle(
@@ -165,17 +192,7 @@ async function importMatches(competition, options = {}) {
 
   let imported = 0;
   if (shouldUseFixture) {
-    for (const [index, match] of fixtures.entries()) {
-      const fixtureId = normalizeText(match?.id) || String(index);
-      const importId = `fixture:${fixtureId}`;
-      const payload = buildMatchPayloadFromFixture(match, competition, index);
-      await Match.updateOne(
-        { competition, importId },
-        { $set: payload, $setOnInsert: { importId } },
-        { upsert: true }
-      );
-      imported += 1;
-    }
+    imported = await upsertFixtureMatches(competition, fixtures);
   } else {
     for (const [index, event] of events.entries()) {
       if (!event.idEvent) {
@@ -197,5 +214,7 @@ async function importMatches(competition, options = {}) {
 
   return { imported };
 }
+
+importMatches.importFixture = importFixtureMatches;
 
 module.exports = importMatches;
