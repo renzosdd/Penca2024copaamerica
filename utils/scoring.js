@@ -3,7 +3,7 @@ const DEFAULT_SCORING = Object.freeze({
   outcome: 3,
   goalDifference: 2,
   teamGoals: 1,
-  cleanSheet: 1
+  cleanSheet: 0
 });
 
 function normalizeNumber(value, fallback) {
@@ -17,7 +17,7 @@ function sanitizeScoring(scoring = {}) {
     outcome: normalizeNumber(scoring.outcome, DEFAULT_SCORING.outcome),
     goalDifference: normalizeNumber(scoring.goalDifference, DEFAULT_SCORING.goalDifference),
     teamGoals: normalizeNumber(scoring.teamGoals, DEFAULT_SCORING.teamGoals),
-    cleanSheet: normalizeNumber(scoring.cleanSheet, DEFAULT_SCORING.cleanSheet)
+    cleanSheet: 0
   };
 }
 
@@ -27,8 +27,7 @@ function buildRulesDescription(scoringInput) {
     `• ${scoring.exact} puntos por acertar el marcador exacto`,
     `• ${scoring.outcome} puntos por acertar el resultado (victoria/empate)`,
     `• ${scoring.goalDifference} puntos por acertar la diferencia de goles`,
-    `• ${scoring.teamGoals} punto por cada equipo con goles exactos`,
-    `• ${scoring.cleanSheet} punto extra por cada arco en cero correctamente pronosticado`
+    `• ${scoring.teamGoals} punto por cada equipo con goles exactos`
   ].join('\n');
 }
 
@@ -64,13 +63,6 @@ function calculatePoints({ prediction, match, scoring: scoringInput }) {
   }
   if (prediction.result2 === match.result2) {
     points += scoring.teamGoals;
-  }
-
-  if (prediction.result2 === 0 && match.result2 === 0 && prediction.result1 >= match.result1) {
-    points += scoring.cleanSheet;
-  }
-  if (prediction.result1 === 0 && match.result1 === 0 && prediction.result2 >= match.result2) {
-    points += scoring.cleanSheet;
   }
 
   return points;

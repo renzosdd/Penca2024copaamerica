@@ -29,10 +29,11 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
 import StageAccordionList from './StageAccordionList';
 import useLang from './useLang';
 import pointsForPrediction, { calculatePointsBreakdown } from './calcPoints';
-import { formatLocalKickoff, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
+import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
 
 function TabPanel({ current, value, children, sx, ...other }) {
   const isActive = current === value;
@@ -60,6 +61,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [filter, setFilter] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [rankingSearch, setRankingSearch] = useState('');
+  const [openBreakdowns, setOpenBreakdowns] = useState({});
   const { t } = useLang();
   const predictionForms = useRef(new Map());
 
@@ -211,6 +213,43 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     return t('scheduleTbd');
   };
 
+  const calendarHref = match => {
+    const kickoff = getMatchKickoffDate(match);
+    if (!kickoff) {
+      return null;
+    }
+    const formatDate = date => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+    const end = new Date(kickoff.getTime() + 2 * 60 * 60000);
+    const summary = `${match.team1} vs ${match.team2}`;
+    const description = [penca.name, match.group_name, match.series].filter(Boolean).join(' - ');
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Penca//Match//EN',
+      'BEGIN:VEVENT',
+      `UID:${match._id || `${summary}-${formatDate(kickoff)}`}`,
+      `DTSTAMP:${formatDate(new Date())}`,
+      `DTSTART:${formatDate(kickoff)}`,
+      `DTEND:${formatDate(end)}`,
+      `SUMMARY:${summary}`,
+      description ? `DESCRIPTION:${description}` : null,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ]
+      .filter(Boolean)
+      .join('\n');
+    return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
+  };
+
+  const calendarFilename = match => {
+    const base = match._id || `${match.team1}-${match.team2}`;
+    return `match-${base}.ics`;
+  };
+
+  const toggleBreakdown = matchId => {
+    setOpenBreakdowns(prev => ({ ...prev, [matchId]: !prev[matchId] }));
+  };
+
   const renderMatchCard = (match, section) => {
     const pr = getPrediction(penca._id, match._id) || {};
     const editable = canPredict(match);
@@ -235,20 +274,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
         label: t('pointsBreakdownTeamGoals', { team: match.team2 }),
         points: breakdown.scoring.teamGoals,
         earned: breakdown.earned.team2Goals
-      },
-      {
-        key: 'team1CleanSheet',
-        label: t('pointsBreakdownCleanSheet', { team: match.team1 }),
-        points: breakdown.scoring.cleanSheet,
-        earned: breakdown.earned.team1CleanSheet
-      },
-      {
-        key: 'team2CleanSheet',
-        label: t('pointsBreakdownCleanSheet', { team: match.team2 }),
-        points: breakdown.scoring.cleanSheet,
-        earned: breakdown.earned.team2CleanSheet
       }
     ].filter(item => item.points > 0);
+    const earnedItems = breakdownItems.filter(item => item.earned);
+    const showBreakdown = Boolean(openBreakdowns[match._id]);
+    const calendarLink = calendarHref(match);
 
     const hasPrediction = pr.result1 != null && pr.result2 != null;
     const hasResult = match.result1 != null && match.result2 != null;
@@ -270,6 +300,18 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               <Chip size="small" label={kickoffText(match)} variant="outlined" />
               {match.group_name && <Chip size="small" label={match.group_name} />}
               {match.series && <Chip size="small" color="secondary" label={match.series} />}
+              {calendarLink && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  component="a"
+                  href={calendarLink}
+                  download={calendarFilename(match)}
+                  startIcon={<CalendarTodayOutlined fontSize="inherit" />}
+                >
+                  {t('saveToCalendar')}
+                </Button>
+              )}
             </Stack>
           </Stack>
 
@@ -344,51 +386,52 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               </Typography>
               {hasPrediction && (
                 <Stack spacing={0.75}>
-                  <Typography variant="body2" color="text.secondary">
-                    {t('difference')}: ({pr.result1 - match.result1}/{pr.result2 - match.result2})
-                  </Typography>
                   <Typography variant="body2" fontWeight={600} color="primary.main">
                     {t('pointsEarned')}: {pointsForPrediction(pr, match, penca.scoring)} {t('pts')}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {t('pointsBreakdownTitle', { stage: section?.label || t('pointsBreakdownDefaultStage') })}
-                  </Typography>
-                  <Stack spacing={0.5}>
-                    {breakdownItems.map(item => (
-                      <Box
-                        key={item.key}
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          px: 1.25,
-                          py: 0.75,
-                          borderRadius: 1.5,
-                          border: theme => `1px solid ${item.earned ? theme.palette.success.light : theme.palette.divider}`,
-                          backgroundColor: theme =>
-                            item.earned ? alpha(theme.palette.success.light, 0.18) : alpha(theme.palette.background.paper, 0.6)
-                        }}
+                  {earnedItems.length > 0 && (
+                    <>
+                      <Button
+                        size="small"
+                        variant="text"
+                        onClick={() => toggleBreakdown(match._id)}
+                        sx={{ alignSelf: 'flex-start' }}
                       >
-                        <Typography
-                          variant="body2"
-                          sx={{ color: item.earned ? 'success.dark' : 'text.secondary', fontWeight: item.earned ? 600 : 400 }}
-                        >
-                          {item.label}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ color: item.earned ? 'success.dark' : 'text.secondary', fontWeight: 600 }}
-                        >
-                          {item.earned ? `+${item.points}` : '+0'}
-                        </Typography>
-                      </Box>
-                    ))}
-                    {!breakdownItems.length && (
-                      <Typography variant="body2" color="text.secondary">
-                        {t('pointsBreakdownHint')}
-                      </Typography>
-                    )}
-                  </Stack>
+                        {showBreakdown ? t('hidePointsDetails') : t('viewPointsDetails')}
+                      </Button>
+                      {showBreakdown && (
+                        <>
+                          <Typography variant="body2" color="text.secondary">
+                            {t('pointsBreakdownTitle', { stage: section?.label || t('pointsBreakdownDefaultStage') })}
+                          </Typography>
+                          <Stack spacing={0.5}>
+                            {earnedItems.map(item => (
+                              <Box
+                                key={item.key}
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  px: 1.25,
+                                  py: 0.75,
+                                  borderRadius: 1.5,
+                                  border: theme => `1px solid ${theme.palette.success.light}`,
+                                  backgroundColor: theme => alpha(theme.palette.success.light, 0.18)
+                                }}
+                              >
+                                <Typography variant="body2" sx={{ color: 'success.dark', fontWeight: 600 }}>
+                                  {item.label}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'success.dark', fontWeight: 600 }}>
+                                  +{item.points}
+                                </Typography>
+                              </Box>
+                            ))}
+                          </Stack>
+                        </>
+                      )}
+                    </>
+                  )}
                 </Stack>
               )}
             </Stack>
