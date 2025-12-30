@@ -17,6 +17,7 @@ export default function Admin() {
   const [competitionName, setCompetitionName] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [importingMatches, setImportingMatches] = useState(false);
   const [importingFixture, setImportingFixture] = useState(false);
   const [error, setError] = useState('');
   const { t } = useLang();
@@ -106,20 +107,20 @@ export default function Admin() {
     }
   };
 
-  const handleImportFixture = async () => {
-    setImportingFixture(true);
+  const handleImportMatches = async () => {
+    setImportingMatches(true);
     setError('');
     try {
-      const res = await fetch('/admin/import-fixture', { method: 'POST' });
+      const res = await fetch('/admin/import-matches', { method: 'POST' });
       if (!res.ok) {
-        throw new Error('import fixture failed');
+        throw new Error('import matches failed');
       }
       await loadMatches();
     } catch (err) {
-      console.error('import fixture error', err);
+      console.error('import matches error', err);
       setError(t('networkError'));
     } finally {
-      setImportingFixture(false);
+      setImportingMatches(false);
     }
   };
 
@@ -173,11 +174,11 @@ export default function Admin() {
               <Button
                 variant="contained"
                 size="small"
-                onClick={handleImportFixture}
-                disabled={importingFixture}
+                onClick={handleImportMatches}
+                disabled={importingMatches}
                 fullWidth
               >
-                {importingFixture ? <CircularProgress size={18} /> : t('importFixture')}
+                {importingMatches ? <CircularProgress size={18} /> : t('importMatches')}
               </Button>
               <Button
                 variant="contained"
