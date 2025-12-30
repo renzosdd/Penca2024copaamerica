@@ -3,7 +3,7 @@ export const DEFAULT_SCORING = {
   outcome: 3,
   goalDifference: 2,
   teamGoals: 1,
-  cleanSheet: 1
+  cleanSheet: 0
 };
 
 export const sanitizeScoring = scoring => ({
@@ -13,7 +13,7 @@ export const sanitizeScoring = scoring => ({
     ? Number(scoring.goalDifference)
     : DEFAULT_SCORING.goalDifference,
   teamGoals: Number.isFinite(Number(scoring?.teamGoals)) ? Number(scoring.teamGoals) : DEFAULT_SCORING.teamGoals,
-  cleanSheet: Number.isFinite(Number(scoring?.cleanSheet)) ? Number(scoring.cleanSheet) : DEFAULT_SCORING.cleanSheet
+  cleanSheet: 0
 });
 
 const outcome = (a, b) => {
@@ -31,9 +31,7 @@ export function calculatePointsBreakdown(prediction, match, scoring) {
       outcome: false,
       goalDifference: false,
       team1Goals: false,
-      team2Goals: false,
-      team1CleanSheet: false,
-      team2CleanSheet: false
+      team2Goals: false
     }
   };
 
@@ -70,15 +68,6 @@ export function calculatePointsBreakdown(prediction, match, scoring) {
   if (prediction.result2 === match.result2) {
     breakdown.earned.team2Goals = true;
     breakdown.total += safeScoring.teamGoals;
-  }
-
-  if (prediction.result2 === 0 && match.result2 === 0) {
-    breakdown.earned.team2CleanSheet = true;
-    breakdown.total += safeScoring.cleanSheet;
-  }
-  if (prediction.result1 === 0 && match.result1 === 0) {
-    breakdown.earned.team1CleanSheet = true;
-    breakdown.total += safeScoring.cleanSheet;
   }
 
   return breakdown;
