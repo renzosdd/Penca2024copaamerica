@@ -19,6 +19,8 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [importingMatches, setImportingMatches] = useState(false);
   const [importingFixture, setImportingFixture] = useState(false);
+  const [clearingMatches, setClearingMatches] = useState(false);
+  const [reloadingMatches, setReloadingMatches] = useState(false);
   const [error, setError] = useState('');
   const { t } = useLang();
 
@@ -141,6 +143,40 @@ export default function Admin() {
     }
   };
 
+  const handleClearMatches = async () => {
+    setClearingMatches(true);
+    setError('');
+    try {
+      const res = await fetch('/admin/matches/clear', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('clear matches failed');
+      }
+      await loadMatches();
+    } catch (err) {
+      console.error('clear matches error', err);
+      setError(t('networkError'));
+    } finally {
+      setClearingMatches(false);
+    }
+  };
+
+  const handleReloadMatches = async () => {
+    setReloadingMatches(true);
+    setError('');
+    try {
+      const res = await fetch('/admin/matches/reload', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('reload matches failed');
+      }
+      await loadMatches();
+    } catch (err) {
+      console.error('reload matches error', err);
+      setError(t('networkError'));
+    } finally {
+      setReloadingMatches(false);
+    }
+  };
+
   const filteredMatches = useMemo(() => {
     return [...matches]
       .sort((a, b) => matchKickoffValue(a) - matchKickoffValue(b))
@@ -168,6 +204,27 @@ export default function Admin() {
               </Button>
               <Button variant="outlined" size="small" onClick={handleRecalculate} disabled={saving} fullWidth>
                 {t('recalculateBracket')}
+              </Button>
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+              <Button
+                variant="outlined"
+                size="small"
+                color="error"
+                onClick={handleClearMatches}
+                disabled={clearingMatches}
+                fullWidth
+              >
+                {clearingMatches ? <CircularProgress size={18} /> : t('adminClearMatches')}
+              </Button>
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleReloadMatches}
+                disabled={reloadingMatches}
+                fullWidth
+              >
+                {reloadingMatches ? <CircularProgress size={18} /> : t('adminReloadMatches')}
               </Button>
             </Stack>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
