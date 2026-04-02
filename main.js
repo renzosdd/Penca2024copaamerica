@@ -168,23 +168,24 @@ async function initializeDatabase() {
     try {
         // Verificar si existe el usuario administrador
 
-        const adminUsername = process.env.DEFAULT_ADMIN_USERNAME;
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.DEFAULT_ADMIN_EMAIL;
         const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
-        const adminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@example.com';
-        if (!adminUsername || !adminPassword) {
-            console.error('DEFAULT_ADMIN_USERNAME and DEFAULT_ADMIN_PASSWORD environment variables are required');
+        const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
+        if (!adminEmail || !adminPassword) {
+            console.error('ADMIN_EMAIL and DEFAULT_ADMIN_PASSWORD environment variables are required');
             process.exit(1);
         }
 
         // Crear usuario administrador si no existe
-        let admin = await User.findOne({ username: adminUsername });
+        let admin = await User.findOne({ email: adminEmail.toLowerCase() });
         if (!admin) {
             debugLog('No existe usuario administrador, creándolo...');
             const hashedPassword = await bcrypt.hash(adminPassword, 10);
             admin = new User({
                 username: adminUsername,
                 password: hashedPassword,
-                email: adminEmail,
+                displayName: 'Administrador',
+                email: adminEmail.toLowerCase(),
                 role: 'admin',
                 valid: true
             });
@@ -282,10 +283,11 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
 
 
 app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    debugLog('Intento de inicio de sesión para el usuario:', username);
+    const { email, password } = req.body;
+    debugLog('Intento de inicio de sesión para el usuario:', email);
     try {
-        const user = await User.findOne({ username });
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
         if (user) {
             debugLog('Usuario encontrado:', user.username);
         } else {
@@ -328,11 +330,15 @@ const upload = multer({
 });
 
 app.post('/register', upload.single('avatar'), async (req, res) => {
-    const { username, password, name, surname, email, dob } = req.body;
+    const { username, password, displayName, name, surname, email, dob, avatarUrl } = req.body;
     const avatar = req.file ? req.file.buffer : null;
     const avatarContentType = req.file ? req.file.mimetype : null;
     try {
-        const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        if (!displayName || !displayName.trim()) {
+            return res.status(400).json({ error: 'displayName is required' });
+        }
+        const existingUser = await User.findOne({ $or: [{ username }, { email: normalizedEmail }] });
         if (existingUser) {
             return res.status(400).json({ error: getMessage('USER_EXISTS', req.lang) });
         }
@@ -340,10 +346,12 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         const user = new User({
             username,
             password: hashedPassword,
+            displayName: displayName.trim(),
             name,
             surname,
-            email,
+            email: normalizedEmail,
             dob,
+            avatarUrl: avatarUrl || null,
             avatar,
             avatarContentType,
             valid: false

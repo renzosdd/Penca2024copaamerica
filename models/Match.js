@@ -21,6 +21,11 @@ const matchSchema = new mongoose.Schema({
         stadium: String
     },
     importId: String,
+    status: {
+        type: String,
+        enum: ['scheduled', 'live', 'finished', 'postponed', 'cancelled'],
+        default: 'scheduled'
+    },
     result1: Number,
     result2: Number,
     order: Number

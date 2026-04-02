@@ -60,9 +60,9 @@ router.post('/', async (req, res) => {
             return res.status(404).json({ error: getMessage('MATCH_NOT_FOUND', req.lang) });
         }
 
-        // Verificar si falta menos de media hora para el partido
+        // Verificar si falta menos de media hora para el partido o si ya está en juego/finalizado
         const currentTime = new Date();
-        const matchDateTime = new Date(`${match.date}T${match.time}:00`); // Combinar fecha y hora
+        const matchDateTime = match.kickoff ? new Date(match.kickoff) : new Date(`${match.date}T${match.time}:00`); // Combinar fecha y hora
 
         debugLog(`currentTime: ${currentTime}`);
         debugLog(`matchDateTime: ${matchDateTime}`);
@@ -71,7 +71,7 @@ router.post('/', async (req, res) => {
 
         debugLog(`timeDifference: ${timeDifference} minutos`);
 
-        if (timeDifference < 30) {
+        if (timeDifference < 30 || match.status === 'live' || match.status === 'finished') {
             return res.status(400).json({ error: getMessage('PREDICTION_TIME', req.lang) });
         }
 

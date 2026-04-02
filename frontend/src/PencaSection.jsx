@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Avatar,
@@ -23,6 +23,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Pagination,
   TextField,
   Tooltip,
   Typography
@@ -59,6 +60,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [infoOpen, setInfoOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('matches');
   const [filter, setFilter] = useState('all');
+  const [rankingPage, setRankingPage] = useState(1);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [rankingSearch, setRankingSearch] = useState('');
   const [openBreakdowns, setOpenBreakdowns] = useState({});
@@ -77,11 +79,26 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     }
     const sorted = [...list].sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
     return sorted.filter(match => {
+      const kickoff = getMatchKickoffDate(match);
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      const dayAfterTomorrow = new Date(today);
+      dayAfterTomorrow.setDate(today.getDate() + 2);
       if (filter === 'upcoming') {
         return match.result1 == null && match.result2 == null;
       }
       if (filter === 'played') {
         return match.result1 != null && match.result2 != null;
+      }
+      if (filter === 'today') {
+        if (!kickoff) return false;
+        return kickoff >= today && kickoff < tomorrow;
+      }
+      if (filter === 'tomorrow') {
+        if (!kickoff) return false;
+        return kickoff >= tomorrow && kickoff < dayAfterTomorrow;
       }
       return true;
     });
@@ -144,6 +161,16 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
         return entry.username.toLowerCase().includes(normalized);
       });
   }, [ranking, rankingSearch]);
+  const rankingPageSize = 10;
+  const rankingTotalPages = Math.max(1, Math.ceil(filteredRanking.length / rankingPageSize));
+  const paginatedRanking = useMemo(() => {
+    const start = (rankingPage - 1) * rankingPageSize;
+    return filteredRanking.slice(start, start + rankingPageSize);
+  }, [filteredRanking, rankingPage]);
+
+  useEffect(() => {
+    setRankingPage(1);
+  }, [rankingSearch]);
 
   const InfoDetails = () => (
     <Stack spacing={2}>
@@ -562,6 +589,28 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 </Button>
                 <Button
                   size="small"
+                  variant={filter === 'today' ? 'contained' : 'outlined'}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setFilter('today');
+                  }}
+                  fullWidth
+                >
+                  {t('today')}
+                </Button>
+                <Button
+                  size="small"
+                  variant={filter === 'tomorrow' ? 'contained' : 'outlined'}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setFilter('tomorrow');
+                  }}
+                  fullWidth
+                >
+                  {t('tomorrow')}
+                </Button>
+                <Button
+                  size="small"
                   variant={filter === 'upcoming' ? 'contained' : 'outlined'}
                   onClick={e => {
                     e.stopPropagation();
@@ -626,10 +675,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {filteredRanking.map(u => (
+                    {paginatedRanking.map(u => (
                       <TableRow
                         key={u.userId}
                         className={`rank-${u.rank} ${u.username === currentUsername ? 'current-user-row' : ''}`.trim()}
+                        sx={u.rank === 1 ? { backgroundColor: theme => alpha(theme.palette.success.light, 0.25) } : undefined}
                       >
                         <TableCell>{u.rank}</TableCell>
                         <TableCell>
@@ -639,7 +689,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                             className="avatar-small"
                             style={{ marginRight: '0.5rem' }}
                           />
-                          {u.username}
+                          {u.displayName || u.username}
                         </TableCell>
                         <TableCell>{u.score}</TableCell>
                       </TableRow>
@@ -656,6 +706,15 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                   </TableBody>
                 </Table>
               </TableContainer>
+              <Stack direction="row" justifyContent="center" sx={{ mt: 1.5 }}>
+                <Pagination
+                  count={rankingTotalPages}
+                  page={rankingPage}
+                  onChange={(_, value) => setRankingPage(value)}
+                  color="primary"
+                  size="small"
+                />
+              </Stack>
             </TabPanel>
 
             <TabPanel current={activeSection} value="info">
