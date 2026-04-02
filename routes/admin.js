@@ -232,7 +232,11 @@ router.post('/matches/clear', isAuthenticated, isAdmin, async (req, res) => {
   try {
     const result = await Match.deleteMany({ competition: DEFAULT_COMPETITION });
     await invalidateMatchCache(DEFAULT_COMPETITION);
-    await rankingCache.invalidate({ competition: DEFAULT_COMPETITION });
+    try {
+      await rankingCache.invalidate({ competition: DEFAULT_COMPETITION });
+    } catch (cacheError) {
+      console.error('Error invalidating ranking cache after clearing matches:', cacheError);
+    }
     res.json({ message: 'Matches cleared', deleted: result.deletedCount || 0 });
   } catch (error) {
     console.error('Error clearing matches:', error);
