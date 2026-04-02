@@ -122,3 +122,12 @@ test('imports fixture matches when events are empty and fallback is enabled', as
   expect(updateEliminationMatches).toHaveBeenCalledWith('Mundial 2026');
   expect(rankingCache.invalidate).toHaveBeenCalledWith({ competition: 'Mundial 2026' });
 });
+
+test('imports fixture matches without recalculating bracket when skipBracketUpdate is true', async () => {
+  const result = await importMatches.importFixture('Mundial 2026', { skipBracketUpdate: true });
+
+  expect(result.imported).toBe(2);
+  expect(Match.updateOne).toHaveBeenCalledTimes(2);
+  expect(updateEliminationMatches).not.toHaveBeenCalled();
+  expect(rankingCache.invalidate).toHaveBeenCalledWith({ competition: 'Mundial 2026' });
+});

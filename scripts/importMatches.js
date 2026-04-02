@@ -155,13 +155,16 @@ async function upsertFixtureMatches(competition, fixtures) {
   return imported;
 }
 
-async function importFixtureMatches(competition) {
+async function importFixtureMatches(competition, options = {}) {
+  const { skipBracketUpdate = false } = options;
   const fixtures = await loadFixtureFromFile();
   if (!fixtures.length) {
     return { imported: 0, missing: true };
   }
   const imported = await upsertFixtureMatches(competition, fixtures);
-  await updateEliminationMatches(competition);
+  if (!skipBracketUpdate) {
+    await updateEliminationMatches(competition);
+  }
   await rankingCache.invalidate({ competition });
   return { imported };
 }

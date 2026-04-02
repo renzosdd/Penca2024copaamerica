@@ -228,4 +228,36 @@ router.post('/import-fixture', isAuthenticated, isAdmin, async (req, res) => {
   }
 });
 
+router.post('/matches/clear', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const result = await Match.deleteMany({ competition: DEFAULT_COMPETITION });
+    await invalidateMatchCache(DEFAULT_COMPETITION);
+    await rankingCache.invalidate({ competition: DEFAULT_COMPETITION });
+    res.json({ message: 'Matches cleared', deleted: result.deletedCount || 0 });
+  } catch (error) {
+    console.error('Error clearing matches:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/matches/reload', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    await Match.deleteMany({ competition: DEFAULT_COMPETITION });
+    const result = await importMatches.importFixture(DEFAULT_COMPETITION, {
+      skipBracketUpdate: true
+    });
+    if (result && result.missing) {
+      return res.json({ skipped: true });
+    }
+    await invalidateMatchCache(DEFAULT_COMPETITION);
+    res.json({
+      message: 'Matches reloaded from fixture',
+      imported: result.imported
+    });
+  } catch (error) {
+    console.error('Error reloading matches:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
