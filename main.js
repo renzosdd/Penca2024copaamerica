@@ -350,18 +350,23 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
     const avatarContentType = req.file ? req.file.mimetype : null;
     try {
         const normalizedEmail = (email || '').trim().toLowerCase();
-        if (!displayName || !displayName.trim()) {
+        const normalizedUsername = (username || '').trim();
+        const derivedDisplayName = (displayName || name || normalizedUsername).trim();
+        if (!normalizedUsername || !password || !normalizedEmail) {
+            return res.status(400).json({ error: 'username, password and email are required' });
+        }
+        if (!derivedDisplayName) {
             return res.status(400).json({ error: 'displayName is required' });
         }
-        const existingUser = await User.findOne({ $or: [{ username }, { email: normalizedEmail }] });
+        const existingUser = await User.findOne({ $or: [{ username: normalizedUsername }, { email: normalizedEmail }] });
         if (existingUser) {
             return res.status(400).json({ error: getMessage('USER_EXISTS', req.lang) });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({
-            username,
+            username: normalizedUsername,
             password: hashedPassword,
-            displayName: displayName.trim(),
+            displayName: derivedDisplayName,
             name,
             surname,
             email: normalizedEmail,
@@ -412,12 +417,20 @@ app.use('/matches', matchesRouter);
 app.use(profileRouter);
 
 app.post('/logout', (req, res) => {
+    if (!req.session) {
+        return res.json({ success: true, redirectUrl: '/' });
+    }
     req.session.destroy(err => {
         if (err) {
+            console.error('Error on logout:', err);
             return res.status(500).json({ error: getMessage('LOGOUT_ERROR', req.lang) });
         }
-        res.redirect('/');
+        res.json({ success: true, redirectUrl: '/' });
     });
+});
+
+app.get(['/register'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 
 app.use((req, res) => {
