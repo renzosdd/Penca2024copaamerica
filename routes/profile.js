@@ -16,7 +16,7 @@ const upload = multer({
 
 router.post('/profile/update', isAuthenticated, upload.single('avatar'), async (req, res) => {
   try {
-    const { name, surname, email, dob } = req.body;
+    const { displayName, name, surname, email, dob, avatarUrl } = req.body;
     const user = await User.findById(req.session.user._id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -24,6 +24,13 @@ router.post('/profile/update', isAuthenticated, upload.single('avatar'), async (
       return res.status(400).json({ error: 'Invalid email' });
     }
 
+    if (displayName !== undefined) {
+      const normalizedDisplayName = String(displayName).trim();
+      if (!normalizedDisplayName) {
+        return res.status(400).json({ error: 'Display name required' });
+      }
+      user.displayName = normalizedDisplayName;
+    }
     if (name !== undefined) user.name = name;
     if (surname !== undefined) user.surname = surname;
     if (email !== undefined) user.email = email;
@@ -33,6 +40,9 @@ router.post('/profile/update', isAuthenticated, upload.single('avatar'), async (
         return res.status(400).json({ error: 'Invalid date' });
       }
       user.dob = d;
+    }
+    if (avatarUrl !== undefined) {
+      user.avatarUrl = avatarUrl || null;
     }
     if (req.file) {
       user.avatar = req.file.buffer;

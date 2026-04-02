@@ -13,7 +13,7 @@ import {
 import useLang from './useLang';
  
 export default function Login() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function Login() {
       const res = await fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ email, password })
       });
       const data = await res.json();
       if (res.ok && data.redirectUrl) {
@@ -56,13 +56,14 @@ export default function Login() {
             </Stack>
             <Stack component="form" spacing={2} onSubmit={handleSubmit}>
               <TextField
-                id="login-username"
-                label={t('username')}
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="login-email"
+                label={t('email')}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 fullWidth
-                autoComplete="username"
+                autoComplete="email"
               />
               <TextField
                 id="login-password"

@@ -15,13 +15,14 @@ import useLang from './useLang';
 export default function Register() {
   const [form, setForm] = useState({
     username: '',
+    displayName: '',
     password: '',
     name: '',
     surname: '',
     email: '',
-    dob: ''
+    dob: '',
+    avatarUrl: ''
   });
-  const [avatar, setAvatar] = useState(null);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { t } = useLang();
@@ -37,7 +38,6 @@ export default function Register() {
     try {
       const data = new FormData();
       Object.entries(form).forEach(([k, v]) => data.append(k, v));
-      if (avatar) data.append('avatar', avatar);
       const res = await fetch('/register', {
         method: 'POST',
         body: data
@@ -70,6 +70,15 @@ export default function Register() {
                 label={t('username')}
                 name="username"
                 value={form.username}
+                onChange={handleChange}
+                required
+                fullWidth
+              />
+              <TextField
+                id="register-display-name"
+                label={t('name')}
+                name="displayName"
+                value={form.displayName}
                 onChange={handleChange}
                 required
                 fullWidth
@@ -122,15 +131,14 @@ export default function Register() {
                 InputLabelProps={{ shrink: true }}
                 fullWidth
               />
-              <Button variant="outlined" component="label" fullWidth size="large">
-                {t('uploadAvatar')}
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={e => setAvatar(e.target.files[0])}
-                />
-              </Button>
+              <TextField
+                id="register-avatar-url"
+                label="Avatar URL"
+                name="avatarUrl"
+                value={form.avatarUrl}
+                onChange={handleChange}
+                fullWidth
+              />
               <Button variant="contained" type="submit" fullWidth size="large">
                 {t('register')}
               </Button>

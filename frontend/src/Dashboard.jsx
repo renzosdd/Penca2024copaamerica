@@ -40,7 +40,7 @@ export default function Dashboard() {
       const res = await fetch('/ranking');
       if (res.ok) {
         const data = await res.json();
-        setRanking(data);
+        setRanking(data.items || data);
       }
     } catch (err) {
       console.error('ranking error', err);
@@ -74,7 +74,8 @@ export default function Dashboard() {
           setPredictions(await pRes.json());
         }
         if (rankingRes.ok) {
-          setRanking(await rankingRes.json());
+          const rankingPayload = await rankingRes.json();
+          setRanking(rankingPayload.items || rankingPayload);
         }
         if (matchesRes.ok) {
           setMatches(await matchesRes.json());
@@ -149,7 +150,7 @@ export default function Dashboard() {
             {user && (
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
                 <Typography variant="body2" color="text.secondary">
-                  {user.username}
+                  {user.displayName || user.username}
                 </Typography>
                 <Button
                   size="small"

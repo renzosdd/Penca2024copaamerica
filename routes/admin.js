@@ -71,7 +71,7 @@ router.get('/matches', isAuthenticated, isAdmin, async (req, res) => {
     const matches = await getOrLoad(DEFAULT_COMPETITION, () =>
       Match.find({ competition: DEFAULT_COMPETITION })
         .select(
-          'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 order originalDate originalTime originalTimezone'
+          'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 status order originalDate originalTime originalTimezone'
         )
         .sort({ order: 1, kickoff: 1, date: 1, time: 1 })
         .lean()
@@ -107,13 +107,14 @@ router.put('/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
       return res.status(404).json({ error: 'Match not found' });
     }
 
-    const { team1, team2, date, time, group_name, series } = req.body;
+    const { team1, team2, date, time, group_name, series, status } = req.body;
     if (team1 !== undefined) match.team1 = team1;
     if (team2 !== undefined) match.team2 = team2;
     if (date !== undefined) match.date = date || null;
     if (time !== undefined) match.time = time || null;
     if (group_name !== undefined) match.group_name = group_name || 'Otros';
     if (series !== undefined) match.series = series || match.series;
+    if (status !== undefined) match.status = status || match.status;
     if (req.body.kickoff !== undefined) {
       const kickoffValue = parseKickoff(req.body.kickoff);
       match.kickoff = kickoffValue || null;
@@ -160,6 +161,9 @@ router.post('/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
     const { result1, result2 } = req.body;
     match.result1 = result1 === null || result1 === '' || result1 === undefined ? null : Number(result1);
     match.result2 = result2 === null || result2 === '' || result2 === undefined ? null : Number(result2);
+    if (match.result1 != null && match.result2 != null) {
+      match.status = 'finished';
+    }
     await match.save();
     await updateEliminationMatches(match.competition);
     await invalidateMatchCache(DEFAULT_COMPETITION);

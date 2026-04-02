@@ -4,12 +4,13 @@ import useLang from './useLang';
 
 export default function ProfileForm({ user, onUpdated }) {
   const [form, setForm] = useState({
+    displayName: user?.displayName || user?.name || '',
     name: user?.name || '',
     surname: user?.surname || '',
     email: user?.email || '',
-    dob: user?.dob ? user.dob.slice(0, 10) : ''
+    dob: user?.dob ? user.dob.slice(0, 10) : '',
+    avatarUrl: user?.avatarUrl || ''
   });
-  const [avatar, setAvatar] = useState(null);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const { t } = useLang();
@@ -26,7 +27,6 @@ export default function ProfileForm({ user, onUpdated }) {
     try {
       const data = new FormData();
       Object.entries(form).forEach(([k, v]) => data.append(k, v));
-      if (avatar) data.append('avatar', avatar);
       const res = await fetch('/profile/update', {
         method: 'POST',
         body: data
@@ -50,14 +50,12 @@ export default function ProfileForm({ user, onUpdated }) {
           {t('myProfile')}
         </Typography>
         <form onSubmit={handleSubmit}>
+          <TextField label="Nombre público" name="displayName" value={form.displayName} onChange={handleChange} required fullWidth margin="normal" />
           <TextField label={t('name')} name="name" value={form.name} onChange={handleChange} fullWidth margin="normal" />
           <TextField label={t('surname')} name="surname" value={form.surname} onChange={handleChange} fullWidth margin="normal" />
           <TextField label={t('email')} type="email" name="email" value={form.email} onChange={handleChange} required fullWidth margin="normal" />
           <TextField label={t('birthdate')} type="date" name="dob" value={form.dob} onChange={handleChange} InputLabelProps={{ shrink: true }} fullWidth margin="normal" />
-          <Button variant="contained" component="label" fullWidth sx={{ mt: 1, mb: 1 }}>
-            {t('uploadAvatar')}
-            <input type="file" hidden accept="image/*" onChange={e => setAvatar(e.target.files[0])} />
-          </Button>
+          <TextField label="Avatar URL" name="avatarUrl" value={form.avatarUrl} onChange={handleChange} fullWidth margin="normal" />
           <Button variant="contained" type="submit" fullWidth>
             {t('save')}
           </Button>
@@ -68,4 +66,3 @@ export default function ProfileForm({ user, onUpdated }) {
     </Card>
   );
 }
-

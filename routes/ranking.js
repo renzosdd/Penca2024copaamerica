@@ -75,8 +75,11 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
         userFilter = Object.keys(userFilter).length ? { $and: [userFilter, criteria] } : criteria;
     }
 
+    userFilter.role = 'user';
+    userFilter.valid = true;
+
     const users = await User.find(userFilter)
-        .select('username avatar avatarContentType')
+        .select('username displayName email avatar avatarUrl avatarContentType')
         .lean();
 
     if (!users.length) {
@@ -95,6 +98,8 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
     const scores = users.map(user => {
         const userPredictions = predictionsByUser.get(user._id.toString()) || [];
         let userScore = 0;
+        let exactHits = 0;
+        let goalError = 0;
 
         for (const prediction of userPredictions) {
             const match = matchesById.get(prediction.matchId.toString());
@@ -102,20 +107,33 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
                 continue;
             }
             userScore += calculatePoints({ prediction, match, scoring });
+            if (prediction.result1 === match.result1 && prediction.result2 === match.result2) {
+                exactHits += 1;
+            }
+            goalError += Math.abs((prediction.result1 ?? 0) - match.result1) + Math.abs((prediction.result2 ?? 0) - match.result2);
         }
 
-        const avatarPath = user.avatar ? '/avatar/' + user.username : '/images/avatar.webp';
+        const avatarPath = user.avatar ? '/avatar/' + user.username : (user.avatarUrl || '/images/avatar.webp');
+        const label = user.displayName || user.email || user.username;
 
         return {
             userId: user._id,
             username: user.username,
+            displayName: label,
             avatar: avatarPath,
             avatarContentType: user.avatarContentType,
-            score: userScore
+            score: userScore,
+            exactHits,
+            goalError
         };
     });
 
-    scores.sort((a, b) => b.score - a.score);
+    scores.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        if (b.exactHits !== a.exactHits) return b.exactHits - a.exactHits;
+        if (a.goalError !== b.goalError) return a.goalError - b.goalError;
+        return String(a.displayName).localeCompare(String(b.displayName), 'es');
+    });
     return scores;
 }
 
@@ -124,14 +142,26 @@ router.get('/', async (req, res) => {
     try {
         const premiumOnly = req.query.premium === 'true';
         const variant = premiumOnly ? 'premium' : 'all';
+        const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit || '10', 10), 1), 100);
+        const paginate = (scores) => {
+            const start = (page - 1) * limit;
+            return {
+                items: scores.slice(start, start + limit),
+                total: scores.length,
+                page,
+                limit,
+                totalPages: Math.max(1, Math.ceil(scores.length / limit))
+            };
+        };
         const penca = await ensureWorldCupPenca();
         const cached = await rankingCache.get(penca?._id, DEFAULT_COMPETITION, variant);
         if (cached) {
-            return res.json(cached);
+            return res.json(paginate(cached));
         }
         const scores = await calculateScores(penca, { premiumOnly });
         await rankingCache.set(penca?._id, DEFAULT_COMPETITION, variant, scores);
-        res.json(scores);
+        res.json(paginate(scores));
     } catch (err) {
         console.error('Error al obtener el ranking:', err);
         res.status(500).json({ error: getMessage('RANKING_ERROR', req.lang) });
