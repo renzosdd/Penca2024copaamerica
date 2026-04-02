@@ -168,16 +168,22 @@ async function initializeDatabase() {
     try {
         // Verificar si existe el usuario administrador
 
-        const adminEmail = process.env.ADMIN_EMAIL || process.env.DEFAULT_ADMIN_EMAIL;
+        const adminEmailFromEnv = process.env.ADMIN_EMAIL || process.env.DEFAULT_ADMIN_EMAIL;
         const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD;
         const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin';
-        if (!adminEmail || !adminPassword) {
-            console.error('ADMIN_EMAIL and DEFAULT_ADMIN_PASSWORD environment variables are required');
+        const adminEmail = (adminEmailFromEnv || `${adminUsername}@local.dev`).toLowerCase();
+        if (!adminPassword) {
+            console.error('DEFAULT_ADMIN_PASSWORD environment variable is required');
             process.exit(1);
         }
 
         // Crear usuario administrador si no existe
-        let admin = await User.findOne({ email: adminEmail.toLowerCase() });
+        let admin = await User.findOne({
+            $or: [
+                { email: adminEmail },
+                { username: adminUsername }
+            ]
+        });
         if (!admin) {
             debugLog('No existe usuario administrador, creándolo...');
             const hashedPassword = await bcrypt.hash(adminPassword, 10);
@@ -194,6 +200,9 @@ async function initializeDatabase() {
                 await Score.create({ userId: admin._id, competition: DEFAULT_COMPETITION });
             }
             debugLog('Usuario administrador creado.');
+        } else if (!admin.email) {
+            admin.email = adminEmail;
+            await admin.save();
         }
         await ensureWorldCupPenca(admin._id);
         await ensureInitialMatchesFromApi();
@@ -286,8 +295,14 @@ app.post('/login', async (req, res) => {
     const { email, password } = req.body;
     debugLog('Intento de inicio de sesión para el usuario:', email);
     try {
-        const normalizedEmail = (email || '').trim().toLowerCase();
-        const user = await User.findOne({ email: normalizedEmail });
+        const loginValue = (email || '').trim();
+        const normalizedEmail = loginValue.toLowerCase();
+        const user = await User.findOne({
+            $or: [
+                { email: normalizedEmail },
+                { username: loginValue }
+            ]
+        });
         if (user) {
             debugLog('Usuario encontrado:', user.username);
         } else {
