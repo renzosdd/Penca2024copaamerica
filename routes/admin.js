@@ -216,24 +216,25 @@ router.post('/recalculate-bracket', isAuthenticated, isAdmin, async (req, res) =
 
 router.post('/matches/clear', isAuthenticated, isAdmin, async (req, res) => {
   try {
-    const [matchesResult, predictionsResult, pencasResult] = await Promise.all([
-      Match.deleteMany({}),
+    const matchesResult = await Match.deleteMany({});
+    const cleanupResults = await Promise.allSettled([
       Prediction.deleteMany({}),
-      Penca.updateMany({}, { $set: { fixture: [] } })
-    ]);
-    const cacheResults = await Promise.allSettled([
+      Penca.updateMany({}, { $set: { fixture: [] } }),
       invalidateMatchCache(),
       rankingCache.invalidate(),
       invalidateGroupStandings()
     ]);
-    cacheResults
+    cleanupResults
       .filter(result => result.status === 'rejected')
-      .forEach(result => console.error('Error invalidating cache after clearing matches:', result.reason));
+      .forEach(result => console.error('Error during cleanup after clearing matches:', result.reason));
+    const [predictionsResult, pencasResult] = cleanupResults.map(result =>
+      result.status === 'fulfilled' ? result.value : null
+    );
     res.json({
       message: 'Matches cleared',
       deleted: matchesResult.deletedCount || 0,
-      predictionsDeleted: predictionsResult.deletedCount || 0,
-      pencasUpdated: pencasResult.modifiedCount || 0
+      predictionsDeleted: predictionsResult?.deletedCount || 0,
+      pencasUpdated: pencasResult?.modifiedCount || 0
     });
   } catch (error) {
     console.error('Error clearing matches:', error);
