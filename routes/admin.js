@@ -2,11 +2,11 @@ const express = require('express');
 const path = require('path');
 const router = express.Router();
 const Match = require('../models/Match');
+const Penca = require('../models/Penca');
+const Prediction = require('../models/Prediction');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
-const { updateEliminationMatches } = require('../utils/bracket');
-const updateResults = require('../scripts/updateResults');
-const importMatches = require('../scripts/importMatches');
+const { updateEliminationMatches, invalidateGroupStandings } = require('../utils/bracket');
 const { fetchCompetitionData } = require('../scripts/sportsDb');
 const { getOrLoad, invalidate: invalidateMatchCache } = require('../utils/matchCache');
 const rankingCache = require('../utils/rankingCache');
@@ -22,6 +22,25 @@ function parseKickoff(value) {
 function parseNumeric(value) {
   const parsed = parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseScore(value) {
+  if (value === null || value === '' || value === undefined) {
+    return null;
+  }
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    return undefined;
+  }
+  return parsed;
+}
+
+async function invalidateAdminCaches(competition) {
+  await Promise.allSettled([
+    invalidateMatchCache(competition),
+    rankingCache.invalidate(competition ? { competition } : {}),
+    invalidateGroupStandings(competition)
+  ]);
 }
 
 router.post('/competitions/preview', isAuthenticated, isAdmin, async (req, res) => {
@@ -159,15 +178,24 @@ router.post('/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
     }
 
     const { result1, result2 } = req.body;
-    match.result1 = result1 === null || result1 === '' || result1 === undefined ? null : Number(result1);
-    match.result2 = result2 === null || result2 === '' || result2 === undefined ? null : Number(result2);
+    const parsedResult1 = parseScore(result1);
+    const parsedResult2 = parseScore(result2);
+    if (parsedResult1 === undefined || parsedResult2 === undefined) {
+      return res.status(400).json({ error: 'Invalid score' });
+    }
+    if ((parsedResult1 == null) !== (parsedResult2 == null)) {
+      return res.status(400).json({ error: 'Both scores are required' });
+    }
+    match.result1 = parsedResult1;
+    match.result2 = parsedResult2;
     if (match.result1 != null && match.result2 != null) {
       match.status = 'finished';
+    } else {
+      match.status = 'scheduled';
     }
     await match.save();
     await updateEliminationMatches(match.competition);
-    await invalidateMatchCache(DEFAULT_COMPETITION);
-    await rankingCache.invalidate({ competition: DEFAULT_COMPETITION });
+    await invalidateAdminCaches(match.competition);
     res.json({ message: 'Match result updated' });
   } catch (error) {
     console.error('Error updating match result:', error);
@@ -178,7 +206,7 @@ router.post('/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
 router.post('/recalculate-bracket', isAuthenticated, isAdmin, async (req, res) => {
   try {
     await updateEliminationMatches(DEFAULT_COMPETITION);
-    await invalidateMatchCache(DEFAULT_COMPETITION);
+    await invalidateAdminCaches(DEFAULT_COMPETITION);
     res.json({ message: 'Bracket recalculated' });
   } catch (error) {
     console.error('Error recalculating bracket:', error);
@@ -186,80 +214,29 @@ router.post('/recalculate-bracket', isAuthenticated, isAdmin, async (req, res) =
   }
 });
 
-router.post('/update-results', isAuthenticated, isAdmin, async (req, res) => {
-  try {
-    const result = await updateResults(DEFAULT_COMPETITION);
-    if (result && result.skipped) {
-      return res.json({ skipped: true });
-    }
-    await invalidateMatchCache(DEFAULT_COMPETITION);
-    res.json({ message: 'Results updated' });
-  } catch (error) {
-    console.error('Error updating results:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/import-matches', isAuthenticated, isAdmin, async (req, res) => {
-  try {
-    const result = await importMatches(DEFAULT_COMPETITION, { preferFixture: true });
-    if (result && result.skipped) {
-      return res.json({ skipped: true });
-    }
-    await invalidateMatchCache(DEFAULT_COMPETITION);
-    res.json({ message: 'Matches imported', imported: result.imported });
-  } catch (error) {
-    console.error('Error importing matches:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/import-fixture', isAuthenticated, isAdmin, async (req, res) => {
-  try {
-    const result = await importMatches.importFixture(DEFAULT_COMPETITION);
-    if (result && result.missing) {
-      return res.json({ skipped: true });
-    }
-    await invalidateMatchCache(DEFAULT_COMPETITION);
-    res.json({ message: 'Fixture imported', imported: result.imported });
-  } catch (error) {
-    console.error('Error importing fixture:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 router.post('/matches/clear', isAuthenticated, isAdmin, async (req, res) => {
   try {
-    const result = await Match.deleteMany({ competition: DEFAULT_COMPETITION });
-    await invalidateMatchCache(DEFAULT_COMPETITION);
-    try {
-      await rankingCache.invalidate({ competition: DEFAULT_COMPETITION });
-    } catch (cacheError) {
-      console.error('Error invalidating ranking cache after clearing matches:', cacheError);
-    }
-    res.json({ message: 'Matches cleared', deleted: result.deletedCount || 0 });
+    const [matchesResult, predictionsResult, pencasResult] = await Promise.all([
+      Match.deleteMany({}),
+      Prediction.deleteMany({}),
+      Penca.updateMany({}, { $set: { fixture: [] } })
+    ]);
+    const cacheResults = await Promise.allSettled([
+      invalidateMatchCache(),
+      rankingCache.invalidate(),
+      invalidateGroupStandings()
+    ]);
+    cacheResults
+      .filter(result => result.status === 'rejected')
+      .forEach(result => console.error('Error invalidating cache after clearing matches:', result.reason));
+    res.json({
+      message: 'Matches cleared',
+      deleted: matchesResult.deletedCount || 0,
+      predictionsDeleted: predictionsResult.deletedCount || 0,
+      pencasUpdated: pencasResult.modifiedCount || 0
+    });
   } catch (error) {
     console.error('Error clearing matches:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/matches/reload', isAuthenticated, isAdmin, async (req, res) => {
-  try {
-    await Match.deleteMany({ competition: DEFAULT_COMPETITION });
-    const result = await importMatches.importFixture(DEFAULT_COMPETITION, {
-      skipBracketUpdate: true
-    });
-    if (result && result.missing) {
-      return res.json({ skipped: true });
-    }
-    await invalidateMatchCache(DEFAULT_COMPETITION);
-    res.json({
-      message: 'Matches reloaded from fixture',
-      imported: result.imported
-    });
-  } catch (error) {
-    console.error('Error reloading matches:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -13,8 +13,6 @@ const language = require('./middleware/language');
 const { DEFAULT_COMPETITION } = require('./config');
 const { getMessage } = require('./utils/messages');
 const { ensureUserInPenca, ensureWorldCupPenca } = require('./utils/worldcupPenca');
-const updateResults = require('./scripts/updateResults');
-const importMatches = require('./scripts/importMatches');
 
 dotenv.config();
 
@@ -116,7 +114,6 @@ mongoose.connect(uri, mongooseOptions)
     .then(async () => {
         debugLog('Conexión a la base de datos establecida');
         await initializeDatabase();
-        scheduleResultsUpdates();
     })
     .catch(err => {
         console.error('Error al conectar a la base de datos. Saliendo...', err);
@@ -140,29 +137,10 @@ mongoose.connection.on('disconnected', () => {
 
 const User = require('./models/User');
 const Score = require('./models/Score');
-const Match = require('./models/Match');
 const Prediction = require('./models/Prediction');
 const adminRouter = require('./routes/admin');
 const matchesRouter = require('./routes/matches');
 const profileRouter = require('./routes/profile');
-const resultsScheduleMs = parsePositiveInt(process.env.SPORTSDB_RESULTS_SCHEDULE_MS, 0);
-let resultsScheduleHandle = null;
-
-function scheduleResultsUpdates() {
-    if (!resultsScheduleMs) {
-        return;
-    }
-    resultsScheduleHandle = setInterval(async () => {
-        try {
-            const result = await updateResults(DEFAULT_COMPETITION);
-            if (result?.skipped) {
-                debugLog('Actualización de resultados omitida por intervalo mínimo.');
-            }
-        } catch (error) {
-            console.error('Error al actualizar resultados en segundo plano:', error);
-        }
-    }, resultsScheduleMs);
-}
 
 async function initializeDatabase() {
     try {
@@ -205,31 +183,9 @@ async function initializeDatabase() {
             await admin.save();
         }
         await ensureWorldCupPenca(admin._id);
-        await ensureInitialMatchesFromApi();
 
     } catch (error) {
         console.error('Error al inicializar la base de datos:', error);
-    }
-}
-
-async function ensureInitialMatchesFromApi() {
-    try {
-        const existingMatches = await Match.countDocuments({ competition: DEFAULT_COMPETITION });
-        if (existingMatches > 0) {
-            return;
-        }
-        if (typeof importMatches.importFixture === 'function') {
-            const fixtureResult = await importMatches.importFixture(DEFAULT_COMPETITION);
-            if (fixtureResult?.imported) {
-                return;
-            }
-        }
-        const result = await importMatches(DEFAULT_COMPETITION, { force: true, preferFixture: true });
-        if (result?.skipped) {
-            debugLog('Carga inicial de partidos omitida por intervalo mínimo.');
-        }
-    } catch (error) {
-        console.error('Error al cargar partidos desde API:', error);
     }
 }
 
@@ -441,9 +397,6 @@ app.use((req, res) => {
 process.on('SIGINT', async () => {
     debugLog('Cerrando la conexión de Mongoose...');
     await mongoose.connection.close();
-    if (resultsScheduleHandle) {
-        clearInterval(resultsScheduleHandle);
-    }
     debugLog('Conexión de Mongoose cerrada.');
     process.exit(0);
 });

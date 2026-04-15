@@ -48,10 +48,6 @@ SPORTSDB_LEAGUE_ID=<id_liga>
 SPORTSDB_SEASON=<temporada>
 # URL base opcional de la API
 SPORTSDB_API_URL=https://www.thesportsdb.com/api/v2/json
-# Intervalo mínimo entre actualizaciones de resultados (ms)
-SPORTSDB_UPDATE_INTERVAL=3600000
-# Intervalo para ejecutar actualizaciones automáticas de resultados (ms)
-SPORTSDB_RESULTS_SCHEDULE_MS=3600000
 ```
 Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
 El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
@@ -172,18 +168,14 @@ Si generas los encuentros de la fase de grupos desde aquí sin usar un fixture e
 
 Para replicar el Mundial 2026 utiliza el archivo `worldcup2026.json` incluido en la raíz del repositorio al momento de cargar el fixture. Las banderas de los equipos usan `/images/default.png` a menos que exista una imagen específica. Configura además `DEFAULT_COMPETITION=Mundial 2026` en tu archivo `.env` para que la aplicación asigne ese torneo por defecto.
 
-> Desde esta versión, la aplicación carga automáticamente la competencia **Mundial 2026** y su fixture completo durante la inicialización si la base de datos aún no los contiene. Esto garantiza que puedas crear pencas, registrar resultados y realizar predicciones del Mundial sin pasos manuales adicionales.
-
 ## Administración de resultados
 
 Los administradores registran los marcadores finales desde `/admin/edit` dentro
-del acordeón de cada competencia. Allí pueden ver y actualizar todos los
-encuentros de forma agrupada. Al guardar un resultado la aplicación actualiza
-automáticamente la llave del knockout. El endpoint
-`/admin/recalculate-bracket` (botón *Recalcular bracket* en el panel) queda como
-opción de respaldo para recalcular manualmente si fuera necesario.
-También puedes usar `/admin/update-results` para obtener marcadores directamente desde TheSportsDB. La frecuencia de actualización se controla con la variable `SPORTSDB_UPDATE_INTERVAL`. Si defines `SPORTSDB_RESULTS_SCHEDULE_MS`, el servidor ejecutará actualizaciones automáticas en segundo plano.
-El comando utilizará los valores `apiLeagueId` y `apiSeason` definidos en la competencia.
+del panel de resultados. Allí pueden ver los encuentros agrupados, cargar el
+marcador real y guardar. Al guardar un resultado la aplicación actualiza
+automáticamente la llave del knockout. El endpoint `/admin/recalculate-bracket`
+(botón *Recalcular eliminatorias* en el panel) queda como opción de respaldo
+para recalcular manualmente si fuera necesario.
 
 ### Ejemplo de uso
 
@@ -197,8 +189,6 @@ El comando utilizará los valores `apiLeagueId` y `apiSeason` definidos en la co
 - `GET /bracket` – muestra la llave del knockout según la última recalculación.
 - `POST /admin/recalculate-bracket` – fuerza el nuevo cálculo del bracket con
   los resultados cargados.
-- `POST /admin/update-results` – obtiene los resultados desde TheSportsDB.
-- `POST /admin/import-matches` – importa el fixture desde TheSportsDB.
 - `GET /competitions/:competition/matches` – lista los partidos de la competencia indicada.
 
 ## Ideas para próximas iteraciones
