@@ -12,11 +12,11 @@
         "México",
         "Sudáfrica",
         "República de Corea",
-        "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)"
+        "República Checa"
       ],
       "Grupo B": [
         "Canadá",
-        "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+        "Bosnia y Herzegovina",
         "Qatar",
         "Suiza"
       ],
@@ -30,7 +30,7 @@
         "Estados Unidos",
         "Paraguay",
         "Australia",
-        "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)"
+        "Turquía"
       ],
       "Grupo E": [
         "Alemania",
@@ -41,7 +41,7 @@
       "Grupo F": [
         "Países Bajos",
         "Japón",
-        "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+        "Suecia",
         "Túnez"
       ],
       "Grupo G": [
@@ -59,7 +59,7 @@
       "Grupo I": [
         "Francia",
         "Senegal",
-        "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+        "Irak",
         "Noruega"
       ],
       "Grupo J": [
@@ -70,7 +70,7 @@
       ],
       "Grupo K": [
         "Portugal",
-        "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+        "RD Congo",
         "Uzbekistán",
         "Colombia"
       ],
@@ -85,9 +85,9 @@
       "A1": "México",
       "A2": "Sudáfrica",
       "A3": "República de Corea",
-      "A4": "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)",
+      "A4": "República Checa",
       "B1": "Canadá",
-      "B2": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "B2": "Bosnia y Herzegovina",
       "B3": "Qatar",
       "B4": "Suiza",
       "C1": "Brasil",
@@ -97,14 +97,14 @@
       "D1": "Estados Unidos",
       "D2": "Paraguay",
       "D3": "Australia",
-      "D4": "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)",
+      "D4": "Turquía",
       "E1": "Alemania",
       "E2": "Curazao",
       "E3": "Costa de Marfil",
       "E4": "Ecuador",
       "F1": "Países Bajos",
       "F2": "Japón",
-      "F3": "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+      "F3": "Suecia",
       "F4": "Túnez",
       "G1": "Bélgica",
       "G2": "Egipto",
@@ -116,14 +116,14 @@
       "H4": "Uruguay",
       "I1": "Francia",
       "I2": "Senegal",
-      "I3": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "I3": "Irak",
       "I4": "Noruega",
       "J1": "Argentina",
       "J2": "Argelia",
       "J3": "Austria",
       "J4": "Jordania",
       "K1": "Portugal",
-      "K2": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "K2": "RD Congo",
       "K3": "Uzbekistán",
       "K4": "Colombia",
       "L1": "Inglaterra",
@@ -174,7 +174,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo A",
       "team1": "República de Corea",
-      "team2": "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)",
+      "team2": "República Checa",
       "kickoff": "2026-06-11T20:00-06:00",
       "originalKickoff": {
         "date": "2026-06-11",
@@ -194,7 +194,7 @@
       "id": "match-3",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)",
+      "team1": "República Checa",
       "team2": "Sudáfrica",
       "kickoff": "2026-06-18T12:00-04:00",
       "originalKickoff": {
@@ -236,7 +236,7 @@
       "id": "match-5",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "Ganador Playoff UEFA D (Dinamarca, República Checa, Irlanda o Macedonia del Norte)",
+      "team1": "República Checa",
       "team2": "México",
       "kickoff": "2026-06-24T19:00-06:00",
       "originalKickoff": {
@@ -279,7 +279,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo B",
       "team1": "Canadá",
-      "team2": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "team2": "Bosnia y Herzegovina",
       "kickoff": "2026-06-12T15:00-04:00",
       "originalKickoff": {
         "date": "2026-06-12",
@@ -321,7 +321,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo B",
       "team1": "Suiza",
-      "team2": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "team2": "Bosnia y Herzegovina",
       "kickoff": "2026-06-18T15:00-07:00",
       "originalKickoff": {
         "date": "2026-06-18",
@@ -383,7 +383,7 @@
       "id": "match-12",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "team1": "Bosnia y Herzegovina",
       "team2": "Qatar",
       "kickoff": "2026-06-24T15:00-07:00",
       "originalKickoff": {
@@ -552,7 +552,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo D",
       "team1": "Australia",
-      "team2": "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)",
+      "team2": "Turquía",
       "kickoff": "2026-06-13T22:00-07:00",
       "originalKickoff": {
         "date": "2026-06-13",
@@ -572,7 +572,7 @@
       "id": "match-21",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)",
+      "team1": "Turquía",
       "team2": "Paraguay",
       "kickoff": "2026-06-19T22:00-07:00",
       "originalKickoff": {
@@ -614,7 +614,7 @@
       "id": "match-23",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "Ganador Playoff UEFA C (Turquía, Eslovaquia, Kosovo o Rumania)",
+      "team1": "Turquía",
       "team2": "Estados Unidos",
       "kickoff": "2026-06-25T22:00-07:00",
       "originalKickoff": {
@@ -803,7 +803,7 @@
       "id": "match-32",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+      "team1": "Suecia",
       "team2": "Túnez",
       "kickoff": "2026-06-14T22:00-06:00",
       "originalKickoff": {
@@ -825,7 +825,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo F",
       "team1": "Países Bajos",
-      "team2": "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+      "team2": "Suecia",
       "kickoff": "2026-06-20T13:00-05:00",
       "originalKickoff": {
         "date": "2026-06-20",
@@ -867,7 +867,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo F",
       "team1": "Japón",
-      "team2": "Ganador Playoff UEFA B (Ucrania, Polonia, Albania o Suecia)",
+      "team2": "Suecia",
       "kickoff": "2026-06-25T19:00-05:00",
       "originalKickoff": {
         "date": "2026-06-25",
@@ -1181,7 +1181,7 @@
       "id": "match-50",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "team1": "Irak",
       "team2": "Noruega",
       "kickoff": "2026-06-16T18:00-04:00",
       "originalKickoff": {
@@ -1203,7 +1203,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo I",
       "team1": "Francia",
-      "team2": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "team2": "Irak",
       "kickoff": "2026-06-22T17:00-04:00",
       "originalKickoff": {
         "date": "2026-06-22",
@@ -1266,7 +1266,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo I",
       "team1": "Senegal",
-      "team2": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "team2": "Irak",
       "kickoff": "2026-06-26T15:00-04:00",
       "originalKickoff": {
         "date": "2026-06-26",
@@ -1413,7 +1413,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo K",
       "team1": "Portugal",
-      "team2": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "team2": "RD Congo",
       "kickoff": "2026-06-17T13:00-05:00",
       "originalKickoff": {
         "date": "2026-06-17",
@@ -1476,7 +1476,7 @@
       "stage": "Fase de grupos",
       "group": "Grupo K",
       "team1": "Colombia",
-      "team2": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "team2": "RD Congo",
       "kickoff": "2026-06-23T22:00-06:00",
       "originalKickoff": {
         "date": "2026-06-23",
@@ -1517,7 +1517,7 @@
       "id": "match-66",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "team1": "RD Congo",
       "team2": "Uzbekistán",
       "kickoff": "2026-06-27T19:30-04:00",
       "originalKickoff": {
@@ -1665,7 +1665,7 @@
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
       "team1": "México",
-      "team2": "Ganador Playoff UEFA A (Italia, Gales, Bosnia y Herzegovina o Irlanda del Norte)",
+      "team2": "Bosnia y Herzegovina",
       "kickoff": "2026-08-19T18:00-04:00",
       "originalKickoff": null,
       "venue": {
@@ -1852,7 +1852,7 @@
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
       "team1": "Inglaterra",
-      "team2": "Ganador repechaje 2 (Congo, Jamaica o Nueva Caledonia)",
+      "team2": "RD Congo",
       "kickoff": "2026-08-30T18:00-04:00",
       "originalKickoff": null,
       "venue": {
@@ -1902,7 +1902,7 @@
       "id": "match-87",
       "stage": "Eliminatorias",
       "group": "Ronda de 32",
-      "team1": "Ganador Repechaje 1 (Irak, Bolivia o Surinam)",
+      "team1": "Irak",
       "team2": "Uzbekistán",
       "kickoff": "2026-09-02T18:00-04:00",
       "originalKickoff": null,
