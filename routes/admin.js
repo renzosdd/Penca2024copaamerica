@@ -8,8 +8,12 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, invalidateGroupStandings } = require('../utils/bracket');
 const { fetchCompetitionData } = require('../scripts/sportsDb');
-const { getOrLoad, invalidate: invalidateMatchCache } = require('../utils/matchCache');
+const importMatches = require('../scripts/importMatches');
+const { invalidate: invalidateMatchCache } = require('../utils/matchCache');
 const rankingCache = require('../utils/rankingCache');
+
+const MATCH_LIST_FIELDS =
+  'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 status order originalDate originalTime originalTimezone';
 
 function parseKickoff(value) {
   if (!value) {
@@ -41,6 +45,13 @@ async function invalidateAdminCaches(competition) {
     rankingCache.invalidate(competition ? { competition } : {}),
     invalidateGroupStandings(competition)
   ]);
+}
+
+function listMatchesFromDatabase() {
+  return Match.find({ competition: DEFAULT_COMPETITION })
+    .select(MATCH_LIST_FIELDS)
+    .sort({ order: 1, kickoff: 1, date: 1, time: 1 })
+    .lean();
 }
 
 router.post('/competitions/preview', isAuthenticated, isAdmin, async (req, res) => {
@@ -87,15 +98,22 @@ router.get('/edit', isAuthenticated, isAdmin, (req, res) => {
 
 router.get('/matches', isAuthenticated, isAdmin, async (req, res) => {
   try {
-    const matches = await getOrLoad(DEFAULT_COMPETITION, () =>
-      Match.find({ competition: DEFAULT_COMPETITION })
-        .select(
-          'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 status order originalDate originalTime originalTimezone'
-        )
-        .sort({ order: 1, kickoff: 1, date: 1, time: 1 })
-        .lean()
-    );
-    res.json({ competition: DEFAULT_COMPETITION, matches });
+    await invalidateMatchCache(DEFAULT_COMPETITION).catch(error => {
+      console.error('Error invalidating match cache before listing admin matches:', error);
+    });
+    let matches = await listMatchesFromDatabase();
+    let importedFromFixture = false;
+    if (!matches.length && typeof importMatches.importFixture === 'function') {
+      const result = await importMatches.importFixture(DEFAULT_COMPETITION, {
+        skipBracketUpdate: true
+      });
+      importedFromFixture = Boolean(result?.imported);
+      if (importedFromFixture) {
+        await invalidateAdminCaches(DEFAULT_COMPETITION);
+        matches = await listMatchesFromDatabase();
+      }
+    }
+    res.json({ competition: DEFAULT_COMPETITION, matches, importedFromFixture });
   } catch (error) {
     console.error('Error listing matches:', error);
     res.status(500).json({ error: 'Internal server error' });

@@ -131,7 +131,7 @@ export default function Admin() {
       }
       const data = await res.json();
       setNotice(t('adminClearMatchesSuccess', { count: data.deleted || 0 }));
-      await loadMatches();
+      setMatches([]);
     } catch (err) {
       console.error('clear matches error', err);
       setError(t('networkError'));
