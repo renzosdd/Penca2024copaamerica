@@ -145,22 +145,26 @@ export default function Dashboard() {
     <Container maxWidth="md" sx={{ py: { xs: 2.5, sm: 4 } }}>
       <Stack spacing={{ xs: 2.5, md: 3.5 }}>
         <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
-          <Stack spacing={1.5}>
-            <Typography variant="h5">{t('dashboardTitle')}</Typography>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="space-between">
             {user && (
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
-                <Typography variant="body2" color="text.secondary">
-                  {user.displayName || user.username}
+              <Stack spacing={0.5}>
+                <Typography variant="h5">
+                  {t('playerDashboardTitle', { name: user.displayName || user.username })}
                 </Typography>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => setShowProfile(!showProfile)}
-                  sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
-                >
-                  {showProfile ? t('hide') : t('editProfile')}
-                </Button>
+                <Typography variant="body2" color="text.secondary">
+                  {t('playerDashboardHint')}
+                </Typography>
               </Stack>
+            )}
+            {user && (
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => setShowProfile(!showProfile)}
+                sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
+              >
+                {showProfile ? t('hide') : t('editProfile')}
+              </Button>
             )}
           </Stack>
         </Paper>

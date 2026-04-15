@@ -6,6 +6,7 @@ import {
   Chip,
   CircularProgress,
   Container,
+  MenuItem,
   Paper,
   Stack,
   TextField,
@@ -21,6 +22,20 @@ function scoreLoaded(match) {
 function matchOrderValue(match) {
   const order = Number(match.order);
   return Number.isFinite(order) ? order : Number.MAX_SAFE_INTEGER;
+}
+
+function normalizeText(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function matchDateValue(match) {
+  if (match.originalDate) return match.originalDate;
+  if (match.date) return match.date;
+  const kickoff = match.kickoff ? new Date(match.kickoff) : null;
+  if (kickoff && !Number.isNaN(kickoff.getTime())) {
+    return kickoff.toISOString().slice(0, 10);
+  }
+  return '';
 }
 
 async function responseError(res) {
@@ -41,6 +56,9 @@ export default function Admin() {
   const [clearingMatches, setClearingMatches] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+  const [groupFilter, setGroupFilter] = useState('');
   const { t } = useLang();
 
   const loadMatches = async () => {
@@ -148,9 +166,47 @@ export default function Admin() {
     });
   }, [matches]);
 
+  const groupOptions = useMemo(() => {
+    const groups = new Set();
+    for (const match of matches) {
+      if (match.group_name) {
+        groups.add(match.group_name);
+      }
+    }
+    return Array.from(groups).sort((a, b) => a.localeCompare(b, 'es'));
+  }, [matches]);
+
+  const filteredMatches = useMemo(() => {
+    const normalizedSearch = normalizeText(search);
+    return sortedMatches.filter(match => {
+      if (dateFilter && matchDateValue(match) !== dateFilter) {
+        return false;
+      }
+      if (groupFilter && match.group_name !== groupFilter) {
+        return false;
+      }
+      if (!normalizedSearch) {
+        return true;
+      }
+      const haystack = [
+        match.team1,
+        match.team2,
+        match.group_name,
+        match.series,
+        match.venue?.country,
+        match.venue?.city,
+        match.venue?.stadium,
+        matchDateValue(match)
+      ]
+        .map(normalizeText)
+        .join(' ');
+      return haystack.includes(normalizedSearch);
+    });
+  }, [dateFilter, groupFilter, search, sortedMatches]);
+
   const groupedMatches = useMemo(() => {
     const groups = new Map();
-    for (const match of sortedMatches) {
+    for (const match of filteredMatches) {
       const key = match.group_name || t('otherMatches');
       if (!groups.has(key)) {
         groups.set(key, []);
@@ -158,10 +214,11 @@ export default function Admin() {
       groups.get(key).push(match);
     }
     return Array.from(groups.entries()).map(([title, items]) => ({ title, items }));
-  }, [sortedMatches, t]);
+  }, [filteredMatches, t]);
 
   const loadedCount = useMemo(() => matches.filter(scoreLoaded).length, [matches]);
   const pendingCount = matches.length - loadedCount;
+  const hasActiveFilters = Boolean(search || dateFilter || groupFilter);
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2.5, md: 4 } }}>
@@ -211,6 +268,62 @@ export default function Admin() {
           </Stack>
         </Paper>
 
+        <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
+          <Stack spacing={2}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+              <TextField
+                label={t('adminMatchesSearch')}
+                placeholder={t('adminMatchesSearchPlaceholder')}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                size="small"
+                fullWidth
+              />
+              <TextField
+                label={t('adminMatchesDateFilter')}
+                type="date"
+                value={dateFilter}
+                onChange={e => setDateFilter(e.target.value)}
+                size="small"
+                InputLabelProps={{ shrink: true }}
+                sx={{ minWidth: { md: 180 } }}
+              />
+              <TextField
+                select
+                label={t('adminMatchesGroupFilter')}
+                value={groupFilter}
+                onChange={e => setGroupFilter(e.target.value)}
+                size="small"
+                sx={{ minWidth: { md: 220 } }}
+              >
+                <MenuItem value="">{t('allMatches')}</MenuItem>
+                {groupOptions.map(group => (
+                  <MenuItem key={group} value={group}>
+                    {group}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
+              <Typography variant="body2" color="text.secondary">
+                {t('adminMatchesFiltered', { count: filteredMatches.length })}
+              </Typography>
+              <Button
+                size="small"
+                variant="text"
+                disabled={!hasActiveFilters}
+                onClick={() => {
+                  setSearch('');
+                  setDateFilter('');
+                  setGroupFilter('');
+                }}
+              >
+                {t('adminMatchesClearFilters')}
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+
         {error && (
           <Alert severity="error" sx={{ maxWidth: 560 }}>
             {error}
@@ -225,8 +338,12 @@ export default function Admin() {
 
         {loading && <CircularProgress sx={{ alignSelf: 'center' }} />}
 
-        {!loading && sortedMatches.length === 0 && (
+        {!loading && matches.length === 0 && (
           <Alert severity="info">{t('adminMatchesNoResults')}</Alert>
+        )}
+
+        {!loading && matches.length > 0 && filteredMatches.length === 0 && (
+          <Alert severity="info">{t('adminMatchesNoFilteredResults')}</Alert>
         )}
 
         <Stack spacing={2.5}>

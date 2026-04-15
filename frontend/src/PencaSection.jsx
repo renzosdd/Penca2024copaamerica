@@ -7,11 +7,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
   Paper,
   Snackbar,
   Stack,
@@ -25,11 +20,9 @@ import {
   TableRow,
   Pagination,
   TextField,
-  Tooltip,
   Typography
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import InfoOutlined from '@mui/icons-material/InfoOutlined';
 import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
 import StageAccordionList from './StageAccordionList';
 import useLang from './useLang';
@@ -57,7 +50,6 @@ function TabPanel({ current, value, children, sx, ...other }) {
 
 export default function PencaSection({ penca, matches, groups, getPrediction, handlePrediction, ranking, currentUsername, onOpen, isLoading }) {
   const [open, setOpen] = useState(false);
-  const [infoOpen, setInfoOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('matches');
   const [filter, setFilter] = useState('all');
   const [rankingPage, setRankingPage] = useState(1);
@@ -130,35 +122,15 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     }
   }
 
-  const scoringText = penca.rules?.trim() ? penca.rules : t('noRules');
-  const participantsCount = (() => {
-    if (typeof penca.participantsCount === 'number' && Number.isFinite(penca.participantsCount)) {
-      return penca.participantsCount;
-    }
-    if (typeof penca.participantsCount === 'string') {
-      const parsed = Number(penca.participantsCount);
-      if (!Number.isNaN(parsed)) {
-        return parsed;
-      }
-    }
-    if (typeof penca.metrics?.participants === 'number' && penca.metrics.participants >= 0) {
-      return penca.metrics.participants;
-    }
-    return Array.isArray(penca.participants) ? penca.participants.length : 0;
-  })();
-  const participantLimit = penca.participantLimit ? `/${penca.participantLimit}` : '';
-  const modeKey = penca.tournamentMode ? `mode_${penca.tournamentMode}` : 'mode_group_stage_knockout';
-  const translatedMode = t(modeKey);
-  const tournamentLabel = translatedMode === modeKey ? penca.tournamentMode || t('mode_group_stage_knockout') : translatedMode;
-  const participantsLabel = `${participantsCount}${participantLimit} ${t('participantsShort')}`.trim();
-
   const filteredRanking = useMemo(() => {
     const normalized = rankingSearch.trim().toLowerCase();
     return ranking
       .map((entry, index) => ({ ...entry, rank: index + 1 }))
       .filter(entry => {
         if (!normalized) return true;
-        return entry.username.toLowerCase().includes(normalized);
+        return [entry.username, entry.displayName]
+          .filter(Boolean)
+          .some(value => value.toLowerCase().includes(normalized));
       });
   }, [ranking, rankingSearch]);
   const rankingPageSize = 10;
@@ -171,33 +143,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   useEffect(() => {
     setRankingPage(1);
   }, [rankingSearch]);
-
-  const InfoDetails = () => (
-    <Stack spacing={2}>
-      <Box>
-        <Typography variant="subtitle2" gutterBottom>
-          {t('format')}
-        </Typography>
-        <Chip size="small" color="primary" label={tournamentLabel} />
-      </Box>
-      <Box>
-        <Typography variant="subtitle2" gutterBottom>
-          {t('rules')}
-        </Typography>
-        <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>
-          {scoringText}
-        </Typography>
-      </Box>
-      <Box>
-        <Typography variant="subtitle2" gutterBottom>
-          {t('prizes')}
-        </Typography>
-        <Typography variant="body2">
-          {penca.prizes || t('noPrizes')}
-        </Typography>
-      </Box>
-    </Stack>
-  );
 
   const renderTeam = (name, badgeUrl) => (
     <Stack direction="row" spacing={1.5} alignItems="center" key={name} sx={{ minWidth: 0 }}>
@@ -495,26 +440,14 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             gap: 2
           }}
         >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="h6" component="h3">
               {penca.name}
             </Typography>
-            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
-              <Chip size="small" color="primary" label={tournamentLabel} />
-              <Chip size="small" label={participantsLabel} />
-            </Stack>
+            <Typography variant="body2" color="text.secondary">
+              {t('playerPageHint')}
+            </Typography>
           </Box>
-          <Tooltip title={t('viewRules')}>
-            <IconButton
-              size="small"
-              onClick={e => {
-                e.stopPropagation();
-                setInfoOpen(true);
-              }}
-            >
-              <InfoOutlined fontSize="small" />
-            </IconButton>
-          </Tooltip>
         </CardContent>
       </Card>
 
@@ -554,12 +487,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 value="ranking"
                 id="penca-tab-ranking"
                 aria-controls="penca-tabpanel-ranking"
-              />
-              <Tab
-                label={t('pencaTabInfo')}
-                value="info"
-                id="penca-tab-info"
-                aria-controls="penca-tabpanel-info"
               />
             </Tabs>
 
@@ -717,22 +644,9 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               </Stack>
             </TabPanel>
 
-            <TabPanel current={activeSection} value="info">
-              <InfoDetails />
-            </TabPanel>
           </CardContent>
         </Card>
       )}
-
-      <Dialog open={infoOpen} onClose={() => setInfoOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{penca.name}</DialogTitle>
-        <DialogContent dividers>
-          <InfoDetails />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setInfoOpen(false)}>{t('close')}</Button>
-        </DialogActions>
-      </Dialog>
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}

@@ -18,6 +18,14 @@ function premiumCriteria() {
     };
 }
 
+async function resolveQuery(query, fields) {
+    if (query && typeof query.select === 'function') {
+        const selected = query.select(fields);
+        return typeof selected.lean === 'function' ? selected.lean() : selected;
+    }
+    return query;
+}
+
 async function calculateScores(penca, { premiumOnly = false } = {}) {
     if (!penca) {
         return [];
@@ -33,9 +41,10 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
         matchFilter.competition = penca.competition;
     }
 
-    const matches = await Match.find(matchFilter)
-        .select('result1 result2 competition')
-        .lean();
+    const matches = await resolveQuery(
+        Match.find(matchFilter),
+        'result1 result2 competition'
+    ) || [];
 
     const matchesById = new Map();
     const completedMatches = [];
@@ -48,26 +57,23 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
     });
 
     const completedMatchIds = completedMatches.map(match => match._id);
-    if (!completedMatchIds.length) {
-        return [];
-    }
-
-    predictionFilter.matchId = { $in: completedMatchIds };
-    const predictions = await Prediction.find(predictionFilter)
-        .select('userId matchId result1 result2 pencaId')
-        .lean();
-
-    if (!predictions.length) {
-        return [];
-    }
+    const predictions = completedMatchIds.length
+        ? (await resolveQuery(
+            Prediction.find({ ...predictionFilter, matchId: { $in: completedMatchIds } }),
+            'userId matchId result1 result2 pencaId'
+        ) || [])
+        : [];
 
     let userFilter = {};
     const participantIds = Array.isArray(penca.participants) ? penca.participants : [];
+    const participantIdSet = new Set(participantIds.map(id => id?.toString()).filter(Boolean));
     if (participantIds.length) {
         userFilter._id = { $in: participantIds };
     } else {
         const participantSet = new Set(predictions.map(prediction => prediction.userId.toString()));
-        userFilter._id = { $in: Array.from(participantSet) };
+        if (participantSet.size) {
+            userFilter._id = { $in: Array.from(participantSet) };
+        }
     }
 
     if (premiumOnly) {
@@ -78,9 +84,13 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
     userFilter.role = 'user';
     userFilter.valid = true;
 
-    const users = await User.find(userFilter)
-        .select('username displayName email avatar avatarUrl avatarContentType')
-        .lean();
+    const queriedUsers = await resolveQuery(
+        User.find(userFilter),
+        'username displayName avatar avatarUrl avatarContentType'
+    ) || [];
+    const users = participantIdSet.size
+        ? queriedUsers.filter(user => participantIdSet.has(user._id?.toString()))
+        : queriedUsers;
 
     if (!users.length) {
         return [];
@@ -114,7 +124,7 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
         }
 
         const avatarPath = user.avatar ? '/avatar/' + user.username : (user.avatarUrl || '/images/avatar.webp');
-        const label = user.displayName || user.email || user.username;
+        const label = user.displayName || user.username;
 
         return {
             userId: user._id,
@@ -156,7 +166,7 @@ router.get('/', async (req, res) => {
         };
         const penca = await ensureWorldCupPenca();
         const cached = await rankingCache.get(penca?._id, DEFAULT_COMPETITION, variant);
-        if (cached) {
+        if (Array.isArray(cached) && cached.length > 0) {
             return res.json(paginate(cached));
         }
         const scores = await calculateScores(penca, { premiumOnly });
