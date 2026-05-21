@@ -327,6 +327,59 @@ router.put('/matches/knockout-order', isAuthenticated, isAdmin, async (req, res)
   }
 });
 
+router.post('/matches/clear', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const matchesResult = await Match.deleteMany({});
+    const cleanupResults = await Promise.allSettled([
+      Prediction.deleteMany({}),
+      Penca.updateMany({}, { $set: { fixture: [] } }),
+      invalidateMatchCache(),
+      rankingCache.invalidate(),
+      invalidateGroupStandings()
+    ]);
+    cleanupResults
+      .filter(result => result.status === 'rejected')
+      .forEach(result => console.error('Error during cleanup after clearing matches:', result.reason));
+    const [predictionsResult, pencasResult] = cleanupResults.map(result =>
+      result.status === 'fulfilled' ? result.value : null
+    );
+    res.json({
+      message: 'Matches cleared',
+      deleted: matchesResult.deletedCount || 0,
+      predictionsDeleted: predictionsResult?.deletedCount || 0,
+      pencasUpdated: pencasResult?.modifiedCount || 0
+    });
+  } catch (error) {
+    console.error('Error clearing matches:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/matches/reset-fixture', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const confirmation = String(req.body?.confirmation || '').trim();
+    if (confirmation !== 'REINICIAR') {
+      return res.status(400).json({ error: 'Confirmation required' });
+    }
+    const matchesResult = await Match.deleteMany({ competition: DEFAULT_COMPETITION });
+    const predictionsResult = await Prediction.deleteMany({});
+    await Penca.updateMany({ competition: DEFAULT_COMPETITION }, { $set: { fixture: [] } });
+    const importResult = typeof importMatches.importFixture === 'function'
+      ? await importMatches.importFixture(DEFAULT_COMPETITION, { skipBracketUpdate: true })
+      : { imported: 0 };
+    await invalidateAdminCaches(DEFAULT_COMPETITION);
+    res.json({
+      message: 'Fixture reset',
+      deletedMatches: matchesResult.deletedCount || 0,
+      deletedPredictions: predictionsResult.deletedCount || 0,
+      importedMatches: importResult.imported || 0
+    });
+  } catch (error) {
+    console.error('Error resetting fixture:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 router.put('/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
   try {
     const match = await Match.findById(req.params.matchId);
@@ -431,59 +484,6 @@ router.post('/recalculate-bracket', isAuthenticated, isAdmin, async (req, res) =
     res.json({ message: 'Bracket recalculated' });
   } catch (error) {
     console.error('Error recalculating bracket:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/matches/clear', isAuthenticated, isAdmin, async (req, res) => {
-  try {
-    const matchesResult = await Match.deleteMany({});
-    const cleanupResults = await Promise.allSettled([
-      Prediction.deleteMany({}),
-      Penca.updateMany({}, { $set: { fixture: [] } }),
-      invalidateMatchCache(),
-      rankingCache.invalidate(),
-      invalidateGroupStandings()
-    ]);
-    cleanupResults
-      .filter(result => result.status === 'rejected')
-      .forEach(result => console.error('Error during cleanup after clearing matches:', result.reason));
-    const [predictionsResult, pencasResult] = cleanupResults.map(result =>
-      result.status === 'fulfilled' ? result.value : null
-    );
-    res.json({
-      message: 'Matches cleared',
-      deleted: matchesResult.deletedCount || 0,
-      predictionsDeleted: predictionsResult?.deletedCount || 0,
-      pencasUpdated: pencasResult?.modifiedCount || 0
-    });
-  } catch (error) {
-    console.error('Error clearing matches:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-router.post('/matches/reset-fixture', isAuthenticated, isAdmin, async (req, res) => {
-  try {
-    const confirmation = String(req.body?.confirmation || '').trim();
-    if (confirmation !== 'REINICIAR') {
-      return res.status(400).json({ error: 'Confirmation required' });
-    }
-    const matchesResult = await Match.deleteMany({ competition: DEFAULT_COMPETITION });
-    const predictionsResult = await Prediction.deleteMany({});
-    await Penca.updateMany({ competition: DEFAULT_COMPETITION }, { $set: { fixture: [] } });
-    const importResult = typeof importMatches.importFixture === 'function'
-      ? await importMatches.importFixture(DEFAULT_COMPETITION, { skipBracketUpdate: true })
-      : { imported: 0 };
-    await invalidateAdminCaches(DEFAULT_COMPETITION);
-    res.json({
-      message: 'Fixture reset',
-      deletedMatches: matchesResult.deletedCount || 0,
-      deletedPredictions: predictionsResult.deletedCount || 0,
-      importedMatches: importResult.imported || 0
-    });
-  } catch (error) {
-    console.error('Error resetting fixture:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
