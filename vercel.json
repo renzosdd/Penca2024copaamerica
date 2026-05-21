@@ -5,7 +5,8 @@
       "src": "main.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": "frontend/dist/**"
+        "includeFiles": "frontend/dist/**",
+        "maxDuration": 60
       }
     }
   ],

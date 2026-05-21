@@ -361,13 +361,21 @@ router.post('/matches/reset-fixture', isAuthenticated, isAdmin, async (req, res)
     if (confirmation !== 'REINICIAR') {
       return res.status(400).json({ error: 'Confirmation required' });
     }
-    const matchesResult = await Match.deleteMany({ competition: DEFAULT_COMPETITION });
-    const predictionsResult = await Prediction.deleteMany({});
-    await Penca.updateMany({ competition: DEFAULT_COMPETITION }, { $set: { fixture: [] } });
+    const [matchesResult, predictionsResult] = await Promise.all([
+      Match.deleteMany({ competition: DEFAULT_COMPETITION }),
+      Prediction.deleteMany({}),
+      Penca.updateMany({ competition: DEFAULT_COMPETITION }, { $set: { fixture: [] } })
+    ]);
     const importResult = typeof importMatches.importFixture === 'function'
       ? await importMatches.importFixture(DEFAULT_COMPETITION, { skipBracketUpdate: true })
       : { imported: 0 };
-    await invalidateAdminCaches(DEFAULT_COMPETITION);
+    Promise.allSettled([
+      invalidateMatchCache(DEFAULT_COMPETITION),
+      rankingCache.invalidate({ competition: DEFAULT_COMPETITION }),
+      invalidateGroupStandings(DEFAULT_COMPETITION)
+    ]).catch(error => {
+      console.error('Error invalidating caches after fixture reset:', error);
+    });
     res.json({
       message: 'Fixture reset',
       deletedMatches: matchesResult.deletedCount || 0,

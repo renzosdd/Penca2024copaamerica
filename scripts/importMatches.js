@@ -143,19 +143,25 @@ async function loadFixtureFromFile() {
 }
 
 async function upsertFixtureMatches(competition, fixtures) {
-  let imported = 0;
-  for (const [index, match] of fixtures.entries()) {
+  const operations = fixtures.map((match, index) => {
     const fixtureId = normalizeText(match?.id) || String(index);
     const importId = `fixture:${fixtureId}`;
     const payload = buildMatchPayloadFromFixture(match, competition, index);
-    await Match.updateOne(
-      { competition, importId },
-      { $set: payload, $setOnInsert: { importId } },
-      { upsert: true }
-    );
-    imported += 1;
+    return {
+      updateOne: {
+        filter: { competition, importId },
+        update: { $set: payload, $setOnInsert: { importId } },
+        upsert: true
+      }
+    };
+  });
+
+  if (!operations.length) {
+    return 0;
   }
-  return imported;
+
+  await Match.bulkWrite(operations, { ordered: false });
+  return operations.length;
 }
 
 async function importFixtureMatches(competition, options = {}) {
