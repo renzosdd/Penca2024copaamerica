@@ -14,6 +14,15 @@ function debugLog(...args) {
     }
 }
 
+function isKnockoutMatch(match) {
+    const group = String(match?.group_name || '');
+    return group && !group.startsWith('Grupo');
+}
+
+function normalizePenaltyWinner(value) {
+    return value === 'team1' || value === 'team2' ? value : null;
+}
+
 router.get('/', async (req, res) => {
     try {
         const user = req.session.user;
@@ -25,7 +34,7 @@ router.get('/', async (req, res) => {
             return res.status(500).json({ error: getMessage('PREDICTIONS_FETCH_ERROR', req.lang) });
         }
         const predictions = await Prediction.find({ userId: user._id, pencaId: penca._id })
-            .select('matchId pencaId result1 result2 username')
+            .select('matchId pencaId result1 result2 penaltyWinner username')
             .lean();
         res.json(predictions);
     } catch (err) {
@@ -38,6 +47,7 @@ router.post('/', async (req, res) => {
         const { matchId, result1, result2 } = req.body;
         const r1 = Number(result1);
         const r2 = Number(result2);
+        let penaltyWinner = normalizePenaltyWinner(req.body.penaltyWinner);
         if (Number.isNaN(r1) || Number.isNaN(r2)) {
             return res.status(400).json({ error: getMessage('INVALID_RESULTS', req.lang) });
         }
@@ -51,13 +61,19 @@ router.post('/', async (req, res) => {
 
         const penca = await ensureUserInPenca(user._id);
         if (!penca || !penca.participants.some(id => id.equals(user._id))) {
-            return res.status(403).json({ error: getMessage('NOT_IN_PENCA', req.lang) });
+            return res.status(403).json({ error: getMessage('APPROVAL_REQUIRED', req.lang) });
         }
 
         // Obtener información del partido
         const match = await Match.findById(matchId);
         if (!match) {
             return res.status(404).json({ error: getMessage('MATCH_NOT_FOUND', req.lang) });
+        }
+        if (isKnockoutMatch(match) && r1 === r2 && !penaltyWinner) {
+            return res.status(400).json({ error: getMessage('PENALTY_WINNER_REQUIRED', req.lang) });
+        }
+        if (!isKnockoutMatch(match) || r1 !== r2) {
+            penaltyWinner = null;
         }
 
         // Verificar si falta menos de media hora para el partido o si ya está en juego/finalizado
@@ -79,6 +95,7 @@ router.post('/', async (req, res) => {
         if (prediction) {
             prediction.result1 = r1;
             prediction.result2 = r2;
+            prediction.penaltyWinner = penaltyWinner;
         } else {
             prediction = new Prediction({
                 userId: user._id,
@@ -86,6 +103,7 @@ router.post('/', async (req, res) => {
                 pencaId: penca._id,
                 result1: r1,
                 result2: r2,
+                penaltyWinner,
                 username: user.username
             });
         }

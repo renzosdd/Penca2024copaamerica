@@ -72,7 +72,7 @@ async function updateResults(competition) {
       { series: id, competition },
       updatePayload
     );
-    if (primaryResult.matchedCount === 0) {
+    if ((primaryResult?.matchedCount || 0) === 0) {
       const fallbackQuery = buildFallbackMatchQuery(competition, event);
       if (fallbackQuery) {
         const fallbackUpdate = { ...updatePayload };

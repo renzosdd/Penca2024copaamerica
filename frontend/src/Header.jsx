@@ -54,7 +54,7 @@ export default function Header() {
             }}
           >
             <LangToggle />
-            {location.pathname !== '/' && (
+            {['/dashboard', '/admin/edit'].includes(location.pathname) && (
               <Button variant="contained" color="primary" onClick={handleLogout} size="small">
                 {t('logout')}
               </Button>

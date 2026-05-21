@@ -1,22 +1,22 @@
-let pointsForPrediction;
+const { calculatePoints } = require('../utils/scoring');
 
-beforeAll(async () => {
-  pointsForPrediction = (await import('../frontend/src/calcPoints.js')).default;
-});
+function pointsForPrediction(prediction, match, scoring) {
+  return calculatePoints({ prediction, match, scoring });
+}
 
 describe('pointsForPrediction', () => {
-  const scoring = { exact: 3, outcome: 1, goals: 1 };
+  const scoring = { exact: 8, outcome: 3, goalDifference: 5, teamGoals: 1, penaltyWinner: 1, maxNonExact: 7 };
 
-  test('awards exact and goal points for perfect prediction', () => {
+  test('awards exact score only for perfect prediction', () => {
     const pred = { result1: 2, result2: 1 };
     const match = { result1: 2, result2: 1 };
-    expect(pointsForPrediction(pred, match, scoring)).toBe(4);
+    expect(pointsForPrediction(pred, match, scoring)).toBe(8);
   });
 
-  test('awards outcome points only when no goals match', () => {
+  test('awards goal difference when scoreline is close but not exact', () => {
     const pred = { result1: 1, result2: 0 };
     const match = { result1: 2, result2: 1 };
-    expect(pointsForPrediction(pred, match, scoring)).toBe(1);
+    expect(pointsForPrediction(pred, match, scoring)).toBe(5);
   });
 
   test('awards goal points when outcome is wrong but one score matches', () => {
@@ -28,7 +28,7 @@ describe('pointsForPrediction', () => {
   test('awards outcome and goal points when outcome correct and one score matches', () => {
     const pred = { result1: 3, result2: 1 };
     const match = { result1: 2, result2: 1 };
-    expect(pointsForPrediction(pred, match, scoring)).toBe(2);
+    expect(pointsForPrediction(pred, match, scoring)).toBe(4);
   });
 
   test('returns zero when nothing matches', () => {
@@ -37,10 +37,9 @@ describe('pointsForPrediction', () => {
     expect(pointsForPrediction(pred, match, scoring)).toBe(0);
   });
 
-  test('uses custom scoring values', () => {
+  test('adds penalty winner bonus only after a draw prediction', () => {
     const pred = { result1: 1, result2: 1 };
-    const match = { result1: 1, result2: 1 };
-    const custom = { exact: 5, outcome: 2, goals: 1 };
-    expect(pointsForPrediction(pred, match, custom)).toBe(6);
+    const match = { result1: 1, result2: 1, penaltyWinner: 'team2' };
+    expect(pointsForPrediction({ ...pred, penaltyWinner: 'team2' }, match, scoring)).toBe(9);
   });
 });

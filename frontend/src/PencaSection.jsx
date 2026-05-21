@@ -19,6 +19,7 @@ import {
   TableHead,
   TableRow,
   Pagination,
+  MenuItem,
   TextField,
   Typography
 } from '@mui/material';
@@ -56,6 +57,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [rankingSearch, setRankingSearch] = useState('');
   const [openBreakdowns, setOpenBreakdowns] = useState({});
+  const [predictionDrafts, setPredictionDrafts] = useState({});
   const { t } = useLang();
   const predictionForms = useRef(new Map());
 
@@ -100,7 +102,28 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
   function canPredict(match) {
     const minutes = minutesUntilKickoff(match);
-    return minutes >= 30;
+    return minutes >= 30 && match.status !== 'live' && match.status !== 'finished';
+  }
+
+  function isKnockoutMatch(match) {
+    const group = String(match?.group_name || '');
+    return group && !group.startsWith('Grupo');
+  }
+
+  function penaltyWinnerLabel(match, side) {
+    if (side === 'team1') return match.team1 || t('team1Label');
+    if (side === 'team2') return match.team2 || t('team2Label');
+    return '';
+  }
+
+  function updateDraft(matchId, field, value) {
+    setPredictionDrafts(prev => ({
+      ...prev,
+      [matchId]: {
+        ...(prev[matchId] || {}),
+        [field]: value
+      }
+    }));
   }
 
   async function submitPrediction(e, pencaId, matchId) {
@@ -246,6 +269,12 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
         label: t('pointsBreakdownTeamGoals', { team: match.team2 }),
         points: breakdown.scoring.teamGoals,
         earned: breakdown.earned.team2Goals
+      },
+      {
+        key: 'penaltyWinner',
+        label: t('pointsBreakdownPenaltyWinner'),
+        points: breakdown.scoring.penaltyWinner,
+        earned: breakdown.earned.penaltyWinner
       }
     ].filter(item => item.points > 0);
     const earnedItems = breakdownItems.filter(item => item.earned);
@@ -254,6 +283,15 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
     const hasPrediction = pr.result1 != null && pr.result2 != null;
     const hasResult = match.result1 != null && match.result2 != null;
+    const draft = predictionDrafts[match._id] || {};
+    const result1Value = draft.result1 ?? pr.result1 ?? '';
+    const result2Value = draft.result2 ?? pr.result2 ?? '';
+    const penaltyWinnerValue = draft.penaltyWinner ?? pr.penaltyWinner ?? '';
+    const needsPenaltyWinner =
+      isKnockoutMatch(match) &&
+      result1Value !== '' &&
+      result2Value !== '' &&
+      Number(result1Value) === Number(result2Value);
 
     return (
       <Paper
@@ -312,7 +350,8 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 <TextField
                   name="result1"
                   type="number"
-                  defaultValue={pr.result1 ?? ''}
+                  value={result1Value}
+                  onChange={e => updateDraft(match._id, 'result1', e.target.value)}
                   required
                   size="small"
                   fullWidth
@@ -325,7 +364,8 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 <TextField
                   name="result2"
                   type="number"
-                  defaultValue={pr.result2 ?? ''}
+                  value={result2Value}
+                  onChange={e => updateDraft(match._id, 'result2', e.target.value)}
                   required
                   size="small"
                   fullWidth
@@ -344,6 +384,21 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 {t('save')}
               </Button>
             </Stack>
+            {needsPenaltyWinner && (
+              <TextField
+                select
+                name="penaltyWinner"
+                label={t('penaltyWinnerLabel')}
+                value={penaltyWinnerValue}
+                onChange={e => updateDraft(match._id, 'penaltyWinner', e.target.value)}
+                required
+                size="small"
+                disabled={!editable}
+              >
+                <MenuItem value="team1">{penaltyWinnerLabel(match, 'team1')}</MenuItem>
+                <MenuItem value="team2">{penaltyWinnerLabel(match, 'team2')}</MenuItem>
+              </TextField>
+            )}
             {!editable && (
               <Typography variant="caption" color="text.secondary">
                 {t('predictionClosed')}
@@ -356,6 +411,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               <Typography variant="body2" fontWeight={600}>
                 {t('result')}: {match.result1} - {match.result2}
               </Typography>
+              {match.penaltyWinner && (
+                <Typography variant="body2" color="text.secondary">
+                  {t('penaltyWinnerResult', { team: penaltyWinnerLabel(match, match.penaltyWinner) })}
+                </Typography>
+              )}
               {hasPrediction && (
                 <Stack spacing={0.75}>
                   <Typography variant="body2" fontWeight={600} color="primary.main">

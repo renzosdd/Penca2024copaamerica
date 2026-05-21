@@ -1,9 +1,10 @@
 export const DEFAULT_SCORING = {
-  exact: 5,
+  exact: 8,
   outcome: 3,
-  goalDifference: 2,
+  goalDifference: 5,
   teamGoals: 1,
-  cleanSheet: 0
+  penaltyWinner: 1,
+  maxNonExact: 7
 };
 
 export const sanitizeScoring = scoring => ({
@@ -13,7 +14,10 @@ export const sanitizeScoring = scoring => ({
     ? Number(scoring.goalDifference)
     : DEFAULT_SCORING.goalDifference,
   teamGoals: Number.isFinite(Number(scoring?.teamGoals)) ? Number(scoring.teamGoals) : DEFAULT_SCORING.teamGoals,
-  cleanSheet: 0
+  penaltyWinner: Number.isFinite(Number(scoring?.penaltyWinner))
+    ? Number(scoring.penaltyWinner)
+    : DEFAULT_SCORING.penaltyWinner,
+  maxNonExact: Number.isFinite(Number(scoring?.maxNonExact)) ? Number(scoring.maxNonExact) : DEFAULT_SCORING.maxNonExact
 });
 
 const outcome = (a, b) => {
@@ -31,7 +35,8 @@ export function calculatePointsBreakdown(prediction, match, scoring) {
       outcome: false,
       goalDifference: false,
       team1Goals: false,
-      team2Goals: false
+      team2Goals: false,
+      penaltyWinner: false
     }
   };
 
@@ -46,28 +51,41 @@ export function calculatePointsBreakdown(prediction, match, scoring) {
   const predictedOutcome = outcome(prediction.result1, prediction.result2);
   const actualOutcome = outcome(match.result1, match.result2);
 
-  if (prediction.result1 === match.result1 && prediction.result2 === match.result2) {
+  const isExact = prediction.result1 === match.result1 && prediction.result2 === match.result2;
+
+  if (isExact) {
     breakdown.earned.exact = true;
     breakdown.total += safeScoring.exact;
-  } else if (predictedOutcome === actualOutcome) {
-    breakdown.earned.outcome = true;
-    breakdown.total += safeScoring.outcome;
+  } else {
+    const predictedDiff = prediction.result1 - prediction.result2;
+    const actualDiff = match.result1 - match.result2;
+    if (predictedDiff === actualDiff) {
+      breakdown.earned.goalDifference = true;
+      breakdown.total += safeScoring.goalDifference;
+    } else if (predictedOutcome === actualOutcome) {
+      breakdown.earned.outcome = true;
+      breakdown.total += safeScoring.outcome;
+    }
+
+    if (prediction.result1 === match.result1) {
+      breakdown.earned.team1Goals = true;
+      breakdown.total += safeScoring.teamGoals;
+    }
+    if (prediction.result2 === match.result2) {
+      breakdown.earned.team2Goals = true;
+      breakdown.total += safeScoring.teamGoals;
+    }
+    breakdown.total = Math.min(breakdown.total, safeScoring.maxNonExact);
   }
 
-  const predictedDiff = prediction.result1 - prediction.result2;
-  const actualDiff = match.result1 - match.result2;
-  if (predictedDiff === actualDiff) {
-    breakdown.earned.goalDifference = true;
-    breakdown.total += safeScoring.goalDifference;
-  }
-
-  if (prediction.result1 === match.result1) {
-    breakdown.earned.team1Goals = true;
-    breakdown.total += safeScoring.teamGoals;
-  }
-  if (prediction.result2 === match.result2) {
-    breakdown.earned.team2Goals = true;
-    breakdown.total += safeScoring.teamGoals;
+  if (
+    match.result1 === match.result2 &&
+    prediction.result1 === prediction.result2 &&
+    match.penaltyWinner &&
+    prediction.penaltyWinner === match.penaltyWinner
+  ) {
+    breakdown.earned.penaltyWinner = true;
+    breakdown.total += safeScoring.penaltyWinner;
   }
 
   return breakdown;

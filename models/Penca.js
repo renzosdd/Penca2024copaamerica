@@ -3,32 +3,20 @@ const { sanitizeScoring, buildRulesDescription, DEFAULT_SCORING } = require('../
 
 const pencaSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  code: { type: String, required: true, unique: true },
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   competition: { type: String, required: true },
-  tournamentMode: {
-    type: String,
-    enum: ['group_stage_knockout', 'league', 'knockout', 'custom'],
-    default: 'group_stage_knockout'
-  },
-  modeSettings: {
-    type: Object,
-    default: {}
-  },
-  participantLimit: { type: Number, default: 20 },
-  isPublic: { type: Boolean, default: false },
   scoring: {
     exact: { type: Number, default: DEFAULT_SCORING.exact },
     outcome: { type: Number, default: DEFAULT_SCORING.outcome },
     goalDifference: { type: Number, default: DEFAULT_SCORING.goalDifference },
     teamGoals: { type: Number, default: DEFAULT_SCORING.teamGoals },
-    cleanSheet: { type: Number, default: DEFAULT_SCORING.cleanSheet }
+    penaltyWinner: { type: Number, default: DEFAULT_SCORING.penaltyWinner },
+    maxNonExact: { type: Number, default: DEFAULT_SCORING.maxNonExact }
   },
   rules: { type: String },
   prizes: { type: String },
   fixture: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Match' }],
-  participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  pendingRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 });
 
 pencaSchema.statics.rulesText = function (scoring) {
@@ -43,7 +31,7 @@ pencaSchema.methods.applyScoring = function applyScoring(scoring) {
 };
 
 pencaSchema.index({ owner: 1, competition: 1 });
-pencaSchema.index({ competition: 1, isPublic: 1 });
+pencaSchema.index({ competition: 1 });
 pencaSchema.index({ participants: 1 });
 
 module.exports = mongoose.models.Penca || mongoose.model('Penca', pencaSchema);

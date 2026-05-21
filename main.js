@@ -171,16 +171,30 @@ async function initializeDatabase() {
                 displayName: 'Administrador',
                 email: adminEmail.toLowerCase(),
                 role: 'admin',
-                valid: true
+                valid: true,
+                approvalStatus: 'approved',
+                approvedAt: new Date()
             });
             await admin.save();
             if (DEFAULT_COMPETITION) {
                 await Score.create({ userId: admin._id, competition: DEFAULT_COMPETITION });
             }
             debugLog('Usuario administrador creado.');
-        } else if (!admin.email) {
-            admin.email = adminEmail;
-            await admin.save();
+        } else {
+            let changed = false;
+            if (!admin.email) {
+                admin.email = adminEmail;
+                changed = true;
+            }
+            if (admin.approvalStatus !== 'approved' || !admin.valid) {
+                admin.valid = true;
+                admin.approvalStatus = 'approved';
+                admin.approvedAt = admin.approvedAt || new Date();
+                changed = true;
+            }
+            if (changed) {
+                await admin.save();
+            }
         }
         await ensureWorldCupPenca(admin._id);
 
@@ -225,11 +239,31 @@ app.get('/dashboard', isAuthenticated, async (req, res) => {
 
 // Datos para el dashboard en React
 app.get('/api/dashboard', isAuthenticated, async (req, res) => {
-    const { user } = req.session;
+    const sessionUser = req.session.user;
+    const user = await User.findById(sessionUser._id);
+    if (!user) {
+        return res.status(401).json({ error: getMessage('UNAUTHORIZED', req.lang) });
+    }
+    req.session.user = user;
     if (user.role === 'admin') {
         return res.status(403).json({ error: getMessage('ADMIN_ONLY', req.lang) });
     }
     try {
+        const isApproved = user.valid === true || user.role === 'admin';
+        if (!isApproved) {
+            return res.json({
+                user: {
+                    username: user.username,
+                    displayName: user.displayName,
+                    role: user.role,
+                    valid: false,
+                    approvalStatus: user.approvalStatus || 'pending'
+                },
+                penca: null,
+                approvalRequired: true
+            });
+        }
+
         const penca = await ensureUserInPenca(user._id);
         if (!penca) {
             return res.status(500).json({ error: getMessage('DASHBOARD_ERROR', req.lang) });
@@ -239,7 +273,16 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
             participantsCount: Array.isArray(penca.participants) ? penca.participants.length : 0
         };
 
-        res.json({ user: { username: user.username, role: user.role }, penca: formatted });
+        res.json({
+            user: {
+                username: user.username,
+                displayName: user.displayName,
+                role: user.role,
+                valid: true,
+                approvalStatus: user.approvalStatus || 'approved'
+            },
+            penca: formatted
+        });
     } catch (err) {
         console.error('dashboard api error', err);
         res.status(500).json({ error: getMessage('DASHBOARD_ERROR', req.lang) });
@@ -330,7 +373,8 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             avatarUrl: avatarUrl || null,
             avatar,
             avatarContentType,
-            valid: false
+            valid: false,
+            approvalStatus: 'pending'
         });
         await user.save();
         // Crear registro de puntaje
@@ -341,7 +385,6 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             });
             await score.save();
         }
-        await ensureUserInPenca(user._id);
         req.session.user = user;
         debugLog('Usuario registrado y sesión iniciada:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });

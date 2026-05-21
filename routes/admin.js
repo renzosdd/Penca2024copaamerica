@@ -4,16 +4,19 @@ const router = express.Router();
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
 const Prediction = require('../models/Prediction');
+const User = require('../models/User');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, invalidateGroupStandings } = require('../utils/bracket');
+const { ensureWorldCupPenca } = require('../utils/worldcupPenca');
+const { notifyPlayerApproval } = require('../utils/emailService');
 const { fetchCompetitionData } = require('../scripts/sportsDb');
 const importMatches = require('../scripts/importMatches');
 const { invalidate: invalidateMatchCache } = require('../utils/matchCache');
 const rankingCache = require('../utils/rankingCache');
 
 const MATCH_LIST_FIELDS =
-  'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 status order originalDate originalTime originalTimezone';
+  'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 penaltyWinner status order originalDate originalTime originalTimezone';
 
 function parseKickoff(value) {
   if (!value) {
@@ -39,6 +42,15 @@ function parseScore(value) {
   return parsed;
 }
 
+function isKnockoutMatch(match) {
+  const group = String(match?.group_name || '');
+  return group && !group.startsWith('Grupo');
+}
+
+function normalizePenaltyWinner(value) {
+  return value === 'team1' || value === 'team2' ? value : null;
+}
+
 async function invalidateAdminCaches(competition) {
   await Promise.allSettled([
     invalidateMatchCache(competition),
@@ -48,10 +60,15 @@ async function invalidateAdminCaches(competition) {
 }
 
 function listMatchesFromDatabase() {
-  return Match.find({ competition: DEFAULT_COMPETITION })
-    .select(MATCH_LIST_FIELDS)
-    .sort({ order: 1, kickoff: 1, date: 1, time: 1 })
-    .lean();
+  const query = Match.find({ competition: DEFAULT_COMPETITION });
+  if (!query || typeof query.select !== 'function') {
+    return query;
+  }
+  const selected = query.select(MATCH_LIST_FIELDS);
+  const sorted = selected && typeof selected.sort === 'function'
+    ? selected.sort({ order: 1, kickoff: 1, date: 1, time: 1 })
+    : selected;
+  return sorted && typeof sorted.lean === 'function' ? sorted.lean() : sorted;
 }
 
 router.post('/competitions/preview', isAuthenticated, isAdmin, async (req, res) => {
@@ -94,6 +111,76 @@ router.post('/competitions/preview', isAuthenticated, isAdmin, async (req, res) 
 
 router.get('/edit', isAuthenticated, isAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
+});
+
+router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const users = await User.find({ role: 'user' })
+      .select('username displayName name surname email valid approvalStatus approvedAt createdAt')
+      .sort({ valid: 1, createdAt: -1, username: 1 })
+      .lean();
+    const normalized = users.map(user => ({
+      ...user,
+      approvalStatus: user.valid ? 'approved' : (user.approvalStatus || 'pending')
+    }));
+    res.json({
+      pending: normalized.filter(user => user.approvalStatus === 'pending'),
+      approved: normalized.filter(user => user.approvalStatus === 'approved'),
+      rejected: normalized.filter(user => user.approvalStatus === 'rejected')
+    });
+  } catch (error) {
+    console.error('Error listing users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/users/:userId/approve', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.userId, role: 'user' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    user.valid = true;
+    user.approvalStatus = 'approved';
+    user.approvedAt = new Date();
+    await user.save();
+
+    const penca = await ensureWorldCupPenca(req.session.user?._id);
+    if (penca) {
+      await Penca.updateOne({ _id: penca._id }, { $addToSet: { participants: user._id } });
+      await User.updateOne({ _id: user._id }, { $addToSet: { pencas: penca._id } });
+    }
+
+    let emailSent = false;
+    try {
+      emailSent = await notifyPlayerApproval({ player: user, penca });
+    } catch (emailError) {
+      console.error('Approval email error:', emailError);
+    }
+
+    res.json({ message: 'User approved', emailSent });
+  } catch (error) {
+    console.error('Error approving user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/users/:userId/reject', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.userId, role: 'user' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    user.valid = false;
+    user.approvalStatus = 'rejected';
+    await user.save();
+    await Penca.updateMany({}, { $pull: { participants: user._id } });
+    res.json({ message: 'User rejected' });
+  } catch (error) {
+    console.error('Error rejecting user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 router.get('/matches', isAuthenticated, isAdmin, async (req, res) => {
@@ -198,14 +285,27 @@ router.post('/matches/:matchId', isAuthenticated, isAdmin, async (req, res) => {
     const { result1, result2 } = req.body;
     const parsedResult1 = parseScore(result1);
     const parsedResult2 = parseScore(result2);
+    let penaltyWinner = normalizePenaltyWinner(req.body.penaltyWinner);
     if (parsedResult1 === undefined || parsedResult2 === undefined) {
       return res.status(400).json({ error: 'Invalid score' });
     }
     if ((parsedResult1 == null) !== (parsedResult2 == null)) {
       return res.status(400).json({ error: 'Both scores are required' });
     }
+    if (
+      isKnockoutMatch(match) &&
+      parsedResult1 != null &&
+      parsedResult1 === parsedResult2 &&
+      !penaltyWinner
+    ) {
+      return res.status(400).json({ error: 'Penalty winner is required for tied knockout matches' });
+    }
+    if (!isKnockoutMatch(match) || parsedResult1 !== parsedResult2) {
+      penaltyWinner = null;
+    }
     match.result1 = parsedResult1;
     match.result2 = parsedResult2;
+    match.penaltyWinner = penaltyWinner;
     if (match.result1 != null && match.result2 != null) {
       match.status = 'finished';
     } else {

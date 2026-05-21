@@ -6,13 +6,18 @@ const { invalidate: invalidateMatchCache } = require('../utils/matchCache');
 const { DEFAULT_COMPETITION } = require('../config');
 
 const MATCH_LIST_FIELDS =
-  'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 order originalDate originalTime originalTimezone';
+  'team1 team2 team1Badge team2Badge competition date time kickoff group_name series venue result1 result2 penaltyWinner status order originalDate originalTime originalTimezone';
 
 function listMatchesFromDatabase() {
-  return Match.find({ competition: DEFAULT_COMPETITION })
-    .select(MATCH_LIST_FIELDS)
-    .sort({ order: 1, kickoff: 1, date: 1, time: 1 })
-    .lean();
+  const query = Match.find({ competition: DEFAULT_COMPETITION });
+  if (!query || typeof query.select !== 'function') {
+    return query;
+  }
+  const selected = query.select(MATCH_LIST_FIELDS);
+  const sorted = selected && typeof selected.sort === 'function'
+    ? selected.sort({ order: 1, kickoff: 1, date: 1, time: 1 })
+    : selected;
+  return sorted && typeof sorted.lean === 'function' ? sorted.lean() : sorted;
 }
 
 router.get('/', async (req, res) => {

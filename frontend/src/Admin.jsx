@@ -54,6 +54,9 @@ export default function Admin() {
   const [savingMatchId, setSavingMatchId] = useState('');
   const [recalculating, setRecalculating] = useState(false);
   const [clearingMatches, setClearingMatches] = useState(false);
+  const [users, setUsers] = useState({ pending: [], approved: [], rejected: [] });
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [actingUserId, setActingUserId] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [search, setSearch] = useState('');
@@ -80,14 +83,53 @@ export default function Admin() {
     }
   };
 
+  const loadUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const res = await fetch('/admin/users');
+      if (!res.ok) {
+        throw new Error(await responseError(res));
+      }
+      setUsers(await res.json());
+    } catch (err) {
+      console.error('load users error', err);
+      setError(t('networkError'));
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
   useEffect(() => {
     loadMatches();
+    loadUsers();
   }, []);
 
   const updateMatchField = (matchId, field, value) => {
     setMatches(prev =>
       prev.map(match => (match._id === matchId ? { ...match, [field]: value } : match))
     );
+  };
+
+  const updateUserApproval = async (userId, action) => {
+    setActingUserId(userId);
+    setError('');
+    setNotice('');
+    try {
+      const res = await fetch(`/admin/users/${userId}/${action}`, { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(await responseError(res));
+      }
+      const data = await res.json();
+      setNotice(action === 'approve'
+        ? t('adminUserApproved', { emailStatus: data.emailSent ? t('emailSent') : t('emailNotConfigured') })
+        : t('adminUserRejected'));
+      await Promise.all([loadUsers(), loadMatches()]);
+    } catch (err) {
+      console.error('user approval error', err);
+      setError(t('networkError'));
+    } finally {
+      setActingUserId('');
+    }
   };
 
   const handleSave = async match => {
@@ -100,7 +142,8 @@ export default function Admin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           result1: match.result1,
-          result2: match.result2
+          result2: match.result2,
+          penaltyWinner: match.penaltyWinner || null
         })
       });
       if (!res.ok) {
@@ -219,6 +262,24 @@ export default function Admin() {
   const loadedCount = useMemo(() => matches.filter(scoreLoaded).length, [matches]);
   const pendingCount = matches.length - loadedCount;
   const hasActiveFilters = Boolean(search || dateFilter || groupFilter);
+  const approvedCount = users.approved?.length || 0;
+  const pendingUsers = users.pending || [];
+
+  function isKnockoutMatch(match) {
+    const group = String(match?.group_name || '');
+    return group && !group.startsWith('Grupo');
+  }
+
+  function needsPenaltyWinner(match) {
+    return isKnockoutMatch(match) &&
+      match.result1 !== '' &&
+      match.result1 !== null &&
+      match.result1 !== undefined &&
+      match.result2 !== '' &&
+      match.result2 !== null &&
+      match.result2 !== undefined &&
+      Number(match.result1) === Number(match.result2);
+  }
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2.5, md: 4 } }}>
@@ -235,7 +296,67 @@ export default function Admin() {
               <Chip label={t('adminMatchesTotal', { count: matches.length })} />
               <Chip color="success" label={t('adminMatchesLoaded', { count: loadedCount })} />
               <Chip color="warning" variant="outlined" label={t('adminMatchesPending', { count: pendingCount })} />
+              <Chip color="primary" variant="outlined" label={t('adminApprovedUsers', { count: approvedCount })} />
             </Stack>
+          </Stack>
+        </Paper>
+
+        <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
+          <Stack spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
+              <Box>
+                <Typography variant="h6">{t('adminApprovalsTitle')}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t('adminApprovalsHelp')}
+                </Typography>
+              </Box>
+              <Button variant="outlined" size="small" onClick={loadUsers} disabled={loadingUsers}>
+                {loadingUsers ? <CircularProgress size={18} /> : t('adminMatchesRefresh')}
+              </Button>
+            </Stack>
+            {pendingUsers.length === 0 ? (
+              <Alert severity="info">{t('adminNoPendingUsers')}</Alert>
+            ) : (
+              <Stack spacing={1}>
+                {pendingUsers.map(player => (
+                  <Box
+                    key={player._id}
+                    sx={{
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 2,
+                      p: { xs: 1.5, sm: 2 }
+                    }}
+                  >
+                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="subtitle1">{player.displayName || player.username}</Typography>
+                        <Typography variant="body2" color="text.secondary">{player.email}</Typography>
+                      </Box>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', md: 'auto' } }}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled={Boolean(actingUserId)}
+                          onClick={() => updateUserApproval(player._id, 'approve')}
+                        >
+                          {actingUserId === player._id ? <CircularProgress size={18} /> : t('approve')}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          disabled={Boolean(actingUserId)}
+                          onClick={() => updateUserApproval(player._id, 'reject')}
+                        >
+                          {t('remove')}
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  </Box>
+                ))}
+              </Stack>
+            )}
           </Stack>
         </Paper>
 
@@ -414,6 +535,21 @@ export default function Admin() {
                               fullWidth
                             />
                           </Stack>
+
+                          {needsPenaltyWinner(match) && (
+                            <TextField
+                              select
+                              label={t('penaltyWinnerLabel')}
+                              value={match.penaltyWinner || ''}
+                              onChange={e => updateMatchField(match._id, 'penaltyWinner', e.target.value)}
+                              size="small"
+                              required
+                              sx={{ width: { xs: '100%', md: 220 } }}
+                            >
+                              <MenuItem value="team1">{match.team1 || t('team1Label')}</MenuItem>
+                              <MenuItem value="team2">{match.team2 || t('team2Label')}</MenuItem>
+                            </TextField>
+                          )}
 
                           <Button
                             variant="contained"

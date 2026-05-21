@@ -14,12 +14,16 @@ const userSchema = new mongoose.Schema({
     avatarContentType: { type: String, required: false },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     valid: { type: Boolean, default: false },
-    isPremium: { type: Boolean, default: false },
-    premiumUntil: { type: Date, required: false },
+    approvalStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected'],
+        default: 'pending'
+    },
+    approvedAt: { type: Date, required: false },
     pencas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Penca' }]
-});
+}, { timestamps: true });
 
-userSchema.index({ role: 1, valid: 1 });
+userSchema.index({ role: 1, valid: 1, approvalStatus: 1 });
 userSchema.index({ username: 1 });
 userSchema.index({ email: 1 });
 userSchema.index({ googleId: 1 });

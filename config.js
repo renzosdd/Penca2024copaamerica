@@ -10,7 +10,7 @@ const DEFAULT_COMPETITION = (
 module.exports = {
     DEFAULT_COMPETITION,
     DEFAULT_PENCA_NAME: process.env.DEFAULT_PENCA_NAME || 'Penca Mundial 2026',
-    DEFAULT_PENCA_CODE: process.env.DEFAULT_PENCA_CODE || 'MUND26',
+    APP_BASE_URL: process.env.APP_BASE_URL || process.env.PUBLIC_APP_URL || '',
     LANGUAGE: process.env.APP_LANG || 'es'
 };
  

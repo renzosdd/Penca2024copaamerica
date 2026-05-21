@@ -7,13 +7,12 @@ jest.mock('../models/Match', () => ({
   updateOne: jest.fn()
 }));
 
-jest.mock('../models/Competition', () => ({
-  findById: jest.fn()
-}));
-
 jest.mock('../utils/bracket', () => ({
-  updateEliminationMatches: jest.fn()
+  updateEliminationMatches: jest.fn(),
+  invalidateGroupStandings: jest.fn()
 }));
+jest.mock('../utils/matchCache', () => ({ invalidate: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../utils/rankingCache', () => ({ invalidate: jest.fn().mockResolvedValue(undefined) }));
 
 jest.mock('../middleware/auth', () => ({
   isAuthenticated: jest.fn((req, res, next) => next()),
@@ -21,42 +20,28 @@ jest.mock('../middleware/auth', () => ({
 }));
 
 const Match = require('../models/Match');
-const Competition = require('../models/Competition');
 const { updateEliminationMatches } = require('../utils/bracket');
 const adminRouter = require('../routes/admin');
+const { DEFAULT_COMPETITION } = require('../config');
 
 describe('Admin match management', () => {
   afterEach(() => jest.clearAllMocks());
 
   it('lists matches for a competition', async () => {
-    Competition.findById.mockResolvedValue({ name: 'Copa' });
     Match.find.mockResolvedValue([{ _id: 'm1' }]);
 
     const app = express();
     app.use('/admin', adminRouter);
 
-    const res = await request(app).get('/admin/competitions/c1/matches');
+    const res = await request(app).get('/admin/matches');
 
     expect(res.status).toBe(200);
-    expect(Competition.findById).toHaveBeenCalledWith('c1');
-    expect(Match.find).toHaveBeenCalledWith({ competition: 'Copa' });
-    expect(res.body[0]._id).toBe('m1');
-  });
-
-  it('returns 404 if competition not found', async () => {
-    Competition.findById.mockResolvedValue(null);
-
-    const app = express();
-    app.use('/admin', adminRouter);
-
-    const res = await request(app).get('/admin/competitions/c1/matches');
-
-    expect(res.status).toBe(404);
-    expect(Match.find).not.toHaveBeenCalled();
+    expect(Match.find).toHaveBeenCalledWith({ competition: DEFAULT_COMPETITION });
+    expect(res.body.matches[0]._id).toBe('m1');
   });
 
   it('updates match info', async () => {
-    const match = { _id: 'm1', competition: 'c1', save: jest.fn().mockResolvedValue(true) };
+    const match = { _id: 'm1', competition: DEFAULT_COMPETITION, save: jest.fn().mockResolvedValue(true) };
     Match.findById.mockResolvedValue(match);
 
     const app = express();
@@ -64,7 +49,7 @@ describe('Admin match management', () => {
     app.use('/admin', adminRouter);
 
     const res = await request(app)
-      .put('/admin/competitions/c1/matches/m1')
+      .put('/admin/matches/m1')
       .send({ team1: 'A' });
 
     expect(res.status).toBe(200);
@@ -73,7 +58,7 @@ describe('Admin match management', () => {
   });
 
   it('updates match result and recalculates bracket', async () => {
-    const match = { _id: 'm1', competition: 'c1', save: jest.fn().mockResolvedValue(true) };
+    const match = { _id: 'm1', competition: DEFAULT_COMPETITION, save: jest.fn().mockResolvedValue(true) };
     Match.findById.mockResolvedValue(match);
 
     const app = express();
@@ -81,13 +66,13 @@ describe('Admin match management', () => {
     app.use('/admin', adminRouter);
 
     const res = await request(app)
-      .post('/admin/competitions/c1/matches/m1')
+      .post('/admin/matches/m1')
       .send({ result1: 2, result2: 1 });
 
     expect(res.status).toBe(200);
     expect(match.result1).toBe(2);
     expect(match.result2).toBe(1);
-    expect(updateEliminationMatches).toHaveBeenCalledWith('c1');
+    expect(updateEliminationMatches).toHaveBeenCalledWith(DEFAULT_COMPETITION);
   });
 
   it('updates knockout match order', async () => {
@@ -96,11 +81,11 @@ describe('Admin match management', () => {
     app.use('/admin', adminRouter);
 
     const res = await request(app)
-      .put('/admin/competitions/c1/knockout-order')
+      .put('/admin/matches/knockout-order')
       .send({ order: ['m1', 'm2'] });
 
     expect(res.status).toBe(200);
-    expect(Match.updateOne).toHaveBeenCalledWith({ _id: 'm1', competition: 'c1' }, { order: 0 });
-    expect(Match.updateOne).toHaveBeenCalledWith({ _id: 'm2', competition: 'c1' }, { order: 1 });
+    expect(Match.updateOne).toHaveBeenCalledWith({ _id: 'm1', competition: DEFAULT_COMPETITION }, { order: 0 });
+    expect(Match.updateOne).toHaveBeenCalledWith({ _id: 'm2', competition: DEFAULT_COMPETITION }, { order: 1 });
   });
 });

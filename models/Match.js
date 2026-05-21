@@ -28,6 +28,11 @@ const matchSchema = new mongoose.Schema({
     },
     result1: Number,
     result2: Number,
+    penaltyWinner: {
+        type: String,
+        enum: ['team1', 'team2', null],
+        default: null
+    },
     order: Number
 });
 

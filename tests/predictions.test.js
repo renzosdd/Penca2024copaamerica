@@ -15,14 +15,28 @@ jest.mock('../models/Match', () => ({
   findById: jest.fn()
 }));
 
+jest.mock('../utils/worldcupPenca', () => ({
+  ensureUserInPenca: jest.fn()
+}));
+jest.mock('../utils/audit', () => ({ recordAudit: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../utils/rankingCache', () => ({ invalidate: jest.fn().mockResolvedValue(undefined) }));
+
 const Prediction = require('../models/Prediction');
 const Match = require('../models/Match');
+const { ensureUserInPenca } = require('../utils/worldcupPenca');
 const predictionsRouter = require('../routes/predictions');
 const { getMessage } = require('../utils/messages');
 
 describe('Predictions Routes', () => {
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  beforeEach(() => {
+    ensureUserInPenca.mockResolvedValue({
+      _id: 'p1',
+      participants: [{ equals: id => id === 'u1' }]
+    });
   });
 
   it('saves a new prediction', async () => {

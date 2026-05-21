@@ -1,17 +1,16 @@
 # Penca Mundial 2026
 
 Aplicación web desarrollada en **Node.js** y **Express** con un frontend en
-**React**. Permite administrar una penca del Mundial 2026 con modelo
-freemium: usuarios gratuitos compiten en el ranking general y quienes activen
-Premium acceden a rankings especiales y beneficios.
+**React**. Permite administrar una única penca del Mundial 2026 con registro,
+aprobación manual de jugadores, pronósticos por partido y ranking general.
 
 Características principales:
 
 - Registro e inicio de sesión con autenticación JWT.
-- Gestión de partidos, resultados oficiales y cierre automático de predicciones.
-- Sistema de puntos configurable con soporte para diferentes formatos de torneo.
-- Rankings general y Premium con actualizaciones automáticas.
-- Panel de administración para gestionar competencias, usuarios y resultados.
+- Gestión de partidos, resultados oficiales y cierre automático de predicciones 30 minutos antes del inicio.
+- Sistema de puntos equilibrado para marcador exacto, diferencia, resultado, goles por equipo y ganador por penales.
+- Ranking general con todos los jugadores aprobados, aunque todavía no tengan predicciones.
+- Panel de administración para aprobar usuarios, cargar resultados y recalcular eliminatorias.
 
 Esta aplicación requiere Node.js 18 o superior para utilizar la función `fetch` en el backend.
 
@@ -36,8 +35,6 @@ DEFAULT_COMPETITION=<nombre>
 SESSION_SECRET=<tu_clave>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
-# Límite de pencas que un usuario puede unir (3 por defecto)
-MAX_PENCAS_PER_USER=3
 # Idioma de los mensajes (es o en)
 APP_LANG=es
 Tambin puedes cambiar el idioma de las respuestas agregando `?lang=es` o `?lang=en` a cada solicitud, o enviando el encabezado `Accept-Language`.
@@ -50,9 +47,6 @@ SPORTSDB_SEASON=<temporada>
 SPORTSDB_API_URL=https://www.thesportsdb.com/api/v2/json
 ```
 Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
-El valor `MAX_PENCAS_PER_USER` controla cuántas pencas puede integrar cada usuario,
-útil si planeas varias competiciones en paralelo.
-
 `APP_LANG` permite elegir el idioma de las respuestas del backend. Usa `es` para español o `en` para inglés.
 
 Cada competencia puede definir `apiLeagueId` y `apiSeason` para usar valores diferentes a los de las variables globales al obtener fixtures o actualizar resultados.
@@ -91,11 +85,12 @@ Las pencas ahora admiten distintos formatos (`Grupos + Eliminación`, `Liga`,
 los campos `tournamentMode` y `modeSettings`. El cálculo de puntos utiliza un
 esquema equilibrado pensado para el Mundial 2026:
 
-- 5 puntos por acertar el marcador exacto.
+- 8 puntos por acertar el marcador exacto.
+- 5 puntos por acertar la diferencia de goles sin marcador exacto.
 - 3 puntos por acertar el resultado (victoria/empate).
-- 2 puntos por acertar la diferencia de goles.
-- 1 punto por cada equipo con cantidad de goles correcta.
-- 1 punto extra por cada arco en cero pronosticado correctamente.
+- 1 punto por cada equipo con cantidad de goles correcta cuando no hubo marcador exacto.
+- 1 punto extra por acertar el ganador por penales si el partido termina empatado tras alargue.
+- 7 puntos de tope cuando el marcador no es exacto.
 
 El detalle de la puntuación aparece en el botón de información dentro de cada
 penca para que todos los participantes tengan las reglas a un clic.
@@ -148,7 +143,7 @@ definidas en tu archivo `.env`.
 - **main.js** – punto de entrada de la aplicación y configuración de Express.
 - **middleware/** – middlewares de autenticación y control de caché.
 - **models/** – modelos de Mongoose (User, Match, Prediction, Score, Penca).
-- **routes/** – rutas de la aplicación: administración, partidos, predicciones, ranking y pencas.
+- **routes/** – rutas de la aplicación: administración, partidos, predicciones y ranking.
 - **public/** – archivos estáticos (CSS e imágenes).
 - **frontend/** – frontend de React compilado con Vite.
 - **matches.json** – datos de ejemplo de los partidos que pueden cargarse desde las rutas de administración.
@@ -156,7 +151,7 @@ definidas en tu archivo `.env`.
 
 Los partidos ya no se insertan automáticamente al iniciar la aplicación. Debes cargarlos manualmente desde el panel de administración.
 
-El esquema `Penca` permite organizar competiciones privadas. Los usuarios se unen con un código y el equipo de administración decide aprobar o eliminar participantes.
+Los usuarios registrados quedan pendientes hasta que el equipo de administración aprueba su acceso. Solo los jugadores aprobados pueden cargar pronósticos y aparecer en el ranking.
 
 Con esta estructura puedes navegar fácilmente por cada componente de la aplicación.
 

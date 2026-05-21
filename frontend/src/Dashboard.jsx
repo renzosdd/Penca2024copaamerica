@@ -3,6 +3,7 @@ import { Button, CircularProgress, Alert, Container, Stack, Typography, Paper } 
 import PencaSection from './PencaSection';
 import ProfileForm from './ProfileForm';
 import useLang from './useLang';
+import { minutesUntilKickoff } from './kickoffUtils';
 
 
 export default function Dashboard() {
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showProfile, setShowProfile] = useState(false);
+  const [shareNotice, setShareNotice] = useState('');
   const { t } = useLang();
 
   const loadDashboard = useCallback(async () => {
@@ -125,7 +127,14 @@ export default function Dashboard() {
             p => !(p.pencaId === pencaId && p.matchId === matchId && p.username === user?.username)
           );
           if (user) {
-            updated.push({ pencaId, matchId, result1: Number(data.result1), result2: Number(data.result2), username: user.username });
+            updated.push({
+              pencaId,
+              matchId,
+              result1: Number(data.result1),
+              result2: Number(data.result2),
+              penaltyWinner: data.penaltyWinner || null,
+              username: user.username
+            });
           }
           return updated;
         });
@@ -137,6 +146,59 @@ export default function Dashboard() {
       return { success: false, error: t('networkError') };
     }
   };
+
+  const predictionProgress = useMemo(() => {
+    if (!penca) return { predicted: 0, total: 0 };
+    const relevantMatches = matches.filter(match => {
+      const belongsToPenca = Array.isArray(penca.fixture) && penca.fixture.length
+        ? penca.fixture.map(String).includes(String(match._id))
+        : match.competition === penca.competition;
+      return belongsToPenca && minutesUntilKickoff(match) >= 30;
+    });
+    return {
+      total: relevantMatches.length,
+      predicted: relevantMatches.filter(match => getPrediction(penca._id, match._id)).length
+    };
+  }, [getPrediction, matches, penca]);
+
+  const sharePenca = async () => {
+    const url = `${window.location.origin}/register`;
+    const text = t('shareText', { url });
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: t('dashboardTitle'), text, url });
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      setShareNotice(t('shareCopied'));
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        setShareNotice(t('shareCopyError'));
+      }
+    }
+  };
+
+  if (user && user.valid === false) {
+    const rejected = user.approvalStatus === 'rejected';
+    return (
+      <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 6 } }}>
+        <Paper sx={{ p: { xs: 3, sm: 4 }, borderRadius: 3 }}>
+          <Stack spacing={2} alignItems="flex-start">
+            <Typography variant="h5">
+              {rejected ? t('approvalRejectedTitle') : t('approvalPendingTitle')}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {rejected ? t('approvalRejectedBody') : t('approvalPendingBody')}
+            </Typography>
+            <Button variant="outlined" onClick={sharePenca}>
+              {t('sharePenca')}
+            </Button>
+            {shareNotice && <Alert severity="success">{shareNotice}</Alert>}
+          </Stack>
+        </Paper>
+      </Container>
+    );
+  }
 
 
 
@@ -154,20 +216,35 @@ export default function Dashboard() {
                 <Typography variant="body2" color="text.secondary">
                   {t('playerDashboardHint')}
                 </Typography>
+                {penca && (
+                  <Typography variant="body2" color="text.secondary">
+                    {t('predictionProgress', predictionProgress)}
+                  </Typography>
+                )}
               </Stack>
             )}
             {user && (
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={() => setShowProfile(!showProfile)}
-                sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}
-              >
-                {showProfile ? t('hide') : t('editProfile')}
-              </Button>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={sharePenca}
+                >
+                  {t('sharePenca')}
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => setShowProfile(!showProfile)}
+                >
+                  {showProfile ? t('hide') : t('editProfile')}
+                </Button>
+              </Stack>
             )}
           </Stack>
         </Paper>
+
+        {shareNotice && <Alert severity="success">{shareNotice}</Alert>}
 
         {showProfile && <ProfileForm user={user} onUpdated={loadDashboard} />}
 

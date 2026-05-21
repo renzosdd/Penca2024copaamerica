@@ -58,7 +58,7 @@ describe('updateResults script', () => {
     expect(global.fetch).toHaveBeenCalledWith('http://api/k/eventsseason.php?id=1&season=2024');
     expect(Match.updateOne).toHaveBeenCalledWith(
       { series: '10', competition: 'Copa' },
-      { result1: 2, result2: 1 }
+      { $set: { result1: 2, result2: 1 } }
     );
     expect(updateEliminationMatches).toHaveBeenCalledWith('Copa');
     expect(ApiUsage.create).toHaveBeenCalled();

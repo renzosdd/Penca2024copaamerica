@@ -1,9 +1,10 @@
 const DEFAULT_SCORING = Object.freeze({
-  exact: 5,
+  exact: 8,
   outcome: 3,
-  goalDifference: 2,
+  goalDifference: 5,
   teamGoals: 1,
-  cleanSheet: 0
+  penaltyWinner: 1,
+  maxNonExact: 7
 });
 
 function normalizeNumber(value, fallback) {
@@ -17,7 +18,8 @@ function sanitizeScoring(scoring = {}) {
     outcome: normalizeNumber(scoring.outcome, DEFAULT_SCORING.outcome),
     goalDifference: normalizeNumber(scoring.goalDifference, DEFAULT_SCORING.goalDifference),
     teamGoals: normalizeNumber(scoring.teamGoals, DEFAULT_SCORING.teamGoals),
-    cleanSheet: 0
+    penaltyWinner: normalizeNumber(scoring.penaltyWinner, DEFAULT_SCORING.penaltyWinner),
+    maxNonExact: normalizeNumber(scoring.maxNonExact, DEFAULT_SCORING.maxNonExact)
   };
 }
 
@@ -25,9 +27,11 @@ function buildRulesDescription(scoringInput) {
   const scoring = sanitizeScoring(scoringInput);
   return [
     `• ${scoring.exact} puntos por acertar el marcador exacto`,
-    `• ${scoring.outcome} puntos por acertar el resultado (victoria/empate)`,
-    `• ${scoring.goalDifference} puntos por acertar la diferencia de goles`,
-    `• ${scoring.teamGoals} punto por cada equipo con goles exactos`
+    `• ${scoring.goalDifference} puntos por acertar la diferencia de goles sin marcador exacto`,
+    `• ${scoring.outcome} puntos por acertar el resultado sin diferencia exacta`,
+    `• ${scoring.teamGoals} punto por cada equipo con goles exactos cuando no hay marcador exacto`,
+    `• ${scoring.penaltyWinner} punto extra por acertar el ganador por penales si el partido termina empatado tras alargue`,
+    `• Tope de ${scoring.maxNonExact} puntos cuando el marcador no es exacto`
   ].join('\n');
 }
 
@@ -45,24 +49,35 @@ function calculatePoints({ prediction, match, scoring: scoringInput }) {
 
   const predictedOutcome = getMatchOutcome(prediction.result1, prediction.result2);
   const actualOutcome = getMatchOutcome(match.result1, match.result2);
+  const isExact = prediction.result1 === match.result1 && prediction.result2 === match.result2;
 
-  if (prediction.result1 === match.result1 && prediction.result2 === match.result2) {
+  if (isExact) {
     points += scoring.exact;
-  } else if (predictedOutcome === actualOutcome) {
-    points += scoring.outcome;
+  } else {
+    const predictedDiff = prediction.result1 - prediction.result2;
+    const actualDiff = match.result1 - match.result2;
+    if (predictedDiff === actualDiff) {
+      points += scoring.goalDifference;
+    } else if (predictedOutcome === actualOutcome) {
+      points += scoring.outcome;
+    }
+
+    if (prediction.result1 === match.result1) {
+      points += scoring.teamGoals;
+    }
+    if (prediction.result2 === match.result2) {
+      points += scoring.teamGoals;
+    }
+    points = Math.min(points, scoring.maxNonExact);
   }
 
-  const predictedDiff = prediction.result1 - prediction.result2;
-  const actualDiff = match.result1 - match.result2;
-  if (predictedDiff === actualDiff) {
-    points += scoring.goalDifference;
-  }
-
-  if (prediction.result1 === match.result1) {
-    points += scoring.teamGoals;
-  }
-  if (prediction.result2 === match.result2) {
-    points += scoring.teamGoals;
+  if (
+    match.result1 === match.result2 &&
+    prediction.result1 === prediction.result2 &&
+    match.penaltyWinner &&
+    prediction.penaltyWinner === match.penaltyWinner
+  ) {
+    points += scoring.penaltyWinner;
   }
 
   return points;

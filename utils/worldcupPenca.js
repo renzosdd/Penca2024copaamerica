@@ -1,6 +1,6 @@
 const Penca = require('../models/Penca');
 const User = require('../models/User');
-const { DEFAULT_COMPETITION, DEFAULT_PENCA_NAME, DEFAULT_PENCA_CODE } = require('../config');
+const { DEFAULT_COMPETITION, DEFAULT_PENCA_NAME } = require('../config');
 const { DEFAULT_SCORING } = require('./scoring');
 
 async function resolveOwner(ownerId) {
@@ -14,17 +14,11 @@ async function resolveOwner(ownerId) {
 function buildPencaPayload(ownerId) {
   return {
     name: DEFAULT_PENCA_NAME,
-    code: DEFAULT_PENCA_CODE,
     owner: ownerId,
     competition: DEFAULT_COMPETITION,
-    participantLimit: null,
-    isPublic: true,
-    tournamentMode: 'group_stage_knockout',
-    modeSettings: {},
     scoring: DEFAULT_SCORING,
     rules: Penca.rulesText(DEFAULT_SCORING),
-    participants: ownerId ? [ownerId] : [],
-    pendingRequests: []
+    participants: ownerId ? [ownerId] : []
   };
 }
 
@@ -46,6 +40,11 @@ async function ensureWorldCupPenca(ownerId) {
 
 async function ensureUserInPenca(userId) {
   if (!userId) {
+    return null;
+  }
+
+  const user = await User.findById(userId).select('_id role valid approvalStatus');
+  if (!user || (user.role !== 'admin' && !user.valid)) {
     return null;
   }
 

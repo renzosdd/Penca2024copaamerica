@@ -1,4 +1,5 @@
 const emailConfig = require('../config/email');
+const { APP_BASE_URL } = require('../config');
 
 let nodemailer;
 try {
@@ -40,21 +41,39 @@ async function sendEmail({ to, subject, text, html }) {
 
 function buildApprovalMessage({ playerName, pencaName }) {
   const subject = `Tu acceso a ${pencaName} fue aprobado`;
+  const baseUrl = APP_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+  const dashboardUrl = baseUrl ? `${baseUrl}/dashboard` : '/dashboard';
+  const logoUrl = baseUrl ? `${baseUrl}/images/Logo.png` : '';
   const body = [
     `Hola ${playerName},`,
     '',
     `Ya podés cargar tus predicciones en la penca "${pencaName}".`,
-    'Ingresá para empezar a jugar.',
+    `Ingresá para empezar a jugar: ${dashboardUrl}`,
     '',
     'Equipo de Penca'
   ].join('\n');
-  return { subject, text: body, html: body.replace(/\n/g, '<br/>') };
+  const html = `
+    <div style="margin:0;padding:24px;background:#f6f8fb;font-family:Arial,sans-serif;color:#0f172a;">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+        <div style="padding:24px;text-align:center;border-bottom:1px solid #e2e8f0;">
+          ${logoUrl ? `<img src="${logoUrl}" alt="Penca Mundial 2026" style="max-height:64px;max-width:220px;" />` : '<h1 style="margin:0;font-size:24px;">Penca Mundial 2026</h1>'}
+        </div>
+        <div style="padding:28px;">
+          <h2 style="margin:0 0 12px;font-size:22px;">Tu acceso fue aprobado</h2>
+          <p style="margin:0 0 16px;line-height:1.5;">Hola ${playerName}, ya podés cargar tus predicciones en <strong>${pencaName}</strong>.</p>
+          <a href="${dashboardUrl}" style="display:inline-block;background:#1f6feb;color:#ffffff;text-decoration:none;border-radius:8px;padding:12px 18px;font-weight:bold;">Entrar a la penca</a>
+          <p style="margin:22px 0 0;color:#64748b;font-size:13px;line-height:1.5;">Recordá completar tus pronósticos hasta 30 minutos antes de cada partido.</p>
+        </div>
+      </div>
+    </div>
+  `;
+  return { subject, text: body, html };
 }
 
 async function notifyPlayerApproval({ player, penca }) {
   if (!player?.email || !penca) return false;
   const message = buildApprovalMessage({
-    playerName: player.name || player.username,
+    playerName: player.displayName || player.name || player.username,
     pencaName: penca.name
   });
   return sendEmail({ to: player.email, ...message });

@@ -9,15 +9,6 @@ const { getMessage } = require('../utils/messages');
 const rankingCache = require('../utils/rankingCache');
 const { ensureWorldCupPenca } = require('../utils/worldcupPenca');
 
-// Función para calcular los puntajes
-function premiumCriteria() {
-    const now = new Date();
-    return {
-        isPremium: true,
-        $or: [{ premiumUntil: null }, { premiumUntil: { $gte: now } }]
-    };
-}
-
 async function resolveQuery(query, fields) {
     if (query && typeof query.select === 'function') {
         const selected = query.select(fields);
@@ -26,7 +17,7 @@ async function resolveQuery(query, fields) {
     return query;
 }
 
-async function calculateScores(penca, { premiumOnly = false } = {}) {
+async function calculateScores(penca) {
     if (!penca) {
         return [];
     }
@@ -74,11 +65,6 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
         if (participantSet.size) {
             userFilter._id = { $in: Array.from(participantSet) };
         }
-    }
-
-    if (premiumOnly) {
-        const criteria = premiumCriteria();
-        userFilter = Object.keys(userFilter).length ? { $and: [userFilter, criteria] } : criteria;
     }
 
     userFilter.role = 'user';
@@ -150,8 +136,7 @@ async function calculateScores(penca, { premiumOnly = false } = {}) {
 // Endpoint para obtener el ranking
 router.get('/', async (req, res) => {
     try {
-        const premiumOnly = req.query.premium === 'true';
-        const variant = premiumOnly ? 'premium' : 'all';
+        const variant = 'all';
         const page = Math.max(parseInt(req.query.page || '1', 10), 1);
         const limit = Math.min(Math.max(parseInt(req.query.limit || '10', 10), 1), 100);
         const paginate = (scores) => {
@@ -169,7 +154,7 @@ router.get('/', async (req, res) => {
         if (Array.isArray(cached) && cached.length > 0) {
             return res.json(paginate(cached));
         }
-        const scores = await calculateScores(penca, { premiumOnly });
+        const scores = await calculateScores(penca);
         await rankingCache.set(penca?._id, DEFAULT_COMPETITION, variant, scores);
         res.json(paginate(scores));
     } catch (err) {

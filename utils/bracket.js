@@ -35,9 +35,11 @@ function setCachedStandings(competition, data) {
 }
 
 async function computeGroupStandings(competition) {
-    const matches = await Match.find({ competition })
-        .select('group_name team1 team2 result1 result2')
-        .lean();
+    const query = Match.find({ competition });
+    const selected = query && typeof query.select === 'function'
+        ? query.select('group_name team1 team2 result1 result2')
+        : query;
+    const matches = await (selected && typeof selected.lean === 'function' ? selected.lean() : selected);
     const standings = {};
 
     for (const match of matches) {
@@ -227,13 +229,21 @@ async function updateEliminationMatches(competition) {
 
     function winnerFromMatch(match) {
         if (!hasCompletedScore(match)) return null;
-        if (match.result1 === match.result2) return null;
+        if (match.result1 === match.result2) {
+            if (match.penaltyWinner === 'team1') return match.team1;
+            if (match.penaltyWinner === 'team2') return match.team2;
+            return null;
+        }
         return match.result1 > match.result2 ? match.team1 : match.team2;
     }
 
     function loserFromMatch(match) {
         if (!hasCompletedScore(match)) return null;
-        if (match.result1 === match.result2) return null;
+        if (match.result1 === match.result2) {
+            if (match.penaltyWinner === 'team1') return match.team2;
+            if (match.penaltyWinner === 'team2') return match.team1;
+            return null;
+        }
         return match.result1 > match.result2 ? match.team2 : match.team1;
     }
 
@@ -268,10 +278,12 @@ async function updateEliminationMatches(competition) {
 
     async function orderedStageMatches(stage) {
         if (!stageMatchesCache.has(stage)) {
+            const query = Match.find({ competition, group_name: stage });
             stageMatchesCache.set(
                 stage,
-                await Match.find({ competition, group_name: stage })
-                    .sort({ order: 1, kickoff: 1, date: 1, time: 1, _id: 1 })
+                (await (query && typeof query.sort === 'function'
+                    ? query.sort({ order: 1, kickoff: 1, date: 1, time: 1, _id: 1 })
+                    : query)) || []
             );
         }
         return stageMatchesCache.get(stage);
@@ -322,9 +334,11 @@ async function updateEliminationMatches(competition) {
     }
 
     async function groupCompletion() {
-        const matches = await Match.find({ competition })
-            .select('group_name result1 result2')
-            .lean();
+        const query = Match.find({ competition });
+        const selected = query && typeof query.select === 'function'
+            ? query.select('group_name result1 result2')
+            : query;
+        const matches = await (selected && typeof selected.lean === 'function' ? selected.lean() : selected);
         const groups = new Map();
         for (const match of matches) {
             const group = match.group_name;
