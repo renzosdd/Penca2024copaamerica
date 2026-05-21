@@ -1,5 +1,6 @@
 const emailConfig = require('../config/email');
 const { APP_BASE_URL } = require('../config');
+const klaviyo = require('./klaviyoService');
 
 let nodemailer;
 try {
@@ -76,6 +77,11 @@ async function notifyPlayerApproval({ player, penca }) {
     playerName: player.displayName || player.name || player.username,
     pencaName: penca.name
   });
+  const baseUrl = APP_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+  const dashboardUrl = baseUrl ? `${baseUrl}/dashboard` : '/dashboard';
+  if (klaviyo.isConfigured()) {
+    return klaviyo.notifyApproval({ player, penca, dashboardUrl });
+  }
   return sendEmail({ to: player.email, ...message });
 }
 

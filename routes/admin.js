@@ -10,6 +10,7 @@ const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, invalidateGroupStandings } = require('../utils/bracket');
 const { ensureWorldCupPenca } = require('../utils/worldcupPenca');
 const { notifyPlayerApproval } = require('../utils/emailService');
+const klaviyo = require('../utils/klaviyoService');
 const { fetchCompetitionData } = require('../scripts/sportsDb');
 const importMatches = require('../scripts/importMatches');
 const { invalidate: invalidateMatchCache } = require('../utils/matchCache');
@@ -49,6 +50,77 @@ function isKnockoutMatch(match) {
 
 function normalizePenaltyWinner(value) {
   return value === 'team1' || value === 'team2' ? value : null;
+}
+
+function kickoffDate(match) {
+  if (match?.kickoff) {
+    const date = new Date(match.kickoff);
+    if (!Number.isNaN(date.getTime())) return date;
+  }
+  if (match?.date && match?.time) {
+    const date = new Date(`${match.date}T${match.time}:00`);
+    if (!Number.isNaN(date.getTime())) return date;
+  }
+  return null;
+}
+
+async function buildMissingSummary() {
+  const [users, matches, predictions] = await Promise.all([
+    User.find({ role: 'user', valid: true })
+      .select('username displayName name surname email')
+      .lean(),
+    Match.find({ competition: DEFAULT_COMPETITION })
+      .select(MATCH_LIST_FIELDS)
+      .sort({ order: 1, kickoff: 1, date: 1, time: 1 })
+      .lean(),
+    Prediction.find({})
+      .select('userId matchId')
+      .lean()
+  ]);
+
+  const now = new Date();
+  const openMatches = matches.filter(match => {
+    const kickoff = kickoffDate(match);
+    if (!kickoff || match.status === 'finished' || match.status === 'live') return false;
+    return (kickoff.getTime() - now.getTime()) / 60000 >= 30;
+  });
+  const closingSoon = openMatches.filter(match => {
+    const kickoff = kickoffDate(match);
+    const hours = (kickoff.getTime() - now.getTime()) / 36e5;
+    return hours <= 48;
+  });
+  const withoutResult = matches.filter(match => {
+    const kickoff = kickoffDate(match);
+    return kickoff && kickoff < now && match.result1 == null && match.result2 == null;
+  });
+
+  const predictedByUser = new Map();
+  for (const prediction of predictions) {
+    const userId = prediction.userId?.toString();
+    if (!userId) continue;
+    if (!predictedByUser.has(userId)) predictedByUser.set(userId, new Set());
+    predictedByUser.get(userId).add(prediction.matchId?.toString());
+  }
+
+  const players = users.map(user => {
+    const predicted = predictedByUser.get(user._id.toString()) || new Set();
+    const missingMatches = openMatches.filter(match => !predicted.has(match._id.toString()));
+    return {
+      ...user,
+      missingCount: missingMatches.length,
+      predictedOpenCount: openMatches.length - missingMatches.length,
+      openCount: openMatches.length,
+      nextMissingMatch: missingMatches[0] || null
+    };
+  });
+
+  return {
+    openMatchesCount: openMatches.length,
+    playersMissing: players.filter(player => player.missingCount > 0),
+    completePlayers: players.filter(player => player.missingCount === 0),
+    closingSoon,
+    withoutResult
+  };
 }
 
 async function invalidateAdminCaches(competition) {
@@ -130,6 +202,37 @@ router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error listing users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/missing', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    res.json(await buildMissingSummary());
+  } catch (error) {
+    console.error('Error building missing summary:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/reminders/missing-predictions', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const summary = await buildMissingSummary();
+    const baseUrl = process.env.APP_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
+    const dashboardUrl = baseUrl ? `${baseUrl}/dashboard` : '/dashboard';
+    const results = await Promise.allSettled(summary.playersMissing.map(player =>
+      klaviyo.notifyMissingPredictions({
+        player,
+        missingCount: player.missingCount,
+        nextMatch: player.nextMissingMatch,
+        dashboardUrl
+      })
+    ));
+    const sent = results.filter(result => result.status === 'fulfilled' && result.value).length;
+    const failed = results.filter(result => result.status === 'rejected').length;
+    res.json({ sent, failed, total: summary.playersMissing.length, klaviyoConfigured: klaviyo.isConfigured() });
+  } catch (error) {
+    console.error('Error sending missing prediction reminders:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -356,6 +459,31 @@ router.post('/matches/clear', isAuthenticated, isAdmin, async (req, res) => {
     });
   } catch (error) {
     console.error('Error clearing matches:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/matches/reset-fixture', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const confirmation = String(req.body?.confirmation || '').trim();
+    if (confirmation !== 'REINICIAR') {
+      return res.status(400).json({ error: 'Confirmation required' });
+    }
+    const matchesResult = await Match.deleteMany({ competition: DEFAULT_COMPETITION });
+    const predictionsResult = await Prediction.deleteMany({});
+    await Penca.updateMany({ competition: DEFAULT_COMPETITION }, { $set: { fixture: [] } });
+    const importResult = typeof importMatches.importFixture === 'function'
+      ? await importMatches.importFixture(DEFAULT_COMPETITION, { skipBracketUpdate: true })
+      : { imported: 0 };
+    await invalidateAdminCaches(DEFAULT_COMPETITION);
+    res.json({
+      message: 'Fixture reset',
+      deletedMatches: matchesResult.deletedCount || 0,
+      deletedPredictions: predictionsResult.deletedCount || 0,
+      importedMatches: importResult.imported || 0
+    });
+  } catch (error) {
+    console.error('Error resetting fixture:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

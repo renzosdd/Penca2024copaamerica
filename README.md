@@ -58,9 +58,9 @@ para que pueda asignarse por defecto a nuevos usuarios y puntajes.
 
 ### Notificaciones por correo y auditoría
 
-La aplicación puede enviar avisos automáticos cuando un jugador solicita unirse
-a una penca o cuando su acceso es aprobado. Configura las siguientes variables
-de entorno para habilitar el envío vía SMTP:
+La aplicación puede enviar avisos automáticos cuando un jugador es aprobado o
+cuando tiene pronósticos pendientes. Configura las siguientes variables de
+entorno para habilitar el envío vía SMTP:
 
 ```bash
 SMTP_HOST=<servidor_smtp>
@@ -77,6 +77,21 @@ base de datos, la auditoría se mantiene desactivada por defecto. Podés habilit
 desde el panel de administración y elegir qué tipos de cambios (usuarios,
 pencas, predicciones) se registran en la colección `auditlogs` cuando esté activa,
 lo que permite reconstruir el historial de cambios en caso de controversias.
+
+También podés enviar aprobaciones y recordatorios mediante Klaviyo. Configurá la
+private key en producción y dejá la public key como variable para evitar cambios
+de código:
+
+```bash
+KLAVIYO_PRIVATE_KEY=<tu_private_key>
+KLAVIYO_PUBLIC_API_KEY=VtZcng
+KLAVIYO_REVISION=2024-10-15
+APP_BASE_URL=https://tu-dominio.com
+```
+
+El backend dispara eventos `Penca Player Approved` y
+`Penca Missing Predictions Reminder`; desde Klaviyo podés crear flows sobre esos
+eventos para diseñar los emails finales.
 
 ### Formatos de torneo y reglas de puntuación
 
@@ -177,6 +192,10 @@ para recalcular manualmente si fuera necesario.
 1. Ingresa el resultado de cada encuentro y guarda los cambios.
 2. La llave del knockout se recalculará automáticamente al guardar.
 3. Consulta `/bracket` para ver los enfrentamientos actualizados.
+
+Desde el panel también podés reiniciar la competencia con el fixture oficial:
+la acción exige escribir `REINICIAR`, borra partidos, resultados y predicciones,
+y vuelve a importar `worldcup2026.json` para arrancar desde cero.
 
 ## Nuevos endpoints
 

@@ -21,8 +21,8 @@ describe('updateEliminationMatches World Cup style', () => {
       _id: `r32-${index}`,
       competition: 'WC',
       group_name: 'Ronda de 32',
-      team1: `placeholder-${index}-1`,
-      team2: `placeholder-${index}-2`
+      team1: index === 0 ? '2A' : `W${index}`,
+      team2: index === 0 ? '2B' : `W${index + 20}`
     }));
     Match.find
       .mockResolvedValueOnce(matches)
@@ -34,15 +34,11 @@ describe('updateEliminationMatches World Cup style', () => {
 
     expect(Match.updateOne).toHaveBeenCalledWith(
       { _id: 'r32-0' },
-      { $set: { team1: 'A1' } }
+      { $set: { team1: 'A2' } }
     );
     expect(Match.updateOne).toHaveBeenCalledWith(
       { _id: 'r32-0' },
       { $set: { team2: 'B2' } }
-    );
-    expect(Match.updateOne).toHaveBeenCalledWith(
-      { _id: 'r32-15' },
-      { $set: { team2: expect.stringMatching(/Mejor tercero/) } }
     );
   });
 });

@@ -112,7 +112,10 @@ function buildMatchPayloadFromFixture(match, competition, order) {
     originalDate: dateValue,
     originalTime: timeValue,
     originalTimezone: normalizeText(match?.originalKickoff?.timezone),
-    order: resolvedOrder
+    order: resolvedOrder,
+    result1: Number.isFinite(match?.result1) ? match.result1 : null,
+    result2: Number.isFinite(match?.result2) ? match.result2 : null,
+    penaltyWinner: match?.penaltyWinner === 'team1' || match?.penaltyWinner === 'team2' ? match.penaltyWinner : null
   };
 }
 

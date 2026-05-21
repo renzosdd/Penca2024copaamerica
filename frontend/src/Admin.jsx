@@ -55,8 +55,12 @@ export default function Admin() {
   const [recalculating, setRecalculating] = useState(false);
   const [clearingMatches, setClearingMatches] = useState(false);
   const [users, setUsers] = useState({ pending: [], approved: [], rejected: [] });
+  const [missingSummary, setMissingSummary] = useState(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingMissing, setLoadingMissing] = useState(false);
   const [actingUserId, setActingUserId] = useState('');
+  const [resettingFixture, setResettingFixture] = useState(false);
+  const [sendingReminders, setSendingReminders] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [search, setSearch] = useState('');
@@ -99,9 +103,26 @@ export default function Admin() {
     }
   };
 
+  const loadMissingSummary = async () => {
+    setLoadingMissing(true);
+    try {
+      const res = await fetch('/admin/missing');
+      if (!res.ok) {
+        throw new Error(await responseError(res));
+      }
+      setMissingSummary(await res.json());
+    } catch (err) {
+      console.error('load missing summary error', err);
+      setError(t('networkError'));
+    } finally {
+      setLoadingMissing(false);
+    }
+  };
+
   useEffect(() => {
     loadMatches();
     loadUsers();
+    loadMissingSummary();
   }, []);
 
   const updateMatchField = (matchId, field, value) => {
@@ -123,7 +144,7 @@ export default function Admin() {
       setNotice(action === 'approve'
         ? t('adminUserApproved', { emailStatus: data.emailSent ? t('emailSent') : t('emailNotConfigured') })
         : t('adminUserRejected'));
-      await Promise.all([loadUsers(), loadMatches()]);
+      await Promise.all([loadUsers(), loadMatches(), loadMissingSummary()]);
     } catch (err) {
       console.error('user approval error', err);
       setError(t('networkError'));
@@ -201,6 +222,54 @@ export default function Admin() {
     }
   };
 
+  const handleResetFixture = async () => {
+    const confirmation = window.prompt(t('adminResetFixturePrompt'));
+    if (confirmation !== 'REINICIAR') {
+      setError(t('adminResetFixtureCancelled'));
+      return;
+    }
+    setResettingFixture(true);
+    setError('');
+    setNotice('');
+    try {
+      const res = await fetch('/admin/matches/reset-fixture', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation })
+      });
+      if (!res.ok) {
+        throw new Error(await responseError(res));
+      }
+      const data = await res.json();
+      setNotice(t('adminResetFixtureSuccess', { count: data.importedMatches || 0 }));
+      await Promise.all([loadMatches(), loadMissingSummary()]);
+    } catch (err) {
+      console.error('reset fixture error', err);
+      setError(t('networkError'));
+    } finally {
+      setResettingFixture(false);
+    }
+  };
+
+  const handleSendReminders = async () => {
+    setSendingReminders(true);
+    setError('');
+    setNotice('');
+    try {
+      const res = await fetch('/admin/reminders/missing-predictions', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(await responseError(res));
+      }
+      const data = await res.json();
+      setNotice(t('adminRemindersSent', { sent: data.sent || 0, total: data.total || 0 }));
+    } catch (err) {
+      console.error('send reminders error', err);
+      setError(t('networkError'));
+    } finally {
+      setSendingReminders(false);
+    }
+  };
+
   const sortedMatches = useMemo(() => {
     return [...matches].sort((a, b) => {
       const orderDiff = matchOrderValue(a) - matchOrderValue(b);
@@ -264,6 +333,9 @@ export default function Admin() {
   const hasActiveFilters = Boolean(search || dateFilter || groupFilter);
   const approvedCount = users.approved?.length || 0;
   const pendingUsers = users.pending || [];
+  const playersMissing = missingSummary?.playersMissing || [];
+  const closingSoon = missingSummary?.closingSoon || [];
+  const withoutResult = missingSummary?.withoutResult || [];
 
   function isKnockoutMatch(match) {
     const group = String(match?.group_name || '');
@@ -385,7 +457,66 @@ export default function Admin() {
               >
                 {clearingMatches ? <CircularProgress size={18} /> : t('adminClearMatches')}
               </Button>
+              <Button
+                variant="contained"
+                size="small"
+                color="error"
+                onClick={handleResetFixture}
+                disabled={resettingFixture}
+                fullWidth
+              >
+                {resettingFixture ? <CircularProgress size={18} /> : t('adminResetFixture')}
+              </Button>
             </Stack>
+          </Stack>
+        </Paper>
+
+        <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
+          <Stack spacing={2}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} justifyContent="space-between">
+              <Box>
+                <Typography variant="h6">{t('adminMissingTitle')}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t('adminMissingHelp')}
+                </Typography>
+              </Box>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <Button variant="outlined" size="small" onClick={loadMissingSummary} disabled={loadingMissing}>
+                  {loadingMissing ? <CircularProgress size={18} /> : t('adminMatchesRefresh')}
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleSendReminders}
+                  disabled={sendingReminders || playersMissing.length === 0}
+                >
+                  {sendingReminders ? <CircularProgress size={18} /> : t('adminSendReminders')}
+                </Button>
+              </Stack>
+            </Stack>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <Chip color="warning" variant="outlined" label={t('adminMissingPlayers', { count: playersMissing.length })} />
+              <Chip label={t('adminClosingSoon', { count: closingSoon.length })} />
+              <Chip color="error" variant="outlined" label={t('adminWithoutResult', { count: withoutResult.length })} />
+            </Stack>
+            {playersMissing.length > 0 && (
+              <Stack spacing={1}>
+                {playersMissing.slice(0, 8).map(player => (
+                  <Box
+                    key={player._id}
+                    sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1.5 }}
+                  >
+                    <Typography variant="subtitle2">{player.displayName || player.username}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t('adminPlayerMissingLine', {
+                        missing: player.missingCount,
+                        total: player.openCount
+                      })}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            )}
           </Stack>
         </Paper>
 

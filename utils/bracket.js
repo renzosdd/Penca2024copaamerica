@@ -264,6 +264,18 @@ async function updateEliminationMatches(competition) {
         return `Perdedor ${aliases[stageName] || stageName}${index + 1}`;
     }
 
+    function matchNumber(match) {
+        const candidates = [match?.importId, match?.series, match?.id]
+            .filter(Boolean)
+            .map(value => String(value));
+        for (const candidate of candidates) {
+            const match = /match-(\d+)/i.exec(candidate);
+            if (match) return Number(match[1]);
+        }
+        const order = Number(match?.order);
+        return Number.isFinite(order) ? order + 1 : null;
+    }
+
     function buildPlaceholderVariants(label, index, prefix = 'Ganador') {
         const variants = new Set();
         const normalized = String(label || '').trim();
@@ -292,6 +304,14 @@ async function updateEliminationMatches(competition) {
     async function setStageSlot(stage, matchIndex, side, team) {
         const matches = await orderedStageMatches(stage);
         const match = matches[matchIndex];
+        if (!match || !team || match[side] === team) {
+            return;
+        }
+        await Match.updateOne({ _id: match._id }, { $set: { [side]: team } });
+        match[side] = team;
+    }
+
+    async function setMatchSlot(match, side, team) {
         if (!match || !team || match[side] === team) {
             return;
         }
@@ -370,6 +390,92 @@ async function updateEliminationMatches(competition) {
     }
 
     const groupLetters = Object.keys(standings).map(g => g.replace('Grupo ', '')).sort();
+    const qualifiedThirds = completion.allComplete() ? rankThirdPlacedTeams(standings).slice(0, 8) : [];
+    const qualifiedThirdByGroup = new Map(qualifiedThirds.map(team => [team.group, team]));
+    const usedThirdGroups = new Set();
+
+    function resolveGroupPlaceholder(label) {
+        const normalized = String(label || '').trim();
+        const direct = /^([12])([A-L])$/.exec(normalized);
+        if (direct) {
+            const pos = Number(direct[1]) - 1;
+            return team(direct[2], pos);
+        }
+        const third = /^3([A-L]+)$/.exec(normalized);
+        if (third && completion.allComplete()) {
+            const candidates = third[1].split('')
+                .map(group => qualifiedThirdByGroup.get(group))
+                .filter(Boolean)
+                .filter(entry => !usedThirdGroups.has(entry.group))
+                .sort((a, b) => {
+                    if (b.points !== a.points) return b.points - a.points;
+                    if (b.gd !== a.gd) return b.gd - a.gd;
+                    return b.gf - a.gf;
+                });
+            const selected = candidates[0];
+            if (selected) {
+                usedThirdGroups.add(selected.group);
+                return selected.team;
+            }
+        }
+        return null;
+    }
+
+    async function updateOfficialGroupPlaceholders() {
+        const query = Match.find({ competition });
+        const sorted = query && typeof query.sort === 'function'
+            ? query.sort({ order: 1, kickoff: 1, date: 1, time: 1, _id: 1 })
+            : query;
+        const allMatches = (await sorted) || [];
+        const knockoutMatches = allMatches.filter(match => {
+            const group = String(match.group_name || '');
+            return group && !group.startsWith('Grupo');
+        });
+        let foundOfficialPlaceholders = false;
+        for (const match of knockoutMatches) {
+            for (const side of ['team1', 'team2']) {
+                const resolved = resolveGroupPlaceholder(match[side]);
+                if (resolved) {
+                    foundOfficialPlaceholders = true;
+                    await setMatchSlot(match, side, resolved);
+                }
+            }
+        }
+        return { allMatches, foundOfficialPlaceholders };
+    }
+
+    async function propagateOfficialWinnerPlaceholders(existingMatches) {
+        const allMatches = existingMatches || [];
+        const byPlaceholder = new Map();
+        for (const match of allMatches) {
+            for (const side of ['team1', 'team2']) {
+                const value = String(match[side] || '').trim();
+                if (/^[WL]\d+$/.test(value)) {
+                    if (!byPlaceholder.has(value)) byPlaceholder.set(value, []);
+                    byPlaceholder.get(value).push({ match, side });
+                }
+            }
+        }
+
+        for (const match of allMatches) {
+            const number = matchNumber(match);
+            if (!number) continue;
+            const winner = winnerFromMatch(match);
+            const loser = loserFromMatch(match);
+            for (const slot of byPlaceholder.get(`W${number}`) || []) {
+                await setMatchSlot(slot.match, slot.side, winner);
+            }
+            for (const slot of byPlaceholder.get(`L${number}`) || []) {
+                await setMatchSlot(slot.match, slot.side, loser);
+            }
+        }
+    }
+
+    const officialUpdate = await updateOfficialGroupPlaceholders();
+    if (officialUpdate.foundOfficialPlaceholders) {
+        await propagateOfficialWinnerPlaceholders(officialUpdate.allMatches);
+        return;
+    }
 
     if (groupLetters.length > 4) {
         // Mundial 2026 style with Round of 32
