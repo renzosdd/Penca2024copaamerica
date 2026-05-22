@@ -26,6 +26,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
 import StageAccordionList from './StageAccordionList';
+import GroupTable from './GroupTable';
 import useLang from './useLang';
 import pointsForPrediction, { calculatePointsBreakdown } from './calcPoints';
 import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
@@ -114,6 +115,10 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     if (side === 'team1') return match.team1 || t('team1Label');
     if (side === 'team2') return match.team2 || t('team2Label');
     return '';
+  }
+
+  function shouldShowSeries(match) {
+    return match.series && !/^match-\d+$/i.test(String(match.series));
   }
 
   function updateDraft(matchId, field, value) {
@@ -309,7 +314,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
               <Chip size="small" label={kickoffText(match)} variant="outlined" />
               {match.group_name && <Chip size="small" label={match.group_name} />}
-              {match.series && <Chip size="small" color="secondary" label={match.series} />}
+              {shouldShowSeries(match) && <Chip size="small" color="secondary" label={match.series} />}
               {calendarLink && (
                 <Button
                   size="small"
@@ -548,6 +553,12 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 id="penca-tab-ranking"
                 aria-controls="penca-tabpanel-ranking"
               />
+              <Tab
+                label={t('groups')}
+                value="groups"
+                id="penca-tab-groups"
+                aria-controls="penca-tabpanel-groups"
+              />
             </Tabs>
 
             <TabPanel current={activeSection} value="matches">
@@ -701,6 +712,19 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                   color="primary"
                   size="small"
                 />
+              </Stack>
+            </TabPanel>
+
+            <TabPanel current={activeSection} value="groups">
+              <Stack spacing={1.5}>
+                <Typography variant="subtitle1">
+                  {t('groups')}
+                </Typography>
+                {Array.isArray(groups) && groups.length > 0 ? (
+                  <GroupTable groups={groups} />
+                ) : (
+                  <Alert severity="info">{t('groupsEmpty')}</Alert>
+                )}
               </Stack>
             </TabPanel>
 

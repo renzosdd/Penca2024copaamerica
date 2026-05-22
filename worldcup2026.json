@@ -18,15 +18,18 @@
     "officialFormatUrl": "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026",
     "generatedAt": "2026-05-21T15:53:45.047Z",
     "timeFormat": "Kickoffs are stored in Eastern Time (America/New_York, -04:00 during June/July 2026).",
-    "notes": "Knockout placeholders follow the official bracket labels: 1A/2B/3ACDF and W/L match numbers."
+    "notes": "Knockout placeholders follow the official bracket labels: 1A/2B/3ACDF and W/L match numbers.",
+    "language": "es",
+    "teamNames": "Spanish country names. Badge paths point to files under public/images when available.",
+    "missingFlagAssets": []
   },
   "matches": [
     {
       "id": "match-1",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "Mexico",
-      "team2": "South Africa",
+      "team1": "México",
+      "team2": "Sudáfrica",
       "kickoff": "2026-06-11T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-11",
@@ -41,14 +44,16 @@
       "order": 0,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/mexico.png",
+      "team2Badge": "/images/sudáfrica.png"
     },
     {
       "id": "match-2",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "South Korea",
-      "team2": "Czechia",
+      "team1": "Corea del Sur",
+      "team2": "Chequia",
       "kickoff": "2026-06-11T23:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-11",
@@ -63,14 +68,16 @@
       "order": 1,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/corea del sur.png",
+      "team2Badge": "/images/chequia.png"
     },
     {
       "id": "match-3",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "Canada",
-      "team2": "Bosnia & Herzegovina",
+      "team1": "Canadá",
+      "team2": "Bosnia y Herzegovina",
       "kickoff": "2026-06-12T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-12",
@@ -85,13 +92,15 @@
       "order": 2,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/canada.png",
+      "team2Badge": "/images/bosnia y herzegovina.png"
     },
     {
       "id": "match-4",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "United States",
+      "team1": "Estados Unidos",
       "team2": "Paraguay",
       "kickoff": "2026-06-12T22:00:00-04:00",
       "originalKickoff": {
@@ -107,14 +116,16 @@
       "order": 3,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/estados unidos.png",
+      "team2Badge": "/images/paraguay.png"
     },
     {
       "id": "match-5",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "Qatar",
-      "team2": "Switzerland",
+      "team1": "Catar",
+      "team2": "Suiza",
       "kickoff": "2026-06-13T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-13",
@@ -129,14 +140,16 @@
       "order": 4,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/catar.png",
+      "team2Badge": "/images/suiza.png"
     },
     {
       "id": "match-6",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "Brazil",
-      "team2": "Morocco",
+      "team1": "Brasil",
+      "team2": "Marruecos",
       "kickoff": "2026-06-13T19:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-13",
@@ -151,13 +164,15 @@
       "order": 5,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/brasil.png",
+      "team2Badge": "/images/marruecos.png"
     },
     {
       "id": "match-7",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "Ivory Coast",
+      "team1": "Costa de Marfil",
       "team2": "Ecuador",
       "kickoff": "2026-06-13T20:00:00-04:00",
       "originalKickoff": {
@@ -173,14 +188,16 @@
       "order": 6,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/costa de marfil.png",
+      "team2Badge": "/images/ecuador.png"
     },
     {
       "id": "match-8",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "Haiti",
-      "team2": "Scotland",
+      "team1": "Haití",
+      "team2": "Escocia",
       "kickoff": "2026-06-13T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-13",
@@ -195,14 +212,16 @@
       "order": 7,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/haití.png",
+      "team2Badge": "/images/escocia.png"
     },
     {
       "id": "match-9",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "Sweden",
-      "team2": "Tunisia",
+      "team1": "Suecia",
+      "team2": "Túnez",
       "kickoff": "2026-06-13T23:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-13",
@@ -217,14 +236,16 @@
       "order": 8,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/suecia.png",
+      "team2Badge": "/images/túnez.png"
     },
     {
       "id": "match-10",
       "stage": "Fase de grupos",
       "group": "Grupo D",
       "team1": "Australia",
-      "team2": "Türkiye",
+      "team2": "Turquía",
       "kickoff": "2026-06-14T01:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-14",
@@ -239,14 +260,16 @@
       "order": 9,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/australia.png",
+      "team2Badge": "/images/turquía.png"
     },
     {
       "id": "match-11",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "Germany",
-      "team2": "Curaçao",
+      "team1": "Alemania",
+      "team2": "Curazao",
       "kickoff": "2026-06-14T14:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-14",
@@ -261,14 +284,16 @@
       "order": 10,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/alemania.png",
+      "team2Badge": "/images/curazao.png"
     },
     {
       "id": "match-12",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "Netherlands",
-      "team2": "Japan",
+      "team1": "Países Bajos",
+      "team2": "Japón",
       "kickoff": "2026-06-14T17:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-14",
@@ -283,14 +308,16 @@
       "order": 11,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/países bajos.png",
+      "team2Badge": "/images/japón.png"
     },
     {
       "id": "match-13",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "Spain",
-      "team2": "Cape Verde",
+      "team1": "España",
+      "team2": "Cabo Verde",
       "kickoff": "2026-06-15T13:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-15",
@@ -305,14 +332,16 @@
       "order": 12,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/españa.png",
+      "team2Badge": "/images/cabo verde.png"
     },
     {
       "id": "match-14",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "Belgium",
-      "team2": "Egypt",
+      "team1": "Bélgica",
+      "team2": "Egipto",
       "kickoff": "2026-06-15T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-15",
@@ -327,13 +356,15 @@
       "order": 13,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/bélgica.png",
+      "team2Badge": "/images/egipto.png"
     },
     {
       "id": "match-15",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "Saudi Arabia",
+      "team1": "Arabia Saudita",
       "team2": "Uruguay",
       "kickoff": "2026-06-15T19:00:00-04:00",
       "originalKickoff": {
@@ -349,14 +380,16 @@
       "order": 14,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/arabia saudita.png",
+      "team2Badge": "/images/uruguay.png"
     },
     {
       "id": "match-16",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "Iran",
-      "team2": "New Zealand",
+      "team1": "Irán",
+      "team2": "Nueva Zelanda",
       "kickoff": "2026-06-15T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-15",
@@ -371,14 +404,16 @@
       "order": 15,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/irán.png",
+      "team2Badge": "/images/nueva zelanda.png"
     },
     {
       "id": "match-17",
       "stage": "Fase de grupos",
       "group": "Grupo J",
       "team1": "Argentina",
-      "team2": "Algeria",
+      "team2": "Argelia",
       "kickoff": "2026-06-15T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-15",
@@ -393,14 +428,16 @@
       "order": 16,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/argentina.png",
+      "team2Badge": "/images/argelia.png"
     },
     {
       "id": "match-18",
       "stage": "Fase de grupos",
       "group": "Grupo J",
       "team1": "Austria",
-      "team2": "Jordan",
+      "team2": "Jordania",
       "kickoff": "2026-06-16T01:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-16",
@@ -415,14 +452,16 @@
       "order": 17,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/austria.png",
+      "team2Badge": "/images/jordania.png"
     },
     {
       "id": "match-19",
       "stage": "Fase de grupos",
       "group": "Grupo K",
       "team1": "Portugal",
-      "team2": "DR Congo",
+      "team2": "RD Congo",
       "kickoff": "2026-06-16T14:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-16",
@@ -437,13 +476,15 @@
       "order": 18,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/portugal.png",
+      "team2Badge": "/images/rd congo.png"
     },
     {
       "id": "match-20",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "France",
+      "team1": "Francia",
       "team2": "Senegal",
       "kickoff": "2026-06-16T16:00:00-04:00",
       "originalKickoff": {
@@ -459,14 +500,16 @@
       "order": 19,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/francia.png",
+      "team2Badge": "/images/senegal.png"
     },
     {
       "id": "match-21",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "England",
-      "team2": "Croatia",
+      "team1": "Inglaterra",
+      "team2": "Croacia",
       "kickoff": "2026-06-16T17:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-16",
@@ -481,14 +524,16 @@
       "order": 20,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/inglaterra.png",
+      "team2Badge": "/images/croacia.png"
     },
     {
       "id": "match-22",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "Iraq",
-      "team2": "Norway",
+      "team1": "Irak",
+      "team2": "Noruega",
       "kickoff": "2026-06-16T19:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-16",
@@ -503,14 +548,16 @@
       "order": 21,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/irak.png",
+      "team2Badge": "/images/noruega.png"
     },
     {
       "id": "match-23",
       "stage": "Fase de grupos",
       "group": "Grupo L",
       "team1": "Ghana",
-      "team2": "Panama",
+      "team2": "Panamá",
       "kickoff": "2026-06-16T20:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-16",
@@ -525,13 +572,15 @@
       "order": 22,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/ghana.png",
+      "team2Badge": "/images/panama.png"
     },
     {
       "id": "match-24",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "Uzbekistan",
+      "team1": "Uzbekistán",
       "team2": "Colombia",
       "kickoff": "2026-06-16T23:00:00-04:00",
       "originalKickoff": {
@@ -547,14 +596,16 @@
       "order": 23,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/uzbekistán.png",
+      "team2Badge": "/images/colombia.png"
     },
     {
       "id": "match-25",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "Czechia",
-      "team2": "South Africa",
+      "team1": "Chequia",
+      "team2": "Sudáfrica",
       "kickoff": "2026-06-18T13:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-18",
@@ -569,14 +620,16 @@
       "order": 24,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/chequia.png",
+      "team2Badge": "/images/sudáfrica.png"
     },
     {
       "id": "match-26",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "Switzerland",
-      "team2": "Bosnia & Herzegovina",
+      "team1": "Suiza",
+      "team2": "Bosnia y Herzegovina",
       "kickoff": "2026-06-18T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-18",
@@ -591,14 +644,16 @@
       "order": 25,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/suiza.png",
+      "team2Badge": "/images/bosnia y herzegovina.png"
     },
     {
       "id": "match-27",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "Canada",
-      "team2": "Qatar",
+      "team1": "Canadá",
+      "team2": "Catar",
       "kickoff": "2026-06-18T19:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-18",
@@ -613,14 +668,16 @@
       "order": 26,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/canada.png",
+      "team2Badge": "/images/catar.png"
     },
     {
       "id": "match-28",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "Mexico",
-      "team2": "South Korea",
+      "team1": "México",
+      "team2": "Corea del Sur",
       "kickoff": "2026-06-18T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-18",
@@ -635,13 +692,15 @@
       "order": 27,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/mexico.png",
+      "team2Badge": "/images/corea del sur.png"
     },
     {
       "id": "match-29",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "United States",
+      "team1": "Estados Unidos",
       "team2": "Australia",
       "kickoff": "2026-06-19T16:00:00-04:00",
       "originalKickoff": {
@@ -657,14 +716,16 @@
       "order": 28,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/estados unidos.png",
+      "team2Badge": "/images/australia.png"
     },
     {
       "id": "match-30",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "Scotland",
-      "team2": "Morocco",
+      "team1": "Escocia",
+      "team2": "Marruecos",
       "kickoff": "2026-06-19T19:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-19",
@@ -679,14 +740,16 @@
       "order": 29,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/escocia.png",
+      "team2Badge": "/images/marruecos.png"
     },
     {
       "id": "match-31",
       "stage": "Fase de grupos",
       "group": "Grupo E",
       "team1": "Ecuador",
-      "team2": "Curaçao",
+      "team2": "Curazao",
       "kickoff": "2026-06-19T21:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-19",
@@ -701,14 +764,16 @@
       "order": 30,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/ecuador.png",
+      "team2Badge": "/images/curazao.png"
     },
     {
       "id": "match-32",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "Brazil",
-      "team2": "Haiti",
+      "team1": "Brasil",
+      "team2": "Haití",
       "kickoff": "2026-06-19T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-19",
@@ -723,13 +788,15 @@
       "order": 31,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/brasil.png",
+      "team2Badge": "/images/haití.png"
     },
     {
       "id": "match-33",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "Türkiye",
+      "team1": "Turquía",
       "team2": "Paraguay",
       "kickoff": "2026-06-19T22:00:00-04:00",
       "originalKickoff": {
@@ -745,14 +812,16 @@
       "order": 32,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/turquía.png",
+      "team2Badge": "/images/paraguay.png"
     },
     {
       "id": "match-34",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "Netherlands",
-      "team2": "Sweden",
+      "team1": "Países Bajos",
+      "team2": "Suecia",
       "kickoff": "2026-06-20T14:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-20",
@@ -767,14 +836,16 @@
       "order": 33,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/países bajos.png",
+      "team2Badge": "/images/suecia.png"
     },
     {
       "id": "match-35",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "Germany",
-      "team2": "Ivory Coast",
+      "team1": "Alemania",
+      "team2": "Costa de Marfil",
       "kickoff": "2026-06-20T17:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-20",
@@ -789,14 +860,16 @@
       "order": 34,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/alemania.png",
+      "team2Badge": "/images/costa de marfil.png"
     },
     {
       "id": "match-36",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "Tunisia",
-      "team2": "Japan",
+      "team1": "Túnez",
+      "team2": "Japón",
       "kickoff": "2026-06-20T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-20",
@@ -811,14 +884,16 @@
       "order": 35,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/túnez.png",
+      "team2Badge": "/images/japón.png"
     },
     {
       "id": "match-37",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "New Zealand",
-      "team2": "Egypt",
+      "team1": "Nueva Zelanda",
+      "team2": "Egipto",
       "kickoff": "2026-06-20T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-20",
@@ -833,14 +908,16 @@
       "order": 36,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/nueva zelanda.png",
+      "team2Badge": "/images/egipto.png"
     },
     {
       "id": "match-38",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "Spain",
-      "team2": "Saudi Arabia",
+      "team1": "España",
+      "team2": "Arabia Saudita",
       "kickoff": "2026-06-21T13:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-21",
@@ -855,14 +932,16 @@
       "order": 37,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/españa.png",
+      "team2Badge": "/images/arabia saudita.png"
     },
     {
       "id": "match-39",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "Belgium",
-      "team2": "Iran",
+      "team1": "Bélgica",
+      "team2": "Irán",
       "kickoff": "2026-06-21T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-21",
@@ -877,14 +956,16 @@
       "order": 38,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/bélgica.png",
+      "team2Badge": "/images/irán.png"
     },
     {
       "id": "match-40",
       "stage": "Fase de grupos",
       "group": "Grupo H",
       "team1": "Uruguay",
-      "team2": "Cape Verde",
+      "team2": "Cabo Verde",
       "kickoff": "2026-06-21T19:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-21",
@@ -899,7 +980,9 @@
       "order": 39,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/uruguay.png",
+      "team2Badge": "/images/cabo verde.png"
     },
     {
       "id": "match-41",
@@ -921,14 +1004,16 @@
       "order": 40,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/argentina.png",
+      "team2Badge": "/images/austria.png"
     },
     {
       "id": "match-42",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "France",
-      "team2": "Iraq",
+      "team1": "Francia",
+      "team2": "Irak",
       "kickoff": "2026-06-22T18:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-22",
@@ -943,14 +1028,16 @@
       "order": 41,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/francia.png",
+      "team2Badge": "/images/irak.png"
     },
     {
       "id": "match-43",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "Panama",
-      "team2": "Croatia",
+      "team1": "Panamá",
+      "team2": "Croacia",
       "kickoff": "2026-06-22T20:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-22",
@@ -965,13 +1052,15 @@
       "order": 42,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/panama.png",
+      "team2Badge": "/images/croacia.png"
     },
     {
       "id": "match-44",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "Norway",
+      "team1": "Noruega",
       "team2": "Senegal",
       "kickoff": "2026-06-22T21:00:00-04:00",
       "originalKickoff": {
@@ -987,14 +1076,16 @@
       "order": 43,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/noruega.png",
+      "team2Badge": "/images/senegal.png"
     },
     {
       "id": "match-45",
       "stage": "Fase de grupos",
       "group": "Grupo K",
       "team1": "Colombia",
-      "team2": "DR Congo",
+      "team2": "RD Congo",
       "kickoff": "2026-06-22T23:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-22",
@@ -1009,14 +1100,16 @@
       "order": 44,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/colombia.png",
+      "team2Badge": "/images/rd congo.png"
     },
     {
       "id": "match-46",
       "stage": "Fase de grupos",
       "group": "Grupo K",
       "team1": "Portugal",
-      "team2": "Uzbekistan",
+      "team2": "Uzbekistán",
       "kickoff": "2026-06-23T14:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-23",
@@ -1031,13 +1124,15 @@
       "order": 45,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/portugal.png",
+      "team2Badge": "/images/uzbekistán.png"
     },
     {
       "id": "match-47",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "England",
+      "team1": "Inglaterra",
       "team2": "Ghana",
       "kickoff": "2026-06-23T17:00:00-04:00",
       "originalKickoff": {
@@ -1053,14 +1148,16 @@
       "order": 46,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/inglaterra.png",
+      "team2Badge": "/images/ghana.png"
     },
     {
       "id": "match-48",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "Jordan",
-      "team2": "Algeria",
+      "team1": "Jordania",
+      "team2": "Argelia",
       "kickoff": "2026-06-23T20:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-23",
@@ -1075,14 +1172,16 @@
       "order": 47,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/jordania.png",
+      "team2Badge": "/images/argelia.png"
     },
     {
       "id": "match-49",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "Switzerland",
-      "team2": "Canada",
+      "team1": "Suiza",
+      "team2": "Canadá",
       "kickoff": "2026-06-24T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1097,14 +1196,16 @@
       "order": 48,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/suiza.png",
+      "team2Badge": "/images/canada.png"
     },
     {
       "id": "match-50",
       "stage": "Fase de grupos",
       "group": "Grupo B",
-      "team1": "Bosnia & Herzegovina",
-      "team2": "Qatar",
+      "team1": "Bosnia y Herzegovina",
+      "team2": "Catar",
       "kickoff": "2026-06-24T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1119,14 +1220,16 @@
       "order": 49,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/bosnia y herzegovina.png",
+      "team2Badge": "/images/catar.png"
     },
     {
       "id": "match-51",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "Scotland",
-      "team2": "Brazil",
+      "team1": "Escocia",
+      "team2": "Brasil",
       "kickoff": "2026-06-24T19:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1141,14 +1244,16 @@
       "order": 50,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/escocia.png",
+      "team2Badge": "/images/brasil.png"
     },
     {
       "id": "match-52",
       "stage": "Fase de grupos",
       "group": "Grupo C",
-      "team1": "Morocco",
-      "team2": "Haiti",
+      "team1": "Marruecos",
+      "team2": "Haití",
       "kickoff": "2026-06-24T19:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1163,14 +1268,16 @@
       "order": 51,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/marruecos.png",
+      "team2Badge": "/images/haití.png"
     },
     {
       "id": "match-53",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "Japan",
-      "team2": "Sweden",
+      "team1": "Japón",
+      "team2": "Suecia",
       "kickoff": "2026-06-24T20:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1185,14 +1292,16 @@
       "order": 52,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/japón.png",
+      "team2Badge": "/images/suecia.png"
     },
     {
       "id": "match-54",
       "stage": "Fase de grupos",
       "group": "Grupo F",
-      "team1": "Tunisia",
-      "team2": "Netherlands",
+      "team1": "Túnez",
+      "team2": "Países Bajos",
       "kickoff": "2026-06-24T20:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1207,14 +1316,16 @@
       "order": 53,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/túnez.png",
+      "team2Badge": "/images/países bajos.png"
     },
     {
       "id": "match-55",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "Czechia",
-      "team2": "Mexico",
+      "team1": "Chequia",
+      "team2": "México",
       "kickoff": "2026-06-24T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1229,14 +1340,16 @@
       "order": 54,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/chequia.png",
+      "team2Badge": "/images/mexico.png"
     },
     {
       "id": "match-56",
       "stage": "Fase de grupos",
       "group": "Grupo A",
-      "team1": "South Africa",
-      "team2": "South Korea",
+      "team1": "Sudáfrica",
+      "team2": "Corea del Sur",
       "kickoff": "2026-06-24T22:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1251,14 +1364,16 @@
       "order": 55,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/sudáfrica.png",
+      "team2Badge": "/images/corea del sur.png"
     },
     {
       "id": "match-57",
       "stage": "Fase de grupos",
       "group": "Grupo D",
-      "team1": "Türkiye",
-      "team2": "United States",
+      "team1": "Turquía",
+      "team2": "Estados Unidos",
       "kickoff": "2026-06-24T23:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-24",
@@ -1273,7 +1388,9 @@
       "order": 56,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/turquía.png",
+      "team2Badge": "/images/estados unidos.png"
     },
     {
       "id": "match-58",
@@ -1295,14 +1412,16 @@
       "order": 57,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/paraguay.png",
+      "team2Badge": "/images/australia.png"
     },
     {
       "id": "match-59",
       "stage": "Fase de grupos",
       "group": "Grupo E",
       "team1": "Ecuador",
-      "team2": "Germany",
+      "team2": "Alemania",
       "kickoff": "2026-06-25T17:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-25",
@@ -1317,14 +1436,16 @@
       "order": 58,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/ecuador.png",
+      "team2Badge": "/images/alemania.png"
     },
     {
       "id": "match-60",
       "stage": "Fase de grupos",
       "group": "Grupo E",
-      "team1": "Curaçao",
-      "team2": "Ivory Coast",
+      "team1": "Curazao",
+      "team2": "Costa de Marfil",
       "kickoff": "2026-06-25T17:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-25",
@@ -1339,14 +1460,16 @@
       "order": 59,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/curazao.png",
+      "team2Badge": "/images/costa de marfil.png"
     },
     {
       "id": "match-61",
       "stage": "Fase de grupos",
       "group": "Grupo H",
-      "team1": "Cape Verde",
-      "team2": "Saudi Arabia",
+      "team1": "Cabo Verde",
+      "team2": "Arabia Saudita",
       "kickoff": "2026-06-25T21:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-25",
@@ -1361,14 +1484,16 @@
       "order": 60,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/cabo verde.png",
+      "team2Badge": "/images/arabia saudita.png"
     },
     {
       "id": "match-62",
       "stage": "Fase de grupos",
       "group": "Grupo H",
       "team1": "Uruguay",
-      "team2": "Spain",
+      "team2": "España",
       "kickoff": "2026-06-25T21:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-25",
@@ -1383,14 +1508,16 @@
       "order": 61,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/uruguay.png",
+      "team2Badge": "/images/españa.png"
     },
     {
       "id": "match-63",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "Egypt",
-      "team2": "Iran",
+      "team1": "Egipto",
+      "team2": "Irán",
       "kickoff": "2026-06-26T00:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-26",
@@ -1405,14 +1532,16 @@
       "order": 62,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/egipto.png",
+      "team2Badge": "/images/irán.png"
     },
     {
       "id": "match-64",
       "stage": "Fase de grupos",
       "group": "Grupo G",
-      "team1": "New Zealand",
-      "team2": "Belgium",
+      "team1": "Nueva Zelanda",
+      "team2": "Bélgica",
       "kickoff": "2026-06-26T00:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-26",
@@ -1427,14 +1556,16 @@
       "order": 63,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/nueva zelanda.png",
+      "team2Badge": "/images/bélgica.png"
     },
     {
       "id": "match-65",
       "stage": "Fase de grupos",
       "group": "Grupo I",
-      "team1": "Norway",
-      "team2": "France",
+      "team1": "Noruega",
+      "team2": "Francia",
       "kickoff": "2026-06-26T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-26",
@@ -1449,14 +1580,16 @@
       "order": 64,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/noruega.png",
+      "team2Badge": "/images/francia.png"
     },
     {
       "id": "match-66",
       "stage": "Fase de grupos",
       "group": "Grupo I",
       "team1": "Senegal",
-      "team2": "Iraq",
+      "team2": "Irak",
       "kickoff": "2026-06-26T16:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-26",
@@ -1471,7 +1604,9 @@
       "order": 65,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/senegal.png",
+      "team2Badge": "/images/irak.png"
     },
     {
       "id": "match-67",
@@ -1493,14 +1628,16 @@
       "order": 66,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/colombia.png",
+      "team2Badge": "/images/portugal.png"
     },
     {
       "id": "match-68",
       "stage": "Fase de grupos",
       "group": "Grupo K",
-      "team1": "DR Congo",
-      "team2": "Uzbekistan",
+      "team1": "RD Congo",
+      "team2": "Uzbekistán",
       "kickoff": "2026-06-26T20:30:00-04:00",
       "originalKickoff": {
         "date": "2026-06-26",
@@ -1515,13 +1652,15 @@
       "order": 67,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/rd congo.png",
+      "team2Badge": "/images/uzbekistán.png"
     },
     {
       "id": "match-69",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "Algeria",
+      "team1": "Argelia",
       "team2": "Austria",
       "kickoff": "2026-06-26T23:00:00-04:00",
       "originalKickoff": {
@@ -1537,13 +1676,15 @@
       "order": 68,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/argelia.png",
+      "team2Badge": "/images/austria.png"
     },
     {
       "id": "match-70",
       "stage": "Fase de grupos",
       "group": "Grupo J",
-      "team1": "Jordan",
+      "team1": "Jordania",
       "team2": "Argentina",
       "kickoff": "2026-06-26T23:00:00-04:00",
       "originalKickoff": {
@@ -1559,14 +1700,16 @@
       "order": 69,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/jordania.png",
+      "team2Badge": "/images/argentina.png"
     },
     {
       "id": "match-71",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "Panama",
-      "team2": "England",
+      "team1": "Panamá",
+      "team2": "Inglaterra",
       "kickoff": "2026-06-27T18:00:00-04:00",
       "originalKickoff": {
         "date": "2026-06-27",
@@ -1581,13 +1724,15 @@
       "order": 70,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/panama.png",
+      "team2Badge": "/images/inglaterra.png"
     },
     {
       "id": "match-72",
       "stage": "Fase de grupos",
       "group": "Grupo L",
-      "team1": "Croatia",
+      "team1": "Croacia",
       "team2": "Ghana",
       "kickoff": "2026-06-27T18:00:00-04:00",
       "originalKickoff": {
@@ -1603,7 +1748,9 @@
       "order": 71,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": "/images/croacia.png",
+      "team2Badge": "/images/ghana.png"
     },
     {
       "id": "match-73",
@@ -1625,7 +1772,9 @@
       "order": 72,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-74",
@@ -1647,7 +1796,9 @@
       "order": 73,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-75",
@@ -1669,7 +1820,9 @@
       "order": 74,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-76",
@@ -1691,7 +1844,9 @@
       "order": 75,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-77",
@@ -1713,7 +1868,9 @@
       "order": 76,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-78",
@@ -1735,7 +1892,9 @@
       "order": 77,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-79",
@@ -1757,7 +1916,9 @@
       "order": 78,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-80",
@@ -1779,7 +1940,9 @@
       "order": 79,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-81",
@@ -1801,7 +1964,9 @@
       "order": 80,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-82",
@@ -1823,7 +1988,9 @@
       "order": 81,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-83",
@@ -1845,7 +2012,9 @@
       "order": 82,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-84",
@@ -1867,7 +2036,9 @@
       "order": 83,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-85",
@@ -1889,7 +2060,9 @@
       "order": 84,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-86",
@@ -1911,7 +2084,9 @@
       "order": 85,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-87",
@@ -1933,7 +2108,9 @@
       "order": 86,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-88",
@@ -1955,7 +2132,9 @@
       "order": 87,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-89",
@@ -1977,7 +2156,9 @@
       "order": 88,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-90",
@@ -1999,7 +2180,9 @@
       "order": 89,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-91",
@@ -2021,7 +2204,9 @@
       "order": 90,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-92",
@@ -2043,7 +2228,9 @@
       "order": 91,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-93",
@@ -2065,7 +2252,9 @@
       "order": 92,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-94",
@@ -2087,7 +2276,9 @@
       "order": 93,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-95",
@@ -2109,7 +2300,9 @@
       "order": 94,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-96",
@@ -2131,7 +2324,9 @@
       "order": 95,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-97",
@@ -2153,7 +2348,9 @@
       "order": 96,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-98",
@@ -2175,7 +2372,9 @@
       "order": 97,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-99",
@@ -2197,7 +2396,9 @@
       "order": 98,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-100",
@@ -2219,7 +2420,9 @@
       "order": 99,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-101",
@@ -2241,7 +2444,9 @@
       "order": 100,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-102",
@@ -2263,7 +2468,9 @@
       "order": 101,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-103",
@@ -2285,7 +2492,9 @@
       "order": 102,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     },
     {
       "id": "match-104",
@@ -2307,7 +2516,9 @@
       "order": 103,
       "result1": null,
       "result2": null,
-      "penaltyWinner": null
+      "penaltyWinner": null,
+      "team1Badge": null,
+      "team2Badge": null
     }
   ]
 }
