@@ -22,7 +22,7 @@ const translations = {
     ERROR_GETTING_PENCAS: 'Error getting pencas',
     ERROR_CREATING_PENCA: 'Error creating penca',
     PENCA_NOT_FOUND: 'Penca not found',
-    FORBIDDEN: 'Forbidden',
+    FORBIDDEN: 'No tenés permisos para realizar esta acción',
     ERROR_GETTING_PENCA: 'Error getting penca',
     ERROR_UPDATING_PENCA: 'Error updating penca',
     PENCA_UPDATED: 'Penca actualizada',

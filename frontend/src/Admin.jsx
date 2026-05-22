@@ -40,8 +40,13 @@ function matchDateValue(match) {
 
 async function responseError(res) {
   try {
-    const body = await res.json();
-    return body?.error || body?.message || 'request failed';
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const body = await res.json();
+      return body?.error || body?.message || 'request failed';
+    }
+    const text = await res.text();
+    return text || 'request failed';
   } catch {
     return 'request failed';
   }
@@ -81,7 +86,7 @@ export default function Admin() {
       setMatches(Array.isArray(data.matches) ? data.matches : []);
     } catch (err) {
       console.error('load matches error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setLoading(false);
     }
@@ -97,7 +102,7 @@ export default function Admin() {
       setUsers(await res.json());
     } catch (err) {
       console.error('load users error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setLoadingUsers(false);
     }
@@ -113,7 +118,7 @@ export default function Admin() {
       setMissingSummary(await res.json());
     } catch (err) {
       console.error('load missing summary error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setLoadingMissing(false);
     }
@@ -147,7 +152,7 @@ export default function Admin() {
       await Promise.all([loadUsers(), loadMatches(), loadMissingSummary()]);
     } catch (err) {
       console.error('user approval error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setActingUserId('');
     }
@@ -174,7 +179,7 @@ export default function Admin() {
       await loadMatches();
     } catch (err) {
       console.error('save match error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setSavingMatchId('');
     }
@@ -193,7 +198,7 @@ export default function Admin() {
       await loadMatches();
     } catch (err) {
       console.error('recalculate error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setRecalculating(false);
     }
@@ -216,7 +221,7 @@ export default function Admin() {
       setMatches([]);
     } catch (err) {
       console.error('clear matches error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setClearingMatches(false);
     }
@@ -245,7 +250,7 @@ export default function Admin() {
       await Promise.all([loadMatches(), loadMissingSummary()]);
     } catch (err) {
       console.error('reset fixture error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setResettingFixture(false);
     }
@@ -264,7 +269,7 @@ export default function Admin() {
       setNotice(t('adminRemindersSent', { sent: data.sent || 0, total: data.total || 0 }));
     } catch (err) {
       console.error('send reminders error', err);
-      setError(t('networkError'));
+      setError(err.message || t('networkError'));
     } finally {
       setSendingReminders(false);
     }

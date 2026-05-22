@@ -33,6 +33,10 @@ const SESSION_SECRET = process.env.SESSION_SECRET;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+if (process.env.VERCEL || process.env.TRUST_PROXY === 'true') {
+    app.set('trust proxy', 1);
+}
+
 const uri = process.env.MONGODB_URI;
 if (!uri) {
     console.error('MONGODB_URI environment variable not provided. Exiting...');
@@ -226,6 +230,10 @@ app.get('/', (req, res) => {
     }
     // Enviar la aplicación React compilada
     res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
+});
+
+app.get('/favicon.ico', (req, res) => {
+    res.redirect(301, '/images/LogoSquare.png');
 });
 
 app.get('/dashboard', isAuthenticated, async (req, res) => {
