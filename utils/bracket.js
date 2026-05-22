@@ -37,40 +37,36 @@ function setCachedStandings(competition, data) {
 async function computeGroupStandings(competition) {
     const query = Match.find({ competition });
     const selected = query && typeof query.select === 'function'
-        ? query.select('group_name team1 team2 result1 result2')
+        ? query.select('group_name team1 team2 team1Badge team2Badge result1 result2')
         : query;
     const matches = await (selected && typeof selected.lean === 'function' ? selected.lean() : selected);
     const standings = {};
+
+    function ensureTeam(group, team, badge) {
+        if (!standings[group][team]) {
+            standings[group][team] = {
+                team,
+                badge: badge || null,
+                points: 0,
+                gf: 0,
+                ga: 0,
+                gd: 0,
+                wins: 0,
+                draws: 0,
+                losses: 0
+            };
+        } else if (!standings[group][team].badge && badge) {
+            standings[group][team].badge = badge;
+        }
+    }
 
     for (const match of matches) {
         const group = match.group_name;
         if (!group || !group.startsWith('Grupo')) continue;
 
         if (!standings[group]) standings[group] = {};
-        if (!standings[group][match.team1]) {
-            standings[group][match.team1] = {
-                team: match.team1,
-                points: 0,
-                gf: 0,
-                ga: 0,
-                gd: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0
-            };
-        }
-        if (!standings[group][match.team2]) {
-            standings[group][match.team2] = {
-                team: match.team2,
-                points: 0,
-                gf: 0,
-                ga: 0,
-                gd: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0
-            };
-        }
+        ensureTeam(group, match.team1, match.team1Badge);
+        ensureTeam(group, match.team2, match.team2Badge);
 
         if (!hasCompletedScore(match)) continue;
 

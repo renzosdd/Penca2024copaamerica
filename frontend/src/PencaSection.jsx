@@ -27,6 +27,7 @@ import { alpha } from '@mui/material/styles';
 import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
 import StageAccordionList from './StageAccordionList';
 import GroupTable from './GroupTable';
+import KnockoutBracket from './KnockoutBracket';
 import useLang from './useLang';
 import pointsForPrediction, { calculatePointsBreakdown } from './calcPoints';
 import { formatLocalKickoff, getMatchKickoffDate, matchKickoffValue, minutesUntilKickoff } from './kickoffUtils';
@@ -64,7 +65,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
   const matchTimeValue = useCallback(match => matchKickoffValue(match), []);
 
-  const filteredMatches = useMemo(() => {
+  const pencaMatches = useMemo(() => {
     let list = [];
     if (Array.isArray(penca.fixture) && penca.fixture.length) {
       const fixtureSet = new Set(penca.fixture.map(String));
@@ -72,8 +73,11 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     } else {
       list = matches.filter(m => m.competition === penca.competition);
     }
-    const sorted = [...list].sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
-    return sorted.filter(match => {
+    return [...list].sort((a, b) => matchTimeValue(a) - matchTimeValue(b));
+  }, [matchTimeValue, matches, penca.competition, penca.fixture]);
+
+  const filteredMatches = useMemo(() => {
+    return pencaMatches.filter(match => {
       const kickoff = getMatchKickoffDate(match);
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -97,7 +101,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       }
       return true;
     });
-  }, [filter, matchTimeValue, matches, penca.competition, penca.fixture]);
+  }, [filter, pencaMatches]);
 
   const hasAnyMatches = filteredMatches.length > 0;
 
@@ -559,6 +563,12 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 id="penca-tab-groups"
                 aria-controls="penca-tabpanel-groups"
               />
+              <Tab
+                label={t('pencaTabBracket')}
+                value="bracket"
+                id="penca-tab-bracket"
+                aria-controls="penca-tabpanel-bracket"
+              />
             </Tabs>
 
             <TabPanel current={activeSection} value="matches">
@@ -645,7 +655,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 renderMatch={renderMatchCard}
                 loading={isLoading}
                 emptyMessage={t('adminMatchesNoResults')}
-                showGroupTables
               />
             </TabPanel>
 
@@ -725,6 +734,15 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 ) : (
                   <Alert severity="info">{t('groupsEmpty')}</Alert>
                 )}
+              </Stack>
+            </TabPanel>
+
+            <TabPanel current={activeSection} value="bracket">
+              <Stack spacing={1.5}>
+                <Typography variant="subtitle1">
+                  {t('pencaTabBracket')}
+                </Typography>
+                <KnockoutBracket matches={pencaMatches} t={t} />
               </Stack>
             </TabPanel>
 
