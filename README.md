@@ -81,10 +81,13 @@ SMTP_SECURE=false # true si usas TLS en el puerto 465
 SMTP_USER=<usuario>
 SMTP_PASS=<password>
 EMAIL_FROM="Penca 2026 <no-reply@tudominio.com>"
+# Email que recibe nuevas solicitudes pendientes de aprobacion
+ADMIN_EMAIL=<admin@tudominio.com>
 ```
 
 Si las credenciales no están presentes, la aplicación registrará el intento de
-envío en consola sin fallar. Para evitar alcanzar el límite de concurrencia en la
+envío en consola sin fallar. `ADMIN_EMAIL` recibe un aviso cuando se registra un
+jugador nuevo y queda pendiente de aprobación. Para evitar alcanzar el límite de concurrencia en la
 base de datos, la auditoría se mantiene desactivada por defecto. Podés habilitarla
 desde el panel de administración y elegir qué tipos de cambios (usuarios,
 pencas, predicciones) se registran en la colección `auditlogs` cuando esté activa,

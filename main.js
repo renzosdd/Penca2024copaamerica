@@ -14,6 +14,7 @@ const language = require('./middleware/language');
 const { DEFAULT_COMPETITION } = require('./config');
 const { getMessage } = require('./utils/messages');
 const { ensureUserInPenca, ensureWorldCupPenca } = require('./utils/worldcupPenca');
+const { notifyAdminApprovalRequest } = require('./utils/emailService');
 
 dotenv.config();
 
@@ -148,6 +149,7 @@ const matchesRouter = require('./routes/matches');
 const profileRouter = require('./routes/profile');
 
 function getPublicUser(user) {
+    const legacyGoogleOnlyAccount = user.googleId && !user.googleLinkedAt && !user.passwordUpdatedAt;
     return {
         username: user.username,
         displayName: user.displayName,
@@ -157,9 +159,15 @@ function getPublicUser(user) {
         phone: user.phone || '',
         dob: user.dob || null,
         avatarUrl: user.avatarUrl || '',
+        hasGoogle: Boolean(user.googleId),
+        hasPassword: user.passwordLoginEnabled !== false && !legacyGoogleOnlyAccount,
         role: user.role,
         valid: user.valid === true || user.role === 'admin',
-        approvalStatus: user.approvalStatus || (user.valid ? 'approved' : 'pending')
+        approvalStatus: user.valid
+            ? 'approved'
+            : user.approvalStatus === 'rejected'
+                ? 'rejected'
+                : 'pending'
     };
 }
 
@@ -169,6 +177,14 @@ async function createScoreForUser(userId) {
             userId,
             competition: DEFAULT_COMPETITION
         });
+    }
+}
+
+async function notifyAdminOfPendingUser(user) {
+    try {
+        await notifyAdminApprovalRequest({ player: user });
+    } catch (error) {
+        console.error('Approval request email error:', error);
     }
 }
 
@@ -248,9 +264,10 @@ async function findOrCreateGoogleUser(profile) {
         let changed = false;
         if (!user.googleId) {
             user.googleId = profile.sub;
+            user.googleLinkedAt = new Date();
             changed = true;
         }
-        if (!user.avatarUrl && profile.picture) {
+        if (profile.picture && user.avatarUrl !== profile.picture) {
             user.avatarUrl = profile.picture;
             changed = true;
         }
@@ -284,11 +301,40 @@ async function findOrCreateGoogleUser(profile) {
         surname: profile.family_name || '',
         email: normalizedEmail,
         avatarUrl: profile.picture || null,
+        passwordLoginEnabled: false,
+        googleLinkedAt: new Date(),
         valid: false,
         approvalStatus: 'pending'
     });
     await user.save();
     await createScoreForUser(user._id);
+    await notifyAdminOfPendingUser(user);
+    return user;
+}
+
+async function linkGoogleProfileToUser(profile, userId) {
+    const normalizedEmail = String(profile.email || '').trim().toLowerCase();
+    if (!profile.sub || !normalizedEmail || profile.email_verified !== true) {
+        throw new Error('Google profile is missing a verified email');
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new Error('User not found');
+    }
+    if (String(user.email || '').trim().toLowerCase() !== normalizedEmail) {
+        throw new Error('Google email must match current account email');
+    }
+    const owner = await User.findOne({ googleId: profile.sub });
+    if (owner && String(owner._id) !== String(user._id)) {
+        throw new Error('Google account is already linked');
+    }
+    user.googleId = profile.sub;
+    user.googleLinkedAt = new Date();
+    if (profile.picture) user.avatarUrl = profile.picture;
+    if (!user.name && profile.given_name) user.name = profile.given_name;
+    if (!user.surname && profile.family_name) user.surname = profile.family_name;
+    if (!user.displayName && profile.name) user.displayName = profile.name;
+    await user.save();
     return user;
 }
 
@@ -318,6 +364,8 @@ async function initializeDatabase() {
             admin = new User({
                 username: adminUsername,
                 password: hashedPassword,
+                passwordLoginEnabled: true,
+                passwordUpdatedAt: new Date(),
                 displayName: 'Administrador',
                 email: adminEmail.toLowerCase(),
                 role: 'admin',
@@ -452,6 +500,9 @@ app.post('/login', async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: getMessage('USER_NOT_FOUND', req.lang) });
         }
+        if (user.passwordLoginEnabled === false) {
+            return res.status(401).json({ error: getMessage('INCORRECT_PASSWORD', req.lang) });
+        }
         const passwordMatch = await bcrypt.compare(password, user.password);
         debugLog('Coincidencia de contraseña:', passwordMatch);
         if (!passwordMatch) {
@@ -476,7 +527,24 @@ app.get('/auth/google', (req, res) => {
         return res.redirect('/?authError=google_not_configured');
     }
     const state = crypto.randomBytes(24).toString('hex');
-    req.session.googleOAuthState = state;
+    req.session.googleOAuth = { state, mode: 'login' };
+    const params = new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        redirect_uri: getGoogleRedirectUri(req),
+        response_type: 'code',
+        scope: 'openid email profile',
+        state,
+        prompt: 'select_account'
+    });
+    res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+});
+
+app.get('/auth/google/link', isAuthenticated, (req, res) => {
+    if (!googleAuthConfigured()) {
+        return res.redirect('/dashboard?profileError=google_not_configured');
+    }
+    const state = crypto.randomBytes(24).toString('hex');
+    req.session.googleOAuth = { state, mode: 'link', userId: String(req.session.user._id) };
     const params = new URLSearchParams({
         client_id: process.env.GOOGLE_CLIENT_ID,
         redirect_uri: getGoogleRedirectUri(req),
@@ -496,15 +564,21 @@ app.get('/auth/google/callback', async (req, res) => {
     if (!googleAuthConfigured()) {
         return res.redirect('/?authError=google_not_configured');
     }
-    if (!code || !state || state !== req.session.googleOAuthState) {
+    const oauthSession = req.session.googleOAuth;
+    if (!code || !state || !oauthSession || state !== oauthSession.state) {
         return res.redirect('/?authError=google_invalid_state');
     }
-    delete req.session.googleOAuthState;
+    delete req.session.googleOAuth;
     try {
         const profile = await getGoogleProfile({
             code: String(code),
             redirectUri: getGoogleRedirectUri(req)
         });
+        if (oauthSession.mode === 'link') {
+            const user = await linkGoogleProfileToUser(profile, oauthSession.userId);
+            req.session.user = user;
+            return res.redirect('/dashboard?profileNotice=google_linked');
+        }
         const user = await findOrCreateGoogleUser(profile);
         req.session.user = user;
         if (user.role === 'admin') {
@@ -513,6 +587,9 @@ app.get('/auth/google/callback', async (req, res) => {
         return res.redirect('/dashboard');
     } catch (err) {
         console.error('Error en login con Google', err);
+        if (oauthSession.mode === 'link') {
+            return res.redirect('/dashboard?profileError=google_link_failed');
+        }
         return res.redirect('/?authError=google_failed');
     }
 });
@@ -553,6 +630,8 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         const user = new User({
             username: normalizedUsername,
             password: hashedPassword,
+            passwordLoginEnabled: true,
+            passwordUpdatedAt: new Date(),
             displayName: derivedDisplayName,
             name,
             surname,
@@ -568,6 +647,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         await user.save();
         // Crear registro de puntaje
         await createScoreForUser(user._id);
+        await notifyAdminOfPendingUser(user);
         req.session.user = user;
         debugLog('Usuario registrado y sesión iniciada:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });

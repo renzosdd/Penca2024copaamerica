@@ -188,12 +188,18 @@ router.get('/edit', isAuthenticated, isAdmin, (req, res) => {
 router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
   try {
     const users = await User.find({ role: 'user' })
-      .select('username displayName name surname email valid approvalStatus approvedAt createdAt')
+      .select('username displayName name surname email valid approvalStatus approvedAt createdAt googleId googleLinkedAt passwordLoginEnabled passwordUpdatedAt')
       .sort({ valid: 1, createdAt: -1, username: 1 })
       .lean();
     const normalized = users.map(user => ({
       ...user,
-      approvalStatus: user.valid ? 'approved' : (user.approvalStatus || 'pending')
+      approvalStatus: user.valid
+        ? 'approved'
+        : user.approvalStatus === 'rejected'
+          ? 'rejected'
+          : 'pending',
+      hasGoogle: Boolean(user.googleId),
+      hasPassword: user.passwordLoginEnabled !== false && !(user.googleId && !user.googleLinkedAt && !user.passwordUpdatedAt)
     }));
     res.json({
       pending: normalized.filter(user => user.approvalStatus === 'pending'),

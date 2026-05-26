@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const { isAuthenticated } = require('../middleware/auth');
 
@@ -55,6 +56,37 @@ router.post('/profile/update', isAuthenticated, upload.single('avatar'), async (
     res.json({ message: 'Profile updated' });
   } catch (err) {
     console.error('update profile error', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/profile/password', isAuthenticated, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const normalizedPassword = String(newPassword || '');
+    if (normalizedPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const user = await User.findById(req.session.user._id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const legacyGoogleOnlyAccount = user.googleId && !user.googleLinkedAt && !user.passwordUpdatedAt;
+    if (user.passwordLoginEnabled !== false && !legacyGoogleOnlyAccount) {
+      const passwordMatch = await bcrypt.compare(String(currentPassword || ''), user.password);
+      if (!passwordMatch) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+    }
+
+    user.password = await bcrypt.hash(normalizedPassword, 10);
+    user.passwordLoginEnabled = true;
+    user.passwordUpdatedAt = new Date();
+    await user.save();
+    req.session.user = user;
+    res.json({ message: 'Password updated' });
+  } catch (err) {
+    console.error('update password error', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button, CircularProgress, Alert, Container, Stack, Typography, Paper } from '@mui/material';
 import PencaSection from './PencaSection';
 import ProfileForm from './ProfileForm';
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [showProfile, setShowProfile] = useState(false);
   const [shareNotice, setShareNotice] = useState('');
+  const [searchParams] = useSearchParams();
   const { t } = useLang();
 
   const loadDashboard = useCallback(async () => {
@@ -53,6 +55,9 @@ export default function Dashboard() {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  const profileNotice = searchParams.get('profileNotice');
+  const profileError = searchParams.get('profileError');
 
   useEffect(() => {
     async function loadBaseData() {
@@ -245,6 +250,8 @@ export default function Dashboard() {
         </Paper>
 
         {shareNotice && <Alert severity="success">{shareNotice}</Alert>}
+        {profileNotice === 'google_linked' && <Alert severity="success">{t('profileGoogleLinked')}</Alert>}
+        {profileError === 'google_link_failed' && <Alert severity="error">{t('profileGoogleLinkFailed')}</Alert>}
 
         {showProfile && <ProfileForm user={user} onUpdated={loadDashboard} />}
 
