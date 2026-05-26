@@ -221,8 +221,10 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   };
 
   const matchFilterButtonSx = {
-    width: { xs: '100%', sm: 'auto' },
-    minWidth: { sm: 96 }
+    flex: '0 0 auto',
+    minWidth: { xs: 'auto', sm: 96 },
+    px: { xs: 1.5, sm: 2 },
+    borderRadius: 999
   };
 
   const renderMatchCard = (match, section) => {
@@ -554,15 +556,22 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
 
             <TabPanel current={activeSection} value="matches">
               <Stack
-                direction={{ xs: 'column', sm: 'row' }}
+                direction="row"
                 spacing={1}
                 sx={{
                   mb: 2,
                   alignItems: 'center',
                   justifyContent: 'flex-start',
-                  flexWrap: 'wrap',
+                  flexWrap: { xs: 'nowrap', sm: 'wrap' },
+                  overflowX: { xs: 'auto', sm: 'visible' },
+                  pb: { xs: 0.5, sm: 0 },
                   rowGap: 1,
-                  columnGap: 1
+                  columnGap: 1,
+                  WebkitOverflowScrolling: 'touch',
+                  scrollbarWidth: 'none',
+                  '&::-webkit-scrollbar': {
+                    display: 'none'
+                  }
                 }}
               >
                 <Button

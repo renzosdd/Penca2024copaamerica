@@ -30,18 +30,34 @@ export default function Header() {
           sx={{
             justifyContent: 'space-between',
             gap: 2,
-            py: 1,
+            py: 0,
             flexWrap: 'wrap',
             rowGap: 1.5,
-            minHeight: 'auto'
+            minHeight: { xs: 64, sm: 72 }
           }}
         >
           <Box
             component={Link}
             to="/"
-            sx={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexGrow: { xs: 1, sm: 0 } }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              alignSelf: 'stretch',
+              textDecoration: 'none',
+              flexGrow: { xs: 1, sm: 0 }
+            }}
           >
-            <Box component="img" src="/images/Logo.png" alt="Penca" sx={{ height: { xs: 32, sm: 40 }, mr: 1 }} />
+            <Box
+              component="img"
+              src="/images/Logo.png"
+              alt="Penca"
+              sx={{
+                height: { xs: 56, sm: 64 },
+                maxHeight: '100%',
+                width: 'auto',
+                mr: 1
+              }}
+            />
           </Box>
           <Box
             sx={{
