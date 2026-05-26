@@ -24,7 +24,6 @@ import {
   Typography
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import CalendarTodayOutlined from '@mui/icons-material/CalendarTodayOutlined';
 import StageAccordionList from './StageAccordionList';
 import GroupTable from './GroupTable';
 import KnockoutBracket from './KnockoutBracket';
@@ -217,41 +216,13 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     return t('scheduleTbd');
   };
 
-  const calendarHref = match => {
-    const kickoff = getMatchKickoffDate(match);
-    if (!kickoff) {
-      return null;
-    }
-    const formatDate = date => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
-    const end = new Date(kickoff.getTime() + 2 * 60 * 60000);
-    const summary = `${match.team1} vs ${match.team2}`;
-    const description = [penca.name, match.group_name, match.series].filter(Boolean).join(' - ');
-    const ics = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Penca//Match//EN',
-      'BEGIN:VEVENT',
-      `UID:${match._id || `${summary}-${formatDate(kickoff)}`}`,
-      `DTSTAMP:${formatDate(new Date())}`,
-      `DTSTART:${formatDate(kickoff)}`,
-      `DTEND:${formatDate(end)}`,
-      `SUMMARY:${summary}`,
-      description ? `DESCRIPTION:${description}` : null,
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ]
-      .filter(Boolean)
-      .join('\n');
-    return `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
-  };
-
-  const calendarFilename = match => {
-    const base = match._id || `${match.team1}-${match.team2}`;
-    return `match-${base}.ics`;
-  };
-
   const toggleBreakdown = matchId => {
     setOpenBreakdowns(prev => ({ ...prev, [matchId]: !prev[matchId] }));
+  };
+
+  const matchFilterButtonSx = {
+    width: { xs: '100%', sm: 'auto' },
+    minWidth: { sm: 96 }
   };
 
   const renderMatchCard = (match, section) => {
@@ -288,7 +259,6 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     ].filter(item => item.points > 0);
     const earnedItems = breakdownItems.filter(item => item.earned);
     const showBreakdown = Boolean(openBreakdowns[match._id]);
-    const calendarLink = calendarHref(match);
 
     const hasPrediction = pr.result1 != null && pr.result2 != null;
     const hasResult = match.result1 != null && match.result2 != null;
@@ -301,6 +271,29 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
       result1Value !== '' &&
       result2Value !== '' &&
       Number(result1Value) === Number(result2Value);
+    const scoreInputSx = {
+      width: { xs: 72, sm: 82 },
+      flexShrink: 0,
+      '& .MuiInputBase-root': {
+        height: 44,
+        borderRadius: 2
+      },
+      '& input': {
+        textAlign: 'center',
+        fontSize: '1rem',
+        fontWeight: 700,
+        px: 1
+      }
+    };
+    const scoreInputProps = {
+      min: 0,
+      inputMode: 'numeric',
+      pattern: '[0-9]*',
+      maxLength: 3
+    };
+    const handleScoreChange = field => e => {
+      updateDraft(match._id, field, e.target.value.replace(/\D/g, ''));
+    };
 
     return (
       <Paper
@@ -319,27 +312,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
               <Chip size="small" label={kickoffText(match)} variant="outlined" />
               {match.group_name && <Chip size="small" label={match.group_name} />}
               {shouldShowSeries(match) && <Chip size="small" color="secondary" label={match.series} />}
-              {calendarLink && (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  component="a"
-                  href={calendarLink}
-                  download={calendarFilename(match)}
-                  startIcon={<CalendarTodayOutlined fontSize="inherit" />}
-                >
-                  {t('saveToCalendar')}
-                </Button>
-              )}
             </Stack>
-          </Stack>
-
-          <Stack spacing={1.5} sx={{ px: { xs: 0, sm: 0.5 } }}>
-            {renderTeam(match.team1, match.team1Badge)}
-            <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: 2 }}>
-              {t('vs')}
-            </Typography>
-            {renderTeam(match.team2, match.team2Badge)}
           </Stack>
 
           <Box
@@ -354,32 +327,40 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
             onSubmit={e => submitPrediction(e, penca._id, match._id)}
             sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
           >
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', sm: 'center' }}>
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1 }}>
+            <Stack spacing={1.25} sx={{ px: { xs: 0, sm: 0.5 } }}>
+              <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between">
+                {renderTeam(match.team1, match.team1Badge)}
                 <TextField
                   name="result1"
-                  type="number"
+                  type="text"
                   value={result1Value}
-                  onChange={e => updateDraft(match._id, 'result1', e.target.value)}
+                  onChange={handleScoreChange('result1')}
                   required
                   size="small"
-                  fullWidth
-                  inputProps={{ min: 0, inputMode: 'numeric', pattern: '[0-9]*' }}
+                  inputProps={{ ...scoreInputProps, 'aria-label': `${match.team1} ${t('result')}` }}
                   disabled={!editable}
+                  sx={scoreInputSx}
                 />
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  -
-                </Typography>
+              </Stack>
+              <Typography
+                variant="overline"
+                color="text.secondary"
+                sx={{ alignSelf: 'center', letterSpacing: 2 }}
+              >
+                {t('vs')}
+              </Typography>
+              <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between">
+                {renderTeam(match.team2, match.team2Badge)}
                 <TextField
                   name="result2"
-                  type="number"
+                  type="text"
                   value={result2Value}
-                  onChange={e => updateDraft(match._id, 'result2', e.target.value)}
+                  onChange={handleScoreChange('result2')}
                   required
                   size="small"
-                  fullWidth
-                  inputProps={{ min: 0, inputMode: 'numeric', pattern: '[0-9]*' }}
+                  inputProps={{ ...scoreInputProps, 'aria-label': `${match.team2} ${t('result')}` }}
                   disabled={!editable}
+                  sx={scoreInputSx}
                 />
               </Stack>
               <Button
@@ -388,7 +369,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 disabled={!editable}
                 size="large"
                 fullWidth
-                sx={{ flexShrink: 0 }}
+                sx={{ flexShrink: 0, mt: 0.5 }}
               >
                 {t('save')}
               </Button>
@@ -591,7 +572,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     e.stopPropagation();
                     setFilter('all');
                   }}
-                  fullWidth
+                  sx={matchFilterButtonSx}
                 >
                   {t('allMatches')}
                 </Button>
@@ -602,7 +583,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     e.stopPropagation();
                     setFilter('today');
                   }}
-                  fullWidth
+                  sx={matchFilterButtonSx}
                 >
                   {t('today')}
                 </Button>
@@ -613,7 +594,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     e.stopPropagation();
                     setFilter('tomorrow');
                   }}
-                  fullWidth
+                  sx={matchFilterButtonSx}
                 >
                   {t('tomorrow')}
                 </Button>
@@ -624,7 +605,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     e.stopPropagation();
                     setFilter('upcoming');
                   }}
-                  fullWidth
+                  sx={matchFilterButtonSx}
                 >
                   {t('upcoming')}
                 </Button>
@@ -635,7 +616,7 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                     e.stopPropagation();
                     setFilter('played');
                   }}
-                  fullWidth
+                  sx={matchFilterButtonSx}
                 >
                   {t('played')}
                 </Button>
