@@ -16,7 +16,7 @@ const upload = multer({
 
 router.post('/profile/update', isAuthenticated, upload.single('avatar'), async (req, res) => {
   try {
-    const { displayName, name, surname, email, dob, avatarUrl } = req.body;
+    const { displayName, name, surname, email, phone, dob, avatarUrl } = req.body;
     const user = await User.findById(req.session.user._id);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
@@ -34,6 +34,7 @@ router.post('/profile/update', isAuthenticated, upload.single('avatar'), async (
     if (name !== undefined) user.name = name;
     if (surname !== undefined) user.surname = surname;
     if (email !== undefined) user.email = email;
+    if (phone !== undefined) user.phone = String(phone).trim();
     if (dob) {
       const d = new Date(dob);
       if (isNaN(d.getTime())) {

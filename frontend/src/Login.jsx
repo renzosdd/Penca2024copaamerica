@@ -1,15 +1,17 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import {
   Alert,
   Button,
   Card,
   CardContent,
   Container,
+  Divider,
   Stack,
   TextField,
   Typography
 } from '@mui/material';
+import GoogleIcon from '@mui/icons-material/Google';
 import useLang from './useLang';
  
 export default function Login() {
@@ -17,7 +19,15 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useLang();
+
+  useEffect(() => {
+    const authError = searchParams.get('authError');
+    if (authError) {
+      setError(t(`authError_${authError}`));
+    }
+  }, [searchParams, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -54,6 +64,17 @@ export default function Login() {
                 {t('login')}
               </Typography>
             </Stack>
+            <Button
+              component="a"
+              href="/auth/google"
+              variant="outlined"
+              fullWidth
+              size="large"
+              startIcon={<GoogleIcon />}
+            >
+              {t('loginWithGoogle')}
+            </Button>
+            <Divider>{t('or')}</Divider>
             <Stack component="form" spacing={2} onSubmit={handleSubmit}>
               <TextField
                 id="login-email"

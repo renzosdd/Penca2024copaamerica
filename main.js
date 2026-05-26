@@ -6,6 +6,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const MongoStore = require('connect-mongo');
 const { isAuthenticated, isAdmin } = require('./middleware/auth');
 const cacheControl = require('./middleware/cacheControl');
@@ -146,6 +147,151 @@ const adminRouter = require('./routes/admin');
 const matchesRouter = require('./routes/matches');
 const profileRouter = require('./routes/profile');
 
+function getPublicUser(user) {
+    return {
+        username: user.username,
+        displayName: user.displayName,
+        name: user.name || '',
+        surname: user.surname || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        dob: user.dob || null,
+        avatarUrl: user.avatarUrl || '',
+        role: user.role,
+        valid: user.valid === true || user.role === 'admin',
+        approvalStatus: user.approvalStatus || (user.valid ? 'approved' : 'pending')
+    };
+}
+
+async function createScoreForUser(userId) {
+    if (DEFAULT_COMPETITION) {
+        await Score.create({
+            userId,
+            competition: DEFAULT_COMPETITION
+        });
+    }
+}
+
+function getGoogleRedirectUri(req) {
+    if (process.env.GOOGLE_REDIRECT_URI) {
+        return process.env.GOOGLE_REDIRECT_URI;
+    }
+    return `${req.protocol}://${req.get('host')}/auth/google/callback`;
+}
+
+function googleAuthConfigured() {
+    return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+}
+
+function sanitizeUsername(value) {
+    const cleaned = String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9._-]/g, '')
+        .replace(/^[._-]+|[._-]+$/g, '')
+        .slice(0, 32);
+    return cleaned || 'usuario';
+}
+
+async function generateUniqueUsername(email, fallbackName) {
+    const emailBase = String(email || '').split('@')[0];
+    const base = sanitizeUsername(emailBase || fallbackName);
+    for (let attempt = 0; attempt < 50; attempt += 1) {
+        const candidate = attempt === 0 ? base : `${base}${attempt + 1}`;
+        const existing = await User.findOne({ username: candidate }).select('_id').lean();
+        if (!existing) {
+            return candidate;
+        }
+    }
+    return `${base}${crypto.randomBytes(4).toString('hex')}`;
+}
+
+async function getGoogleProfile({ code, redirectUri }) {
+    const tokenParams = new URLSearchParams({
+        code,
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code'
+    });
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: tokenParams
+    });
+    if (!tokenRes.ok) {
+        throw new Error(`Google token exchange failed: ${tokenRes.status}`);
+    }
+    const tokenData = await tokenRes.json();
+    const profileRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` }
+    });
+    if (!profileRes.ok) {
+        throw new Error(`Google profile fetch failed: ${profileRes.status}`);
+    }
+    return profileRes.json();
+}
+
+async function findOrCreateGoogleUser(profile) {
+    const normalizedEmail = String(profile.email || '').trim().toLowerCase();
+    if (!profile.sub || !normalizedEmail || profile.email_verified !== true) {
+        throw new Error('Google profile is missing a verified email');
+    }
+
+    let user = await User.findOne({ googleId: profile.sub });
+    if (!user) {
+        user = await User.findOne({ email: normalizedEmail });
+    }
+
+    if (user) {
+        let changed = false;
+        if (!user.googleId) {
+            user.googleId = profile.sub;
+            changed = true;
+        }
+        if (!user.avatarUrl && profile.picture) {
+            user.avatarUrl = profile.picture;
+            changed = true;
+        }
+        if (!user.name && profile.given_name) {
+            user.name = profile.given_name;
+            changed = true;
+        }
+        if (!user.surname && profile.family_name) {
+            user.surname = profile.family_name;
+            changed = true;
+        }
+        if (!user.displayName && profile.name) {
+            user.displayName = profile.name;
+            changed = true;
+        }
+        if (changed) {
+            await user.save();
+        }
+        return user;
+    }
+
+    const username = await generateUniqueUsername(normalizedEmail, profile.name);
+    const randomPassword = crypto.randomBytes(32).toString('hex');
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+    user = new User({
+        username,
+        password: hashedPassword,
+        googleId: profile.sub,
+        displayName: profile.name || username,
+        name: profile.given_name || '',
+        surname: profile.family_name || '',
+        email: normalizedEmail,
+        avatarUrl: profile.picture || null,
+        valid: false,
+        approvalStatus: 'pending'
+    });
+    await user.save();
+    await createScoreForUser(user._id);
+    return user;
+}
+
 async function initializeDatabase() {
     try {
         // Verificar si existe el usuario administrador
@@ -260,13 +406,7 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
         const isApproved = user.valid === true || user.role === 'admin';
         if (!isApproved) {
             return res.json({
-                user: {
-                    username: user.username,
-                    displayName: user.displayName,
-                    role: user.role,
-                    valid: false,
-                    approvalStatus: user.approvalStatus || 'pending'
-                },
+                user: getPublicUser(user),
                 penca: null,
                 approvalRequired: true
             });
@@ -282,13 +422,7 @@ app.get('/api/dashboard', isAuthenticated, async (req, res) => {
         };
 
         res.json({
-            user: {
-                username: user.username,
-                displayName: user.displayName,
-                role: user.role,
-                valid: true,
-                approvalStatus: user.approvalStatus || 'approved'
-            },
+            user: getPublicUser(user),
             penca: formatted
         });
     } catch (err) {
@@ -337,6 +471,52 @@ app.post('/login', async (req, res) => {
     }
 });
 
+app.get('/auth/google', (req, res) => {
+    if (!googleAuthConfigured()) {
+        return res.redirect('/?authError=google_not_configured');
+    }
+    const state = crypto.randomBytes(24).toString('hex');
+    req.session.googleOAuthState = state;
+    const params = new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        redirect_uri: getGoogleRedirectUri(req),
+        response_type: 'code',
+        scope: 'openid email profile',
+        state,
+        prompt: 'select_account'
+    });
+    res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+});
+
+app.get('/auth/google/callback', async (req, res) => {
+    const { code, state, error } = req.query;
+    if (error) {
+        return res.redirect('/?authError=google_cancelled');
+    }
+    if (!googleAuthConfigured()) {
+        return res.redirect('/?authError=google_not_configured');
+    }
+    if (!code || !state || state !== req.session.googleOAuthState) {
+        return res.redirect('/?authError=google_invalid_state');
+    }
+    delete req.session.googleOAuthState;
+    try {
+        const profile = await getGoogleProfile({
+            code: String(code),
+            redirectUri: getGoogleRedirectUri(req)
+        });
+        const user = await findOrCreateGoogleUser(profile);
+        req.session.user = user;
+        if (user.role === 'admin') {
+            return res.redirect('/admin/edit');
+        }
+        return res.redirect('/dashboard');
+    } catch (err) {
+        console.error('Error en login con Google', err);
+        return res.redirect('/?authError=google_failed');
+    }
+});
+
 // Configurar Multer para almacenar archivos en memoria y usar el nombre de usuario
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -352,7 +532,7 @@ const upload = multer({
 });
 
 app.post('/register', upload.single('avatar'), async (req, res) => {
-    const { username, password, displayName, name, surname, email, dob, avatarUrl } = req.body;
+    const { username, password, displayName, name, surname, email, phone, dob, avatarUrl } = req.body;
     const avatar = req.file ? req.file.buffer : null;
     const avatarContentType = req.file ? req.file.mimetype : null;
     try {
@@ -377,6 +557,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
             name,
             surname,
             email: normalizedEmail,
+            phone: phone || '',
             dob,
             avatarUrl: avatarUrl || null,
             avatar,
@@ -386,13 +567,7 @@ app.post('/register', upload.single('avatar'), async (req, res) => {
         });
         await user.save();
         // Crear registro de puntaje
-        if (DEFAULT_COMPETITION) {
-            const score = new Score({
-                userId: user._id,
-                competition: DEFAULT_COMPETITION
-            });
-            await score.save();
-        }
+        await createScoreForUser(user._id);
         req.session.user = user;
         debugLog('Usuario registrado y sesión iniciada:', user.username);
         res.json({ success: true, redirectUrl: '/dashboard' });

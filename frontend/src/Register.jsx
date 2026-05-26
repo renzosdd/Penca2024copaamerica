@@ -6,10 +6,12 @@ import {
   Card,
   CardContent,
   Container,
+  Divider,
   Stack,
   TextField,
   Typography
 } from '@mui/material';
+import GoogleIcon from '@mui/icons-material/Google';
 import useLang from './useLang';
  
 export default function Register() {
@@ -17,9 +19,8 @@ export default function Register() {
     username: '',
     displayName: '',
     password: '',
-    name: '',
-    surname: '',
     email: '',
+    phone: '',
     dob: '',
     avatarUrl: ''
   });
@@ -64,6 +65,17 @@ export default function Register() {
                 {t('register')}
               </Typography>
             </Stack>
+            <Button
+              component="a"
+              href="/auth/google"
+              variant="outlined"
+              fullWidth
+              size="large"
+              startIcon={<GoogleIcon />}
+            >
+              {t('registerWithGoogle')}
+            </Button>
+            <Divider>{t('or')}</Divider>
             <Stack component="form" spacing={2} onSubmit={handleSubmit}>
               <TextField
                 id="register-username"
@@ -76,7 +88,7 @@ export default function Register() {
               />
               <TextField
                 id="register-display-name"
-                label={t('name')}
+                label={t('fullName')}
                 name="displayName"
                 value={form.displayName}
                 onChange={handleChange}
@@ -93,24 +105,6 @@ export default function Register() {
                 required
                 fullWidth
               />
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <TextField
-                  id="register-name"
-                  label={t('name')}
-                  name="name"
-                  value={form.name}
-                  onChange={handleChange}
-                  fullWidth
-                />
-                <TextField
-                  id="register-surname"
-                  label={t('surname')}
-                  name="surname"
-                  value={form.surname}
-                  onChange={handleChange}
-                  fullWidth
-                />
-              </Stack>
               <TextField
                 id="register-email"
                 label={t('email')}
@@ -120,6 +114,15 @@ export default function Register() {
                 onChange={handleChange}
                 required
                 fullWidth
+              />
+              <TextField
+                id="register-phone"
+                label={t('phone')}
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                fullWidth
+                autoComplete="tel"
               />
               <TextField
                 id="register-dob"

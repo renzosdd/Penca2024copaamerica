@@ -5,9 +5,8 @@ import useLang from './useLang';
 export default function ProfileForm({ user, onUpdated }) {
   const [form, setForm] = useState({
     displayName: user?.displayName || user?.name || '',
-    name: user?.name || '',
-    surname: user?.surname || '',
     email: user?.email || '',
+    phone: user?.phone || '',
     dob: user?.dob ? user.dob.slice(0, 10) : '',
     avatarUrl: user?.avatarUrl || ''
   });
@@ -50,10 +49,9 @@ export default function ProfileForm({ user, onUpdated }) {
           {t('myProfile')}
         </Typography>
         <form onSubmit={handleSubmit}>
-          <TextField label="Nombre público" name="displayName" value={form.displayName} onChange={handleChange} required fullWidth margin="normal" />
-          <TextField label={t('name')} name="name" value={form.name} onChange={handleChange} fullWidth margin="normal" />
-          <TextField label={t('surname')} name="surname" value={form.surname} onChange={handleChange} fullWidth margin="normal" />
+          <TextField label={t('fullName')} name="displayName" value={form.displayName} onChange={handleChange} required fullWidth margin="normal" />
           <TextField label={t('email')} type="email" name="email" value={form.email} onChange={handleChange} required fullWidth margin="normal" />
+          <TextField label={t('phone')} name="phone" value={form.phone} onChange={handleChange} fullWidth margin="normal" autoComplete="tel" />
           <TextField label={t('birthdate')} type="date" name="dob" value={form.dob} onChange={handleChange} InputLabelProps={{ shrink: true }} fullWidth margin="normal" />
           <TextField label="Avatar URL" name="avatarUrl" value={form.avatarUrl} onChange={handleChange} fullWidth margin="normal" />
           <Button variant="contained" type="submit" fullWidth>

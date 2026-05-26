@@ -35,6 +35,11 @@ DEFAULT_COMPETITION=<nombre>
 SESSION_SECRET=<tu_clave>
 # Opcionalmente puedes definir el puerto de la app
 PORT=3000
+# Login con Google
+GOOGLE_CLIENT_ID=<client_id_de_google>
+GOOGLE_CLIENT_SECRET=<client_secret_de_google>
+# Opcional si tu callback publico no se puede inferir de la request
+GOOGLE_REDIRECT_URI=https://tu-dominio.com/auth/google/callback
 # Idioma de los mensajes (es o en)
 APP_LANG=es
 Tambin puedes cambiar el idioma de las respuestas agregando `?lang=es` o `?lang=en` a cada solicitud, o enviando el encabezado `Accept-Language`.
@@ -48,6 +53,13 @@ SPORTSDB_API_URL=https://www.thesportsdb.com/api/v2/json
 ```
 Si no defines `SESSION_SECRET`, el servidor se cerrará al iniciarse.
 `APP_LANG` permite elegir el idioma de las respuestas del backend. Usa `es` para español o `en` para inglés.
+
+Para habilitar Google, crea un OAuth Client ID de tipo web en Google Cloud,
+configura las variables `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET`, y agrega
+`https://tu-dominio.com/auth/google/callback` como Authorized redirect URI. En
+desarrollo puedes registrar `http://localhost:3000/auth/google/callback`. Si tu
+app está detrás de un proxy o dominio custom, define `GOOGLE_REDIRECT_URI` con
+la URL exacta registrada en Google.
 
 Cada competencia puede definir `apiLeagueId` y `apiSeason` para usar valores diferentes a los de las variables globales al obtener fixtures o actualizar resultados.
 Tambin puedes cambiar el idioma de las respuestas agregando `?lang=es` o `?lang=en` a cada solicitud, o enviando el encabezado `Accept-Language`.
@@ -199,6 +211,8 @@ y vuelve a importar `worldcup2026.json` para arrancar desde cero.
 
 ## Nuevos endpoints
 
+- `GET /auth/google` – inicia el login o registro con Google.
+- `GET /auth/google/callback` – recibe el callback OAuth de Google y crea o enlaza el usuario.
 - `GET /groups` – devuelve las tablas de posiciones actuales.
 - `GET /bracket` – muestra la llave del knockout según la última recalculación.
 - `POST /admin/recalculate-bracket` – fuerza el nuevo cálculo del bracket con
