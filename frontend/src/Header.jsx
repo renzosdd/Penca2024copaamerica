@@ -29,11 +29,10 @@ export default function Header() {
           disableGutters
           sx={{
             justifyContent: 'space-between',
-            gap: 2,
+            gap: { xs: 1.25, sm: 2 },
             py: 0,
-            flexWrap: 'wrap',
-            rowGap: 1.5,
-            minHeight: { xs: 64, sm: 72 }
+            flexWrap: 'nowrap',
+            minHeight: { xs: 72, sm: 76 }
           }}
         >
           <Box
@@ -44,7 +43,8 @@ export default function Header() {
               alignItems: 'center',
               alignSelf: 'stretch',
               textDecoration: 'none',
-              flexGrow: { xs: 1, sm: 0 }
+              flex: '1 1 auto',
+              minWidth: 0
             }}
           >
             <Box
@@ -52,7 +52,7 @@ export default function Header() {
               src="/images/Logo.png"
               alt="Penca"
               sx={{
-                height: { xs: 56, sm: 64 },
+                height: { xs: 64, sm: 68 },
                 maxHeight: '100%',
                 width: 'auto',
                 mr: 1
@@ -63,15 +63,24 @@ export default function Header() {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 1,
-              flexWrap: 'wrap',
+              gap: { xs: 0.75, sm: 1 },
+              flexWrap: 'nowrap',
               justifyContent: 'flex-end',
-              width: { xs: '100%', sm: 'auto' }
+              flex: '0 0 auto'
             }}
           >
             <LangToggle />
             {['/dashboard', '/admin/edit'].includes(location.pathname) && (
-              <Button variant="contained" color="primary" onClick={handleLogout} size="small">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleLogout}
+                size="small"
+                sx={{
+                  whiteSpace: 'nowrap',
+                  px: { xs: 1.75, sm: 2 }
+                }}
+              >
                 {t('logout')}
               </Button>
             )}

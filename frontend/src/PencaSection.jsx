@@ -24,6 +24,10 @@ import {
   Typography
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import GroupsIcon from '@mui/icons-material/Groups';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
+import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import StageAccordionList from './StageAccordionList';
 import GroupTable from './GroupTable';
 import KnockoutBracket from './KnockoutBracket';
@@ -226,6 +230,8 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
     px: { xs: 1.5, sm: 2 },
     borderRadius: 999
   };
+  const mobileTabLabelSx = { display: { xs: 'none', sm: 'inline' } };
+  const mobileTabIconSx = { display: { xs: 'inline-flex', sm: 'none' }, fontSize: 24 };
 
   const renderMatchCard = (match, section) => {
     const pr = getPrediction(penca._id, match._id) || {};
@@ -517,40 +523,54 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
                 borderBottom: 1,
                 borderColor: 'divider',
                 '& .MuiTabs-flexContainer': {
-                  flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                  flexWrap: 'nowrap',
                   justifyContent: { xs: 'center', md: 'center' },
-                  gap: { xs: 1, sm: 0 }
+                  gap: 0
                 },
                 '& .MuiTab-root': {
-                  flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' },
-                  minHeight: 'auto',
-                  borderRadius: { xs: 2, sm: 0 }
+                  flex: { xs: '1 1 25%', sm: '0 0 auto' },
+                  minWidth: { xs: 0, sm: 90 },
+                  minHeight: { xs: 48, sm: 'auto' },
+                  px: { xs: 1, sm: 2 },
+                  py: { xs: 1, sm: 1.5 },
+                  borderRadius: 0
+                },
+                '& .MuiTab-iconWrapper': {
+                  mb: 0
                 }
               }}
             >
               <Tab
-                label={t('pencaTabMatches')}
+                icon={<SportsSoccerIcon sx={mobileTabIconSx} />}
+                label={<Box component="span" sx={mobileTabLabelSx}>{t('pencaTabMatches')}</Box>}
                 value="matches"
                 id="penca-tab-matches"
                 aria-controls="penca-tabpanel-matches"
+                aria-label={t('pencaTabMatches')}
               />
               <Tab
-                label={t('pencaTabRanking')}
+                icon={<LeaderboardIcon sx={mobileTabIconSx} />}
+                label={<Box component="span" sx={mobileTabLabelSx}>{t('pencaTabRanking')}</Box>}
                 value="ranking"
                 id="penca-tab-ranking"
                 aria-controls="penca-tabpanel-ranking"
+                aria-label={t('pencaTabRanking')}
               />
               <Tab
-                label={t('groups')}
+                icon={<GroupsIcon sx={mobileTabIconSx} />}
+                label={<Box component="span" sx={mobileTabLabelSx}>{t('groups')}</Box>}
                 value="groups"
                 id="penca-tab-groups"
                 aria-controls="penca-tabpanel-groups"
+                aria-label={t('groups')}
               />
               <Tab
-                label={t('pencaTabBracket')}
+                icon={<AccountTreeIcon sx={mobileTabIconSx} />}
+                label={<Box component="span" sx={mobileTabLabelSx}>{t('pencaTabBracket')}</Box>}
                 value="bracket"
                 id="penca-tab-bracket"
                 aria-controls="penca-tabpanel-bracket"
+                aria-label={t('pencaTabBracket')}
               />
             </Tabs>
 
