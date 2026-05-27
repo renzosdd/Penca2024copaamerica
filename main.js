@@ -539,7 +539,18 @@ app.post('/password/forgot', async (req, res) => {
             });
             if (user?.email) {
                 const reset = await issuePasswordReset(user, req);
-                await notifyPasswordReset({ player: user, resetUrl: reset.resetUrl });
+                try {
+                    await notifyPasswordReset({ player: user, resetUrl: reset.resetUrl });
+                } catch (emailError) {
+                    console.error('Password reset email error', {
+                        code: emailError.code,
+                        command: emailError.command,
+                        responseCode: emailError.responseCode,
+                        response: emailError.response,
+                        message: emailError.message
+                    });
+                    return res.status(502).json({ error: getMessage('EMAIL_SEND_ERROR', req.lang) });
+                }
             }
         }
         res.json({ success: true });

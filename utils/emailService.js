@@ -23,20 +23,44 @@ if (isConfigured) {
   });
 }
 
+function smtpErrorDetails(error) {
+  if (!error) return {};
+  return {
+    code: error.code,
+    command: error.command,
+    responseCode: error.responseCode,
+    response: error.response,
+    message: error.message
+  };
+}
+
 async function sendEmail({ to, subject, text, html }) {
   if (!isConfigured) {
     console.info('[emailService] Email not sent (transporter not configured)', { to, subject });
     return false;
   }
 
-  await transporter.sendMail({
-    from: emailConfig.from,
-    to,
-    subject,
-    text,
-    html
-  });
-  return true;
+  try {
+    await transporter.sendMail({
+      from: emailConfig.from,
+      to,
+      subject,
+      text,
+      html
+    });
+    return true;
+  } catch (error) {
+    console.error('[emailService] SMTP send failed', {
+      to,
+      subject,
+      host: emailConfig.host,
+      port: emailConfig.port,
+      secure: emailConfig.secure,
+      from: emailConfig.from,
+      error: smtpErrorDetails(error)
+    });
+    throw error;
+  }
 }
 
 function buildApprovalMessage({ playerName, pencaName }) {
