@@ -9,9 +9,15 @@ import {
   MenuItem,
   Paper,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Typography
 } from '@mui/material';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import SettingsSuggestIcon from '@mui/icons-material/SettingsSuggest';
+import SportsScoreIcon from '@mui/icons-material/SportsScore';
 import useLang from './useLang';
 import { formatLocalKickoff, matchKickoffValue } from './kickoffUtils';
 
@@ -53,13 +59,14 @@ async function responseError(res) {
 }
 
 export default function Admin() {
+  const [tab, setTab] = useState('results');
   const [matches, setMatches] = useState([]);
   const [competitionName, setCompetitionName] = useState('');
   const [loading, setLoading] = useState(false);
   const [savingMatchId, setSavingMatchId] = useState('');
   const [recalculating, setRecalculating] = useState(false);
   const [clearingMatches, setClearingMatches] = useState(false);
-  const [users, setUsers] = useState({ pending: [], approved: [], rejected: [] });
+  const [users, setUsers] = useState({ pending: [], approved: [], rejected: [], disabled: [] });
   const [missingSummary, setMissingSummary] = useState(null);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [loadingMissing, setLoadingMissing] = useState(false);
@@ -136,19 +143,31 @@ export default function Admin() {
     );
   };
 
-  const updateUserApproval = async (userId, action) => {
+  const runUserAction = async (userId, action) => {
+    if (action === 'delete' && !window.confirm(t('adminDeleteUserConfirm'))) {
+      return;
+    }
+    if (action === 'disable' && !window.confirm(t('adminDisableUserConfirm'))) {
+      return;
+    }
     setActingUserId(userId);
     setError('');
     setNotice('');
     try {
-      const res = await fetch(`/admin/users/${userId}/${action}`, { method: 'POST' });
+      const method = action === 'delete' ? 'DELETE' : 'POST';
+      const res = await fetch(`/admin/users/${userId}/${action}`, { method });
       if (!res.ok) {
         throw new Error(await responseError(res));
       }
       const data = await res.json();
-      setNotice(action === 'approve'
-        ? t('adminUserApproved', { emailStatus: data.emailSent ? t('emailSent') : t('emailNotConfigured') })
-        : t('adminUserRejected'));
+      const messageByAction = {
+        approve: t('adminUserApproved', { emailStatus: data.emailSent ? t('emailSent') : t('emailNotConfigured') }),
+        reject: t('adminUserRejected'),
+        disable: t('adminUserDisabled'),
+        delete: t('adminUserDeleted'),
+        'password-reset': t('adminPasswordResetSent', { emailStatus: data.emailSent ? t('emailSent') : t('emailNotConfigured') })
+      };
+      setNotice(messageByAction[action] || t('adminUserUpdated'));
       await Promise.all([loadUsers(), loadMatches(), loadMissingSummary()]);
     } catch (err) {
       console.error('user approval error', err);
@@ -337,6 +356,15 @@ export default function Admin() {
   const pendingCount = matches.length - loadedCount;
   const hasActiveFilters = Boolean(search || dateFilter || groupFilter);
   const approvedCount = users.approved?.length || 0;
+  const accountRows = useMemo(() => {
+    const withStatus = status => player => ({ ...player, approvalStatus: player.approvalStatus || status });
+    return [
+      ...(users.pending || []).map(withStatus('pending')),
+      ...(users.approved || []).map(withStatus('approved')),
+      ...(users.disabled || []).map(withStatus('disabled')),
+      ...(users.rejected || []).map(withStatus('rejected'))
+    ];
+  }, [users]);
   const pendingUsers = users.pending || [];
   const playersMissing = missingSummary?.playersMissing || [];
   const closingSoon = missingSummary?.closingSoon || [];
@@ -358,6 +386,19 @@ export default function Admin() {
       Number(match.result1) === Number(match.result2);
   }
 
+  function statusChipProps(status) {
+    if (status === 'approved') return { color: 'success', label: t('adminStatusApproved') };
+    if (status === 'disabled') return { color: 'error', label: t('adminStatusDisabled') };
+    if (status === 'rejected') return { color: 'default', label: t('adminStatusRejected') };
+    return { color: 'warning', label: t('adminStatusPending') };
+  }
+
+  const tabLabel = key => (
+    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+      {t(key)}
+    </Box>
+  );
+
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2.5, md: 4 } }}>
       <Stack spacing={{ xs: 2.5, md: 3 }}>
@@ -378,11 +419,37 @@ export default function Admin() {
           </Stack>
         </Paper>
 
+        <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Tabs
+            value={tab}
+            onChange={(_, value) => setTab(value)}
+            variant="fullWidth"
+            aria-label={t('adminTabsLabel')}
+            sx={{
+              minHeight: 58,
+              '& .MuiTab-root': {
+                minHeight: 58,
+                px: { xs: 0.5, sm: 2 },
+                fontSize: { xs: 11, sm: 14 }
+              },
+              '& .MuiTab-iconWrapper': {
+                mb: { xs: 0, sm: 0.5 }
+              }
+            }}
+          >
+            <Tab value="results" icon={<SportsScoreIcon />} label={tabLabel('adminTabResults')} aria-label={t('adminTabResults')} />
+            <Tab value="accounts" icon={<ManageAccountsIcon />} label={tabLabel('adminTabAccounts')} aria-label={t('adminTabAccounts')} />
+            <Tab value="reminders" icon={<NotificationsActiveIcon />} label={tabLabel('adminTabReminders')} aria-label={t('adminTabReminders')} />
+            <Tab value="tools" icon={<SettingsSuggestIcon />} label={tabLabel('adminTabTools')} aria-label={t('adminTabTools')} />
+          </Tabs>
+        </Paper>
+
+        {tab === 'accounts' && (
         <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
           <Stack spacing={2}>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
               <Box>
-                <Typography variant="h6">{t('adminApprovalsTitle')}</Typography>
+                <Typography variant="h6">{t('adminAccountsTitle')}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   {t('adminApprovalsHelp')}
                 </Typography>
@@ -391,11 +458,14 @@ export default function Admin() {
                 {loadingUsers ? <CircularProgress size={18} /> : t('adminMatchesRefresh')}
               </Button>
             </Stack>
-            {pendingUsers.length === 0 ? (
-              <Alert severity="info">{t('adminNoPendingUsers')}</Alert>
+            {pendingUsers.length > 0 && <Alert severity="warning">{t('adminPendingUsersCount', { count: pendingUsers.length })}</Alert>}
+            {accountRows.length === 0 ? (
+              <Alert severity="info">{t('adminNoUsers')}</Alert>
             ) : (
               <Stack spacing={1}>
-                {pendingUsers.map(player => (
+                {accountRows.map(player => {
+                  const chip = statusChipProps(player.approvalStatus);
+                  return (
                   <Box
                     key={player._id}
                     sx={{
@@ -407,42 +477,82 @@ export default function Admin() {
                   >
                     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }}>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography variant="subtitle1">{player.displayName || player.username}</Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap', mb: 0.5 }}>
+                          <Typography variant="subtitle1">{player.displayName || player.username}</Typography>
+                          <Chip size="small" variant="outlined" {...chip} />
+                          {player.hasGoogle && <Chip size="small" label={t('adminLoginGoogle')} />}
+                          {player.hasPassword && <Chip size="small" label={t('adminLoginPassword')} />}
+                        </Stack>
                         <Typography variant="body2" color="text.secondary">{player.email}</Typography>
                       </Box>
                       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ width: { xs: '100%', md: 'auto' } }}>
+                        {player.approvalStatus !== 'approved' && (
+                          <Button
+                            variant="contained"
+                            size="small"
+                            disabled={Boolean(actingUserId)}
+                            onClick={() => runUserAction(player._id, 'approve')}
+                          >
+                            {actingUserId === player._id ? <CircularProgress size={18} /> : t('approve')}
+                          </Button>
+                        )}
+                        {player.approvalStatus === 'approved' && (
+                          <Button
+                            variant="outlined"
+                            color="warning"
+                            size="small"
+                            disabled={Boolean(actingUserId)}
+                            onClick={() => runUserAction(player._id, 'disable')}
+                          >
+                            {t('adminDisableUser')}
+                          </Button>
+                        )}
                         <Button
-                          variant="contained"
+                          variant="outlined"
                           size="small"
                           disabled={Boolean(actingUserId)}
-                          onClick={() => updateUserApproval(player._id, 'approve')}
+                          onClick={() => runUserAction(player._id, 'password-reset')}
                         >
-                          {actingUserId === player._id ? <CircularProgress size={18} /> : t('approve')}
+                          {t('adminSendPasswordReset')}
                         </Button>
+                        {player.approvalStatus === 'pending' && (
+                          <Button
+                            variant="outlined"
+                            color="warning"
+                            size="small"
+                            disabled={Boolean(actingUserId)}
+                            onClick={() => runUserAction(player._id, 'reject')}
+                          >
+                            {t('adminRejectUser')}
+                          </Button>
+                        )}
                         <Button
                           variant="outlined"
                           color="error"
                           size="small"
                           disabled={Boolean(actingUserId)}
-                          onClick={() => updateUserApproval(player._id, 'reject')}
+                          onClick={() => runUserAction(player._id, 'delete')}
                         >
                           {t('remove')}
                         </Button>
                       </Stack>
                     </Stack>
                   </Box>
-                ))}
+                  );
+                })}
               </Stack>
             )}
           </Stack>
         </Paper>
+        )}
 
+        {tab === 'tools' && (
         <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
           <Stack spacing={2}>
             <Box>
-              <Typography variant="h6">{t('adminResultsTitle')}</Typography>
+              <Typography variant="h6">{t('adminToolsTitle')}</Typography>
               <Typography variant="body2" color="text.secondary">
-                {t('adminResultsHelp')}
+                {t('adminToolsHelp')}
               </Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
@@ -475,7 +585,9 @@ export default function Admin() {
             </Stack>
           </Stack>
         </Paper>
+        )}
 
+        {tab === 'reminders' && (
         <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
           <Stack spacing={2}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} justifyContent="space-between">
@@ -524,9 +636,22 @@ export default function Admin() {
             )}
           </Stack>
         </Paper>
+        )}
 
+        {tab === 'results' && (
         <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2 }}>
           <Stack spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} justifyContent="space-between">
+              <Box>
+                <Typography variant="h6">{t('adminResultsTitle')}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t('adminResultsHelp')}
+                </Typography>
+              </Box>
+              <Button variant="outlined" size="small" onClick={loadMatches} disabled={loading}>
+                {loading ? <CircularProgress size={18} /> : t('adminMatchesRefresh')}
+              </Button>
+            </Stack>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
               <TextField
                 label={t('adminMatchesSearch')}
@@ -580,6 +705,7 @@ export default function Admin() {
             </Stack>
           </Stack>
         </Paper>
+        )}
 
         {error && (
           <Alert severity="error" sx={{ maxWidth: 560 }}>
@@ -593,16 +719,17 @@ export default function Admin() {
           </Alert>
         )}
 
-        {loading && <CircularProgress sx={{ alignSelf: 'center' }} />}
+        {tab === 'results' && loading && <CircularProgress sx={{ alignSelf: 'center' }} />}
 
-        {!loading && matches.length === 0 && (
+        {tab === 'results' && !loading && matches.length === 0 && (
           <Alert severity="info">{t('adminMatchesNoResults')}</Alert>
         )}
 
-        {!loading && matches.length > 0 && filteredMatches.length === 0 && (
+        {tab === 'results' && !loading && matches.length > 0 && filteredMatches.length === 0 && (
           <Alert severity="info">{t('adminMatchesNoFilteredResults')}</Alert>
         )}
 
+        {tab === 'results' && (
         <Stack spacing={2.5}>
           {groupedMatches.map(group => (
             <Paper key={group.title} sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 2 }}>
@@ -628,50 +755,57 @@ export default function Admin() {
                           p: { xs: 1.5, sm: 2 }
                         }}
                       >
-                        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }}>
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.75, flexWrap: 'wrap' }}>
-                              <Chip
-                                size="small"
-                                color={loaded ? 'success' : 'default'}
-                                label={loaded ? t('adminMatchLoaded') : t('adminMatchPending')}
-                              />
-                              <Typography variant="caption" color="text.secondary">
-                                {formatLocalKickoff(match) || t('scheduleTbd')}
-                              </Typography>
-                            </Stack>
-                            <Typography variant="subtitle1" sx={{ overflowWrap: 'anywhere' }}>
-                              {match.team1 || t('team1Label')} {t('vs')} {match.team2 || t('team2Label')}
+                        <Stack spacing={1.25}>
+                          <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+                            <Chip
+                              size="small"
+                              color={loaded ? 'success' : 'default'}
+                              label={loaded ? t('adminMatchLoaded') : t('adminMatchPending')}
+                            />
+                            <Typography variant="caption" color="text.secondary">
+                              {formatLocalKickoff(match) || t('scheduleTbd')}
                             </Typography>
                             {match.venue?.city && (
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="caption" color="text.secondary">
                                 {match.venue.city}
                               </Typography>
                             )}
-                          </Box>
-
-                          <Stack direction="row" spacing={1} alignItems="center" sx={{ width: { xs: '100%', md: 250 } }}>
-                            <TextField
-                              label={t('scoreTeam1Label')}
-                              type="number"
-                              value={match.result1 ?? ''}
-                              onChange={e => updateMatchField(match._id, 'result1', e.target.value)}
-                              size="small"
-                              inputProps={{ min: 0 }}
-                              fullWidth
-                            />
-                            <Typography color="text.secondary">-</Typography>
-                            <TextField
-                              label={t('scoreTeam2Label')}
-                              type="number"
-                              value={match.result2 ?? ''}
-                              onChange={e => updateMatchField(match._id, 'result2', e.target.value)}
-                              size="small"
-                              inputProps={{ min: 0 }}
-                              fullWidth
-                            />
                           </Stack>
-
+                          <Stack spacing={0.75}>
+                            <Stack direction="row" spacing={1.25} alignItems="center">
+                              <Typography variant="subtitle1" sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
+                                {match.team1 || t('team1Label')}
+                              </Typography>
+                              <TextField
+                                label={t('result')}
+                                type="number"
+                                value={match.result1 ?? ''}
+                                onChange={e => updateMatchField(match._id, 'result1', e.target.value)}
+                                size="small"
+                                inputProps={{ min: 0, inputMode: 'numeric' }}
+                                InputProps={{ sx: { '& input': { textAlign: 'center' } } }}
+                                sx={{ width: { xs: 82, sm: 96 } }}
+                              />
+                            </Stack>
+                            <Typography variant="caption" color="text.secondary" sx={{ pl: 0.25 }}>
+                              {t('vs')}
+                            </Typography>
+                            <Stack direction="row" spacing={1.25} alignItems="center">
+                              <Typography variant="subtitle1" sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>
+                                {match.team2 || t('team2Label')}
+                              </Typography>
+                              <TextField
+                                label={t('result')}
+                                type="number"
+                                value={match.result2 ?? ''}
+                                onChange={e => updateMatchField(match._id, 'result2', e.target.value)}
+                                size="small"
+                                inputProps={{ min: 0, inputMode: 'numeric' }}
+                                InputProps={{ sx: { '& input': { textAlign: 'center' } } }}
+                                sx={{ width: { xs: 82, sm: 96 } }}
+                              />
+                            </Stack>
+                          </Stack>
                           {needsPenaltyWinner(match) && (
                             <TextField
                               select
@@ -692,7 +826,7 @@ export default function Admin() {
                             size="small"
                             onClick={() => handleSave(match)}
                             disabled={Boolean(savingMatchId)}
-                            sx={{ width: { xs: '100%', md: 160 } }}
+                            sx={{ width: { xs: '100%', sm: 180 }, alignSelf: { sm: 'flex-end' } }}
                           >
                             {isSaving ? <CircularProgress size={18} /> : t('adminSaveResult')}
                           </Button>
@@ -705,6 +839,7 @@ export default function Admin() {
             </Paper>
           ))}
         </Stack>
+        )}
       </Stack>
     </Container>
   );

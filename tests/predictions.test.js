@@ -61,9 +61,7 @@ describe('Predictions Routes', () => {
   it('rejects prediction when match is less than 30 minutes away', async () => {
     Prediction.findOne.mockResolvedValue(null);
     const soon = new Date(Date.now() + 15 * 60 * 1000);
-    const date = soon.toISOString().split('T')[0];
-    const time = soon.toTimeString().slice(0,5);
-    Match.findById.mockResolvedValue({ date, time });
+    Match.findById.mockResolvedValue({ kickoff: soon.toISOString() });
 
     const app = express();
     app.use(express.json());

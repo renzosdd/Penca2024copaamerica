@@ -4,12 +4,14 @@ const router = express.Router();
 const Match = require('../models/Match');
 const Penca = require('../models/Penca');
 const Prediction = require('../models/Prediction');
+const Score = require('../models/Score');
 const User = require('../models/User');
 const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, invalidateGroupStandings } = require('../utils/bracket');
 const { ensureWorldCupPenca } = require('../utils/worldcupPenca');
-const { notifyPlayerApproval } = require('../utils/emailService');
+const { notifyPasswordReset, notifyPlayerApproval } = require('../utils/emailService');
+const { issuePasswordReset } = require('../utils/passwordReset');
 const klaviyo = require('../utils/klaviyoService');
 const { fetchCompetitionData } = require('../scripts/sportsDb');
 const importMatches = require('../scripts/importMatches');
@@ -191,20 +193,24 @@ router.get('/users', isAuthenticated, isAdmin, async (req, res) => {
       .select('username displayName name surname email valid approvalStatus approvedAt createdAt googleId googleLinkedAt passwordLoginEnabled passwordUpdatedAt')
       .sort({ valid: 1, createdAt: -1, username: 1 })
       .lean();
-    const normalized = users.map(user => ({
-      ...user,
-      approvalStatus: user.valid
+    const normalized = users.map(user => {
+      const approvalStatus = user.valid
         ? 'approved'
-        : user.approvalStatus === 'rejected'
-          ? 'rejected'
-          : 'pending',
-      hasGoogle: Boolean(user.googleId),
-      hasPassword: user.passwordLoginEnabled !== false && !(user.googleId && !user.googleLinkedAt && !user.passwordUpdatedAt)
-    }));
+        : ['rejected', 'disabled'].includes(user.approvalStatus)
+          ? user.approvalStatus
+          : 'pending';
+      return {
+        ...user,
+        approvalStatus,
+        hasGoogle: Boolean(user.googleId),
+        hasPassword: user.passwordLoginEnabled !== false && !(user.googleId && !user.googleLinkedAt && !user.passwordUpdatedAt)
+      };
+    });
     res.json({
       pending: normalized.filter(user => user.approvalStatus === 'pending'),
       approved: normalized.filter(user => user.approvalStatus === 'approved'),
-      rejected: normalized.filter(user => user.approvalStatus === 'rejected')
+      rejected: normalized.filter(user => user.approvalStatus === 'rejected'),
+      disabled: normalized.filter(user => user.approvalStatus === 'disabled')
     });
   } catch (error) {
     console.error('Error listing users:', error);
@@ -288,6 +294,71 @@ router.post('/users/:userId/reject', isAuthenticated, isAdmin, async (req, res) 
     res.json({ message: 'User rejected' });
   } catch (error) {
     console.error('Error rejecting user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/users/:userId/disable', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.userId, role: 'user' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    user.valid = false;
+    user.approvalStatus = 'disabled';
+    await user.save();
+    await Penca.updateMany({}, { $pull: { participants: user._id } });
+    await rankingCache.invalidate();
+    res.json({ message: 'User disabled' });
+  } catch (error) {
+    console.error('Error disabling user:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/users/:userId/password-reset', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.userId, role: 'user' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    if (!user.email) {
+      return res.status(400).json({ error: 'User has no email' });
+    }
+    const reset = await issuePasswordReset(user, req);
+    const emailSent = await notifyPasswordReset({
+      player: user,
+      resetUrl: reset.resetUrl,
+      requestedByAdmin: true
+    });
+    res.json({ message: 'Password reset sent', emailSent });
+  } catch (error) {
+    console.error('Error sending password reset:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete('/users/:userId', isAuthenticated, isAdmin, async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.userId, role: 'user' });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const userId = user._id;
+    const [predictionsResult, scoresResult] = await Promise.all([
+      Prediction.deleteMany({ userId }),
+      Score.deleteMany({ userId }),
+      Penca.updateMany({}, { $pull: { participants: userId } })
+    ]);
+    await User.deleteOne({ _id: userId, role: 'user' });
+    await rankingCache.invalidate();
+    res.json({
+      message: 'User deleted',
+      predictionsDeleted: predictionsResult.deletedCount || 0,
+      scoresDeleted: scoresResult.deletedCount || 0
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

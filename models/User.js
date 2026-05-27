@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     passwordLoginEnabled: { type: Boolean, default: true },
     passwordUpdatedAt: { type: Date, required: false },
+    passwordResetTokenHash: { type: String, required: false },
+    passwordResetExpiresAt: { type: Date, required: false },
     googleId: { type: String, required: false, unique: true, sparse: true },
     googleLinkedAt: { type: Date, required: false },
     displayName: { type: String, required: true, trim: true },
@@ -20,7 +22,7 @@ const userSchema = new mongoose.Schema({
     valid: { type: Boolean, default: false },
     approvalStatus: {
         type: String,
-        enum: ['pending', 'approved', 'rejected'],
+        enum: ['pending', 'approved', 'rejected', 'disabled'],
         default: 'pending'
     },
     approvedAt: { type: Date, required: false },

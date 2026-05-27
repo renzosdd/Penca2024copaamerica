@@ -14,7 +14,8 @@ const language = require('./middleware/language');
 const { DEFAULT_COMPETITION } = require('./config');
 const { getMessage } = require('./utils/messages');
 const { ensureUserInPenca, ensureWorldCupPenca } = require('./utils/worldcupPenca');
-const { notifyAdminApprovalRequest } = require('./utils/emailService');
+const { notifyAdminApprovalRequest, notifyPasswordReset } = require('./utils/emailService');
+const { hashResetToken, issuePasswordReset } = require('./utils/passwordReset');
 
 dotenv.config();
 
@@ -165,8 +166,8 @@ function getPublicUser(user) {
         valid: user.valid === true || user.role === 'admin',
         approvalStatus: user.valid
             ? 'approved'
-            : user.approvalStatus === 'rejected'
-                ? 'rejected'
+            : ['rejected', 'disabled'].includes(user.approvalStatus)
+                ? user.approvalStatus
                 : 'pending'
     };
 }
@@ -500,6 +501,9 @@ app.post('/login', async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: getMessage('USER_NOT_FOUND', req.lang) });
         }
+        if (user.approvalStatus === 'disabled') {
+            return res.status(403).json({ error: getMessage('ACCOUNT_DISABLED', req.lang) });
+        }
         if (user.passwordLoginEnabled === false) {
             return res.status(401).json({ error: getMessage('INCORRECT_PASSWORD', req.lang) });
         }
@@ -518,6 +522,57 @@ app.post('/login', async (req, res) => {
         res.json({ success: true, redirectUrl });
     } catch (err) {
         console.error('Error en el inicio de sesión', err);
+        res.status(500).json({ error: getMessage('INTERNAL_ERROR', req.lang) });
+    }
+});
+
+app.post('/password/forgot', async (req, res) => {
+    const loginValue = String(req.body?.email || '').trim();
+    try {
+        if (loginValue) {
+            const normalizedEmail = loginValue.toLowerCase();
+            const user = await User.findOne({
+                $or: [
+                    { email: normalizedEmail },
+                    { username: loginValue }
+                ]
+            });
+            if (user?.email) {
+                const reset = await issuePasswordReset(user, req);
+                await notifyPasswordReset({ player: user, resetUrl: reset.resetUrl });
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error requesting password reset', err);
+        res.status(500).json({ error: getMessage('INTERNAL_ERROR', req.lang) });
+    }
+});
+
+app.post('/password/reset', async (req, res) => {
+    const token = String(req.body?.token || '').trim();
+    const password = String(req.body?.password || '');
+    if (!token || password.length < 6) {
+        return res.status(400).json({ error: 'Invalid reset request' });
+    }
+    try {
+        const tokenHash = hashResetToken(token);
+        const user = await User.findOne({
+            passwordResetTokenHash: tokenHash,
+            passwordResetExpiresAt: { $gt: new Date() }
+        });
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid or expired reset link' });
+        }
+        user.password = await bcrypt.hash(password, 10);
+        user.passwordLoginEnabled = true;
+        user.passwordUpdatedAt = new Date();
+        user.passwordResetTokenHash = undefined;
+        user.passwordResetExpiresAt = undefined;
+        await user.save();
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error resetting password', err);
         res.status(500).json({ error: getMessage('INTERNAL_ERROR', req.lang) });
     }
 });
@@ -580,6 +635,9 @@ app.get('/auth/google/callback', async (req, res) => {
             return res.redirect('/dashboard?profileNotice=google_linked');
         }
         const user = await findOrCreateGoogleUser(profile);
+        if (user.approvalStatus === 'disabled') {
+            return res.redirect('/?authError=account_disabled');
+        }
         req.session.user = user;
         if (user.role === 'admin') {
             return res.redirect('/admin/edit');
@@ -691,7 +749,7 @@ app.post('/logout', (req, res) => {
     });
 });
 
-app.get(['/register'], (req, res) => {
+app.get(['/register', '/password/reset/:token'], (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
 

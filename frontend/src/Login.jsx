@@ -18,6 +18,10 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [sendingReset, setSendingReset] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t } = useLang();
@@ -50,6 +54,30 @@ export default function Login() {
       }
     } catch (err) {
       setError(t('networkError'));
+    }
+  };
+
+  const handleForgotSubmit = async (e) => {
+    e?.preventDefault();
+    setSendingReset(true);
+    setError('');
+    setNotice('');
+    try {
+      const res = await fetch('/password/forgot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail || email })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || t('networkError'));
+      }
+      setNotice(t('resetLinkSent'));
+      setShowForgot(false);
+    } catch (err) {
+      setError(err.message || t('networkError'));
+    } finally {
+      setSendingReset(false);
     }
   };
 
@@ -96,6 +124,44 @@ export default function Login() {
                 fullWidth
                 autoComplete="current-password"
               />
+              <Button
+                type="button"
+                variant="text"
+                size="small"
+                sx={{ alignSelf: 'flex-start', px: 0 }}
+                onClick={() => {
+                  setForgotEmail(email);
+                  setShowForgot(value => !value);
+                }}
+              >
+                {t('forgotPassword')}
+              </Button>
+              {showForgot && (
+                <Stack spacing={1.5}>
+                  <Typography variant="body2" color="text.secondary">
+                    {t('forgotPasswordHelp')}
+                  </Typography>
+                  <TextField
+                    label={t('email')}
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleForgotSubmit();
+                      }
+                    }}
+                    required
+                    fullWidth
+                    size="small"
+                    autoComplete="email"
+                  />
+                  <Button variant="outlined" type="button" onClick={handleForgotSubmit} disabled={sendingReset}>
+                    {sendingReset ? t('loading') : t('sendResetLink')}
+                  </Button>
+                </Stack>
+              )}
               <Button variant="contained" type="submit" fullWidth size="large">
                 {t('login')}
               </Button>
@@ -109,6 +175,7 @@ export default function Login() {
             >
               {t('register')}
             </Button>
+            {notice && <Alert severity="success">{notice}</Alert>}
             {error && <Alert severity="error">{error}</Alert>}
           </Stack>
         </CardContent>

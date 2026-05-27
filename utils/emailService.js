@@ -100,6 +100,35 @@ function buildApprovalRequestMessage({ player }) {
   return { subject, text: body, html };
 }
 
+function buildPasswordResetMessage({ playerName, resetUrl, requestedByAdmin }) {
+  const subject = 'Cambio de contraseña en Pencasa';
+  const body = [
+    `Hola ${playerName},`,
+    '',
+    requestedByAdmin
+      ? 'Un administrador generó un enlace para que puedas cambiar tu contraseña.'
+      : 'Recibimos una solicitud para cambiar tu contraseña.',
+    `Usá este enlace para elegir una nueva contraseña: ${resetUrl}`,
+    '',
+    'El enlace vence en 60 minutos. Si no solicitaste este cambio, podés ignorar este email.',
+    '',
+    'Equipo de Penca'
+  ].join('\n');
+  const html = `
+    <div style="margin:0;padding:24px;background:#f6f8fb;font-family:Arial,sans-serif;color:#0f172a;">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+        <div style="padding:28px;">
+          <h2 style="margin:0 0 12px;font-size:22px;">Cambiar contraseña</h2>
+          <p style="margin:0 0 16px;line-height:1.5;">Hola ${playerName}, ${requestedByAdmin ? 'un administrador generó este enlace para vos.' : 'recibimos una solicitud para cambiar tu contraseña.'}</p>
+          <a href="${resetUrl}" style="display:inline-block;background:#1f6feb;color:#ffffff;text-decoration:none;border-radius:8px;padding:12px 18px;font-weight:bold;">Elegir nueva contraseña</a>
+          <p style="margin:22px 0 0;color:#64748b;font-size:13px;line-height:1.5;">El enlace vence en 60 minutos. Si no solicitaste este cambio, podés ignorar este email.</p>
+        </div>
+      </div>
+    </div>
+  `;
+  return { subject, text: body, html };
+}
+
 async function notifyAdminApprovalRequest({ player }) {
   const adminEmail = process.env.ADMIN_EMAIL || process.env.DEFAULT_ADMIN_EMAIL;
   if (!adminEmail || !player) return false;
@@ -121,9 +150,20 @@ async function notifyPlayerApproval({ player, penca }) {
   return sendEmail({ to: player.email, ...message });
 }
 
+async function notifyPasswordReset({ player, resetUrl, requestedByAdmin = false }) {
+  if (!player?.email || !resetUrl) return false;
+  const message = buildPasswordResetMessage({
+    playerName: player.displayName || player.name || player.username,
+    resetUrl,
+    requestedByAdmin
+  });
+  return sendEmail({ to: player.email, ...message });
+}
+
 module.exports = {
   sendEmail,
   notifyAdminApprovalRequest,
   notifyPlayerApproval,
+  notifyPasswordReset,
   isConfigured
 };

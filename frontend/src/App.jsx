@@ -3,6 +3,7 @@ import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import theme from './theme';
 import Login from './Login';
 import Register from './Register';
+import ResetPassword from './ResetPassword';
 import Dashboard from './Dashboard';
 import Admin from './Admin';
 import Header from './Header';
@@ -19,6 +20,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/password/reset/:token" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin/edit" element={<Admin />} />
             </Routes>

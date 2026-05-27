@@ -70,9 +70,9 @@ para que pueda asignarse por defecto a nuevos usuarios y puntajes.
 
 ### Notificaciones por correo y auditoría
 
-La aplicación puede enviar avisos automáticos cuando un jugador es aprobado o
-cuando tiene pronósticos pendientes. Configura las siguientes variables de
-entorno para habilitar el envío vía SMTP:
+La aplicación puede enviar avisos automáticos cuando un jugador es aprobado,
+cuando tiene pronósticos pendientes o cuando solicita cambiar su contraseña.
+Configura las siguientes variables de entorno para habilitar el envío vía SMTP:
 
 ```bash
 SMTP_HOST=<servidor_smtp>
@@ -87,7 +87,9 @@ ADMIN_EMAIL=<admin@tudominio.com>
 
 Si las credenciales no están presentes, la aplicación registrará el intento de
 envío en consola sin fallar. `ADMIN_EMAIL` recibe un aviso cuando se registra un
-jugador nuevo y queda pendiente de aprobación. Para evitar alcanzar el límite de concurrencia en la
+jugador nuevo y queda pendiente de aprobación. Los enlaces de cambio de
+contraseña usan `APP_BASE_URL` cuando está configurada, y vencen a los 60
+minutos. Para evitar alcanzar el límite de concurrencia en la
 base de datos, la auditoría se mantiene desactivada por defecto. Podés habilitarla
 desde el panel de administración y elegir qué tipos de cambios (usuarios,
 pencas, predicciones) se registran en la colección `auditlogs` cuando esté activa,
