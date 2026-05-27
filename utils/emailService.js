@@ -1,6 +1,5 @@
 const emailConfig = require('../config/email');
 const { APP_BASE_URL } = require('../config');
-const klaviyo = require('./klaviyoService');
 
 let nodemailer;
 try {
@@ -129,6 +128,38 @@ function buildPasswordResetMessage({ playerName, resetUrl, requestedByAdmin }) {
   return { subject, text: body, html };
 }
 
+function buildMissingPredictionsMessage({ playerName, missingCount, nextMatch, dashboardUrl }) {
+  const subject = 'Tenés pronósticos pendientes en la penca';
+  const nextMatchLine = nextMatch
+    ? `Próximo pendiente: ${nextMatch.team1 || 'Equipo 1'} vs ${nextMatch.team2 || 'Equipo 2'}`
+    : 'Entrá a la penca para revisar los partidos abiertos.';
+  const body = [
+    `Hola ${playerName},`,
+    '',
+    `Tenés ${missingCount} pronóstico${missingCount === 1 ? '' : 's'} pendiente${missingCount === 1 ? '' : 's'} para cargar.`,
+    nextMatchLine,
+    `Entrá acá: ${dashboardUrl}`,
+    '',
+    'Recordá que los pronósticos cierran 30 minutos antes de cada partido.',
+    '',
+    'Equipo de Penca'
+  ].join('\n');
+  const html = `
+    <div style="margin:0;padding:24px;background:#f6f8fb;font-family:Arial,sans-serif;color:#0f172a;">
+      <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+        <div style="padding:28px;">
+          <h2 style="margin:0 0 12px;font-size:22px;">Pronósticos pendientes</h2>
+          <p style="margin:0 0 12px;line-height:1.5;">Hola ${playerName}, tenés <strong>${missingCount}</strong> pronóstico${missingCount === 1 ? '' : 's'} pendiente${missingCount === 1 ? '' : 's'} para cargar.</p>
+          <p style="margin:0 0 18px;color:#64748b;line-height:1.5;">${nextMatchLine}</p>
+          <a href="${dashboardUrl}" style="display:inline-block;background:#1f6feb;color:#ffffff;text-decoration:none;border-radius:8px;padding:12px 18px;font-weight:bold;">Cargar pronósticos</a>
+          <p style="margin:22px 0 0;color:#64748b;font-size:13px;line-height:1.5;">Los pronósticos cierran 30 minutos antes de cada partido.</p>
+        </div>
+      </div>
+    </div>
+  `;
+  return { subject, text: body, html };
+}
+
 async function notifyAdminApprovalRequest({ player }) {
   const adminEmail = process.env.ADMIN_EMAIL || process.env.DEFAULT_ADMIN_EMAIL;
   if (!adminEmail || !player) return false;
@@ -142,11 +173,6 @@ async function notifyPlayerApproval({ player, penca }) {
     playerName: player.displayName || player.name || player.username,
     pencaName: penca.name
   });
-  const baseUrl = APP_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
-  const dashboardUrl = baseUrl ? `${baseUrl}/dashboard` : '/dashboard';
-  if (klaviyo.isConfigured()) {
-    return klaviyo.notifyApproval({ player, penca, dashboardUrl });
-  }
   return sendEmail({ to: player.email, ...message });
 }
 
@@ -160,9 +186,21 @@ async function notifyPasswordReset({ player, resetUrl, requestedByAdmin = false 
   return sendEmail({ to: player.email, ...message });
 }
 
+async function notifyMissingPredictions({ player, missingCount, nextMatch, dashboardUrl }) {
+  if (!player?.email || !missingCount || !dashboardUrl) return false;
+  const message = buildMissingPredictionsMessage({
+    playerName: player.displayName || player.name || player.username,
+    missingCount,
+    nextMatch,
+    dashboardUrl
+  });
+  return sendEmail({ to: player.email, ...message });
+}
+
 module.exports = {
   sendEmail,
   notifyAdminApprovalRequest,
+  notifyMissingPredictions,
   notifyPlayerApproval,
   notifyPasswordReset,
   isConfigured

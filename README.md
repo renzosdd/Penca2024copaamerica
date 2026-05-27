@@ -83,6 +83,7 @@ SMTP_PASS=<password>
 EMAIL_FROM="Penca 2026 <no-reply@tudominio.com>"
 # Email que recibe nuevas solicitudes pendientes de aprobacion
 ADMIN_EMAIL=<admin@tudominio.com>
+APP_BASE_URL=https://tu-dominio.com
 ```
 
 Si las credenciales no están presentes, la aplicación registrará el intento de
@@ -94,21 +95,6 @@ base de datos, la auditoría se mantiene desactivada por defecto. Podés habilit
 desde el panel de administración y elegir qué tipos de cambios (usuarios,
 pencas, predicciones) se registran en la colección `auditlogs` cuando esté activa,
 lo que permite reconstruir el historial de cambios en caso de controversias.
-
-También podés enviar aprobaciones y recordatorios mediante Klaviyo. Configurá la
-private key en producción y dejá la public key como variable para evitar cambios
-de código:
-
-```bash
-KLAVIYO_PRIVATE_KEY=<tu_private_key>
-KLAVIYO_PUBLIC_API_KEY=VtZcng
-KLAVIYO_REVISION=2024-10-15
-APP_BASE_URL=https://tu-dominio.com
-```
-
-El backend dispara eventos `Penca Player Approved` y
-`Penca Missing Predictions Reminder`; desde Klaviyo podés crear flows sobre esos
-eventos para diseñar los emails finales.
 
 ### Formatos de torneo y reglas de puntuación
 

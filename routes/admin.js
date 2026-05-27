@@ -10,9 +10,8 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth');
 const { DEFAULT_COMPETITION } = require('../config');
 const { updateEliminationMatches, invalidateGroupStandings } = require('../utils/bracket');
 const { ensureWorldCupPenca } = require('../utils/worldcupPenca');
-const { notifyPasswordReset, notifyPlayerApproval } = require('../utils/emailService');
+const { notifyMissingPredictions, notifyPasswordReset, notifyPlayerApproval } = require('../utils/emailService');
 const { issuePasswordReset } = require('../utils/passwordReset');
-const klaviyo = require('../utils/klaviyoService');
 const { fetchCompetitionData } = require('../scripts/sportsDb');
 const importMatches = require('../scripts/importMatches');
 const { invalidate: invalidateMatchCache } = require('../utils/matchCache');
@@ -233,7 +232,7 @@ router.post('/reminders/missing-predictions', isAuthenticated, isAdmin, async (r
     const baseUrl = process.env.APP_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
     const dashboardUrl = baseUrl ? `${baseUrl}/dashboard` : '/dashboard';
     const results = await Promise.allSettled(summary.playersMissing.map(player =>
-      klaviyo.notifyMissingPredictions({
+      notifyMissingPredictions({
         player,
         missingCount: player.missingCount,
         nextMatch: player.nextMissingMatch,
@@ -242,7 +241,7 @@ router.post('/reminders/missing-predictions', isAuthenticated, isAdmin, async (r
     ));
     const sent = results.filter(result => result.status === 'fulfilled' && result.value).length;
     const failed = results.filter(result => result.status === 'rejected').length;
-    res.json({ sent, failed, total: summary.playersMissing.length, klaviyoConfigured: klaviyo.isConfigured() });
+    res.json({ sent, failed, total: summary.playersMissing.length });
   } catch (error) {
     console.error('Error sending missing prediction reminders:', error);
     res.status(500).json({ error: 'Internal server error' });
