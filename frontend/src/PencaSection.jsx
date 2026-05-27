@@ -25,9 +25,11 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import GroupsIcon from '@mui/icons-material/Groups';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
+import TouchAppIcon from '@mui/icons-material/TouchApp';
 import StageAccordionList from './StageAccordionList';
 import GroupTable from './GroupTable';
 import KnockoutBracket from './KnockoutBracket';
@@ -474,6 +476,9 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
   return (
     <Box component="section" sx={{ mb: 3 }}>
       <Card
+        component="button"
+        type="button"
+        aria-expanded={open}
         onClick={() => {
           const next = !open;
           setOpen(next);
@@ -482,11 +487,28 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
           }
         }}
         sx={{
+          width: '100%',
           p: { xs: 1.5, sm: 2 },
           cursor: 'pointer',
           borderRadius: 3,
-          boxShadow: open ? 8 : 2,
-          transition: 'box-shadow .2s ease-in-out'
+          border: '1px solid',
+          borderColor: open ? 'primary.main' : 'primary.light',
+          bgcolor: open ? alpha('#1f6feb', 0.06) : 'background.paper',
+          boxShadow: open ? 7 : 2,
+          color: 'text.primary',
+          font: 'inherit',
+          textAlign: 'left',
+          transition: 'box-shadow .2s ease-in-out, border-color .2s ease-in-out, background-color .2s ease-in-out, transform .2s ease-in-out',
+          '&:hover': {
+            borderColor: 'primary.main',
+            boxShadow: 7,
+            transform: { xs: 'none', sm: 'translateY(-1px)' }
+          },
+          '&:focus-visible': {
+            outline: '3px solid',
+            outlineColor: alpha('#1f6feb', 0.28),
+            outlineOffset: 2
+          }
         }}
       >
         <CardContent
@@ -499,12 +521,43 @@ export default function PencaSection({ penca, matches, groups, getPrediction, ha
           }}
         >
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            <Typography variant="h6" component="h3">
-              {penca.name}
-            </Typography>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: 'wrap' }}>
+              <Typography variant="h6" component="h3">
+                {penca.name}
+              </Typography>
+              <Chip
+                size="small"
+                color={open ? 'primary' : 'default'}
+                icon={<TouchAppIcon />}
+                label={open ? t('pencaOpenedAction') : t('pencaOpenAction')}
+              />
+            </Stack>
             <Typography variant="body2" color="text.secondary">
               {t('playerPageHint')}
             </Typography>
+            {!open && (
+              <Typography variant="caption" color="primary.main">
+                {t('pencaClickableHint')}
+              </Typography>
+            )}
+          </Box>
+          <Box
+            aria-hidden="true"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 38,
+              height: 38,
+              borderRadius: '50%',
+              bgcolor: open ? 'primary.main' : alpha('#1f6feb', 0.1),
+              color: open ? 'primary.contrastText' : 'primary.main',
+              alignSelf: { xs: 'flex-end', sm: 'center' },
+              transform: open ? 'rotate(180deg)' : 'none',
+              transition: 'transform .2s ease-in-out'
+            }}
+          >
+            <ExpandMoreIcon />
           </Box>
         </CardContent>
       </Card>

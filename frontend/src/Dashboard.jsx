@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Button, CircularProgress, Alert, Container, Stack, Typography, Paper } from '@mui/material';
+import { Alert, Button, CircularProgress, Container, IconButton, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+import ShareIcon from '@mui/icons-material/Share';
 import PencaSection from './PencaSection';
 import ProfileForm from './ProfileForm';
 import useLang from './useLang';
@@ -229,18 +232,42 @@ export default function Dashboard() {
               </Stack>
             )}
             {user && (
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' } }}>
+              <Stack direction="row" spacing={1} sx={{ alignSelf: { xs: 'flex-end', sm: 'flex-start' } }}>
+                <Tooltip title={t('sharePenca')}>
+                  <IconButton
+                    aria-label={t('sharePenca')}
+                    color="primary"
+                    onClick={sharePenca}
+                    sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                  >
+                    <ShareIcon />
+                  </IconButton>
+                </Tooltip>
                 <Button
                   size="small"
                   variant="outlined"
                   onClick={sharePenca}
+                  startIcon={<ShareIcon />}
+                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                 >
                   {t('sharePenca')}
                 </Button>
+                <Tooltip title={showProfile ? t('hide') : t('editProfile')}>
+                  <IconButton
+                    aria-label={showProfile ? t('hide') : t('editProfile')}
+                    color="primary"
+                    onClick={() => setShowProfile(!showProfile)}
+                    sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+                  >
+                    {showProfile ? <CloseIcon /> : <EditIcon />}
+                  </IconButton>
+                </Tooltip>
                 <Button
                   size="small"
                   variant="outlined"
                   onClick={() => setShowProfile(!showProfile)}
+                  startIcon={showProfile ? <CloseIcon /> : <EditIcon />}
+                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
                 >
                   {showProfile ? t('hide') : t('editProfile')}
                 </Button>
